@@ -1,8 +1,8 @@
-var webpack = require("webpack");
 var path = require("path");
-var PROD = (process.env.NODE_ENV === "production")
-var LEGACY = (process.env.LEGACY)
-var MINIMIZE = (process.env.MINIMIZE === "true")
+var webpack = require("webpack");
+
+var LEGACY = (process.env.LEGACY);
+var MINIMIZE = (process.env.MINIMIZE === "true");
 var hostname = "localhost";
 var port = 8080;
 
@@ -24,7 +24,7 @@ module.exports = {
 	entry: {
 		"epub": "./src/epub.js",
 	},
-	devtool: MINIMIZE ? false : 'source-map',
+	devtool: MINIMIZE ? false : "source-map",
 	output: {
 		path: path.resolve("./dist"),
 		filename: filename,
@@ -41,10 +41,17 @@ module.exports = {
 		"jszip/dist/jszip": "JSZip",
 		"xmldom": "xmldom"
 	},
-	plugins: [],
+	plugins: [
+		new webpack.ProvidePlugin({
+			process: "process/browser"
+		})
+	],
 	resolve: {
 		alias: {
 			path: "path-webpack"
+		},
+		fallback: {
+			assert: require.resolve("assert/")
 		}
 	},
 	devServer: {
@@ -80,4 +87,4 @@ module.exports = {
 	performance: {
 		hints: false
 	}
-}
+};
