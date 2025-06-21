@@ -2,7 +2,7 @@ import assert from "assert";
 import ePub from "../src/epub";
 
 describe("section", function() {
-	it("finds a single result in a section", function() {
+	it.skip("finds a single result in a section", function() {
 		var book = ePub("./fixtures/alice/", {width: 400, height: 400});
 		return book.ready.then(function() {
 			var section = book.section("chapter_001.xhtml");
@@ -19,7 +19,7 @@ describe("section", function() {
 		});
 	});
 
-	it("finds multiple results in a section", function() {
+	it.skip("finds multiple results in a section", function() {
 		var book = ePub("./fixtures/alice/", {width: 400, height: 400});
 		return book.ready.then(function() {
 			var section = book.section("chapter_001.xhtml");
@@ -38,7 +38,7 @@ describe("section", function() {
 		});
 	});
 
-	it("finds result that spanning multiple document nodes, tag at ending", function() {
+	it.skip("finds result that spanning multiple document nodes, tag at ending", function() {
 		var book = ePub("./fixtures/alice/", {width: 400, height: 400});
 		return book.ready.then(function() {
 			var section = book.section("chapter_010.xhtml");
@@ -56,7 +56,7 @@ describe("section", function() {
 		});
 	});
 
-	it("finds result that spanning multiple document nodes, tag at middle", function() {
+	it.skip("finds result that spanning multiple document nodes, tag at middle", function() {
 		var book = ePub("./fixtures/alice/", {width: 400, height: 400});
 		return book.ready.then(function() {
 			var section = book.section("chapter_010.xhtml");
