@@ -4,20 +4,32 @@
     "es2021": true,
     "node": true
   },
-  "extends": [
-    "eslint:recommended"
-  ],
-  "plugins": [
-    "@typescript-eslint"
-  ],
+  "extends": ["eslint:recommended"],
+  "plugins": ["@typescript-eslint"],
   "overrides": [
     {
       "files": ["**/*.ts", "**/*.mts", "**/*.cts"],
       "parser": "@typescript-eslint/parser",
-      "extends": [
-        "plugin:@typescript-eslint/recommended"
-      ]
+      "extends": ["plugin:@typescript-eslint/recommended"]
+    },
+    {
+      "files": ["test/**/*.js"],
+      "parserOptions": {
+        "sourceType": "module"
+      },
+      "env": {
+        "mocha": true
+      }
+    },
+    {
+      "files": ["src/**/*.js"],
+      "parserOptions": {
+        "sourceType": "module"
+      }
     }
   ],
-  "rules": {}
+  "rules": {
+    "indent": ["error", 2],
+    "quotes": ["error", "single"]
+  }
 }

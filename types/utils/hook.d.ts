@@ -1,5 +1,5 @@
 interface HooksObject {
-  [key: string]: Hook
+  [key: string]: Hook;
 }
 
 export default class Hook {

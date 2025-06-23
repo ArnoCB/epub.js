@@ -1,13 +1,16 @@
-import { PackagingManifestObject } from "./packaging";
-import Archive from "./archive";
+import { PackagingManifestObject } from './packaging';
+import Archive from './archive';
 
 export default class Resources {
-  constructor(manifest: PackagingManifestObject, options: {
-    replacements?: string,
-    archive?: Archive,
-    resolver?: Function,
-    request?: Function
-  });
+  constructor(
+    manifest: PackagingManifestObject,
+    options: {
+      replacements?: string;
+      archive?: Archive;
+      resolver?: Function;
+      request?: Function;
+    }
+  );
 
   process(manifest: PackagingManifestObject): void;
 
@@ -27,7 +30,10 @@ export default class Resources {
 
   private splitUrls(): void;
 
-  private replaceCss(archive: Archive, resolver?: Function): Promise<Array<string>>;
+  private replaceCss(
+    archive: Archive,
+    resolver?: Function
+  ): Promise<Array<string>>;
 
   private createCssFile(href: string): Promise<string>;
 }

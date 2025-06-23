@@ -1,29 +1,29 @@
-import Section from "../section";
-import Layout from "../layout";
-import Contents from "../contents";
-import View, { ViewSettings } from "./view";
-import { EpubCFIPair } from "../mapping";
+import Section from '../section';
+import Layout from '../layout';
+import Contents from '../contents';
+import View, { ViewSettings } from './view';
+import { EpubCFIPair } from '../mapping';
 
 export interface ViewLocation {
-  index: number,
-  href: string,
-  pages: number[],
-  totalPages: number,
-  mapping: EpubCFIPair
+  index: number;
+  href: string;
+  pages: number[];
+  totalPages: number;
+  mapping: EpubCFIPair;
 }
 
 export interface ManagerOptions extends ViewSettings {
-  infinite?: boolean,
-  overflow?: string,
-  [key: string]: any
+  infinite?: boolean;
+  overflow?: string;
+  [key: string]: any;
 }
 
 export default class Manager {
   constructor(options: object);
 
-  render(element: Element, size?: { width: Number, height: Number }): void;
+  render(element: Element, size?: { width: number; height: number }): void;
 
-  resize(width: Number, height: Number): void;
+  resize(width: number, height: number): void;
 
   onOrientationChange(e: Event): void;
 
@@ -35,7 +35,7 @@ export default class Manager {
 
   private afterResized(view: View): void;
 
-  private moveTo(offset: {top: Number, left: Number}): void;
+  private moveTo(offset: { top: number; left: number }): void;
 
   private append(section: Section): Promise<void>;
 

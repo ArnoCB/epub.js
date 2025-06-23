@@ -1,139 +1,162 @@
-import EpubCFI from "./epubcfi";
+import EpubCFI from './epubcfi';
 
 export interface ViewportSettings {
-  width: string,
-  height: string,
-  scale: string,
-  scalable: string,
-  minimum: string,
-  maximum: string
+  width: string;
+  height: string;
+  scale: string;
+  scalable: string;
+  minimum: string;
+  maximum: string;
 }
 
 export default class Contents {
-    constructor(doc: Document, content: Element, cfiBase: string, sectionIndex: number);
+  constructor(
+    doc: Document,
+    content: Element,
+    cfiBase: string,
+    sectionIndex: number
+  );
 
-    epubcfi: EpubCFI;
-    document: Document;
-    documentElement: Element;
-    content: Element;
-    window: Window;
-    sectionIndex: number;
-    cfiBase: string;
+  epubcfi: EpubCFI;
+  document: Document;
+  documentElement: Element;
+  content: Element;
+  window: Window;
+  sectionIndex: number;
+  cfiBase: string;
 
-    static listenedEvents: string[];
+  static listenedEvents: string[];
 
-    addClass(className: string): void;
+  addClass(className: string): void;
 
-    addScript(src: string): Promise<boolean>;
+  addScript(src: string): Promise<boolean>;
 
-    addStylesheet(src: string): Promise<boolean>;
+  addStylesheet(src: string): Promise<boolean>;
 
-    addStylesheetRules(rules: Array<object> | object, key: string): Promise<boolean>;
+  addStylesheetRules(
+    rules: Array<object> | object,
+    key: string
+  ): Promise<boolean>;
 
-    addStylesheetCss(serializedCss: string, key: string): Promise<boolean>;
+  addStylesheetCss(serializedCss: string, key: string): Promise<boolean>;
 
-    cfiFromNode(node: Node, ignoreClass?: string): string;
+  cfiFromNode(node: Node, ignoreClass?: string): string;
 
-    cfiFromRange(range: Range, ignoreClass?: string): string;
+  cfiFromRange(range: Range, ignoreClass?: string): string;
 
-    columns(width: number, height: number, columnWidth: number, gap: number, dir: string): void;
+  columns(
+    width: number,
+    height: number,
+    columnWidth: number,
+    gap: number,
+    dir: string
+  ): void;
 
-    contentHeight(h: number): number;
+  contentHeight(h: number): number;
 
-    contentWidth(w: number): number;
+  contentWidth(w: number): number;
 
-    css(property: string, value: string, priority?: boolean): string;
+  css(property: string, value: string, priority?: boolean): string;
 
-    destroy(): void;
+  destroy(): void;
 
-    direction(dir: string): void;
+  direction(dir: string): void;
 
-    fit(width: number, height: number): void;
+  fit(width: number, height: number): void;
 
-    height(h: number): number;
+  height(h: number): number;
 
-    locationOf(target: string | EpubCFI, ignoreClass?: string): Promise<{ top: number, left: number }>;
+  locationOf(
+    target: string | EpubCFI,
+    ignoreClass?: string
+  ): Promise<{ top: number; left: number }>;
 
-    map(layout: any): any;
+  map(layout: any): any;
 
-    mapPage(cfiBase: string, layout: object, start: number, end: number, dev: boolean): any;
+  mapPage(
+    cfiBase: string,
+    layout: object,
+    start: number,
+    end: number,
+    dev: boolean
+  ): any;
 
-    overflow(overflow: string): string;
+  overflow(overflow: string): string;
 
-    overflowX(overflow: string): string;
+  overflowX(overflow: string): string;
 
-    overflowY(overflow: string): string;
+  overflowY(overflow: string): string;
 
-    range(cfi: string, ignoreClass?: string): Range;
+  range(cfi: string, ignoreClass?: string): Range;
 
-    removeClass(className: any): void;
+  removeClass(className: any): void;
 
-    root(): Element;
+  root(): Element;
 
-    scaler(scale: number, offsetX: number, offsetY: number): void;
+  scaler(scale: number, offsetX: number, offsetY: number): void;
 
-    scrollHeight(): number;
+  scrollHeight(): number;
 
-    scrollWidth(): number;
+  scrollWidth(): number;
 
-    size(width: number, height: number): void;
+  size(width: number, height: number): void;
 
-    textHeight(): number;
+  textHeight(): number;
 
-    textWidth(): number;
+  textWidth(): number;
 
-    viewport(options: ViewportSettings): ViewportSettings;
+  viewport(options: ViewportSettings): ViewportSettings;
 
-    width(w: number): number;
+  width(w: number): number;
 
-    writingMode(mode: string): string;
+  writingMode(mode: string): string;
 
-    // Event emitters
-    emit(type: any, ...args: any[]): void;
+  // Event emitters
+  emit(type: any, ...args: any[]): void;
 
-    off(type: any, listener: any): any;
+  off(type: any, listener: any): any;
 
-    on(type: any, listener: any): any;
+  on(type: any, listener: any): any;
 
-    once(type: any, listener: any, ...args: any[]): any;
+  once(type: any, listener: any, ...args: any[]): any;
 
-    private addEventListeners(): void;
+  private addEventListeners(): void;
 
-    private addSelectionListeners(): void;
+  private addSelectionListeners(): void;
 
-    private epubReadingSystem(name: string, version: string): object;
+  private epubReadingSystem(name: string, version: string): object;
 
-    private expand(): void;
+  private expand(): void;
 
-    private fontLoadListeners(): void;
+  private fontLoadListeners(): void;
 
-    private imageLoadListeners(): void;
+  private imageLoadListeners(): void;
 
-    private layoutStyle(style: string): string;
+  private layoutStyle(style: string): string;
 
-    private linksHandler(): void;
+  private linksHandler(): void;
 
-    private listeners(): void;
+  private listeners(): void;
 
-    private mediaQueryListeners(): void;
+  private mediaQueryListeners(): void;
 
-    private onSelectionChange(e: Event): void;
+  private onSelectionChange(e: Event): void;
 
-    private removeEventListeners(): void;
+  private removeEventListeners(): void;
 
-    private removeListeners(): void;
+  private removeListeners(): void;
 
-    private removeSelectionListeners(): void;
+  private removeSelectionListeners(): void;
 
-    private resizeCheck(): void;
+  private resizeCheck(): void;
 
-    private resizeListeners(): void;
+  private resizeListeners(): void;
 
-    private resizeObservers(): void;
+  private resizeObservers(): void;
 
-    private transitionListeners(): void;
+  private transitionListeners(): void;
 
-    private triggerEvent(e: Event): void;
+  private triggerEvent(e: Event): void;
 
-    private triggerSelectedEvent(selection: Selection): void;
+  private triggerSelectedEvent(selection: Selection): void;
 }

@@ -17,7 +17,7 @@
 
   "globals": {
     "_": false,
-    "define" : false,
-    "module" : false
+    "define": false,
+    "module": false
   }
 }

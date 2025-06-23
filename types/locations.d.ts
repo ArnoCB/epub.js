@@ -1,6 +1,6 @@
-import Spine from "./spine";
-import Section from "./section";
-import EpubCFI from "./epubcfi";
+import Spine from './spine';
+import Section from './section';
+import EpubCFI from './epubcfi';
 
 export default class Locations {
   constructor(spine: Spine, request?: Function, pause?: number);
@@ -31,11 +31,11 @@ export default class Locations {
   destroy(): void;
 
   private createRange(): {
-    startContainer: Element,
-    startOffset: number,
-    endContainer: Element,
-    endOffset: number
+    startContainer: Element;
+    startOffset: number;
+    endContainer: Element;
+    endOffset: number;
   };
 
-  private parse(contents: Node, cfiBase: string, chars: number) : Array<string>;
+  private parse(contents: Node, cfiBase: string, chars: number): Array<string>;
 }

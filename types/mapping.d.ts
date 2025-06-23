@@ -1,20 +1,25 @@
-import Layout from "./layout";
-import Contents from "./contents";
+import Layout from './layout';
+import Contents from './contents';
 
 export interface EpubCFIPair {
-  start: string,
-  end: string
+  start: string;
+  end: string;
 }
 
 export interface RangePair {
-  start: Range,
-  end: Range
+  start: Range;
+  end: Range;
 }
 
 export default class Mapping {
   constructor(layout: Layout, direction?: string, axis?: string, dev?: boolean);
 
-  page(contents: Contents, cfiBase: string, start: number, end: number): EpubCFIPair;
+  page(
+    contents: Contents,
+    cfiBase: string,
+    start: number,
+    end: number
+  ): EpubCFIPair;
 
   axis(axis: string): boolean;
 
@@ -30,5 +35,8 @@ export default class Mapping {
 
   private splitTextNodeIntoRanges(node: Node, _splitter?: string): Array<Range>;
 
-  private rangePairToCfiPair(cfiBase: string, rangePair: RangePair): EpubCFIPair;
+  private rangePairToCfiPair(
+    cfiBase: string,
+    rangePair: RangePair
+  ): EpubCFIPair;
 }

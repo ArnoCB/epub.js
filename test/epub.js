@@ -2,11 +2,9 @@ import assert from 'assert';
 import ePub from '../src/epub';
 // var sinon = require('sinon');
 
-
-describe('ePub', function() {
-	var server;
-	before(function(){
-		/*
+describe('ePub', function () {
+  before(function () {
+    /*
 		// var packageContents = fs.readFileSync(__dirname + '/../books/moby-dick/OPS/package.opf', 'utf8');
 		// var tocContents = fs.readFileSync(__dirname + '/../books/moby-dick/OPS/toc.xhtml', 'utf8');
 		var packageContents = require('./fixtures/moby-dick/OPS/package.opf');
@@ -23,30 +21,32 @@ describe('ePub', function() {
 			"Content-Type": "application/xhtml+xml"
 		}, tocContents]);
 		*/
+  });
+  after(function () {
+    // server.restore();
+  });
 
-	});
-	after(function(){
-		// server.restore();
-	});
+  it('should open a epub', function () {
+    var book = ePub('/fixtures/alice/OPS/package.opf');
 
-	it('should open a epub', function() {
-		var book = ePub("/fixtures/alice/OPS/package.opf");
+    return book.opened.then(function () {
+      assert.equal(book.isOpen, true, 'book is opened');
+      assert.equal(
+        book.url.toString(),
+        'http://localhost:9876/fixtures/alice/OPS/package.opf',
+        'book url is passed to new Book'
+      );
+    });
+  });
 
-		return book.opened.then(function(){
-			assert.equal( book.isOpen, true, "book is opened" );
-			assert.equal( book.url.toString(), "http://localhost:9876/fixtures/alice/OPS/package.opf", "book url is passed to new Book" );
-		});
-	});
+  it('should open a archived epub', function () {
+    var book = ePub('/fixtures/alice.epub');
 
-	it('should open a archived epub', function() {
-		var book = ePub("/fixtures/alice.epub");
+    // assert(typeof (JSZip) !== "undefined", "JSZip is present" );
 
-		// assert(typeof (JSZip) !== "undefined", "JSZip is present" );
-
-		return book.opened.then(function(){
-			assert.equal( book.isOpen, true, "book is opened" );
-			assert( book.archive, "book is unarchived" );
-		});
-	});
-
+    return book.opened.then(function () {
+      assert.equal(book.isOpen, true, 'book is opened');
+      assert(book.archive, 'book is unarchived');
+    });
+  });
 });

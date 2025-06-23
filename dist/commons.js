@@ -30177,10 +30177,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /**
-	* Handles managing adding & removing Annotations
-	* @param {Rendition} rendition
-	* @class
-	*/
+ * Handles managing adding & removing Annotations
+ * @param {Rendition} rendition
+ * @class
+ */
 class Annotations {
   constructor(rendition) {
     this.rendition = rendition;
@@ -30279,7 +30279,7 @@ class Annotations {
    * @param {object} styles CSS styles to assign to annotation
    */
   highlight(cfiRange, data, cb, className, styles) {
-    return this.add("highlight", cfiRange, data, cb, className, styles);
+    return this.add('highlight', cfiRange, data, cb, className, styles);
   }
 
   /**
@@ -30291,7 +30291,7 @@ class Annotations {
    * @param {object} styles CSS styles to assign to annotation
    */
   underline(cfiRange, data, cb, className, styles) {
-    return this.add("underline", cfiRange, data, cb, className, styles);
+    return this.add('underline', cfiRange, data, cb, className, styles);
   }
 
   /**
@@ -30301,7 +30301,7 @@ class Annotations {
    * @param {function} cb Callback after annotation is clicked
    */
   mark(cfiRange, data, cb) {
-    return this.add("mark", cfiRange, data, cb);
+    return this.add('mark', cfiRange, data, cb);
   }
 
   /**
@@ -30412,11 +30412,11 @@ class Annotation {
       styles
     } = this;
     let result;
-    if (type === "highlight") {
+    if (type === 'highlight') {
       result = view.highlight(cfiRange, data, cb, className, styles);
-    } else if (type === "underline") {
+    } else if (type === 'underline') {
       result = view.underline(cfiRange, data, cb, className, styles);
-    } else if (type === "mark") {
+    } else if (type === 'mark') {
       result = view.mark(cfiRange, data, cb);
     }
     this.mark = result;
@@ -30435,11 +30435,11 @@ class Annotation {
     } = this;
     let result;
     if (view) {
-      if (type === "highlight") {
+      if (type === 'highlight') {
         result = view.unhighlight(cfiRange);
-      } else if (type === "underline") {
+      } else if (type === 'underline') {
         result = view.ununderline(cfiRange);
-      } else if (type === "mark") {
+      } else if (type === 'mark') {
         result = view.unmark(cfiRange);
       }
     }
@@ -30502,7 +30502,7 @@ class Archive {
     try {
       this.zip = new (jszip_dist_jszip__WEBPACK_IMPORTED_MODULE_4___default())();
     } catch (e) {
-      throw new Error("JSZip lib not loaded");
+      throw new Error('JSZip lib not loaded');
     }
   }
 
@@ -30514,7 +30514,7 @@ class Archive {
    */
   open(input, isBase64) {
     return this.zip.loadAsync(input, {
-      "base64": isBase64
+      base64: isBase64
     });
   }
 
@@ -30525,9 +30525,9 @@ class Archive {
    * @return {Promise} zipfile
    */
   openUrl(zipUrl, isBase64) {
-    return (0,_utils_request__WEBPACK_IMPORTED_MODULE_1__["default"])(zipUrl, "binary").then(function (data) {
+    return (0,_utils_request__WEBPACK_IMPORTED_MODULE_1__["default"])(zipUrl, 'binary').then(function (data) {
       return this.zip.loadAsync(data, {
-        "base64": isBase64
+        base64: isBase64
       });
     }.bind(this));
   }
@@ -30547,7 +30547,7 @@ class Archive {
     if (!type) {
       type = path.extension;
     }
-    if (type == "blob") {
+    if (type == 'blob') {
       response = this.getBlob(url);
     } else {
       response = this.getText(url);
@@ -30559,7 +30559,7 @@ class Archive {
       }.bind(this));
     } else {
       deferred.reject({
-        message: "File not found in the epub: " + url,
+        message: 'File not found in the epub: ' + url,
         stack: new Error().stack
       });
     }
@@ -30575,14 +30575,14 @@ class Archive {
    */
   handleResponse(response, type) {
     var r;
-    if (type == "json") {
+    if (type == 'json') {
       r = JSON.parse(response);
     } else if ((0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isXml)(type)) {
-      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, "text/xml");
-    } else if (type == "xhtml") {
-      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, "application/xhtml+xml");
-    } else if (type == "html" || type == "htm") {
-      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, "text/html");
+      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, 'text/xml');
+    } else if (type == 'xhtml') {
+      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, 'application/xhtml+xml');
+    } else if (type == 'html' || type == 'htm') {
+      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, 'text/html');
     } else {
       r = response;
     }
@@ -30600,7 +30600,7 @@ class Archive {
     var entry = this.zip.file(decodededUrl);
     if (entry) {
       mimeType = mimeType || _utils_mime__WEBPACK_IMPORTED_MODULE_2__["default"].lookup(entry.name);
-      return entry.async("uint8array").then(function (uint8array) {
+      return entry.async('uint8array').then(function (uint8array) {
         return new Blob([uint8array], {
           type: mimeType
         });
@@ -30618,7 +30618,7 @@ class Archive {
     var decodededUrl = window.decodeURIComponent(url.substr(1)); // Remove first slash
     var entry = this.zip.file(decodededUrl);
     if (entry) {
-      return entry.async("string").then(function (text) {
+      return entry.async('string').then(function (text) {
         return text;
       });
     }
@@ -30635,8 +30635,8 @@ class Archive {
     var entry = this.zip.file(decodededUrl);
     if (entry) {
       mimeType = mimeType || _utils_mime__WEBPACK_IMPORTED_MODULE_2__["default"].lookup(entry.name);
-      return entry.async("base64").then(function (data) {
-        return "data:" + mimeType + ";base64," + data;
+      return entry.async('base64').then(function (data) {
+        return 'data:' + mimeType + ';base64,' + data;
       });
     }
   }
@@ -30677,7 +30677,7 @@ class Archive {
     }
     if (!response) {
       deferred.reject({
-        message: "File not found in the epub: " + url,
+        message: 'File not found in the epub: ' + url,
         stack: new Error().stack
       });
     }
@@ -30754,15 +30754,15 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const CONTAINER_PATH = "META-INF/container.xml";
-const IBOOKS_DISPLAY_OPTIONS_PATH = "META-INF/com.apple.ibooks.display-options.xml";
+const CONTAINER_PATH = 'META-INF/container.xml';
+const IBOOKS_DISPLAY_OPTIONS_PATH = 'META-INF/com.apple.ibooks.display-options.xml';
 const INPUT_TYPE = {
-  BINARY: "binary",
-  BASE64: "base64",
-  EPUB: "epub",
-  OPF: "opf",
-  MANIFEST: "json",
-  DIRECTORY: "directory"
+  BINARY: 'binary',
+  BASE64: 'base64',
+  EPUB: 'epub',
+  OPF: 'opf',
+  MANIFEST: 'json',
+  DIRECTORY: 'directory'
 };
 
 /**
@@ -30786,7 +30786,7 @@ const INPUT_TYPE = {
 class Book {
   constructor(url, options) {
     // Allow passing just options to the Book
-    if (typeof options === "undefined" && typeof url !== "string" && url instanceof Blob === false && url instanceof ArrayBuffer === false) {
+    if (typeof options === 'undefined' && typeof url !== 'string' && url instanceof Blob === false && url instanceof ArrayBuffer === false) {
       options = url;
       url = undefined;
     }
@@ -30949,7 +30949,7 @@ class Book {
     }
     if (url) {
       this.open(url, this.settings.openAs).catch(error => {
-        var err = new Error("Cannot load book at " + url);
+        var err = new Error('Cannot load book at ' + url);
         this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_17__.EVENTS.BOOK.OPEN_FAILED, err);
       });
     }
@@ -30967,16 +30967,16 @@ class Book {
     var type = what || this.determineType(input);
     if (type === INPUT_TYPE.BINARY) {
       this.archived = true;
-      this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]("/", "");
+      this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]('/', '');
       opening = this.openEpub(input);
     } else if (type === INPUT_TYPE.BASE64) {
       this.archived = true;
-      this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]("/", "");
+      this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]('/', '');
       opening = this.openEpub(input, type);
     } else if (type === INPUT_TYPE.EPUB) {
       this.archived = true;
-      this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]("/", "");
-      opening = this.request(input, "binary", this.settings.requestCredentials, this.settings.requestHeaders).then(this.openEpub.bind(this));
+      this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]('/', '');
+      opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(this.openEpub.bind(this));
     } else if (type == INPUT_TYPE.OPF) {
       this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"](input);
       opening = this.openPackaging(this.url.Path.toString());
@@ -31072,7 +31072,7 @@ class Book {
       return;
     }
     var resolved = path;
-    var isAbsolute = path.indexOf("://") > -1;
+    var isAbsolute = path.indexOf('://') > -1;
     if (isAbsolute) {
       return path;
     }
@@ -31093,7 +31093,7 @@ class Book {
   canonical(path) {
     var url = path;
     if (!path) {
-      return "";
+      return '';
     }
     if (this.settings.canonical) {
       url = this.settings.canonical(path);
@@ -31113,10 +31113,10 @@ class Book {
     var url;
     var path;
     var extension;
-    if (this.settings.encoding === "base64") {
+    if (this.settings.encoding === 'base64') {
       return INPUT_TYPE.BASE64;
     }
-    if (typeof input != "string") {
+    if (typeof input != 'string') {
       return INPUT_TYPE.BINARY;
     }
     url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"](input);
@@ -31125,18 +31125,18 @@ class Book {
 
     // If there's a search string, remove it before determining type
     if (extension) {
-      extension = extension.replace(/\?.*$/, "");
+      extension = extension.replace(/\?.*$/, '');
     }
     if (!extension) {
       return INPUT_TYPE.DIRECTORY;
     }
-    if (extension === "epub") {
+    if (extension === 'epub') {
       return INPUT_TYPE.EPUB;
     }
-    if (extension === "opf") {
+    if (extension === 'opf') {
       return INPUT_TYPE.OPF;
     }
-    if (extension === "json") {
+    if (extension === 'json') {
       return INPUT_TYPE.MANIFEST;
     }
   }
@@ -31149,7 +31149,7 @@ class Book {
   unpack(packaging) {
     this.package = packaging; //TODO: deprecated this
 
-    if (this.packaging.metadata.layout === "") {
+    if (this.packaging.metadata.layout === '') {
       // rendition:layout not set - check display options if book is pre-paginated
       this.load(this.url.resolve(IBOOKS_DISPLAY_OPTIONS_PATH)).then(xml => {
         this.displayOptions = new _displayoptions__WEBPACK_IMPORTED_MODULE_16__["default"](xml);
@@ -31167,7 +31167,7 @@ class Book {
       archive: this.archive,
       resolver: this.resolve.bind(this),
       request: this.request.bind(this),
-      replacements: this.settings.replacements || (this.archived ? "blobUrl" : "base64")
+      replacements: this.settings.replacements || (this.archived ? 'blobUrl' : 'base64')
     });
     this.loadNavigation(this.packaging).then(() => {
       // this.toc = this.navigation.toc;
@@ -31184,7 +31184,7 @@ class Book {
     this.loading.resources.resolve(this.resources);
     this.loading.pageList.resolve(this.pageList);
     this.isOpen = true;
-    if (this.archived || this.settings.replacements && this.settings.replacements != "none") {
+    if (this.archived || this.settings.replacements && this.settings.replacements != 'none') {
       this.replacements().then(() => {
         this.loaded.displayOptions.then(() => {
           this.opening.resolve(this);
@@ -31226,7 +31226,7 @@ class Book {
         resolve(this.navigation);
       });
     }
-    return this.load(navPath, "xml").then(xml => {
+    return this.load(navPath, 'xml').then(xml => {
       this.navigation = new _navigation__WEBPACK_IMPORTED_MODULE_8__["default"](xml);
       this.pageList = new _pagelist__WEBPACK_IMPORTED_MODULE_10__["default"](xml);
       return this.navigation;
@@ -31292,7 +31292,7 @@ class Book {
    */
   store(name) {
     // Use "blobUrl" or "base64" for replacements
-    let replacementsSetting = this.settings.replacements && this.settings.replacements !== "none";
+    let replacementsSetting = this.settings.replacements && this.settings.replacements !== 'none';
     // Save original url
     let originalUrl = this.url;
     // Save original request method
@@ -31311,18 +31311,18 @@ class Book {
       };
 
       // Set to use replacements
-      this.resources.settings.replacements = replacementsSetting || "blobUrl";
+      this.resources.settings.replacements = replacementsSetting || 'blobUrl';
       // Create replacement urls
       this.resources.replacements().then(() => {
         return this.resources.replaceCss();
       });
-      this.storage.on("offline", () => {
+      this.storage.on('offline', () => {
         // Remove url to use relative resolving for hrefs
-        this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]("/", "");
+        this.url = new _utils_url__WEBPACK_IMPORTED_MODULE_2__["default"]('/', '');
         // Add hook to replace resources in contents
         this.spine.hooks.serialize.register(substituteResources);
       });
-      this.storage.on("online", () => {
+      this.storage.on('online', () => {
         // Restore original url
         this.url = originalUrl;
         // Remove hook
@@ -31374,7 +31374,7 @@ class Book {
     var _request = this.load.bind(this);
     if (!item) {
       return new Promise((resolve, reject) => {
-        reject("CFI could not be found");
+        reject('CFI could not be found');
       });
     }
     return item.load(_request).then(function (contents) {
@@ -31473,13 +31473,13 @@ class Container {
     //-- <rootfile full-path="OPS/package.opf" media-type="application/oebps-package+xml"/>
     var rootfile;
     if (!containerDocument) {
-      throw new Error("Container File Not Found");
+      throw new Error('Container File Not Found');
     }
-    rootfile = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(containerDocument, "rootfile");
+    rootfile = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(containerDocument, 'rootfile');
     if (!rootfile) {
-      throw new Error("No RootFile Found");
+      throw new Error('No RootFile Found');
     }
-    this.packagePath = rootfile.getAttribute("full-path");
+    this.packagePath = rootfile.getAttribute('full-path');
     this.directory = path_webpack__WEBPACK_IMPORTED_MODULE_0___default().dirname(this.packagePath);
     this.encoding = containerDocument.xmlEncoding;
   }
@@ -31517,20 +31517,20 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const hasNavigator = typeof navigator !== "undefined";
+const hasNavigator = typeof navigator !== 'undefined';
 const isChrome = hasNavigator && /Chrome/.test(navigator.userAgent);
 const isWebkit = hasNavigator && !isChrome && /AppleWebKit/.test(navigator.userAgent);
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
 
 /**
-	* Handles DOM manipulation, queries and events for View contents
-	* @class
-	* @param {document} doc Document
-	* @param {element} content Parent Element (typically Body)
-	* @param {string} cfiBase Section component of CFIs
-	* @param {number} sectionIndex Index in Spine of Conntent's Section
-	*/
+ * Handles DOM manipulation, queries and events for View contents
+ * @class
+ * @param {document} doc Document
+ * @param {element} content Parent Element (typically Body)
+ * @param {string} cfiBase Section component of CFIs
+ * @param {number} sectionIndex Index in Spine of Conntent's Section
+ */
 class Contents {
   constructor(doc, content, cfiBase, sectionIndex) {
     // Blank Cfi for Parsing
@@ -31544,92 +31544,92 @@ class Contents {
       height: 0
     };
     this.sectionIndex = sectionIndex || 0;
-    this.cfiBase = cfiBase || "";
-    this.epubReadingSystem("epub.js", _utils_constants__WEBPACK_IMPORTED_MODULE_5__.EPUBJS_VERSION);
+    this.cfiBase = cfiBase || '';
+    this.epubReadingSystem('epub.js', _utils_constants__WEBPACK_IMPORTED_MODULE_5__.EPUBJS_VERSION);
     this.called = 0;
     this.active = true;
     this.listeners();
   }
 
   /**
-  	* Get DOM events that are listened for and passed along
-  	*/
+   * Get DOM events that are listened for and passed along
+   */
   static get listenedEvents() {
     return _utils_constants__WEBPACK_IMPORTED_MODULE_5__.DOM_EVENTS;
   }
 
   /**
-  	* Get or Set width
-  	* @param {number} [w]
-  	* @returns {number} width
-  	*/
+   * Get or Set width
+   * @param {number} [w]
+   * @returns {number} width
+   */
   width(w) {
     // var frame = this.documentElement;
     var frame = this.content;
     if (w && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(w)) {
-      w = w + "px";
+      w = w + 'px';
     }
     if (w) {
       frame.style.width = w;
       // this.content.style.width = w;
     }
-    return parseInt(this.window.getComputedStyle(frame)["width"]);
+    return parseInt(this.window.getComputedStyle(frame)['width']);
   }
 
   /**
-  	* Get or Set height
-  	* @param {number} [h]
-  	* @returns {number} height
-  	*/
+   * Get or Set height
+   * @param {number} [h]
+   * @returns {number} height
+   */
   height(h) {
     // var frame = this.documentElement;
     var frame = this.content;
     if (h && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(h)) {
-      h = h + "px";
+      h = h + 'px';
     }
     if (h) {
       frame.style.height = h;
       // this.content.style.height = h;
     }
-    return parseInt(this.window.getComputedStyle(frame)["height"]);
+    return parseInt(this.window.getComputedStyle(frame)['height']);
   }
 
   /**
-  	* Get or Set width of the contents
-  	* @param {number} [w]
-  	* @returns {number} width
-  	*/
+   * Get or Set width of the contents
+   * @param {number} [w]
+   * @returns {number} width
+   */
   contentWidth(w) {
     var content = this.content || this.document.body;
     if (w && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(w)) {
-      w = w + "px";
+      w = w + 'px';
     }
     if (w) {
       content.style.width = w;
     }
-    return parseInt(this.window.getComputedStyle(content)["width"]);
+    return parseInt(this.window.getComputedStyle(content)['width']);
   }
 
   /**
-  	* Get or Set height of the contents
-  	* @param {number} [h]
-  	* @returns {number} height
-  	*/
+   * Get or Set height of the contents
+   * @param {number} [h]
+   * @returns {number} height
+   */
   contentHeight(h) {
     var content = this.content || this.document.body;
     if (h && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(h)) {
-      h = h + "px";
+      h = h + 'px';
     }
     if (h) {
       content.style.height = h;
     }
-    return parseInt(this.window.getComputedStyle(content)["height"]);
+    return parseInt(this.window.getComputedStyle(content)['height']);
   }
 
   /**
-  	* Get the width of the text using Range
-  	* @returns {number} width
-  	*/
+   * Get the width of the text using Range
+   * @returns {number} width
+   */
   textWidth() {
     let rect;
     let width;
@@ -31650,9 +31650,9 @@ class Contents {
   }
 
   /**
-  	* Get the height of the text using Range
-  	* @returns {number} height
-  	*/
+   * Get the height of the text using Range
+   * @returns {number} height
+   */
   textHeight() {
     let rect;
     let height;
@@ -31665,66 +31665,66 @@ class Contents {
   }
 
   /**
-  	* Get documentElement scrollWidth
-  	* @returns {number} width
-  	*/
+   * Get documentElement scrollWidth
+   * @returns {number} width
+   */
   scrollWidth() {
     var width = this.documentElement.scrollWidth;
     return width;
   }
 
   /**
-  	* Get documentElement scrollHeight
-  	* @returns {number} height
-  	*/
+   * Get documentElement scrollHeight
+   * @returns {number} height
+   */
   scrollHeight() {
     var height = this.documentElement.scrollHeight;
     return height;
   }
 
   /**
-  	* Set overflow css style of the contents
-  	* @param {string} [overflow]
-  	*/
+   * Set overflow css style of the contents
+   * @param {string} [overflow]
+   */
   overflow(overflow) {
     if (overflow) {
       this.documentElement.style.overflow = overflow;
     }
-    return this.window.getComputedStyle(this.documentElement)["overflow"];
+    return this.window.getComputedStyle(this.documentElement)['overflow'];
   }
 
   /**
-  	* Set overflowX css style of the documentElement
-  	* @param {string} [overflow]
-  	*/
+   * Set overflowX css style of the documentElement
+   * @param {string} [overflow]
+   */
   overflowX(overflow) {
     if (overflow) {
       this.documentElement.style.overflowX = overflow;
     }
-    return this.window.getComputedStyle(this.documentElement)["overflowX"];
+    return this.window.getComputedStyle(this.documentElement)['overflowX'];
   }
 
   /**
-  	* Set overflowY css style of the documentElement
-  	* @param {string} [overflow]
-  	*/
+   * Set overflowY css style of the documentElement
+   * @param {string} [overflow]
+   */
   overflowY(overflow) {
     if (overflow) {
       this.documentElement.style.overflowY = overflow;
     }
-    return this.window.getComputedStyle(this.documentElement)["overflowY"];
+    return this.window.getComputedStyle(this.documentElement)['overflowY'];
   }
 
   /**
-  	* Set Css styles on the contents element (typically Body)
-  	* @param {string} property
-  	* @param {string} value
-  	* @param {boolean} [priority] set as "important"
-  	*/
+   * Set Css styles on the contents element (typically Body)
+   * @param {string} property
+   * @param {string} value
+   * @param {boolean} [priority] set as "important"
+   */
   css(property, value, priority) {
     var content = this.content || this.document.body;
     if (value) {
-      content.style.setProperty(property, value, priority ? "important" : "");
+      content.style.setProperty(property, value, priority ? 'important' : '');
     } else {
       content.style.removeProperty(property);
     }
@@ -31732,93 +31732,93 @@ class Contents {
   }
 
   /**
-  	* Get or Set the viewport element
-  	* @param {object} [options]
-  	* @param {string} [options.width]
-  	* @param {string} [options.height]
-  	* @param {string} [options.scale]
-  	* @param {string} [options.minimum]
-  	* @param {string} [options.maximum]
-  	* @param {string} [options.scalable]
-  	*/
+   * Get or Set the viewport element
+   * @param {object} [options]
+   * @param {string} [options.width]
+   * @param {string} [options.height]
+   * @param {string} [options.scale]
+   * @param {string} [options.minimum]
+   * @param {string} [options.maximum]
+   * @param {string} [options.scalable]
+   */
   viewport(options) {
     var _width, _height, _scale, _minimum, _maximum, _scalable;
     // var width, height, scale, minimum, maximum, scalable;
-    var $viewport = this.document.querySelector("meta[name='viewport']");
+    var $viewport = this.document.querySelector('meta[name=\'viewport\']');
     var parsed = {
-      "width": undefined,
-      "height": undefined,
-      "scale": undefined,
-      "minimum": undefined,
-      "maximum": undefined,
-      "scalable": undefined
+      width: undefined,
+      height: undefined,
+      scale: undefined,
+      minimum: undefined,
+      maximum: undefined,
+      scalable: undefined
     };
     var newContent = [];
     var settings = {};
 
     /*
-    * check for the viewport size
-    * <meta name="viewport" content="width=1024,height=697" />
-    */
-    if ($viewport && $viewport.hasAttribute("content")) {
-      let content = $viewport.getAttribute("content");
+     * check for the viewport size
+     * <meta name="viewport" content="width=1024,height=697" />
+     */
+    if ($viewport && $viewport.hasAttribute('content')) {
+      let content = $viewport.getAttribute('content');
       let _width = content.match(/width\s*=\s*([^,]*)/);
       let _height = content.match(/height\s*=\s*([^,]*)/);
       let _scale = content.match(/initial-scale\s*=\s*([^,]*)/);
       let _minimum = content.match(/minimum-scale\s*=\s*([^,]*)/);
       let _maximum = content.match(/maximum-scale\s*=\s*([^,]*)/);
       let _scalable = content.match(/user-scalable\s*=\s*([^,]*)/);
-      if (_width && _width.length && typeof _width[1] !== "undefined") {
+      if (_width && _width.length && typeof _width[1] !== 'undefined') {
         parsed.width = _width[1];
       }
-      if (_height && _height.length && typeof _height[1] !== "undefined") {
+      if (_height && _height.length && typeof _height[1] !== 'undefined') {
         parsed.height = _height[1];
       }
-      if (_scale && _scale.length && typeof _scale[1] !== "undefined") {
+      if (_scale && _scale.length && typeof _scale[1] !== 'undefined') {
         parsed.scale = _scale[1];
       }
-      if (_minimum && _minimum.length && typeof _minimum[1] !== "undefined") {
+      if (_minimum && _minimum.length && typeof _minimum[1] !== 'undefined') {
         parsed.minimum = _minimum[1];
       }
-      if (_maximum && _maximum.length && typeof _maximum[1] !== "undefined") {
+      if (_maximum && _maximum.length && typeof _maximum[1] !== 'undefined') {
         parsed.maximum = _maximum[1];
       }
-      if (_scalable && _scalable.length && typeof _scalable[1] !== "undefined") {
+      if (_scalable && _scalable.length && typeof _scalable[1] !== 'undefined') {
         parsed.scalable = _scalable[1];
       }
     }
     settings = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.defaults)(options || {}, parsed);
     if (options) {
       if (settings.width) {
-        newContent.push("width=" + settings.width);
+        newContent.push('width=' + settings.width);
       }
       if (settings.height) {
-        newContent.push("height=" + settings.height);
+        newContent.push('height=' + settings.height);
       }
       if (settings.scale) {
-        newContent.push("initial-scale=" + settings.scale);
+        newContent.push('initial-scale=' + settings.scale);
       }
-      if (settings.scalable === "no") {
-        newContent.push("minimum-scale=" + settings.scale);
-        newContent.push("maximum-scale=" + settings.scale);
-        newContent.push("user-scalable=" + settings.scalable);
+      if (settings.scalable === 'no') {
+        newContent.push('minimum-scale=' + settings.scale);
+        newContent.push('maximum-scale=' + settings.scale);
+        newContent.push('user-scalable=' + settings.scalable);
       } else {
         if (settings.scalable) {
-          newContent.push("user-scalable=" + settings.scalable);
+          newContent.push('user-scalable=' + settings.scalable);
         }
         if (settings.minimum) {
-          newContent.push("minimum-scale=" + settings.minimum);
+          newContent.push('minimum-scale=' + settings.minimum);
         }
         if (settings.maximum) {
-          newContent.push("minimum-scale=" + settings.maximum);
+          newContent.push('minimum-scale=' + settings.maximum);
         }
       }
       if (!$viewport) {
-        $viewport = this.document.createElement("meta");
-        $viewport.setAttribute("name", "viewport");
-        this.document.querySelector("head").appendChild($viewport);
+        $viewport = this.document.createElement('meta');
+        $viewport.setAttribute('name', 'viewport');
+        this.document.querySelector('head').appendChild($viewport);
       }
-      $viewport.setAttribute("content", newContent.join(", "));
+      $viewport.setAttribute('content', newContent.join(', '));
       this.window.scrollTo(0, 0);
     }
     return settings;
@@ -31847,7 +31847,7 @@ class Contents {
 
     // this.transitionListeners();
 
-    if (typeof ResizeObserver === "undefined") {
+    if (typeof ResizeObserver === 'undefined') {
       this.resizeListeners();
       this.visibilityListeners();
     } else {
@@ -31907,8 +31907,8 @@ class Contents {
    * @private
    */
   visibilityListeners() {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && this.active === false) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.active === false) {
         this.active = true;
         this.resizeListeners();
       } else {
@@ -31924,10 +31924,10 @@ class Contents {
    */
   transitionListeners() {
     let body = this.content;
-    body.style['transitionProperty'] = "font, font-size, font-size-adjust, font-stretch, font-variation-settings, font-weight, width, height";
-    body.style['transitionDuration'] = "0.001ms";
-    body.style['transitionTimingFunction'] = "linear";
-    body.style['transitionDelay'] = "0";
+    body.style['transitionProperty'] = 'font, font-size, font-size-adjust, font-stretch, font-variation-settings, font-weight, width, height';
+    body.style['transitionDuration'] = '0.001ms';
+    body.style['transitionTimingFunction'] = 'linear';
+    body.style['transitionDelay'] = '0';
     this._resizeCheck = this.resizeCheck.bind(this);
     this.document.addEventListener('transitionend', this._resizeCheck);
   }
@@ -32005,11 +32005,11 @@ class Contents {
    * @private
    */
   imageLoadListeners() {
-    var images = this.document.querySelectorAll("img");
+    var images = this.document.querySelectorAll('img');
     var img;
     for (var i = 0; i < images.length; i++) {
       img = images[i];
-      if (typeof img.naturalWidth !== "undefined" && img.naturalWidth === 0) {
+      if (typeof img.naturalWidth !== 'undefined' && img.naturalWidth === 0) {
         img.onload = this.expand.bind(this);
       }
     }
@@ -32046,8 +32046,8 @@ class Contents {
   locationOf(target, ignoreClass) {
     var position;
     var targetPos = {
-      "left": 0,
-      "top": 0
+      left: 0,
+      top: 0
     };
     if (!this.document) return targetPos;
     if (this.epubcfi.isCfiString(target)) {
@@ -32059,14 +32059,14 @@ class Contents {
             // true. This in turn leads to inconsistent behaviour when calling
             // getBoundingRect. Wrong bounds lead to the wrong page being displayed.
             // https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/15684911/
-            let pos = range.startContainer.textContent.indexOf(" ", range.startOffset);
+            let pos = range.startContainer.textContent.indexOf(' ', range.startOffset);
             if (pos == -1) {
               pos = range.startContainer.textContent.length;
             }
             range.setEnd(range.startContainer, pos);
           }
         } catch (e) {
-          console.error("setting end offset to start container length failed", e);
+          console.error('setting end offset to start container length failed', e);
         }
         if (range.startContainer.nodeType === Node.ELEMENT_NODE) {
           position = range.startContainer.getBoundingClientRect();
@@ -32103,8 +32103,8 @@ class Contents {
           }
         }
       }
-    } else if (typeof target === "string" && target.indexOf("#") > -1) {
-      let id = target.substring(target.indexOf("#") + 1);
+    } else if (typeof target === 'string' && target.indexOf('#') > -1) {
+      let id = target.substring(target.indexOf('#') + 1);
       let el = this.document.getElementById(id);
       if (el) {
         if (isWebkit) {
@@ -32138,17 +32138,17 @@ class Contents {
       }
 
       // Check if link already exists
-      $stylesheet = this.document.querySelector("link[href='" + src + "']");
+      $stylesheet = this.document.querySelector('link[href=\'' + src + '\']');
       if ($stylesheet) {
         resolve(true);
         return; // already present
       }
-      $stylesheet = this.document.createElement("link");
-      $stylesheet.type = "text/css";
-      $stylesheet.rel = "stylesheet";
+      $stylesheet = this.document.createElement('link');
+      $stylesheet.type = 'text/css';
+      $stylesheet.rel = 'stylesheet';
       $stylesheet.href = src;
       $stylesheet.onload = $stylesheet.onreadystatechange = function () {
-        if (!ready && (!this.readyState || this.readyState == "complete")) {
+        if (!ready && (!this.readyState || this.readyState == 'complete')) {
           ready = true;
           // Let apply
           setTimeout(() => {
@@ -32161,13 +32161,13 @@ class Contents {
   }
   _getStylesheetNode(key) {
     var styleEl;
-    key = "epubjs-inserted-css-" + (key || '');
+    key = 'epubjs-inserted-css-' + (key || '');
     if (!this.document) return false;
 
     // Check if link already exists
     styleEl = this.document.getElementById(key);
     if (!styleEl) {
-      styleEl = this.document.createElement("style");
+      styleEl = this.document.createElement('style');
       styleEl.id = key;
       // Append style element to head
       this.document.head.appendChild(styleEl);
@@ -32201,24 +32201,24 @@ class Contents {
 
     // Grab style sheet
     styleSheet = this._getStylesheetNode(key).sheet;
-    if (Object.prototype.toString.call(rules) === "[object Array]") {
+    if (Object.prototype.toString.call(rules) === '[object Array]') {
       for (var i = 0, rl = rules.length; i < rl; i++) {
         var j = 1,
           rule = rules[i],
           selector = rules[i][0],
-          propStr = "";
+          propStr = '';
         // If the second argument of a rule is an array of arrays, correct our variables.
-        if (Object.prototype.toString.call(rule[1][0]) === "[object Array]") {
+        if (Object.prototype.toString.call(rule[1][0]) === '[object Array]') {
           rule = rule[1];
           j = 0;
         }
         for (var pl = rule.length; j < pl; j++) {
           var prop = rule[j];
-          propStr += prop[0] + ":" + prop[1] + (prop[2] ? " !important" : "") + ";\n";
+          propStr += prop[0] + ':' + prop[1] + (prop[2] ? ' !important' : '') + ';\n';
         }
 
         // Insert CSS Rule
-        styleSheet.insertRule(selector + "{" + propStr + "}", styleSheet.cssRules.length);
+        styleSheet.insertRule(selector + '{' + propStr + '}', styleSheet.cssRules.length);
       }
     } else {
       const selectors = Object.keys(rules);
@@ -32256,12 +32256,12 @@ class Contents {
         resolve(false);
         return;
       }
-      $script = this.document.createElement("script");
-      $script.type = "text/javascript";
+      $script = this.document.createElement('script');
+      $script.type = 'text/javascript';
       $script.async = true;
       $script.src = src;
       $script.onload = $script.onreadystatechange = function () {
-        if (!ready && (!this.readyState || this.readyState == "complete")) {
+        if (!ready && (!this.readyState || this.readyState == 'complete')) {
           ready = true;
           setTimeout(function () {
             resolve(true);
@@ -32347,7 +32347,7 @@ class Contents {
       return;
     }
     this._onSelectionChange = this.onSelectionChange.bind(this);
-    this.document.addEventListener("selectionchange", this._onSelectionChange, {
+    this.document.addEventListener('selectionchange', this._onSelectionChange, {
       passive: true
     });
   }
@@ -32360,7 +32360,7 @@ class Contents {
     if (!this.document) {
       return;
     }
-    this.document.removeEventListener("selectionchange", this._onSelectionChange, {
+    this.document.removeEventListener('selectionchange', this._onSelectionChange, {
       passive: true
     });
     this._onSelectionChange = undefined;
@@ -32442,20 +32442,20 @@ class Contents {
   size(width, height) {
     var viewport = {
       scale: 1.0,
-      scalable: "no"
+      scalable: 'no'
     };
-    this.layoutStyle("scrolling");
+    this.layoutStyle('scrolling');
     if (width >= 0) {
       this.width(width);
       viewport.width = width;
-      this.css("padding", "0 " + width / 12 + "px");
+      this.css('padding', '0 ' + width / 12 + 'px');
     }
     if (height >= 0) {
       this.height(height);
       viewport.height = height;
     }
-    this.css("margin", "0");
-    this.css("box-sizing", "border-box");
+    this.css('margin', '0');
+    this.css('box-sizing', 'border-box');
     this.viewport(viewport);
   }
 
@@ -32467,14 +32467,14 @@ class Contents {
    * @param {number} gap
    */
   columns(width, height, columnWidth, gap, dir) {
-    let COLUMN_AXIS = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)("column-axis");
-    let COLUMN_GAP = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)("column-gap");
-    let COLUMN_WIDTH = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)("column-width");
-    let COLUMN_FILL = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)("column-fill");
+    let COLUMN_AXIS = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)('column-axis');
+    let COLUMN_GAP = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)('column-gap');
+    let COLUMN_WIDTH = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)('column-width');
+    let COLUMN_FILL = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)('column-fill');
     let writingMode = this.writingMode();
-    let axis = writingMode.indexOf("vertical") === 0 ? "vertical" : "horizontal";
-    this.layoutStyle("paginated");
-    if (dir === "rtl" && axis === "horizontal") {
+    let axis = writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
+    this.layoutStyle('paginated');
+    if (dir === 'rtl' && axis === 'horizontal') {
       this.direction(dir);
     }
     this.width(width);
@@ -32485,37 +32485,37 @@ class Contents {
       width: width,
       height: height,
       scale: 1.0,
-      scalable: "no"
+      scalable: 'no'
     });
 
     // TODO: inline-block needs more testing
     // Fixes Safari column cut offs, but causes RTL issues
     // this.css("display", "inline-block");
 
-    this.css("overflow-y", "hidden");
-    this.css("margin", "0", true);
-    if (axis === "vertical") {
-      this.css("padding-top", gap / 2 + "px", true);
-      this.css("padding-bottom", gap / 2 + "px", true);
-      this.css("padding-left", "20px");
-      this.css("padding-right", "20px");
-      this.css(COLUMN_AXIS, "vertical");
+    this.css('overflow-y', 'hidden');
+    this.css('margin', '0', true);
+    if (axis === 'vertical') {
+      this.css('padding-top', gap / 2 + 'px', true);
+      this.css('padding-bottom', gap / 2 + 'px', true);
+      this.css('padding-left', '20px');
+      this.css('padding-right', '20px');
+      this.css(COLUMN_AXIS, 'vertical');
     } else {
-      this.css("padding-top", "20px");
-      this.css("padding-bottom", "20px");
-      this.css("padding-left", gap / 2 + "px", true);
-      this.css("padding-right", gap / 2 + "px", true);
-      this.css(COLUMN_AXIS, "horizontal");
+      this.css('padding-top', '20px');
+      this.css('padding-bottom', '20px');
+      this.css('padding-left', gap / 2 + 'px', true);
+      this.css('padding-right', gap / 2 + 'px', true);
+      this.css(COLUMN_AXIS, 'horizontal');
     }
-    this.css("box-sizing", "border-box");
-    this.css("max-width", "inherit");
-    this.css(COLUMN_FILL, "auto");
-    this.css(COLUMN_GAP, gap + "px");
-    this.css(COLUMN_WIDTH, columnWidth + "px");
+    this.css('box-sizing', 'border-box');
+    this.css('max-width', 'inherit');
+    this.css(COLUMN_FILL, 'auto');
+    this.css(COLUMN_GAP, gap + 'px');
+    this.css(COLUMN_WIDTH, columnWidth + 'px');
 
     // Fix glyph clipping in WebKit
     // https://github.com/futurepress/epub.js/issues/983
-    this.css("-webkit-line-box-contain", "block glyphs replaced");
+    this.css('-webkit-line-box-contain', 'block glyphs replaced');
   }
 
   /**
@@ -32525,14 +32525,14 @@ class Contents {
    * @param {number} offsetY
    */
   scaler(scale, offsetX, offsetY) {
-    var scaleStr = "scale(" + scale + ")";
-    var translateStr = "";
+    var scaleStr = 'scale(' + scale + ')';
+    var translateStr = '';
     // this.css("position", "absolute"));
-    this.css("transform-origin", "top left");
+    this.css('transform-origin', 'top left');
     if (offsetX >= 0 || offsetY >= 0) {
-      translateStr = " translate(" + (offsetX || 0) + "px, " + (offsetY || 0) + "px )";
+      translateStr = ' translate(' + (offsetX || 0) + 'px, ' + (offsetY || 0) + 'px )';
     }
-    this.css("transform", scaleStr + translateStr);
+    this.css('transform', scaleStr + translateStr);
   }
 
   /**
@@ -32555,24 +32555,24 @@ class Contents {
     // 	offsetX = width - (viewportWidth * scale);
     // }
 
-    this.layoutStyle("paginated");
+    this.layoutStyle('paginated');
 
     // scale needs width and height to be set
     this.width(viewportWidth);
     this.height(viewportHeight);
-    this.overflow("hidden");
+    this.overflow('hidden');
 
     // Scale to the correct size
     this.scaler(scale, 0, 0);
     // this.scaler(scale, offsetX > 0 ? offsetX : 0, offsetY);
 
     // background images are not scaled by transform
-    this.css("background-size", viewportWidth * scale + "px " + viewportHeight * scale + "px");
-    this.css("background-color", "transparent");
-    if (section && section.properties.includes("page-spread-left")) {
+    this.css('background-size', viewportWidth * scale + 'px ' + viewportHeight * scale + 'px');
+    this.css('background-color', 'transparent');
+    if (section && section.properties.includes('page-spread-left')) {
       // set margin since scale is weird
       var marginLeft = width - viewportWidth * scale;
-      this.css("margin-left", marginLeft + "px");
+      this.css('margin-left', marginLeft + 'px');
     }
   }
 
@@ -32582,7 +32582,7 @@ class Contents {
    */
   direction(dir) {
     if (this.documentElement) {
-      this.documentElement.style["direction"] = dir;
+      this.documentElement.style['direction'] = dir;
     }
   }
   mapPage(cfiBase, layout, start, end, dev) {
@@ -32605,7 +32605,7 @@ class Contents {
    * @param {string} [mode="horizontal-tb"] "horizontal-tb" | "vertical-rl" | "vertical-lr"
    */
   writingMode(mode) {
-    let WRITING_MODE = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)("writing-mode");
+    let WRITING_MODE = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.prefixed)('writing-mode');
     if (mode && this.documentElement) {
       this.documentElement.style[WRITING_MODE] = mode;
     }
@@ -32622,7 +32622,7 @@ class Contents {
       this._layoutStyle = style;
       navigator.epubReadingSystem.layoutStyle = this._layoutStyle;
     }
-    return this._layoutStyle || "paginated";
+    return this._layoutStyle || 'paginated';
   }
 
   /**
@@ -32638,17 +32638,17 @@ class Contents {
       layoutStyle: this.layoutStyle(),
       hasFeature: function (feature) {
         switch (feature) {
-          case "dom-manipulation":
+          case 'dom-manipulation':
             return true;
-          case "layout-changes":
+          case 'layout-changes':
             return true;
-          case "touch-events":
+          case 'touch-events':
             return true;
-          case "mouse-events":
+          case 'mouse-events':
             return true;
-          case "keyboard-events":
+          case 'keyboard-events':
             return true;
-          case "spine-scripting":
+          case 'spine-scripting':
             return false;
           default:
             return false;
@@ -32689,10 +32689,10 @@ __webpack_require__.r(__webpack_exports__);
  */
 class DisplayOptions {
   constructor(displayOptionsDocument) {
-    this.interactive = "";
-    this.fixedLayout = "";
-    this.openToSpread = "";
-    this.orientationLock = "";
+    this.interactive = '';
+    this.fixedLayout = '';
+    this.openToSpread = '';
+    this.orientationLock = '';
     if (displayOptionsDocument) {
       this.parse(displayOptionsDocument);
     }
@@ -32707,27 +32707,27 @@ class DisplayOptions {
     if (!displayOptionsDocument) {
       return this;
     }
-    const displayOptionsNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(displayOptionsDocument, "display_options");
+    const displayOptionsNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(displayOptionsDocument, 'display_options');
     if (!displayOptionsNode) {
       return this;
     }
-    const options = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(displayOptionsNode, "option");
+    const options = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(displayOptionsNode, 'option');
     options.forEach(el => {
-      let value = "";
+      let value = '';
       if (el.childNodes.length) {
         value = el.childNodes[0].nodeValue;
       }
       switch (el.attributes.name.value) {
-        case "interactive":
+        case 'interactive':
           this.interactive = value;
           break;
-        case "fixed-layout":
+        case 'fixed-layout':
           this.fixedLayout = value;
           break;
-        case "open-to-spread":
+        case 'open-to-spread':
           this.openToSpread = value;
           break;
-        case "orientation-lock":
+        case 'orientation-lock':
           this.orientationLock = value;
           break;
       }
@@ -32762,12 +32762,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _contents__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./contents */ "./src/contents.js");
 /* harmony import */ var _utils_core__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils/core */ "./src/utils/core.js");
 /* harmony import */ var _utils_constants__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./utils/constants */ "./src/utils/constants.js");
-/* harmony import */ var _managers_views_iframe__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./managers/views/iframe */ "./src/managers/views/iframe.js");
-/* harmony import */ var _managers_default__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./managers/default */ "./src/managers/default/index.js");
-/* harmony import */ var _managers_continuous__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./managers/continuous */ "./src/managers/continuous/index.js");
-
-
-
 
 
 
@@ -32786,7 +32780,7 @@ function ePub(url, options) {
   return new _book__WEBPACK_IMPORTED_MODULE_0__["default"](url, options);
 }
 ePub.VERSION = _utils_constants__WEBPACK_IMPORTED_MODULE_5__.EPUBJS_VERSION;
-if (typeof __webpack_require__.g !== "undefined") {
+if (typeof __webpack_require__.g !== 'undefined') {
   __webpack_require__.g.EPUBJS_VERSION = _utils_constants__WEBPACK_IMPORTED_MODULE_5__.EPUBJS_VERSION;
 }
 ePub.Book = _book__WEBPACK_IMPORTED_MODULE_0__["default"];
@@ -32836,7 +32830,7 @@ const DOCUMENT_NODE = 9;
 class EpubCFI {
   constructor(cfiFrom, base, ignoreClass) {
     var type;
-    this.str = "";
+    this.str = '';
     this.base = {};
     this.spinePos = 0; // For compatibility
 
@@ -32850,25 +32844,25 @@ class EpubCFI {
     if (!(this instanceof EpubCFI)) {
       return new EpubCFI(cfiFrom, base, ignoreClass);
     }
-    if (typeof base === "string") {
+    if (typeof base === 'string') {
       this.base = this.parseComponent(base);
-    } else if (typeof base === "object" && base.steps) {
+    } else if (typeof base === 'object' && base.steps) {
       this.base = base;
     }
     type = this.checkType(cfiFrom);
-    if (type === "string") {
+    if (type === 'string') {
       this.str = cfiFrom;
       return (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.extend)(this, this.parse(cfiFrom));
-    } else if (type === "range") {
+    } else if (type === 'range') {
       return (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.extend)(this, this.fromRange(cfiFrom, this.base, ignoreClass));
-    } else if (type === "node") {
+    } else if (type === 'node') {
       return (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.extend)(this, this.fromNode(cfiFrom, this.base, ignoreClass));
-    } else if (type === "EpubCFI" && cfiFrom.path) {
+    } else if (type === 'EpubCFI' && cfiFrom.path) {
       return cfiFrom;
     } else if (!cfiFrom) {
       return this;
     } else {
-      throw new TypeError("not a valid argument for EpubCFI");
+      throw new TypeError('not a valid argument for EpubCFI');
     }
   }
 
@@ -32878,15 +32872,15 @@ class EpubCFI {
    */
   checkType(cfi) {
     if (this.isCfiString(cfi)) {
-      return "string";
+      return 'string';
       // Is a range object
-    } else if (cfi && typeof cfi === "object" && ((0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.type)(cfi) === "Range" || typeof cfi.startContainer != "undefined")) {
-      return "range";
-    } else if (cfi && typeof cfi === "object" && typeof cfi.nodeType != "undefined") {
+    } else if (cfi && typeof cfi === 'object' && ((0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.type)(cfi) === 'Range' || typeof cfi.startContainer != 'undefined')) {
+      return 'range';
+    } else if (cfi && typeof cfi === 'object' && typeof cfi.nodeType != 'undefined') {
       // || typeof cfi === "function"
-      return "node";
-    } else if (cfi && typeof cfi === "object" && cfi instanceof EpubCFI) {
-      return "EpubCFI";
+      return 'node';
+    } else if (cfi && typeof cfi === 'object' && cfi instanceof EpubCFI) {
+      return 'EpubCFI';
     } else {
       return false;
     }
@@ -32907,12 +32901,12 @@ class EpubCFI {
       end: null
     };
     var baseComponent, pathComponent, range;
-    if (typeof cfiStr !== "string") {
+    if (typeof cfiStr !== 'string') {
       return {
         spinePos: -1
       };
     }
-    if (cfiStr.indexOf("epubcfi(") === 0 && cfiStr[cfiStr.length - 1] === ")") {
+    if (cfiStr.indexOf('epubcfi(') === 0 && cfiStr[cfiStr.length - 1] === ')') {
       // Remove initial epubcfi( and ending )
       cfiStr = cfiStr.slice(8, cfiStr.length - 1);
     }
@@ -32949,14 +32943,14 @@ class EpubCFI {
         assertion: null
       }
     };
-    var parts = componentStr.split(":");
-    var steps = parts[0].split("/");
+    var parts = componentStr.split(':');
+    var steps = parts[0].split('/');
     var terminal;
     if (parts.length > 1) {
       terminal = parts[1];
       component.terminal = this.parseTerminal(terminal);
     }
-    if (steps[0] === "") {
+    if (steps[0] === '') {
       steps.shift(); // Ignore the first slash
     }
     component.steps = steps.map(function (step) {
@@ -32978,23 +32972,23 @@ class EpubCFI {
     }
     if (num % 2 === 0) {
       // Even = is an element
-      type = "element";
+      type = 'element';
       index = num / 2 - 1;
     } else {
-      type = "text";
+      type = 'text';
       index = (num - 1) / 2;
     }
     return {
-      "type": type,
-      "index": index,
-      "id": id || null
+      type: type,
+      index: index,
+      id: id || null
     };
   }
   parseTerminal(termialStr) {
     var characterOffset, textLocationAssertion;
     var assertion = termialStr.match(/\[(.*)\]/);
     if (assertion && assertion[1]) {
-      characterOffset = parseInt(termialStr.split("[")[0]);
+      characterOffset = parseInt(termialStr.split('[')[0]);
       textLocationAssertion = assertion[1];
     } else {
       characterOffset = parseInt(termialStr);
@@ -33003,58 +32997,58 @@ class EpubCFI {
       characterOffset = null;
     }
     return {
-      "offset": characterOffset,
-      "assertion": textLocationAssertion
+      offset: characterOffset,
+      assertion: textLocationAssertion
     };
   }
   getChapterComponent(cfiStr) {
-    var indirection = cfiStr.split("!");
+    var indirection = cfiStr.split('!');
     return indirection[0];
   }
   getPathComponent(cfiStr) {
-    var indirection = cfiStr.split("!");
+    var indirection = cfiStr.split('!');
     if (indirection[1]) {
-      let ranges = indirection[1].split(",");
+      let ranges = indirection[1].split(',');
       return ranges[0];
     }
   }
   getRange(cfiStr) {
-    var ranges = cfiStr.split(",");
+    var ranges = cfiStr.split(',');
     if (ranges.length === 3) {
       return [ranges[1], ranges[2]];
     }
     return false;
   }
   getCharecterOffsetComponent(cfiStr) {
-    var splitStr = cfiStr.split(":");
-    return splitStr[1] || "";
+    var splitStr = cfiStr.split(':');
+    return splitStr[1] || '';
   }
   joinSteps(steps) {
     if (!steps) {
-      return "";
+      return '';
     }
     return steps.map(function (part) {
-      var segment = "";
-      if (part.type === "element") {
+      var segment = '';
+      if (part.type === 'element') {
         segment += (part.index + 1) * 2;
       }
-      if (part.type === "text") {
+      if (part.type === 'text') {
         segment += 1 + 2 * part.index; // TODO: double check that this is odd
       }
       if (part.id) {
-        segment += "[" + part.id + "]";
+        segment += '[' + part.id + ']';
       }
       return segment;
-    }).join("/");
+    }).join('/');
   }
   segmentString(segment) {
-    var segmentString = "/";
+    var segmentString = '/';
     segmentString += this.joinSteps(segment.steps);
     if (segment.terminal && segment.terminal.offset != null) {
-      segmentString += ":" + segment.terminal.offset;
+      segmentString += ':' + segment.terminal.offset;
     }
     if (segment.terminal && segment.terminal.assertion != null) {
-      segmentString += "[" + segment.terminal.assertion + "]";
+      segmentString += '[' + segment.terminal.assertion + ']';
     }
     return segmentString;
   }
@@ -33064,21 +33058,21 @@ class EpubCFI {
    * @returns {string} epubcfi
    */
   toString() {
-    var cfiString = "epubcfi(";
+    var cfiString = 'epubcfi(';
     cfiString += this.segmentString(this.base);
-    cfiString += "!";
+    cfiString += '!';
     cfiString += this.segmentString(this.path);
 
     // Add Range, if present
     if (this.range && this.start) {
-      cfiString += ",";
+      cfiString += ',';
       cfiString += this.segmentString(this.start);
     }
     if (this.range && this.end) {
-      cfiString += ",";
+      cfiString += ',';
       cfiString += this.segmentString(this.end);
     }
-    cfiString += ")";
+    cfiString += ')';
     return cfiString;
   }
 
@@ -33093,10 +33087,10 @@ class EpubCFI {
     var rangeBEndSteps, rangeBEndSteps;
     var rangeAStartTerminal, rangeAEndTerminal;
     var rangeBStartTerminal, rangeBEndTerminal;
-    if (typeof cfiOne === "string") {
+    if (typeof cfiOne === 'string') {
       cfiOne = new EpubCFI(cfiOne);
     }
-    if (typeof cfiTwo === "string") {
+    if (typeof cfiTwo === 'string') {
       cfiTwo = new EpubCFI(cfiTwo);
     }
     // Compare Spine Positions
@@ -33155,12 +33149,12 @@ class EpubCFI {
     return 0;
   }
   step(node) {
-    var nodeType = node.nodeType === TEXT_NODE ? "text" : "element";
+    var nodeType = node.nodeType === TEXT_NODE ? 'text' : 'element';
     return {
-      "id": node.id,
-      "tagName": node.tagName,
-      "type": nodeType,
-      "index": this.position(node)
+      id: node.id,
+      tagName: node.tagName,
+      type: nodeType,
+      index: this.position(node)
     };
   }
   filteredStep(node, ignoreClass) {
@@ -33173,12 +33167,12 @@ class EpubCFI {
     }
 
     // Otherwise add the filter node in
-    nodeType = filteredNode.nodeType === TEXT_NODE ? "text" : "element";
+    nodeType = filteredNode.nodeType === TEXT_NODE ? 'text' : 'element';
     return {
-      "id": filteredNode.id,
-      "tagName": filteredNode.tagName,
-      "type": nodeType,
-      "index": this.filteredPosition(filteredNode, ignoreClass)
+      id: filteredNode.id,
+      tagName: filteredNode.tagName,
+      type: nodeType,
+      index: this.filteredPosition(filteredNode, ignoreClass)
     };
   }
   pathTo(node, offset, ignoreClass) {
@@ -33206,10 +33200,10 @@ class EpubCFI {
       segment.terminal.offset = offset;
 
       // Make sure we are getting to a textNode if there is an offset
-      if (segment.steps[segment.steps.length - 1].type != "text") {
+      if (segment.steps[segment.steps.length - 1].type != 'text') {
         segment.steps.push({
-          "type": "text",
-          "index": 0
+          type: 'text',
+          index: 0
         });
       }
     }
@@ -33247,12 +33241,12 @@ class EpubCFI {
     var needsIgnoring = false;
     if (ignoreClass) {
       // Tell pathTo if / what to ignore
-      needsIgnoring = start.ownerDocument.querySelector("." + ignoreClass) != null;
+      needsIgnoring = start.ownerDocument.querySelector('.' + ignoreClass) != null;
     }
-    if (typeof base === "string") {
+    if (typeof base === 'string') {
       cfi.base = this.parseComponent(base);
       cfi.spinePos = cfi.base.steps[1].index;
-    } else if (typeof base === "object") {
+    } else if (typeof base === 'object') {
       cfi.base = base;
     }
     if (range.collapsed) {
@@ -33320,10 +33314,10 @@ class EpubCFI {
       start: null,
       end: null
     };
-    if (typeof base === "string") {
+    if (typeof base === 'string') {
       cfi.base = this.parseComponent(base);
       cfi.spinePos = cfi.base.steps[1].index;
-    } else if (typeof base === "object") {
+    } else if (typeof base === 'object') {
       cfi.base = base;
     }
     cfi.path = this.pathTo(anchor, null, ignoreClass);
@@ -33368,7 +33362,7 @@ class EpubCFI {
   }
   patchOffset(anchor, offset, ignoreClass) {
     if (anchor.nodeType != TEXT_NODE) {
-      throw new Error("Anchor must be a text node");
+      throw new Error('Anchor must be a text node');
     }
     var curr = anchor;
     var totalOffset = offset;
@@ -33450,23 +33444,23 @@ class EpubCFI {
     return map[index];
   }
   stepsToXpath(steps) {
-    var xpath = [".", "*"];
+    var xpath = ['.', '*'];
     steps.forEach(function (step) {
       var position = step.index + 1;
       if (step.id) {
-        xpath.push("*[position()=" + position + " and @id='" + step.id + "']");
-      } else if (step.type === "text") {
-        xpath.push("text()[" + position + "]");
+        xpath.push('*[position()=' + position + ' and @id=\'' + step.id + '\']');
+      } else if (step.type === 'text') {
+        xpath.push('text()[' + position + ']');
       } else {
-        xpath.push("*[" + position + "]");
+        xpath.push('*[' + position + ']');
       }
     });
-    return xpath.join("/");
+    return xpath.join('/');
   }
 
   /*
-  	To get the last step if needed:
-  	// Get the terminal step
+  To get the last step if needed:
+  // Get the terminal step
   lastStep = steps[steps.length-1];
   // Get the query string
   query = this.stepsToQuery(steps);
@@ -33474,23 +33468,23 @@ class EpubCFI {
   startContainerParent = doc.querySelector(query);
   // Find the text node within that element
   if(startContainerParent && lastStep.type == "text") {
-  	container = startContainerParent.childNodes[lastStep.index];
+  container = startContainerParent.childNodes[lastStep.index];
   }
   */
   stepsToQuerySelector(steps) {
-    var query = ["html"];
+    var query = ['html'];
     steps.forEach(function (step) {
       var position = step.index + 1;
       if (step.id) {
-        query.push("#" + step.id);
-      } else if (step.type === "text") {
+        query.push('#' + step.id);
+      } else if (step.type === 'text') {
         // unsupported in querySelector
         // query.push("text()[" + position + "]");
       } else {
-        query.push("*:nth-child(" + position + ")");
+        query.push('*:nth-child(' + position + ')');
       }
     });
-    return query.join(">");
+    return query.join('>');
   }
   textNodes(container, ignoreClass) {
     return Array.prototype.slice.call(container.childNodes).filter(function (node) {
@@ -33511,7 +33505,7 @@ class EpubCFI {
     var i;
     for (i = 0; i < len; i++) {
       step = steps[i];
-      if (step.type === "element") {
+      if (step.type === 'element') {
         //better to get a container using id as some times step.index may not be correct
         //For ex.https://github.com/futurepress/epub.js/issues/561
         if (step.id) {
@@ -33520,7 +33514,7 @@ class EpubCFI {
           children = container.children || (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.findChildren)(container);
           container = children[step.index];
         }
-      } else if (step.type === "text") {
+      } else if (step.type === 'text') {
         container = this.textNodes(container, ignoreClass)[step.index];
       }
       if (!container) {
@@ -33536,7 +33530,7 @@ class EpubCFI {
     var doc = _doc || document;
     var container;
     var xpath;
-    if (!ignoreClass && typeof doc.evaluate != "undefined") {
+    if (!ignoreClass && typeof doc.evaluate != 'undefined') {
       xpath = this.stepsToXpath(steps);
       container = doc.evaluate(xpath, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
     } else if (ignoreClass) {
@@ -33588,9 +33582,9 @@ class EpubCFI {
     var start, end, startContainer, endContainer;
     var cfi = this;
     var startSteps, endSteps;
-    var needsIgnoring = ignoreClass ? doc.querySelector("." + ignoreClass) != null : false;
+    var needsIgnoring = ignoreClass ? doc.querySelector('.' + ignoreClass) != null : false;
     var missed;
-    if (typeof doc.createRange !== "undefined") {
+    if (typeof doc.createRange !== 'undefined') {
       range = doc.createRange();
     } else {
       range = new _utils_core__WEBPACK_IMPORTED_MODULE_0__.RangeObject();
@@ -33619,7 +33613,7 @@ class EpubCFI {
         range.setStart(missed.container, missed.offset);
       }
     } else {
-      console.log("No startContainer found for", this.toString());
+      console.log('No startContainer found for', this.toString());
       // No start found
       return null;
     }
@@ -33646,7 +33640,7 @@ class EpubCFI {
    * @returns {boolean}
    */
   isCfiString(str) {
-    if (typeof str === "string" && str.indexOf("epubcfi(") === 0 && str[str.length - 1] === ")") {
+    if (typeof str === 'string' && str.indexOf('epubcfi(') === 0 && str[str.length - 1] === ')') {
       return true;
     }
     return false;
@@ -33654,10 +33648,10 @@ class EpubCFI {
   generateChapterComponent(_spineNodeIndex, _pos, id) {
     var pos = parseInt(_pos),
       spineNodeIndex = (_spineNodeIndex + 1) * 2,
-      cfi = "/" + spineNodeIndex + "/";
+      cfi = '/' + spineNodeIndex + '/';
     cfi += (pos + 1) * 2;
     if (id) {
-      cfi += "[" + id + "]";
+      cfi += '[' + id + ']';
     }
     return cfi;
   }
@@ -33715,14 +33709,14 @@ __webpack_require__.r(__webpack_exports__);
 class Layout {
   constructor(settings) {
     this.settings = settings;
-    this.name = settings.layout || "reflowable";
-    this._spread = settings.spread === "none" ? false : true;
+    this.name = settings.layout || 'reflowable';
+    this._spread = settings.spread === 'none' ? false : true;
     this._minSpreadWidth = settings.minSpreadWidth || 800;
     this._evenSpreads = settings.evenSpreads || false;
-    if (settings.flow === "scrolled" || settings.flow === "scrolled-continuous" || settings.flow === "scrolled-doc") {
-      this._flow = "scrolled";
+    if (settings.flow === 'scrolled' || settings.flow === 'scrolled-continuous' || settings.flow === 'scrolled-doc') {
+      this._flow = 'scrolled';
     } else {
-      this._flow = "paginated";
+      this._flow = 'paginated';
     }
     this.width = 0;
     this.height = 0;
@@ -33751,11 +33745,11 @@ class Layout {
    * @return {string} simplified flow
    */
   flow(flow) {
-    if (typeof flow != "undefined") {
-      if (flow === "scrolled" || flow === "scrolled-continuous" || flow === "scrolled-doc") {
-        this._flow = "scrolled";
+    if (typeof flow != 'undefined') {
+      if (flow === 'scrolled' || flow === 'scrolled-continuous' || flow === 'scrolled-doc') {
+        this._flow = 'scrolled';
       } else {
-        this._flow = "paginated";
+        this._flow = 'paginated';
       }
       // this.props.flow = this._flow;
       this.update({
@@ -33774,7 +33768,7 @@ class Layout {
    */
   spread(spread, min) {
     if (spread) {
-      this._spread = spread === "none" ? false : true;
+      this._spread = spread === 'none' ? false : true;
       // this.props.spread = this._spread;
       this.update({
         spread: this._spread
@@ -33810,10 +33804,10 @@ class Layout {
     } else {
       divisor = 1;
     }
-    if (this.name === "reflowable" && this._flow === "paginated" && !(_gap >= 0)) {
+    if (this.name === 'reflowable' && this._flow === 'paginated' && !(_gap >= 0)) {
       gap = section % 2 === 0 ? section : section - 1;
     }
-    if (this.name === "pre-paginated") {
+    if (this.name === 'pre-paginated') {
       gap = 0;
     }
 
@@ -33828,7 +33822,7 @@ class Layout {
       columnWidth = width;
       pageWidth = width;
     }
-    if (this.name === "pre-paginated" && divisor > 1) {
+    if (this.name === 'pre-paginated' && divisor > 1) {
       width = columnWidth;
     }
     spreadWidth = columnWidth * divisor + gap;
@@ -33871,11 +33865,11 @@ class Layout {
    */
   format(contents, section, axis) {
     var formating;
-    if (this.name === "pre-paginated") {
+    if (this.name === 'pre-paginated') {
       formating = contents.fit(this.columnWidth, this.height, section);
-    } else if (this._flow === "paginated") {
+    } else if (this._flow === 'paginated') {
       formating = contents.columns(this.width, this.height, this.columnWidth, this.gap, this.settings.direction);
-    } else if (axis && axis === "horizontal") {
+    } else if (axis && axis === 'horizontal') {
       formating = contents.size(null, this.height);
     } else {
       formating = contents.size(this.width, null);
@@ -33891,10 +33885,10 @@ class Layout {
    */
   count(totalLength, pageLength) {
     let spreads, pages;
-    if (this.name === "pre-paginated") {
+    if (this.name === 'pre-paginated') {
       spreads = 1;
       pages = 1;
-    } else if (this._flow === "paginated") {
+    } else if (this._flow === 'paginated') {
       pageLength = pageLength || this.delta;
       spreads = Math.ceil(totalLength / pageLength);
       pages = spreads * this.divisor;
@@ -34026,7 +34020,7 @@ class Locations {
     var locations = [];
     var range;
     var doc = contents.ownerDocument;
-    var body = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, "body");
+    var body = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'body');
     var counter = 0;
     var prev;
     var _break = chars || this.break;
@@ -34146,16 +34140,16 @@ class Locations {
 
   //http://stackoverflow.com/questions/18679576/counting-words-in-string
   countWords(s) {
-    s = s.replace(/(^\s*)|(\s*$)/gi, ""); //exclude  start and end white-space
-    s = s.replace(/[ ]{2,}/gi, " "); //2 or more space to 1
-    s = s.replace(/\n /, "\n"); // exclude newline with a start spacing
-    return s.split(" ").length;
+    s = s.replace(/(^\s*)|(\s*$)/gi, ''); //exclude  start and end white-space
+    s = s.replace(/[ ]{2,}/gi, ' '); //2 or more space to 1
+    s = s.replace(/\n /, '\n'); // exclude newline with a start spacing
+    return s.split(' ').length;
   }
   parseWords(contents, section, wordCount, startCfi) {
     var cfiBase = section.cfiBase;
     var locations = [];
     var doc = contents.ownerDocument;
-    var body = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, "body");
+    var body = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'body');
     var prev;
     var _break = wordCount;
     var foundStartNode = startCfi ? startCfi.spinePos !== section.index : true;
@@ -34273,7 +34267,7 @@ class Locations {
   cfiFromLocation(loc) {
     var cfi = -1;
     // check that pg is an int
-    if (typeof loc != "number") {
+    if (typeof loc != 'number') {
       loc = parseInt(loc);
     }
     if (loc >= 0 && loc < this._locations.length) {
@@ -34290,7 +34284,7 @@ class Locations {
   cfiFromPercentage(percentage) {
     let loc;
     if (percentage > 1) {
-      console.warn("Normalize cfiFromPercentage value to between 0 - 1");
+      console.warn('Normalize cfiFromPercentage value to between 0 - 1');
     }
 
     // Make sure 1 goes to very end
@@ -34308,7 +34302,7 @@ class Locations {
    * @param {json} locations
    */
   load(locations) {
-    if (typeof locations === "string") {
+    if (typeof locations === 'string') {
       this._locations = JSON.parse(locations);
     } else {
       this._locations = locations;
@@ -34329,9 +34323,9 @@ class Locations {
   }
   setCurrent(curr) {
     var loc;
-    if (typeof curr == "string") {
+    if (typeof curr == 'string') {
       this._currentCfi = curr;
-    } else if (typeof curr == "number") {
+    } else if (typeof curr == 'number') {
       this._current = curr;
     } else {
       return;
@@ -34339,7 +34333,7 @@ class Locations {
     if (this._locations.length === 0) {
       return;
     }
-    if (typeof curr == "string") {
+    if (typeof curr == 'string') {
       loc = this.locationFromCfi(curr);
       this._current = loc;
     } else {
@@ -34416,13 +34410,13 @@ __webpack_require__.r(__webpack_exports__);
 class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["default"] {
   constructor(options) {
     super(options);
-    this.name = "continuous";
+    this.name = 'continuous';
     this.settings = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.extend)(this.settings || {}, {
       infinite: true,
       overflow: undefined,
       axis: undefined,
       writingMode: undefined,
-      flow: "scrolled",
+      flow: 'scrolled',
       offset: 500,
       offsetDelta: 250,
       width: undefined,
@@ -34435,7 +34429,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.extend)(this.settings, options.settings || {});
 
     // Gap can be 0, but defaults doesn't handle that
-    if (options.settings.gap != "undefined" && options.settings.gap === 0) {
+    if (options.settings.gap != 'undefined' && options.settings.gap === 0) {
       this.settings.gap = options.settings.gap;
     }
     this.viewSettings = {
@@ -34548,7 +34542,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     return view;
   }
   counter(bounds) {
-    if (this.settings.axis === "vertical") {
+    if (this.settings.axis === 'vertical') {
       this.scrollBy(0, bounds.heightDelta, true);
     } else {
       this.scrollBy(bounds.widthDelta, 0, true);
@@ -34559,7 +34553,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     var views = this.views.all();
     var viewsLength = views.length;
     var visible = [];
-    var offset = typeof _offset != "undefined" ? _offset : this.settings.offset || 0;
+    var offset = typeof _offset != 'undefined' ? _offset : this.settings.offset || 0;
     var isVisible;
     var view;
     var updating = new _utils_core__WEBPACK_IMPORTED_MODULE_0__.defer();
@@ -34603,7 +34597,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
   check(_offsetLeft, _offsetTop) {
     var checking = new _utils_core__WEBPACK_IMPORTED_MODULE_0__.defer();
     var newViews = [];
-    var horizontal = this.settings.axis === "horizontal";
+    var horizontal = this.settings.axis === 'horizontal';
     var delta = this.settings.offset || 0;
     if (_offsetLeft && horizontal) {
       delta = _offsetLeft;
@@ -34616,21 +34610,21 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     let offset = horizontal ? this.scrollLeft : this.scrollTop;
     let visibleLength = horizontal ? Math.floor(bounds.width) : bounds.height;
     let contentLength = horizontal ? this.container.scrollWidth : this.container.scrollHeight;
-    let writingMode = this.writingMode && this.writingMode.indexOf("vertical") === 0 ? "vertical" : "horizontal";
+    let writingMode = this.writingMode && this.writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
     let rtlScrollType = this.settings.rtlScrollType;
-    let rtl = this.settings.direction === "rtl";
+    let rtl = this.settings.direction === 'rtl';
     if (!this.settings.fullsize) {
       // Scroll offset starts at width of element
-      if (rtl && rtlScrollType === "default" && writingMode === "horizontal") {
+      if (rtl && rtlScrollType === 'default' && writingMode === 'horizontal') {
         offset = contentLength - visibleLength - offset;
       }
       // Scroll offset starts at 0 and goes negative
-      if (rtl && rtlScrollType === "negative" && writingMode === "horizontal") {
+      if (rtl && rtlScrollType === 'negative' && writingMode === 'horizontal') {
         offset = offset * -1;
       }
     } else {
       // Scroll offset starts at 0 and goes negative
-      if (horizontal && rtl && rtlScrollType === "negative" || !horizontal && rtl && rtlScrollType === "default") {
+      if (horizontal && rtl && rtlScrollType === 'negative' || !horizontal && rtl && rtlScrollType === 'default') {
         offset = offset * -1;
       }
     }
@@ -34713,7 +34707,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     var bounds = view.bounds();
     this.views.remove(view);
     if (above) {
-      if (this.settings.axis === "vertical") {
+      if (this.settings.axis === 'vertical') {
         this.scrollTo(0, prevTop - bounds.height, true);
       } else {
         if (this.settings.direction === 'rtl') {
@@ -34729,20 +34723,20 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     }
   }
   addEventListeners(stage) {
-    window.addEventListener("unload", function (e) {
+    window.addEventListener('unload', function (e) {
       this.ignore = true;
       // this.scrollTo(0,0);
       this.destroy();
     }.bind(this));
     this.addScrollListeners();
     if (this.isPaginated && this.settings.snap) {
-      this.snapper = new _helpers_snap__WEBPACK_IMPORTED_MODULE_2__["default"](this, this.settings.snap && typeof this.settings.snap === "object" && this.settings.snap);
+      this.snapper = new _helpers_snap__WEBPACK_IMPORTED_MODULE_2__["default"](this, this.settings.snap && typeof this.settings.snap === 'object' && this.settings.snap);
     }
   }
   addScrollListeners() {
     var scroller;
     this.tick = _utils_core__WEBPACK_IMPORTED_MODULE_0__.requestAnimationFrame;
-    let dir = this.settings.direction === "rtl" && this.settings.rtlScrollType === "default" ? -1 : 1;
+    let dir = this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default' ? -1 : 1;
     this.scrollDeltaVert = 0;
     this.scrollDeltaHorz = 0;
     if (!this.settings.fullsize) {
@@ -34755,7 +34749,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
       this.scrollLeft = window.scrollX * dir;
     }
     this._onScroll = this.onScroll.bind(this);
-    scroller.addEventListener("scroll", this._onScroll);
+    scroller.addEventListener('scroll', this._onScroll);
     this._scrolled = lodash_debounce__WEBPACK_IMPORTED_MODULE_4___default()(this.scrolled.bind(this), 30);
     // this.tick.call(window, this.onScroll.bind(this));
 
@@ -34768,13 +34762,13 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     } else {
       scroller = window;
     }
-    scroller.removeEventListener("scroll", this._onScroll);
+    scroller.removeEventListener('scroll', this._onScroll);
     this._onScroll = undefined;
   }
   onScroll() {
     let scrollTop;
     let scrollLeft;
-    let dir = this.settings.direction === "rtl" && this.settings.rtlScrollType === "default" ? -1 : 1;
+    let dir = this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default' ? -1 : 1;
     if (!this.settings.fullsize) {
       scrollTop = this.container.scrollTop;
       scrollLeft = this.container.scrollLeft;
@@ -34822,9 +34816,9 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     }.bind(this), this.settings.afterScrolledTimeout);
   }
   next() {
-    let delta = this.layout.props.name === "pre-paginated" && this.layout.props.spread ? this.layout.props.delta * 2 : this.layout.props.delta;
+    let delta = this.layout.props.name === 'pre-paginated' && this.layout.props.spread ? this.layout.props.delta * 2 : this.layout.props.delta;
     if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === "horizontal") {
+    if (this.isPaginated && this.settings.axis === 'horizontal') {
       this.scrollBy(delta, 0, true);
     } else {
       this.scrollBy(0, this.layout.height, true);
@@ -34834,9 +34828,9 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     }.bind(this));
   }
   prev() {
-    let delta = this.layout.props.name === "pre-paginated" && this.layout.props.spread ? this.layout.props.delta * 2 : this.layout.props.delta;
+    let delta = this.layout.props.name === 'pre-paginated' && this.layout.props.spread ? this.layout.props.delta * 2 : this.layout.props.delta;
     if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === "horizontal") {
+    if (this.isPaginated && this.settings.axis === 'horizontal') {
       this.scrollBy(-delta, 0, true);
     } else {
       this.scrollBy(0, -this.layout.height, true);
@@ -34850,9 +34844,9 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
       this.snapper.destroy();
       this.snapper = undefined;
     }
-    super.updateFlow(flow, "scroll");
+    super.updateFlow(flow, 'scroll');
     if (this.rendered && this.isPaginated && this.settings.snap) {
-      this.snapper = new _helpers_snap__WEBPACK_IMPORTED_MODULE_2__["default"](this, this.settings.snap && typeof this.settings.snap === "object" && this.settings.snap);
+      this.snapper = new _helpers_snap__WEBPACK_IMPORTED_MODULE_2__["default"](this, this.settings.snap && typeof this.settings.snap === 'object' && this.settings.snap);
     }
   }
   destroy() {
@@ -34896,7 +34890,7 @@ __webpack_require__.r(__webpack_exports__);
 
 class DefaultViewManager {
   constructor(options) {
-    this.name = "default";
+    this.name = 'default';
     this.optsSettings = options.settings;
     this.View = options.view;
     this.request = options.request;
@@ -34909,8 +34903,8 @@ class DefaultViewManager {
       height: undefined,
       axis: undefined,
       writingMode: undefined,
-      flow: "scrolled",
-      ignoreClass: "",
+      flow: 'scrolled',
+      ignoreClass: '',
       fullsize: undefined,
       allowScriptedContent: false,
       allowPopups: false
@@ -34933,11 +34927,11 @@ class DefaultViewManager {
   }
   render(element, size) {
     let tag = element.tagName;
-    if (typeof this.settings.fullsize === "undefined" && tag && (tag.toLowerCase() == "body" || tag.toLowerCase() == "html")) {
+    if (typeof this.settings.fullsize === 'undefined' && tag && (tag.toLowerCase() == 'body' || tag.toLowerCase() == 'html')) {
       this.settings.fullsize = true;
     }
     if (this.settings.fullsize) {
-      this.settings.overflow = "visible";
+      this.settings.overflow = 'visible';
       this.overflow = this.settings.overflow;
     }
     this.settings.size = size;
@@ -34986,7 +34980,7 @@ class DefaultViewManager {
   }
   addEventListeners() {
     var scroller;
-    window.addEventListener("unload", function (e) {
+    window.addEventListener('unload', function (e) {
       this.destroy();
     }.bind(this));
     if (!this.settings.fullsize) {
@@ -34995,7 +34989,7 @@ class DefaultViewManager {
       scroller = window;
     }
     this._onScroll = this.onScroll.bind(this);
-    scroller.addEventListener("scroll", this._onScroll);
+    scroller.addEventListener('scroll', this._onScroll);
   }
   removeEventListeners() {
     var scroller;
@@ -35004,7 +34998,7 @@ class DefaultViewManager {
     } else {
       scroller = window;
     }
-    scroller.removeEventListener("scroll", this._onScroll);
+    scroller.removeEventListener('scroll', this._onScroll);
     this._onScroll = undefined;
   }
   destroy() {
@@ -35017,12 +35011,12 @@ class DefaultViewManager {
     this.rendered = false;
 
     /*
-    		clearTimeout(this.trimTimeout);
-    	if(this.settings.hidden) {
-    		this.element.removeChild(this.wrapper);
-    	} else {
-    		this.element.removeChild(this.container);
-    	}
+    clearTimeout(this.trimTimeout);
+    if(this.settings.hidden) {
+    this.element.removeChild(this.wrapper);
+    } else {
+    this.element.removeChild(this.container);
+    }
     */
   }
   onOrientationChange(e) {
@@ -35087,13 +35081,13 @@ class DefaultViewManager {
   }
   handleNextPrePaginated(forceRight, section, action) {
     let next;
-    if (this.layout.name === "pre-paginated" && this.layout.divisor > 1) {
+    if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
       if (forceRight || section.index === 0) {
         // First page (cover) should stand alone for pre-paginated books
         return;
       }
       next = section.next();
-      if (next && !next.properties.includes("page-spread-left")) {
+      if (next && !next.properties.includes('page-spread-left')) {
         return action.call(this, next);
       }
     }
@@ -35111,9 +35105,9 @@ class DefaultViewManager {
     var visible = this.views.find(section);
 
     // View is already shown, just move to correct location in view
-    if (visible && section && this.layout.name !== "pre-paginated") {
+    if (visible && section && this.layout.name !== 'pre-paginated') {
       let offset = visible.offset();
-      if (this.settings.direction === "ltr") {
+      if (this.settings.direction === 'ltr') {
         this.scrollTo(offset.left, offset.top, true);
       } else {
         let width = visible.width();
@@ -35131,7 +35125,7 @@ class DefaultViewManager {
     // Hide all current views
     this.clear();
     let forceRight = false;
-    if (this.layout.name === "pre-paginated" && this.layout.divisor === 2 && section.properties.includes("page-spread-right")) {
+    if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && section.properties.includes('page-spread-right')) {
       forceRight = true;
     }
     this.add(section, forceRight).then(function (view) {
@@ -35180,9 +35174,9 @@ class DefaultViewManager {
     }
     if (this.settings.direction === 'rtl') {
       /***
-      	the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
-      	to distX or use `Math.ceil` function, or multiply offset.left by -1
-      	before `Math.floor`
+      the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
+      to distX or use `Math.ceil` function, or multiply offset.left by -1
+      before `Math.floor`
       */
       distX = distX + this.layout.delta;
       distX = distX - width;
@@ -35234,7 +35228,7 @@ class DefaultViewManager {
     return view.display(this.request);
   }
   counter(bounds) {
-    if (this.settings.axis === "vertical") {
+    if (this.settings.axis === 'vertical') {
       this.scrollBy(0, bounds.heightDelta, true);
     } else {
       this.scrollBy(bounds.widthDelta, 0, true);
@@ -35256,7 +35250,7 @@ class DefaultViewManager {
     var left;
     let dir = this.settings.direction;
     if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === "horizontal" && (!dir || dir === "ltr")) {
+    if (this.isPaginated && this.settings.axis === 'horizontal' && (!dir || dir === 'ltr')) {
       this.scrollLeft = this.container.scrollLeft;
       left = this.container.scrollLeft + this.container.offsetWidth + this.layout.delta;
       if (left <= this.container.scrollWidth) {
@@ -35264,9 +35258,9 @@ class DefaultViewManager {
       } else {
         next = this.views.last().section.next();
       }
-    } else if (this.isPaginated && this.settings.axis === "horizontal" && dir === "rtl") {
+    } else if (this.isPaginated && this.settings.axis === 'horizontal' && dir === 'rtl') {
       this.scrollLeft = this.container.scrollLeft;
-      if (this.settings.rtlScrollType === "default") {
+      if (this.settings.rtlScrollType === 'default') {
         left = this.container.scrollLeft;
         if (left > 0) {
           this.scrollBy(this.layout.delta, 0, true);
@@ -35281,7 +35275,7 @@ class DefaultViewManager {
           next = this.views.last().section.next();
         }
       }
-    } else if (this.isPaginated && this.settings.axis === "vertical") {
+    } else if (this.isPaginated && this.settings.axis === 'vertical') {
       this.scrollTop = this.container.scrollTop;
       let top = this.container.scrollTop + this.container.offsetHeight;
       if (top < this.container.scrollHeight) {
@@ -35297,7 +35291,7 @@ class DefaultViewManager {
       // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
       this.updateLayout();
       let forceRight = false;
-      if (this.layout.name === "pre-paginated" && this.layout.divisor === 2 && next.properties.includes("page-spread-right")) {
+      if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && next.properties.includes('page-spread-right')) {
         forceRight = true;
       }
       return this.append(next, forceRight).then(function () {
@@ -35306,7 +35300,7 @@ class DefaultViewManager {
         return err;
       }).then(function () {
         // Reset position to start for scrolled-doc vertical-rl in default mode
-        if (!this.isPaginated && this.settings.axis === "horizontal" && this.settings.direction === "rtl" && this.settings.rtlScrollType === "default") {
+        if (!this.isPaginated && this.settings.axis === 'horizontal' && this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default') {
           this.scrollTo(this.container.scrollWidth, 0, true);
         }
         this.views.show();
@@ -35318,7 +35312,7 @@ class DefaultViewManager {
     var left;
     let dir = this.settings.direction;
     if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === "horizontal" && (!dir || dir === "ltr")) {
+    if (this.isPaginated && this.settings.axis === 'horizontal' && (!dir || dir === 'ltr')) {
       this.scrollLeft = this.container.scrollLeft;
       left = this.container.scrollLeft;
       if (left > 0) {
@@ -35326,9 +35320,9 @@ class DefaultViewManager {
       } else {
         prev = this.views.first().section.prev();
       }
-    } else if (this.isPaginated && this.settings.axis === "horizontal" && dir === "rtl") {
+    } else if (this.isPaginated && this.settings.axis === 'horizontal' && dir === 'rtl') {
       this.scrollLeft = this.container.scrollLeft;
-      if (this.settings.rtlScrollType === "default") {
+      if (this.settings.rtlScrollType === 'default') {
         left = this.container.scrollLeft + this.container.offsetWidth;
         if (left < this.container.scrollWidth) {
           this.scrollBy(-this.layout.delta, 0, true);
@@ -35343,7 +35337,7 @@ class DefaultViewManager {
           prev = this.views.first().section.prev();
         }
       }
-    } else if (this.isPaginated && this.settings.axis === "vertical") {
+    } else if (this.isPaginated && this.settings.axis === 'vertical') {
       this.scrollTop = this.container.scrollTop;
       let top = this.container.scrollTop;
       if (top > 0) {
@@ -35359,12 +35353,12 @@ class DefaultViewManager {
       // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
       this.updateLayout();
       let forceRight = false;
-      if (this.layout.name === "pre-paginated" && this.layout.divisor === 2 && typeof prev.prev() !== "object") {
+      if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && typeof prev.prev() !== 'object') {
         forceRight = true;
       }
       return this.prepend(prev, forceRight).then(function () {
         var left;
-        if (this.layout.name === "pre-paginated" && this.layout.divisor > 1) {
+        if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
           left = prev.prev();
           if (left) {
             return this.prepend(left);
@@ -35373,9 +35367,9 @@ class DefaultViewManager {
       }.bind(this), err => {
         return err;
       }).then(function () {
-        if (this.isPaginated && this.settings.axis === "horizontal") {
-          if (this.settings.direction === "rtl") {
-            if (this.settings.rtlScrollType === "default") {
+        if (this.isPaginated && this.settings.axis === 'horizontal') {
+          if (this.settings.direction === 'rtl') {
+            if (this.settings.rtlScrollType === 'default') {
               this.scrollTo(0, 0, true);
             } else {
               this.scrollTo(this.container.scrollWidth * -1 + this.layout.delta, 0, true);
@@ -35407,7 +35401,7 @@ class DefaultViewManager {
   }
   currentLocation() {
     this.updateLayout();
-    if (this.isPaginated && this.settings.axis === "horizontal") {
+    if (this.isPaginated && this.settings.axis === 'horizontal') {
       this.location = this.paginatedLocation();
     } else {
       this.location = this.scrolledLocation();
@@ -35419,8 +35413,8 @@ class DefaultViewManager {
     let container = this.container.getBoundingClientRect();
     let pageHeight = container.height < window.innerHeight ? container.height : window.innerHeight;
     let pageWidth = container.width < window.innerWidth ? container.width : window.innerWidth;
-    let vertical = this.settings.axis === "vertical";
-    let rtl = this.settings.direction === "rtl";
+    let vertical = this.settings.axis === 'vertical';
+    let rtl = this.settings.direction === 'rtl';
     let offset = 0;
     let used = 0;
     if (this.settings.fullsize) {
@@ -35454,7 +35448,7 @@ class DefaultViewManager {
       let endPage = Math.ceil(endPos / stopPos);
 
       // Reverse page counts for horizontal rtl
-      if (this.settings.direction === "rtl" && !vertical) {
+      if (this.settings.direction === 'rtl' && !vertical) {
         let tempStartPage = currPage;
         currPage = totalPages - endPage;
         endPage = totalPages - tempStartPage;
@@ -35496,7 +35490,7 @@ class DefaultViewManager {
       let start;
       let end;
       let pageWidth;
-      if (this.settings.direction === "rtl") {
+      if (this.settings.direction === 'rtl') {
         offset = container.right - left;
         pageWidth = Math.min(Math.abs(offset - position.left), this.layout.width) - used;
         end = position.width - (position.right - offset) - used;
@@ -35521,7 +35515,7 @@ class DefaultViewManager {
       }
 
       // Reverse page counts for rtl
-      if (this.settings.direction === "rtl") {
+      if (this.settings.direction === 'rtl') {
         let tempStartPage = startPage;
         startPage = totalPages - endPage;
         endPage = totalPages - tempStartPage;
@@ -35543,9 +35537,9 @@ class DefaultViewManager {
   isVisible(view, offsetPrev, offsetNext, _container) {
     var position = view.position();
     var container = _container || this.bounds();
-    if (this.settings.axis === "horizontal" && position.right > container.left - offsetPrev && position.left < container.right + offsetNext) {
+    if (this.settings.axis === 'horizontal' && position.right > container.left - offsetPrev && position.left < container.right + offsetNext) {
       return true;
-    } else if (this.settings.axis === "vertical" && position.bottom > container.top - offsetPrev && position.top < container.bottom + offsetNext) {
+    } else if (this.settings.axis === 'vertical' && position.bottom > container.top - offsetPrev && position.top < container.bottom + offsetNext) {
       return true;
     }
     return false;
@@ -35567,7 +35561,7 @@ class DefaultViewManager {
     return visible;
   }
   scrollBy(x, y, silent) {
-    let dir = this.settings.direction === "rtl" ? -1 : 1;
+    let dir = this.settings.direction === 'rtl' ? -1 : 1;
     if (silent) {
       this.ignore = true;
     }
@@ -35627,7 +35621,7 @@ class DefaultViewManager {
   applyLayout(layout) {
     this.layout = layout;
     this.updateLayout();
-    if (this.views && this.views.length > 0 && this.layout.name === "pre-paginated") {
+    if (this.views && this.views.length > 0 && this.layout.name === 'pre-paginated') {
       this.display(this.views.first().section);
     }
     // this.manager.layout(this.layout.format);
@@ -35678,24 +35672,24 @@ class DefaultViewManager {
       this.mapping = new _mapping__WEBPACK_IMPORTED_MODULE_3__["default"](this.layout.props, this.settings.direction, this.settings.axis);
     }
     if (this.layout) {
-      if (axis === "vertical") {
-        this.layout.spread("none");
+      if (axis === 'vertical') {
+        this.layout.spread('none');
       } else {
         this.layout.spread(this.layout.settings.spread);
       }
     }
   }
-  updateFlow(flow, defaultScrolledOverflow = "auto") {
-    let isPaginated = flow === "paginated" || flow === "auto";
+  updateFlow(flow, defaultScrolledOverflow = 'auto') {
+    let isPaginated = flow === 'paginated' || flow === 'auto';
     this.isPaginated = isPaginated;
-    if (flow === "scrolled-doc" || flow === "scrolled-continuous" || flow === "scrolled") {
-      this.updateAxis("vertical");
+    if (flow === 'scrolled-doc' || flow === 'scrolled-continuous' || flow === 'scrolled') {
+      this.updateAxis('vertical');
     } else {
-      this.updateAxis("horizontal");
+      this.updateAxis('horizontal');
     }
     this.viewSettings.flow = flow;
     if (!this.settings.overflow) {
-      this.overflow = isPaginated ? "hidden" : defaultScrolledOverflow;
+      this.overflow = isPaginated ? 'hidden' : defaultScrolledOverflow;
     } else {
       this.overflow = this.settings.overflow;
     }
@@ -35715,7 +35709,7 @@ class DefaultViewManager {
     });
     return contents;
   }
-  direction(dir = "ltr") {
+  direction(dir = 'ltr') {
     this.settings.direction = dir;
     this.stage && this.stage.direction(dir);
     this.viewSettings.direction = dir;
@@ -35794,7 +35788,7 @@ class Snap {
     } else {
       this.element = this.manager.stage.container;
       this.scroller = this.element;
-      this.element.style["WebkitOverflowScrolling"] = "touch";
+      this.element.style['WebkitOverflowScrolling'] = 'touch';
     }
 
     // this.overflow = this.manager.overflow;
@@ -35802,7 +35796,7 @@ class Snap {
     // set lookahead offset to page width
     this.manager.settings.offset = this.layout.width;
     this.manager.settings.afterScrolledTimeout = this.settings.duration * 2;
-    this.isVertical = this.manager.settings.axis === "vertical";
+    this.isVertical = this.manager.settings.axis === 'vertical';
 
     // disable snapping if not paginated or axis in not horizontal
     if (!this.manager.isPaginated || this.isVertical) {
@@ -35828,10 +35822,10 @@ class Snap {
     return false;
   }
   disableScroll() {
-    this.element.style.overflow = "hidden";
+    this.element.style.overflow = 'hidden';
   }
   enableScroll() {
-    this.element.style.overflow = "";
+    this.element.style.overflow = '';
   }
   addListeners() {
     this._onResize = this.onResize.bind(this);
@@ -35881,7 +35875,7 @@ class Snap {
   }
   afterDisplayed(view) {
     let contents = view.contents;
-    ["touchstart", "touchmove", "touchend"].forEach(e => {
+    ['touchstart', 'touchmove', 'touchend'].forEach(e => {
       contents.on(e, ev => this.triggerViewEvent(ev, contents));
     });
   }
@@ -36054,7 +36048,7 @@ __webpack_require__.r(__webpack_exports__);
 class Stage {
   constructor(_options) {
     this.settings = _options || {};
-    this.id = "epubjs-container-" + (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.uuid)();
+    this.id = 'epubjs-container-' + (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.uuid)();
     this.container = this.create(this.settings);
     if (this.settings.hidden) {
       this.wrapper = this.wrap(this.container);
@@ -36062,39 +36056,39 @@ class Stage {
   }
 
   /*
-  * Creates an element to render to.
-  * Resizes to passed width and height or to the elements size
-  */
+   * Creates an element to render to.
+   * Resizes to passed width and height or to the elements size
+   */
   create(options) {
     let height = options.height; // !== false ? options.height : "100%";
     let width = options.width; // !== false ? options.width : "100%";
     let overflow = options.overflow || false;
-    let axis = options.axis || "vertical";
+    let axis = options.axis || 'vertical';
     let direction = options.direction;
     (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.extend)(this.settings, options);
     if (options.height && (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(options.height)) {
-      height = options.height + "px";
+      height = options.height + 'px';
     }
     if (options.width && (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(options.width)) {
-      width = options.width + "px";
+      width = options.width + 'px';
     }
 
     // Create new container element
-    let container = document.createElement("div");
+    let container = document.createElement('div');
     container.id = this.id;
-    container.classList.add("epub-container");
+    container.classList.add('epub-container');
 
     // Style Element
     // container.style.fontSize = "0";
-    container.style.wordSpacing = "0";
-    container.style.lineHeight = "0";
-    container.style.verticalAlign = "top";
-    container.style.position = "relative";
-    if (axis === "horizontal") {
+    container.style.wordSpacing = '0';
+    container.style.lineHeight = '0';
+    container.style.verticalAlign = 'top';
+    container.style.position = 'relative';
+    if (axis === 'horizontal') {
       // container.style.whiteSpace = "nowrap";
-      container.style.display = "flex";
-      container.style.flexDirection = "row";
-      container.style.flexWrap = "nowrap";
+      container.style.display = 'flex';
+      container.style.flexDirection = 'row';
+      container.style.flexWrap = 'nowrap';
     }
     if (width) {
       container.style.width = width;
@@ -36103,31 +36097,31 @@ class Stage {
       container.style.height = height;
     }
     if (overflow) {
-      if (overflow === "scroll" && axis === "vertical") {
-        container.style["overflow-y"] = overflow;
-        container.style["overflow-x"] = "hidden";
-      } else if (overflow === "scroll" && axis === "horizontal") {
-        container.style["overflow-y"] = "hidden";
-        container.style["overflow-x"] = overflow;
+      if (overflow === 'scroll' && axis === 'vertical') {
+        container.style['overflow-y'] = overflow;
+        container.style['overflow-x'] = 'hidden';
+      } else if (overflow === 'scroll' && axis === 'horizontal') {
+        container.style['overflow-y'] = 'hidden';
+        container.style['overflow-x'] = overflow;
       } else {
-        container.style["overflow"] = overflow;
+        container.style['overflow'] = overflow;
       }
     }
     if (direction) {
       container.dir = direction;
-      container.style["direction"] = direction;
+      container.style['direction'] = direction;
     }
     if (direction && this.settings.fullsize) {
-      document.body.style["direction"] = direction;
+      document.body.style['direction'] = direction;
     }
     return container;
   }
   wrap(container) {
-    var wrapper = document.createElement("div");
-    wrapper.style.visibility = "hidden";
-    wrapper.style.overflow = "hidden";
-    wrapper.style.width = "0";
-    wrapper.style.height = "0";
+    var wrapper = document.createElement('div');
+    wrapper.style.visibility = 'hidden';
+    wrapper.style.overflow = 'hidden';
+    wrapper.style.width = '0';
+    wrapper.style.height = '0';
     wrapper.appendChild(container);
     return wrapper;
   }
@@ -36135,11 +36129,11 @@ class Stage {
     var element;
     if ((0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isElement)(_element)) {
       element = _element;
-    } else if (typeof _element === "string") {
+    } else if (typeof _element === 'string') {
       element = document.getElementById(_element);
     }
     if (!element) {
-      throw new Error("Not an Element");
+      throw new Error('Not an Element');
     }
     return element;
   }
@@ -36166,12 +36160,12 @@ class Stage {
     // This applies if it is set to a percent or auto.
     if (!(0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(this.settings.width) || !(0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(this.settings.height)) {
       this.resizeFunc = lodash_throttle__WEBPACK_IMPORTED_MODULE_1___default()(func, 50);
-      window.addEventListener("resize", this.resizeFunc, false);
+      window.addEventListener('resize', this.resizeFunc, false);
     }
   }
   onOrientationChange(func) {
     this.orientationChangeFunc = func;
-    window.addEventListener("orientationchange", this.orientationChangeFunc, false);
+    window.addEventListener('orientationchange', this.orientationChangeFunc, false);
   }
   size(width, height) {
     var bounds;
@@ -36183,11 +36177,11 @@ class Stage {
       bounds = this.element.getBoundingClientRect();
       if (bounds.width) {
         width = Math.floor(bounds.width);
-        this.container.style.width = width + "px";
+        this.container.style.width = width + 'px';
       }
     } else {
       if ((0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(width)) {
-        this.container.style.width = width + "px";
+        this.container.style.width = width + 'px';
       } else {
         this.container.style.width = width;
       }
@@ -36196,11 +36190,11 @@ class Stage {
       bounds = bounds || this.element.getBoundingClientRect();
       if (bounds.height) {
         height = bounds.height;
-        this.container.style.height = height + "px";
+        this.container.style.height = height + 'px';
       }
     } else {
       if ((0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(height)) {
-        this.container.style.height = height + "px";
+        this.container.style.height = height + 'px';
       } else {
         this.container.style.height = height;
       }
@@ -36213,20 +36207,20 @@ class Stage {
     }
     this.containerStyles = window.getComputedStyle(this.container);
     this.containerPadding = {
-      left: parseFloat(this.containerStyles["padding-left"]) || 0,
-      right: parseFloat(this.containerStyles["padding-right"]) || 0,
-      top: parseFloat(this.containerStyles["padding-top"]) || 0,
-      bottom: parseFloat(this.containerStyles["padding-bottom"]) || 0
+      left: parseFloat(this.containerStyles['padding-left']) || 0,
+      right: parseFloat(this.containerStyles['padding-right']) || 0,
+      top: parseFloat(this.containerStyles['padding-top']) || 0,
+      bottom: parseFloat(this.containerStyles['padding-bottom']) || 0
     };
 
     // Bounds not set, get them from window
     let _windowBounds = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.windowBounds)();
     let bodyStyles = window.getComputedStyle(document.body);
     let bodyPadding = {
-      left: parseFloat(bodyStyles["padding-left"]) || 0,
-      right: parseFloat(bodyStyles["padding-right"]) || 0,
-      top: parseFloat(bodyStyles["padding-top"]) || 0,
-      bottom: parseFloat(bodyStyles["padding-bottom"]) || 0
+      left: parseFloat(bodyStyles['padding-left']) || 0,
+      right: parseFloat(bodyStyles['padding-right']) || 0,
+      top: parseFloat(bodyStyles['padding-top']) || 0,
+      bottom: parseFloat(bodyStyles['padding-bottom']) || 0
     };
     if (!_width) {
       width = _windowBounds.width - bodyPadding.left - bodyPadding.right;
@@ -36241,7 +36235,7 @@ class Stage {
   }
   bounds() {
     let box;
-    if (this.container.style.overflow !== "visible") {
+    if (this.container.style.overflow !== 'visible') {
       box = this.container && this.container.getBoundingClientRect();
     }
     if (!box || !box.width || !box.height) {
@@ -36251,35 +36245,35 @@ class Stage {
     }
   }
   getSheet() {
-    var style = document.createElement("style");
+    var style = document.createElement('style');
 
     // WebKit hack --> https://davidwalsh.name/add-rules-stylesheets
-    style.appendChild(document.createTextNode(""));
+    style.appendChild(document.createTextNode(''));
     document.head.appendChild(style);
     return style.sheet;
   }
   addStyleRules(selector, rulesArray) {
-    var scope = "#" + this.id + " ";
-    var rules = "";
+    var scope = '#' + this.id + ' ';
+    var rules = '';
     if (!this.sheet) {
       this.sheet = this.getSheet();
     }
     rulesArray.forEach(function (set) {
       for (var prop in set) {
         if (set.hasOwnProperty(prop)) {
-          rules += prop + ":" + set[prop] + ";";
+          rules += prop + ':' + set[prop] + ';';
         }
       }
     });
-    this.sheet.insertRule(scope + selector + " {" + rules + "}", 0);
+    this.sheet.insertRule(scope + selector + ' {' + rules + '}', 0);
   }
   axis(axis) {
-    if (axis === "horizontal") {
-      this.container.style.display = "flex";
-      this.container.style.flexDirection = "row";
-      this.container.style.flexWrap = "nowrap";
+    if (axis === 'horizontal') {
+      this.container.style.display = 'flex';
+      this.container.style.flexDirection = 'row';
+      this.container.style.flexWrap = 'nowrap';
     } else {
-      this.container.style.display = "block";
+      this.container.style.display = 'block';
     }
     this.settings.axis = axis;
   }
@@ -36297,23 +36291,23 @@ class Stage {
   direction(dir) {
     if (this.container) {
       this.container.dir = dir;
-      this.container.style["direction"] = dir;
+      this.container.style['direction'] = dir;
     }
     if (this.settings.fullsize) {
-      document.body.style["direction"] = dir;
+      document.body.style['direction'] = dir;
     }
     this.settings.dir = dir;
   }
   overflow(overflow) {
     if (this.container) {
-      if (overflow === "scroll" && this.settings.axis === "vertical") {
-        this.container.style["overflow-y"] = overflow;
-        this.container.style["overflow-x"] = "hidden";
-      } else if (overflow === "scroll" && this.settings.axis === "horizontal") {
-        this.container.style["overflow-y"] = "hidden";
-        this.container.style["overflow-x"] = overflow;
+      if (overflow === 'scroll' && this.settings.axis === 'vertical') {
+        this.container.style['overflow-y'] = overflow;
+        this.container.style['overflow-x'] = 'hidden';
+      } else if (overflow === 'scroll' && this.settings.axis === 'horizontal') {
+        this.container.style['overflow-y'] = 'hidden';
+        this.container.style['overflow-x'] = overflow;
       } else {
-        this.container.style["overflow"] = overflow;
+        this.container.style['overflow'] = overflow;
       }
     }
     this.settings.overflow = overflow;
@@ -36329,8 +36323,8 @@ class Stage {
       if (this.element.contains(this.container)) {
         this.element.removeChild(this.container);
       }
-      window.removeEventListener("resize", this.resizeFunc);
-      window.removeEventListener("orientationChange", this.orientationChangeFunc);
+      window.removeEventListener('resize', this.resizeFunc);
+      window.removeEventListener('orientationChange', this.orientationChangeFunc);
     }
   }
 }
@@ -36513,7 +36507,7 @@ __webpack_require__.r(__webpack_exports__);
 class IframeView {
   constructor(section, options) {
     this.settings = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.extend)({
-      ignoreClass: "",
+      ignoreClass: '',
       axis: undefined,
       //options.layout && options.layout.props.flow === "scrolled" ? "vertical" : "horizontal",
       direction: undefined,
@@ -36526,7 +36520,7 @@ class IframeView {
       allowScriptedContent: false,
       allowPopups: false
     }, options || {});
-    this.id = "epubjs-view-" + (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.uuid)();
+    this.id = 'epubjs-view-' + (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.uuid)();
     this.section = section;
     this.index = section.index;
     this.element = this.container(this.settings.axis);
@@ -36552,19 +36546,19 @@ class IframeView {
     this.marks = {};
   }
   container(axis) {
-    var element = document.createElement("div");
-    element.classList.add("epub-view");
+    var element = document.createElement('div');
+    element.classList.add('epub-view');
 
     // this.element.style.minHeight = "100px";
-    element.style.height = "0px";
-    element.style.width = "0px";
-    element.style.overflow = "hidden";
-    element.style.position = "relative";
-    element.style.display = "block";
-    if (axis && axis == "horizontal") {
-      element.style.flex = "none";
+    element.style.height = '0px';
+    element.style.width = '0px';
+    element.style.overflow = 'hidden';
+    element.style.position = 'relative';
+    element.style.display = 'block';
+    if (axis && axis == 'horizontal') {
+      element.style.flex = 'none';
     } else {
-      element.style.flex = "initial";
+      element.style.flex = 'initial';
     }
     return element;
   }
@@ -36575,33 +36569,33 @@ class IframeView {
     if (!this.element) {
       this.element = this.createContainer();
     }
-    this.iframe = document.createElement("iframe");
+    this.iframe = document.createElement('iframe');
     this.iframe.id = this.id;
-    this.iframe.scrolling = "no"; // Might need to be removed: breaks ios width calculations
-    this.iframe.style.overflow = "hidden";
-    this.iframe.seamless = "seamless";
+    this.iframe.scrolling = 'no'; // Might need to be removed: breaks ios width calculations
+    this.iframe.style.overflow = 'hidden';
+    this.iframe.seamless = 'seamless';
     // Back up if seamless isn't supported
-    this.iframe.style.border = "none";
+    this.iframe.style.border = 'none';
 
     // sandbox
-    this.iframe.sandbox = "allow-same-origin";
+    this.iframe.sandbox = 'allow-same-origin';
     if (this.settings.allowScriptedContent) {
-      this.iframe.sandbox += " allow-scripts";
+      this.iframe.sandbox += ' allow-scripts';
     }
     if (this.settings.allowPopups) {
-      this.iframe.sandbox += " allow-popups";
+      this.iframe.sandbox += ' allow-popups';
     }
-    this.iframe.setAttribute("enable-annotation", "true");
+    this.iframe.setAttribute('enable-annotation', 'true');
     this.resizing = true;
 
     // this.iframe.style.display = "none";
-    this.element.style.visibility = "hidden";
-    this.iframe.style.visibility = "hidden";
-    this.iframe.style.width = "0";
-    this.iframe.style.height = "0";
+    this.element.style.visibility = 'hidden';
+    this.iframe.style.visibility = 'hidden';
+    this.iframe.style.width = '0';
+    this.iframe.style.height = '0';
     this._width = 0;
     this._height = 0;
-    this.element.setAttribute("ref", this.index);
+    this.element.setAttribute('ref', this.index);
     this.added = true;
     this.elementBounds = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.bounds)(this.element);
 
@@ -36613,13 +36607,13 @@ class IframeView {
     //   this.iframeBounds = bounds(this.iframe);
     // }
 
-    if ("srcdoc" in this.iframe) {
+    if ('srcdoc' in this.iframe) {
       this.supportsSrcdoc = true;
     } else {
       this.supportsSrcdoc = false;
     }
     if (!this.settings.method) {
-      this.settings.method = this.supportsSrcdoc ? "srcdoc" : "write";
+      this.settings.method = this.supportsSrcdoc ? 'srcdoc' : 'write';
     }
     return this.iframe;
   }
@@ -36642,12 +36636,12 @@ class IframeView {
 
       // Set the axis based on the flow and writing mode
       let axis;
-      if (this.settings.flow === "scrolled") {
-        axis = writingMode.indexOf("vertical") === 0 ? "horizontal" : "vertical";
+      if (this.settings.flow === 'scrolled') {
+        axis = writingMode.indexOf('vertical') === 0 ? 'horizontal' : 'vertical';
       } else {
-        axis = writingMode.indexOf("vertical") === 0 ? "vertical" : "horizontal";
+        axis = writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
       }
-      if (writingMode.indexOf("vertical") === 0 && this.settings.flow === "paginated") {
+      if (writingMode.indexOf('vertical') === 0 && this.settings.flow === 'paginated') {
         this.layout.delta = this.layout.height;
       }
       this.setAxis(axis);
@@ -36664,7 +36658,7 @@ class IframeView {
         // Expand the iframe to the full size of the content
         this.expand();
         if (this.settings.forceRight) {
-          this.element.style.marginLeft = this.width() + "px";
+          this.element.style.marginLeft = this.width() + 'px';
         }
         resolve();
       });
@@ -36679,8 +36673,8 @@ class IframeView {
   }
   reset() {
     if (this.iframe) {
-      this.iframe.style.width = "0";
-      this.iframe.style.height = "0";
+      this.iframe.style.width = '0';
+      this.iframe.style.height = '0';
       this._width = 0;
       this._height = 0;
       this._textWidth = undefined;
@@ -36695,12 +36689,12 @@ class IframeView {
   size(_width, _height) {
     var width = _width || this.settings.width;
     var height = _height || this.settings.height;
-    if (this.layout.name === "pre-paginated") {
-      this.lock("both", width, height);
-    } else if (this.settings.axis === "horizontal") {
-      this.lock("height", width, height);
+    if (this.layout.name === 'pre-paginated') {
+      this.lock('both', width, height);
+    } else if (this.settings.axis === 'horizontal') {
+      this.lock('height', width, height);
     } else {
-      this.lock("width", width, height);
+      this.lock('width', width, height);
     }
     this.settings.width = width;
     this.settings.height = height;
@@ -36718,15 +36712,15 @@ class IframeView {
         height: 0
       };
     }
-    if (what == "width" && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(width)) {
+    if (what == 'width' && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(width)) {
       this.lockedWidth = width - elBorders.width - iframeBorders.width;
       // this.resize(this.lockedWidth, width); //  width keeps ratio correct
     }
-    if (what == "height" && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(height)) {
+    if (what == 'height' && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(height)) {
       this.lockedHeight = height - elBorders.height - iframeBorders.height;
       // this.resize(width, this.lockedHeight);
     }
-    if (what === "both" && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(width) && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(height)) {
+    if (what === 'both' && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(width) && (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(height)) {
       this.lockedWidth = width - elBorders.width - iframeBorders.width;
       this.lockedHeight = height - elBorders.height - iframeBorders.height;
       // this.resize(this.lockedWidth, this.lockedHeight);
@@ -36745,12 +36739,12 @@ class IframeView {
     var textWidth, textHeight;
     if (!this.iframe || this._expanding) return;
     this._expanding = true;
-    if (this.layout.name === "pre-paginated") {
+    if (this.layout.name === 'pre-paginated') {
       width = this.layout.columnWidth;
       height = this.layout.height;
     }
     // Expand Horizontally
-    else if (this.settings.axis === "horizontal") {
+    else if (this.settings.axis === 'horizontal') {
       // Get the width of the text
       width = this.contents.textWidth();
       if (width % this.layout.pageWidth > 0) {
@@ -36758,15 +36752,15 @@ class IframeView {
       }
       if (this.settings.forceEvenPages) {
         columns = width / this.layout.pageWidth;
-        if (this.layout.divisor > 1 && this.layout.name === "reflowable" && columns % 2 > 0) {
+        if (this.layout.divisor > 1 && this.layout.name === 'reflowable' && columns % 2 > 0) {
           // add a blank page
           width += this.layout.pageWidth;
         }
       }
     } // Expand Vertically
-    else if (this.settings.axis === "vertical") {
+    else if (this.settings.axis === 'vertical') {
       height = this.contents.textHeight();
-      if (this.settings.flow === "paginated" && height % this.layout.height > 0) {
+      if (this.settings.flow === 'paginated' && height % this.layout.height > 0) {
         height = Math.ceil(height / this.layout.height) * this.layout.height;
       }
     }
@@ -36781,13 +36775,13 @@ class IframeView {
   reframe(width, height) {
     var size;
     if ((0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(width)) {
-      this.element.style.width = width + "px";
-      this.iframe.style.width = width + "px";
+      this.element.style.width = width + 'px';
+      this.iframe.style.width = width + 'px';
       this._width = width;
     }
     if ((0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.isNumber)(height)) {
-      this.element.style.height = height + "px";
-      this.iframe.style.height = height + "px";
+      this.element.style.height = height + 'px';
+      this.iframe.style.height = height + 'px';
       this._height = height;
     }
     let widthDelta = this.prevBounds ? width - this.prevBounds.width : width;
@@ -36817,24 +36811,24 @@ class IframeView {
     var loading = new _utils_core__WEBPACK_IMPORTED_MODULE_1__.defer();
     var loaded = loading.promise;
     if (!this.iframe) {
-      loading.reject(new Error("No Iframe Available"));
+      loading.reject(new Error('No Iframe Available'));
       return loaded;
     }
     this.iframe.onload = function (event) {
       this.onLoad(event, loading);
     }.bind(this);
-    if (this.settings.method === "blobUrl") {
-      this.blobUrl = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.createBlobUrl)(contents, "application/xhtml+xml");
+    if (this.settings.method === 'blobUrl') {
+      this.blobUrl = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.createBlobUrl)(contents, 'application/xhtml+xml');
       this.iframe.src = this.blobUrl;
       this.element.appendChild(this.iframe);
-    } else if (this.settings.method === "srcdoc") {
+    } else if (this.settings.method === 'srcdoc') {
       this.iframe.srcdoc = contents;
       this.element.appendChild(this.iframe);
     } else {
       this.element.appendChild(this.iframe);
       this.document = this.iframe.contentDocument;
       if (!this.document) {
-        loading.reject(new Error("No Document Available"));
+        loading.reject(new Error('No Document Available'));
         return loaded;
       }
       this.iframe.contentDocument.open();
@@ -36856,14 +36850,14 @@ class IframeView {
     this.document = this.iframe.contentDocument;
     this.contents = new _contents__WEBPACK_IMPORTED_MODULE_3__["default"](this.document, this.document.body, this.section.cfiBase, this.section.index);
     this.rendering = false;
-    var link = this.document.querySelector("link[rel='canonical']");
+    var link = this.document.querySelector('link[rel=\'canonical\']');
     if (link) {
-      link.setAttribute("href", this.section.canonical);
+      link.setAttribute('href', this.section.canonical);
     } else {
-      link = this.document.createElement("link");
-      link.setAttribute("rel", "canonical");
-      link.setAttribute("href", this.section.canonical);
-      this.document.querySelector("head").appendChild(link);
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      link.setAttribute('href', this.section.canonical);
+      this.document.querySelector('head').appendChild(link);
     }
     this.contents.on(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.CONTENTS.EXPAND, () => {
       if (this.displayed && this.iframe) {
@@ -36892,10 +36886,10 @@ class IframeView {
   }
   setAxis(axis) {
     this.settings.axis = axis;
-    if (axis == "horizontal") {
-      this.element.style.flex = "none";
+    if (axis == 'horizontal') {
+      this.element.style.flex = 'none';
     } else {
-      this.element.style.flex = "initial";
+      this.element.style.flex = 'initial';
     }
     this.size();
   }
@@ -36926,12 +36920,12 @@ class IframeView {
     return displayed.promise;
   }
   show() {
-    this.element.style.visibility = "visible";
+    this.element.style.visibility = 'visible';
     if (this.iframe) {
-      this.iframe.style.visibility = "visible";
+      this.iframe.style.visibility = 'visible';
 
       // Remind Safari to redraw the iframe
-      this.iframe.style.transform = "translateZ(0)";
+      this.iframe.style.transform = 'translateZ(0)';
       this.iframe.offsetWidth;
       this.iframe.style.transform = null;
     }
@@ -36939,8 +36933,8 @@ class IframeView {
   }
   hide() {
     // this.iframe.style.display = "none";
-    this.element.style.visibility = "hidden";
-    this.iframe.style.visibility = "hidden";
+    this.element.style.visibility = 'hidden';
+    this.iframe.style.visibility = 'hidden';
     this.stopExpanding = true;
     this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.VIEWS.HIDDEN, this);
   }
@@ -36963,8 +36957,8 @@ class IframeView {
     var parentPos = this.iframe.getBoundingClientRect();
     var targetPos = this.contents.locationOf(target, this.settings.ignoreClass);
     return {
-      "left": targetPos.left,
-      "top": targetPos.top
+      left: targetPos.left,
+      top: targetPos.top
     };
   }
   onDisplayed(view) {
@@ -36979,69 +36973,69 @@ class IframeView {
     }
     return this.elementBounds;
   }
-  highlight(cfiRange, data = {}, cb, className = "epubjs-hl", styles = {}) {
+  highlight(cfiRange, data = {}, cb, className = 'epubjs-hl', styles = {}) {
     if (!this.contents) {
       return;
     }
     const attributes = Object.assign({
-      "fill": "yellow",
-      "fill-opacity": "0.3",
-      "mix-blend-mode": "multiply"
+      fill: 'yellow',
+      'fill-opacity': '0.3',
+      'mix-blend-mode': 'multiply'
     }, styles);
     let range = this.contents.range(cfiRange);
     let emitter = () => {
       this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
     };
-    data["epubcfi"] = cfiRange;
+    data['epubcfi'] = cfiRange;
     if (!this.pane) {
       this.pane = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Pane(this.iframe, this.element);
     }
     let m = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Highlight(range, className, data, attributes);
     let h = this.pane.addMark(m);
     this.highlights[cfiRange] = {
-      "mark": h,
-      "element": h.element,
-      "listeners": [emitter, cb]
+      mark: h,
+      element: h.element,
+      listeners: [emitter, cb]
     };
-    h.element.setAttribute("ref", className);
-    h.element.addEventListener("click", emitter);
-    h.element.addEventListener("touchstart", emitter);
+    h.element.setAttribute('ref', className);
+    h.element.addEventListener('click', emitter);
+    h.element.addEventListener('touchstart', emitter);
     if (cb) {
-      h.element.addEventListener("click", cb);
-      h.element.addEventListener("touchstart", cb);
+      h.element.addEventListener('click', cb);
+      h.element.addEventListener('touchstart', cb);
     }
     return h;
   }
-  underline(cfiRange, data = {}, cb, className = "epubjs-ul", styles = {}) {
+  underline(cfiRange, data = {}, cb, className = 'epubjs-ul', styles = {}) {
     if (!this.contents) {
       return;
     }
     const attributes = Object.assign({
-      "stroke": "black",
-      "stroke-opacity": "0.3",
-      "mix-blend-mode": "multiply"
+      stroke: 'black',
+      'stroke-opacity': '0.3',
+      'mix-blend-mode': 'multiply'
     }, styles);
     let range = this.contents.range(cfiRange);
     let emitter = () => {
       this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
     };
-    data["epubcfi"] = cfiRange;
+    data['epubcfi'] = cfiRange;
     if (!this.pane) {
       this.pane = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Pane(this.iframe, this.element);
     }
     let m = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Underline(range, className, data, attributes);
     let h = this.pane.addMark(m);
     this.underlines[cfiRange] = {
-      "mark": h,
-      "element": h.element,
-      "listeners": [emitter, cb]
+      mark: h,
+      element: h.element,
+      listeners: [emitter, cb]
     };
-    h.element.setAttribute("ref", className);
-    h.element.addEventListener("click", emitter);
-    h.element.addEventListener("touchstart", emitter);
+    h.element.setAttribute('ref', className);
+    h.element.addEventListener('click', emitter);
+    h.element.addEventListener('touchstart', emitter);
     if (cb) {
-      h.element.addEventListener("click", cb);
-      h.element.addEventListener("touchstart", cb);
+      h.element.addEventListener('click', cb);
+      h.element.addEventListener('touchstart', cb);
     }
     return h;
   }
@@ -37070,33 +37064,33 @@ class IframeView {
       range = new Range();
       range.selectNodeContents(parent);
     }
-    let mark = this.document.createElement("a");
-    mark.setAttribute("ref", "epubjs-mk");
-    mark.style.position = "absolute";
-    mark.dataset["epubcfi"] = cfiRange;
+    let mark = this.document.createElement('a');
+    mark.setAttribute('ref', 'epubjs-mk');
+    mark.style.position = 'absolute';
+    mark.dataset['epubcfi'] = cfiRange;
     if (data) {
       Object.keys(data).forEach(key => {
         mark.dataset[key] = data[key];
       });
     }
     if (cb) {
-      mark.addEventListener("click", cb);
-      mark.addEventListener("touchstart", cb);
+      mark.addEventListener('click', cb);
+      mark.addEventListener('touchstart', cb);
     }
-    mark.addEventListener("click", emitter);
-    mark.addEventListener("touchstart", emitter);
+    mark.addEventListener('click', emitter);
+    mark.addEventListener('touchstart', emitter);
     this.placeMark(mark, range);
     this.element.appendChild(mark);
     this.marks[cfiRange] = {
-      "element": mark,
-      "range": range,
-      "listeners": [emitter, cb]
+      element: mark,
+      range: range,
+      listeners: [emitter, cb]
     };
     return parent;
   }
   placeMark(element, range) {
     let top, right, left;
-    if (this.layout.name === "pre-paginated" || this.settings.axis !== "horizontal") {
+    if (this.layout.name === 'pre-paginated' || this.settings.axis !== 'horizontal') {
       let pos = range.getBoundingClientRect();
       top = pos.top;
       right = pos.right;
@@ -37124,10 +37118,9 @@ class IframeView {
       this.pane.removeMark(item.mark);
       item.listeners.forEach(l => {
         if (l) {
-          item.element.removeEventListener("click", l);
-          item.element.removeEventListener("touchstart", l);
+          item.element.removeEventListener('click', l);
+          item.element.removeEventListener('touchstart', l);
         }
-        ;
       });
       delete this.highlights[cfiRange];
     }
@@ -37139,10 +37132,9 @@ class IframeView {
       this.pane.removeMark(item.mark);
       item.listeners.forEach(l => {
         if (l) {
-          item.element.removeEventListener("click", l);
-          item.element.removeEventListener("touchstart", l);
+          item.element.removeEventListener('click', l);
+          item.element.removeEventListener('touchstart', l);
         }
-        ;
       });
       delete this.underlines[cfiRange];
     }
@@ -37154,10 +37146,9 @@ class IframeView {
       this.element.removeChild(item.element);
       item.listeners.forEach(l => {
         if (l) {
-          item.element.removeEventListener("click", l);
-          item.element.removeEventListener("touchstart", l);
+          item.element.removeEventListener('click', l);
+          item.element.removeEventListener('touchstart', l);
         }
-        ;
       });
       delete this.marks[cfiRange];
     }
@@ -37229,8 +37220,8 @@ __webpack_require__.r(__webpack_exports__);
 class Mapping {
   constructor(layout, direction, axis, dev = false) {
     this.layout = layout;
-    this.horizontal = axis === "horizontal" ? true : false;
-    this.direction = direction || "ltr";
+    this.horizontal = axis === 'horizontal' ? true : false;
+    this.direction = direction || 'ltr';
     this._dev = dev;
   }
 
@@ -37347,9 +37338,8 @@ class Mapping {
       found = this.walk($el, node => {
         var left, right, top, bottom;
         var elPos;
-        var elRange;
         elPos = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.nodeBounds)(node);
-        if (this.horizontal && this.direction === "ltr") {
+        if (this.horizontal && this.direction === 'ltr') {
           left = this.horizontal ? elPos.left : elPos.top;
           right = this.horizontal ? elPos.right : elPos.bottom;
           if (left >= start && left <= end) {
@@ -37360,7 +37350,7 @@ class Mapping {
             $prev = node;
             stack.push(node);
           }
-        } else if (this.horizontal && this.direction === "rtl") {
+        } else if (this.horizontal && this.direction === 'rtl') {
           left = elPos.left;
           right = elPos.right;
           if (right <= end && right >= start) {
@@ -37411,9 +37401,8 @@ class Mapping {
       found = this.walk($el, node => {
         var left, right, top, bottom;
         var elPos;
-        var elRange;
         elPos = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.nodeBounds)(node);
-        if (this.horizontal && this.direction === "ltr") {
+        if (this.horizontal && this.direction === 'ltr') {
           left = Math.round(elPos.left);
           right = Math.round(elPos.right);
           if (left > end && $prev) {
@@ -37424,7 +37413,7 @@ class Mapping {
             $prev = node;
             stack.push(node);
           }
-        } else if (this.horizontal && this.direction === "rtl") {
+        } else if (this.horizontal && this.direction === 'rtl') {
           left = Math.round(this.horizontal ? elPos.left : elPos.top);
           right = Math.round(this.horizontal ? elPos.right : elPos.bottom);
           if (right < start && $prev) {
@@ -37473,12 +37462,12 @@ class Mapping {
     for (var i = 0; i < ranges.length; i++) {
       range = ranges[i];
       pos = range.getBoundingClientRect();
-      if (this.horizontal && this.direction === "ltr") {
+      if (this.horizontal && this.direction === 'ltr') {
         left = pos.left;
         if (left >= start) {
           return range;
         }
-      } else if (this.horizontal && this.direction === "rtl") {
+      } else if (this.horizontal && this.direction === 'rtl') {
         right = pos.right;
         if (right <= end) {
           return range;
@@ -37512,7 +37501,7 @@ class Mapping {
     for (var i = 0; i < ranges.length; i++) {
       range = ranges[i];
       pos = range.getBoundingClientRect();
-      if (this.horizontal && this.direction === "ltr") {
+      if (this.horizontal && this.direction === 'ltr') {
         left = pos.left;
         right = pos.right;
         if (left > end && prev) {
@@ -37520,7 +37509,7 @@ class Mapping {
         } else if (right > end) {
           return range;
         }
-      } else if (this.horizontal && this.direction === "rtl") {
+      } else if (this.horizontal && this.direction === 'rtl') {
         left = pos.left;
         right = pos.right;
         if (right < start && prev) {
@@ -37553,11 +37542,11 @@ class Mapping {
    */
   splitTextNodeIntoRanges(node, _splitter) {
     var ranges = [];
-    var textContent = node.textContent || "";
+    var textContent = node.textContent || '';
     var text = textContent.trim();
     var range;
     var doc = node.ownerDocument;
-    var splitter = _splitter || " ";
+    var splitter = _splitter || ' ';
     var pos = text.indexOf(splitter);
     if (pos === -1 || node.nodeType != Node.TEXT_NODE) {
       range = doc.createRange();
@@ -37623,7 +37612,7 @@ class Mapping {
    */
   axis(axis) {
     if (axis) {
-      this.horizontal = axis === "horizontal" ? true : false;
+      this.horizontal = axis === 'horizontal' ? true : false;
     }
     return this.horizontal;
   }
@@ -37672,8 +37661,8 @@ class Navigation {
     let html;
     let ncx;
     if (isXml) {
-      html = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(xml, "html");
-      ncx = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(xml, "ncx");
+      html = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(xml, 'html');
+      ncx = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(xml, 'ncx');
     }
     if (!isXml) {
       this.toc = this.load(xml);
@@ -37719,7 +37708,7 @@ class Navigation {
     if (!target) {
       return this.toc;
     }
-    if (target.indexOf("#") === 0) {
+    if (target.indexOf('#') === 0) {
       index = this.tocById[target.substring(1)];
     } else if (target in this.tocByHref) {
       index = this.tocByHref[target];
@@ -37775,10 +37764,10 @@ class Navigation {
    * @return {array} navigation list
    */
   parseNav(navHtml) {
-    var navElement = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.querySelectorByType)(navHtml, "nav", "toc");
+    var navElement = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.querySelectorByType)(navHtml, 'nav', 'toc');
     var list = [];
     if (!navElement) return list;
-    let navList = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(navElement, "ol", true);
+    let navList = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(navElement, 'ol', true);
     if (!navList) return list;
     list = this.parseNavList(navList);
     return list;
@@ -37810,27 +37799,27 @@ class Navigation {
    * @return {object} navItem
    */
   navItem(item, parent) {
-    let id = item.getAttribute("id") || undefined;
-    let content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, "a", true) || (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, "span", true);
+    let id = item.getAttribute('id') || undefined;
+    let content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, 'a', true) || (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, 'span', true);
     if (!content) {
       return;
     }
-    let src = content.getAttribute("href") || "";
+    let src = content.getAttribute('href') || '';
     if (!id) {
       id = src;
     }
-    let text = content.textContent || "";
+    let text = content.textContent || '';
     let subitems = [];
-    let nested = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, "ol", true);
+    let nested = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, 'ol', true);
     if (nested) {
       subitems = this.parseNavList(nested, id);
     }
     return {
-      "id": id,
-      "href": src,
-      "label": text,
-      "subitems": subitems,
-      "parent": parent
+      id: id,
+      href: src,
+      label: text,
+      subitems: subitems,
+      parent: parent
     };
   }
 
@@ -37841,8 +37830,8 @@ class Navigation {
    * @return {array} landmarks list
    */
   parseLandmarks(navHtml) {
-    var navElement = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.querySelectorByType)(navHtml, "nav", "landmarks");
-    var navItems = navElement ? (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(navElement, "li") : [];
+    var navElement = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.querySelectorByType)(navHtml, 'nav', 'landmarks');
+    var navItems = navElement ? (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(navElement, 'li') : [];
     var length = navItems.length;
     var i;
     var list = [];
@@ -37865,17 +37854,17 @@ class Navigation {
    * @return {object} landmarkItem
    */
   landmarkItem(item) {
-    let content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, "a", true);
+    let content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.filterChildren)(item, 'a', true);
     if (!content) {
       return;
     }
-    let type = content.getAttributeNS("http://www.idpf.org/2007/ops", "type") || undefined;
-    let href = content.getAttribute("href") || "";
-    let text = content.textContent || "";
+    let type = content.getAttributeNS('http://www.idpf.org/2007/ops', 'type') || undefined;
+    let href = content.getAttribute('href') || '';
+    let text = content.textContent || '';
     return {
-      "href": href,
-      "label": text,
-      "type": type
+      href: href,
+      label: text,
+      type: type
     };
   }
 
@@ -37886,7 +37875,7 @@ class Navigation {
    * @return {array} navigation list
    */
   parseNcx(tocXml) {
-    var navPoints = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(tocXml, "navPoint");
+    var navPoints = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(tocXml, 'navPoint');
     var length = navPoints.length;
     var i;
     var toc = {};
@@ -37913,23 +37902,23 @@ class Navigation {
    * @return {object} ncxItem
    */
   ncxItem(item) {
-    var id = item.getAttribute("id") || false,
-      content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(item, "content"),
-      src = content.getAttribute("src"),
-      navLabel = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(item, "navLabel"),
-      text = navLabel.textContent ? navLabel.textContent : "",
+    var id = item.getAttribute('id') || false,
+      content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(item, 'content'),
+      src = content.getAttribute('src'),
+      navLabel = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(item, 'navLabel'),
+      text = navLabel.textContent ? navLabel.textContent : '',
       subitems = [],
       parentNode = item.parentNode,
       parent;
-    if (parentNode && (parentNode.nodeName === "navPoint" || parentNode.nodeName.split(':').slice(-1)[0] === "navPoint")) {
-      parent = parentNode.getAttribute("id");
+    if (parentNode && (parentNode.nodeName === 'navPoint' || parentNode.nodeName.split(':').slice(-1)[0] === 'navPoint')) {
+      parent = parentNode.getAttribute('id');
     }
     return {
-      "id": id,
-      "href": src,
-      "label": text,
-      "subitems": subitems,
-      "parent": parent
+      id: id,
+      href: src,
+      label: text,
+      subitems: subitems,
+      parent: parent
     };
   }
 
@@ -38000,19 +37989,19 @@ class Packaging {
   parse(packageDocument) {
     var metadataNode, manifestNode, spineNode;
     if (!packageDocument) {
-      throw new Error("Package File Not Found");
+      throw new Error('Package File Not Found');
     }
-    metadataNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageDocument, "metadata");
+    metadataNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageDocument, 'metadata');
     if (!metadataNode) {
-      throw new Error("No Metadata Found");
+      throw new Error('No Metadata Found');
     }
-    manifestNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageDocument, "manifest");
+    manifestNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageDocument, 'manifest');
     if (!manifestNode) {
-      throw new Error("No Manifest Found");
+      throw new Error('No Manifest Found');
     }
-    spineNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageDocument, "spine");
+    spineNode = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageDocument, 'spine');
     if (!spineNode) {
-      throw new Error("No Spine Found");
+      throw new Error('No Spine Found');
     }
     this.manifest = this.parseManifest(manifestNode);
     this.navPath = this.findNavPath(manifestNode);
@@ -38022,15 +38011,15 @@ class Packaging {
     this.spine = this.parseSpine(spineNode, this.manifest);
     this.uniqueIdentifier = this.findUniqueIdentifier(packageDocument);
     this.metadata = this.parseMetadata(metadataNode);
-    this.metadata.direction = spineNode.getAttribute("page-progression-direction");
+    this.metadata.direction = spineNode.getAttribute('page-progression-direction');
     return {
-      "metadata": this.metadata,
-      "spine": this.spine,
-      "manifest": this.manifest,
-      "navPath": this.navPath,
-      "ncxPath": this.ncxPath,
-      "coverPath": this.coverPath,
-      "spineNodeIndex": this.spineNodeIndex
+      metadata: this.metadata,
+      spine: this.spine,
+      manifest: this.manifest,
+      navPath: this.navPath,
+      ncxPath: this.ncxPath,
+      coverPath: this.coverPath,
+      spineNodeIndex: this.spineNodeIndex
     };
   }
 
@@ -38042,21 +38031,21 @@ class Packaging {
    */
   parseMetadata(xml) {
     var metadata = {};
-    metadata.title = this.getElementText(xml, "title");
-    metadata.creator = this.getElementText(xml, "creator");
-    metadata.description = this.getElementText(xml, "description");
-    metadata.pubdate = this.getElementText(xml, "date");
-    metadata.publisher = this.getElementText(xml, "publisher");
-    metadata.identifier = this.getElementText(xml, "identifier");
-    metadata.language = this.getElementText(xml, "language");
-    metadata.rights = this.getElementText(xml, "rights");
-    metadata.modified_date = this.getPropertyText(xml, "dcterms:modified");
-    metadata.layout = this.getPropertyText(xml, "rendition:layout");
-    metadata.orientation = this.getPropertyText(xml, "rendition:orientation");
-    metadata.flow = this.getPropertyText(xml, "rendition:flow");
-    metadata.viewport = this.getPropertyText(xml, "rendition:viewport");
-    metadata.media_active_class = this.getPropertyText(xml, "media:active-class");
-    metadata.spread = this.getPropertyText(xml, "rendition:spread");
+    metadata.title = this.getElementText(xml, 'title');
+    metadata.creator = this.getElementText(xml, 'creator');
+    metadata.description = this.getElementText(xml, 'description');
+    metadata.pubdate = this.getElementText(xml, 'date');
+    metadata.publisher = this.getElementText(xml, 'publisher');
+    metadata.identifier = this.getElementText(xml, 'identifier');
+    metadata.language = this.getElementText(xml, 'language');
+    metadata.rights = this.getElementText(xml, 'rights');
+    metadata.modified_date = this.getPropertyText(xml, 'dcterms:modified');
+    metadata.layout = this.getPropertyText(xml, 'rendition:layout');
+    metadata.orientation = this.getPropertyText(xml, 'rendition:orientation');
+    metadata.flow = this.getPropertyText(xml, 'rendition:flow');
+    metadata.viewport = this.getPropertyText(xml, 'rendition:viewport');
+    metadata.media_active_class = this.getPropertyText(xml, 'media:active-class');
+    metadata.spread = this.getPropertyText(xml, 'rendition:spread');
     // metadata.page_prog_dir = packageXml.querySelector("spine").getAttribute("page-progression-direction");
 
     return metadata;
@@ -38073,22 +38062,22 @@ class Packaging {
 
     //-- Turn items into an array
     // var selected = manifestXml.querySelectorAll("item");
-    var selected = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(manifestXml, "item");
+    var selected = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(manifestXml, 'item');
     var items = Array.prototype.slice.call(selected);
 
     //-- Create an object with the id as key
     items.forEach(function (item) {
-      var id = item.getAttribute("id"),
-        href = item.getAttribute("href") || "",
-        type = item.getAttribute("media-type") || "",
-        overlay = item.getAttribute("media-overlay") || "",
-        properties = item.getAttribute("properties") || "";
+      var id = item.getAttribute('id'),
+        href = item.getAttribute('href') || '',
+        type = item.getAttribute('media-type') || '',
+        overlay = item.getAttribute('media-overlay') || '',
+        properties = item.getAttribute('properties') || '';
       manifest[id] = {
-        "href": href,
+        href: href,
         // "url" : href,
-        "type": type,
-        "overlay": overlay,
-        "properties": properties.length ? properties.split(" ") : []
+        type: type,
+        overlay: overlay,
+        properties: properties.length ? properties.split(' ') : []
       };
     });
     return manifest;
@@ -38103,28 +38092,28 @@ class Packaging {
    */
   parseSpine(spineXml, manifest) {
     var spine = [];
-    var selected = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(spineXml, "itemref");
+    var selected = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(spineXml, 'itemref');
     var items = Array.prototype.slice.call(selected);
 
     // var epubcfi = new EpubCFI();
 
     //-- Add to array to maintain ordering and cross reference with manifest
     items.forEach(function (item, index) {
-      var idref = item.getAttribute("idref");
+      var idref = item.getAttribute('idref');
       // var cfiBase = epubcfi.generateChapterComponent(spineNodeIndex, index, Id);
-      var props = item.getAttribute("properties") || "";
-      var propArray = props.length ? props.split(" ") : [];
+      var props = item.getAttribute('properties') || '';
+      var propArray = props.length ? props.split(' ') : [];
       // var manifestProps = manifest[Id].properties;
       // var manifestPropArray = manifestProps.length ? manifestProps.split(" ") : [];
 
       var itemref = {
-        "id": item.getAttribute("id"),
-        "idref": idref,
-        "linear": item.getAttribute("linear") || "yes",
-        "properties": propArray,
+        id: item.getAttribute('id'),
+        idref: idref,
+        linear: item.getAttribute('linear') || 'yes',
+        properties: propArray,
         // "href" : manifest[Id].href,
         // "url" :  manifest[Id].url,
-        "index": index
+        index: index
         // "cfiBase" : cfiBase
       };
       spine.push(itemref);
@@ -38139,18 +38128,18 @@ class Packaging {
    * @return {string} Unique Identifier text
    */
   findUniqueIdentifier(packageXml) {
-    var uniqueIdentifierId = packageXml.documentElement.getAttribute("unique-identifier");
+    var uniqueIdentifierId = packageXml.documentElement.getAttribute('unique-identifier');
     if (!uniqueIdentifierId) {
-      return "";
+      return '';
     }
     var identifier = packageXml.getElementById(uniqueIdentifierId);
     if (!identifier) {
-      return "";
+      return '';
     }
-    if (identifier.localName === "identifier" && identifier.namespaceURI === "http://purl.org/dc/elements/1.1/") {
-      return identifier.childNodes.length > 0 ? identifier.childNodes[0].nodeValue.trim() : "";
+    if (identifier.localName === 'identifier' && identifier.namespaceURI === 'http://purl.org/dc/elements/1.1/') {
+      return identifier.childNodes.length > 0 ? identifier.childNodes[0].nodeValue.trim() : '';
     }
-    return "";
+    return '';
   }
 
   /**
@@ -38163,10 +38152,10 @@ class Packaging {
     // Find item with property "nav"
     // Should catch nav regardless of order
     // var node = manifestNode.querySelector("item[properties$='nav'], item[properties^='nav '], item[properties*=' nav ']");
-    var node = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(manifestNode, "item", {
-      "properties": "nav"
+    var node = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(manifestNode, 'item', {
+      properties: 'nav'
     });
-    return node ? node.getAttribute("href") : false;
+    return node ? node.getAttribute('href') : false;
   }
 
   /**
@@ -38179,8 +38168,8 @@ class Packaging {
    */
   findNcxPath(manifestNode, spineNode) {
     // var node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
-    var node = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(manifestNode, "item", {
-      "media-type": "application/x-dtbncx+xml"
+    var node = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(manifestNode, 'item', {
+      'media-type': 'application/x-dtbncx+xml'
     });
     var tocId;
 
@@ -38188,13 +38177,13 @@ class Packaging {
     // according to http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.4.1.2,
     // "The item that describes the NCX must be referenced by the spine toc attribute."
     if (!node) {
-      tocId = spineNode.getAttribute("toc");
+      tocId = spineNode.getAttribute('toc');
       if (tocId) {
         // node = manifestNode.querySelector("item[id='" + tocId + "']");
         node = manifestNode.querySelector(`#${tocId}`);
       }
     }
-    return node ? node.getAttribute("href") : false;
+    return node ? node.getAttribute('href') : false;
   }
 
   /**
@@ -38206,25 +38195,25 @@ class Packaging {
    * @return {string} href
    */
   findCoverPath(packageXml) {
-    var pkg = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageXml, "package");
-    var epubVersion = pkg.getAttribute("version");
+    var pkg = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageXml, 'package');
+    var epubVersion = pkg.getAttribute('version');
 
     // Try parsing cover with epub 3.
     // var node = packageXml.querySelector("item[properties='cover-image']");
-    var node = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(packageXml, "item", {
-      "properties": "cover-image"
+    var node = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(packageXml, 'item', {
+      properties: 'cover-image'
     });
-    if (node) return node.getAttribute("href");
+    if (node) return node.getAttribute('href');
 
     // Fallback to epub 2.
-    var metaCover = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(packageXml, "meta", {
-      "name": "cover"
+    var metaCover = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(packageXml, 'meta', {
+      name: 'cover'
     });
     if (metaCover) {
-      var coverId = metaCover.getAttribute("content");
+      var coverId = metaCover.getAttribute('content');
       // var cover = packageXml.querySelector("item[id='" + coverId + "']");
       var cover = packageXml.getElementById(coverId);
-      return cover ? cover.getAttribute("href") : "";
+      return cover ? cover.getAttribute('href') : '';
     } else {
       return false;
     }
@@ -38238,14 +38227,14 @@ class Packaging {
    * @return {string} text
    */
   getElementText(xml, tag) {
-    var found = xml.getElementsByTagNameNS("http://purl.org/dc/elements/1.1/", tag);
+    var found = xml.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', tag);
     var el;
-    if (!found || found.length === 0) return "";
+    if (!found || found.length === 0) return '';
     el = found[0];
     if (el.childNodes.length) {
       return el.childNodes[0].nodeValue;
     }
-    return "";
+    return '';
   }
 
   /**
@@ -38256,13 +38245,13 @@ class Packaging {
    * @return {string} text
    */
   getPropertyText(xml, property) {
-    var el = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(xml, "meta", {
-      "property": property
+    var el = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsp)(xml, 'meta', {
+      property: property
     });
     if (el && el.childNodes.length) {
       return el.childNodes[0].nodeValue;
     }
-    return "";
+    return '';
   }
 
   /**
@@ -38275,12 +38264,12 @@ class Packaging {
     let spine = json.readingOrder || json.spine;
     this.spine = spine.map((item, index) => {
       item.index = index;
-      item.linear = item.linear || "yes";
+      item.linear = item.linear || 'yes';
       return item;
     });
     json.resources.forEach((item, index) => {
       this.manifest[index] = item;
-      if (item.rel && item.rel[0] === "cover") {
+      if (item.rel && item.rel[0] === 'cover') {
         this.coverPath = item.href;
       }
     });
@@ -38290,14 +38279,14 @@ class Packaging {
       return item;
     });
     return {
-      "metadata": this.metadata,
-      "spine": this.spine,
-      "manifest": this.manifest,
-      "navPath": this.navPath,
-      "ncxPath": this.ncxPath,
-      "coverPath": this.coverPath,
-      "spineNodeIndex": this.spineNodeIndex,
-      "toc": this.toc
+      metadata: this.metadata,
+      spine: this.spine,
+      manifest: this.manifest,
+      navPath: this.navPath,
+      ncxPath: this.ncxPath,
+      coverPath: this.coverPath,
+      spineNodeIndex: this.spineNodeIndex,
+      toc: this.toc
     };
   }
   destroy() {
@@ -38357,8 +38346,8 @@ class PageList {
    * @param  {document} xml
    */
   parse(xml) {
-    var html = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(xml, "html");
-    var ncx = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(xml, "ncx");
+    var html = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(xml, 'html');
+    var ncx = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(xml, 'ncx');
     if (html) {
       return this.parseNav(xml);
     } else if (ncx) {
@@ -38373,8 +38362,8 @@ class PageList {
    * @return {PageList.item[]} list
    */
   parseNav(navHtml) {
-    var navElement = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.querySelectorByType)(navHtml, "nav", "page-list");
-    var navItems = navElement ? (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qsa)(navElement, "li") : [];
+    var navElement = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.querySelectorByType)(navHtml, 'nav', 'page-list');
+    var navItems = navElement ? (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qsa)(navElement, 'li') : [];
     var length = navItems.length;
     var i;
     var list = [];
@@ -38393,9 +38382,9 @@ class PageList {
     var pageList;
     var pageTargets;
     var length = 0;
-    pageList = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(navXml, "pageList");
+    pageList = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(navXml, 'pageList');
     if (!pageList) return list;
-    pageTargets = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qsa)(pageList, "pageTarget");
+    pageTargets = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qsa)(pageList, 'pageTarget');
     length = pageTargets.length;
     if (!pageTargets || pageTargets.length === 0) {
       return list;
@@ -38407,15 +38396,15 @@ class PageList {
     return list;
   }
   ncxItem(item) {
-    var navLabel = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(item, "navLabel");
-    var navLabelText = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(navLabel, "text");
+    var navLabel = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(item, 'navLabel');
+    var navLabelText = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(navLabel, 'text');
     var pageText = navLabelText.textContent;
-    var content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(item, "content");
-    var href = content.getAttribute("src");
+    var content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(item, 'content');
+    var href = content.getAttribute('src');
     var page = parseInt(pageText, 10);
     return {
-      "href": href,
-      "page": page
+      href: href,
+      page: page
     };
   }
 
@@ -38426,28 +38415,28 @@ class PageList {
    * @return {object} pageListItem
    */
   item(item) {
-    var content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(item, "a"),
-      href = content.getAttribute("href") || "",
-      text = content.textContent || "",
+    var content = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.qs)(item, 'a'),
+      href = content.getAttribute('href') || '',
+      text = content.textContent || '',
       page = parseInt(text),
-      isCfi = href.indexOf("epubcfi"),
+      isCfi = href.indexOf('epubcfi'),
       split,
       packageUrl,
       cfi;
     if (isCfi != -1) {
-      split = href.split("#");
+      split = href.split('#');
       packageUrl = split[0];
       cfi = split.length > 1 ? split[1] : false;
       return {
-        "cfi": cfi,
-        "href": href,
-        "packageUrl": packageUrl,
-        "page": page
+        cfi: cfi,
+        href: href,
+        packageUrl: packageUrl,
+        page: page
       };
     } else {
       return {
-        "href": href,
-        "page": page
+        href: href,
+        page: page
       };
     }
   }
@@ -38514,7 +38503,7 @@ class PageList {
   cfiFromPage(pg) {
     var cfi = -1;
     // check that pg is an int
-    if (typeof pg != "number") {
+    if (typeof pg != 'number') {
       pg = parseInt(pg);
     }
 
@@ -38647,9 +38636,9 @@ class Rendition {
     this.settings = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.extend)(this.settings || {}, {
       width: null,
       height: null,
-      ignoreClass: "",
-      manager: "default",
-      view: "iframe",
+      ignoreClass: '',
+      manager: 'default',
+      view: 'iframe',
       flow: null,
       layout: null,
       spread: null,
@@ -38658,12 +38647,12 @@ class Rendition {
       resizeOnOrientationChange: true,
       script: null,
       snap: false,
-      defaultDirection: "ltr",
+      defaultDirection: 'ltr',
       allowScriptedContent: false,
       allowPopups: false
     });
     (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.extend)(this.settings, options);
-    if (typeof this.settings.manager === "object") {
+    if (typeof this.settings.manager === 'object') {
       this.manager = this.settings.manager;
     }
     this.book = book;
@@ -38765,9 +38754,9 @@ class Rendition {
     var viewManager;
 
     // If manager is a string, try to load from imported managers
-    if (typeof manager === "string" && manager === "default") {
+    if (typeof manager === 'string' && manager === 'default') {
       viewManager = _managers_default_index__WEBPACK_IMPORTED_MODULE_11__["default"];
-    } else if (typeof manager === "string" && manager === "continuous") {
+    } else if (typeof manager === 'string' && manager === 'continuous') {
       viewManager = _managers_continuous_index__WEBPACK_IMPORTED_MODULE_12__["default"];
     } else {
       // otherwise, assume we were passed a class function
@@ -38785,7 +38774,7 @@ class Rendition {
     var View;
 
     // If view is a string, try to load from imported views,
-    if (typeof view == "string" && view === "iframe") {
+    if (typeof view == 'string' && view === 'iframe') {
       View = _managers_views_iframe__WEBPACK_IMPORTED_MODULE_10__["default"];
     } else {
       // otherwise, assume we were passed a class function
@@ -38799,8 +38788,8 @@ class Rendition {
    * @return {Promise} rendering has started
    */
   start() {
-    if (!this.settings.layout && (this.book.package.metadata.layout === "pre-paginated" || this.book.displayOptions.fixedLayout === "true")) {
-      this.settings.layout = "pre-paginated";
+    if (!this.settings.layout && (this.book.package.metadata.layout === 'pre-paginated' || this.book.displayOptions.fixedLayout === 'true')) {
+      this.settings.layout = 'pre-paginated';
     }
     switch (this.book.package.metadata.spread) {
       case 'none':
@@ -38861,8 +38850,8 @@ class Rendition {
     return this.q.enqueue(function () {
       // Start rendering
       this.manager.render(element, {
-        "width": this.settings.width,
-        "height": this.settings.height
+        width: this.settings.width,
+        height: this.settings.height
       });
 
       /**
@@ -38912,7 +38901,7 @@ class Rendition {
     }
     section = this.book.spine.get(target);
     if (!section) {
-      displaying.reject(new Error("No Section Found"));
+      displaying.reject(new Error('No Section Found'));
       return displayed;
     }
     this.manager.display(section, target).then(() => {
@@ -38941,42 +38930,42 @@ class Rendition {
 
   /*
   render(view, show) {
-  		// view.onLayout = this.layout.format.bind(this.layout);
-  	view.create();
-  		// Fit to size of the container, apply padding
-  	this.manager.resizeView(view);
-  		// Render Chain
-  	return view.section.render(this.book.request)
-  		.then(function(contents){
-  			return view.load(contents);
+  	// view.onLayout = this.layout.format.bind(this.layout);
+  view.create();
+  	// Fit to size of the container, apply padding
+  this.manager.resizeView(view);
+  	// Render Chain
+  return view.section.render(this.book.request)
+  	.then(function(contents){
+  		return view.load(contents);
+  	}.bind(this))
+  	.then(function(doc){
+  		return this.hooks.content.trigger(view, this);
+  	}.bind(this))
+  	.then(function(){
+  		this.layout.format(view.contents);
+  		return this.hooks.layout.trigger(view, this);
+  	}.bind(this))
+  	.then(function(){
+  		return view.display();
+  	}.bind(this))
+  	.then(function(){
+  		return this.hooks.render.trigger(view, this);
+  	}.bind(this))
+  	.then(function(){
+  		if(show !== false) {
+  			this.q.enqueue(function(view){
+  				view.show();
+  			}, view);
+  		}
+  		// this.map = new Map(view, this.layout);
+  		this.hooks.show.trigger(view, this);
+  		this.trigger("rendered", view.section);
   		}.bind(this))
-  		.then(function(doc){
-  			return this.hooks.content.trigger(view, this);
-  		}.bind(this))
-  		.then(function(){
-  			this.layout.format(view.contents);
-  			return this.hooks.layout.trigger(view, this);
-  		}.bind(this))
-  		.then(function(){
-  			return view.display();
-  		}.bind(this))
-  		.then(function(){
-  			return this.hooks.render.trigger(view, this);
-  		}.bind(this))
-  		.then(function(){
-  			if(show !== false) {
-  				this.q.enqueue(function(view){
-  					view.show();
-  				}, view);
-  			}
-  			// this.map = new Map(view, this.layout);
-  			this.hooks.show.trigger(view, this);
-  			this.trigger("rendered", view.section);
-  			}.bind(this))
-  		.catch(function(e){
-  			this.trigger("loaderror", e);
-  		}.bind(this));
-  	}
+  	.catch(function(e){
+  		this.trigger("loaderror", e);
+  	}.bind(this));
+  }
   */
 
   /**
@@ -39115,13 +39104,13 @@ class Rendition {
    */
   determineLayoutProperties(metadata) {
     var properties;
-    var layout = this.settings.layout || metadata.layout || "reflowable";
-    var spread = this.settings.spread || metadata.spread || "auto";
-    var orientation = this.settings.orientation || metadata.orientation || "auto";
-    var flow = this.settings.flow || metadata.flow || "auto";
-    var viewport = metadata.viewport || "";
+    var layout = this.settings.layout || metadata.layout || 'reflowable';
+    var spread = this.settings.spread || metadata.spread || 'auto';
+    var orientation = this.settings.orientation || metadata.orientation || 'auto';
+    var flow = this.settings.flow || metadata.flow || 'auto';
+    var viewport = metadata.viewport || '';
     var minSpreadWidth = this.settings.minSpreadWidth || metadata.minSpreadWidth || 800;
-    var direction = this.settings.direction || metadata.direction || "ltr";
+    var direction = this.settings.direction || metadata.direction || 'ltr';
     if ((this.settings.width === 0 || this.settings.width > 0) && (this.settings.height === 0 || this.settings.height > 0)) {
       // viewport = "width="+this.settings.width+", height="+this.settings.height+"";
     }
@@ -39144,11 +39133,11 @@ class Rendition {
    */
   flow(flow) {
     var _flow = flow;
-    if (flow === "scrolled" || flow === "scrolled-doc" || flow === "scrolled-continuous") {
-      _flow = "scrolled";
+    if (flow === 'scrolled' || flow === 'scrolled-doc' || flow === 'scrolled-continuous') {
+      _flow = 'scrolled';
     }
-    if (flow === "auto" || flow === "paginated") {
-      _flow = "paginated";
+    if (flow === 'auto' || flow === 'paginated') {
+      _flow = 'paginated';
     }
     this.settings.flow = flow;
     if (this._layout) {
@@ -39210,7 +39199,7 @@ class Rendition {
    * @param  {string} dir
    */
   direction(dir) {
-    this.settings.direction = dir || "ltr";
+    this.settings.direction = dir || 'ltr';
     if (this.manager) {
       this.manager.direction(this.settings.direction);
     }
@@ -39229,7 +39218,7 @@ class Rendition {
     return this.q.enqueue(function reportedLocation() {
       requestAnimationFrame(function reportedLocationAfterRAF() {
         var location = this.manager.currentLocation();
-        if (location && location.then && typeof location.then === "function") {
+        if (location && location.then && typeof location.then === 'function') {
           location.then(function (result) {
             let located = this.located(result);
             if (!located || !located.start || !located.end) {
@@ -39288,7 +39277,7 @@ class Rendition {
    */
   currentLocation() {
     var location = this.manager.currentLocation();
-    if (location && location.then && typeof location.then === "function") {
+    if (location && location.then && typeof location.then === 'function') {
       location.then(function (result) {
         let located = this.located(result);
         return located;
@@ -39466,28 +39455,28 @@ class Rendition {
    * @private
    */
   adjustImages(contents) {
-    if (this._layout.name === "pre-paginated") {
+    if (this._layout.name === 'pre-paginated') {
       return new Promise(function (resolve) {
         resolve();
       });
     }
     let computed = contents.window.getComputedStyle(contents.content, null);
-    let height = (contents.content.offsetHeight - (parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom))) * .95;
+    let height = (contents.content.offsetHeight - (parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom))) * 0.95;
     let horizontalPadding = parseFloat(computed.paddingLeft) + parseFloat(computed.paddingRight);
     contents.addStylesheetRules({
-      "img": {
-        "max-width": (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + "px" : "100%") + "!important",
-        "max-height": height + "px" + "!important",
-        "object-fit": "contain",
-        "page-break-inside": "avoid",
-        "break-inside": "avoid",
-        "box-sizing": "border-box"
+      img: {
+        'max-width': (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + 'px' : '100%') + '!important',
+        'max-height': height + 'px' + '!important',
+        'object-fit': 'contain',
+        'page-break-inside': 'avoid',
+        'break-inside': 'avoid',
+        'box-sizing': 'border-box'
       },
-      "svg": {
-        "max-width": (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + "px" : "100%") + "!important",
-        "max-height": height + "px" + "!important",
-        "page-break-inside": "avoid",
-        "break-inside": "avoid"
+      svg: {
+        'max-width': (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + 'px' : '100%') + '!important',
+        'max-height': height + 'px' + '!important',
+        'page-break-inside': 'avoid',
+        'break-inside': 'avoid'
       }
     });
     return new Promise(function (resolve, reject) {
@@ -39537,11 +39526,11 @@ class Rendition {
    * @private
    */
   injectStylesheet(doc, section) {
-    let style = doc.createElement("link");
-    style.setAttribute("type", "text/css");
-    style.setAttribute("rel", "stylesheet");
-    style.setAttribute("href", this.settings.stylesheet);
-    doc.getElementsByTagName("head")[0].appendChild(style);
+    let style = doc.createElement('link');
+    style.setAttribute('type', 'text/css');
+    style.setAttribute('rel', 'stylesheet');
+    style.setAttribute('href', this.settings.stylesheet);
+    doc.getElementsByTagName('head')[0].appendChild(style);
   }
 
   /**
@@ -39552,11 +39541,11 @@ class Rendition {
    * @private
    */
   injectScript(doc, section) {
-    let script = doc.createElement("script");
-    script.setAttribute("type", "text/javascript");
-    script.setAttribute("src", this.settings.script);
-    script.textContent = " "; // Needed to prevent self closing tag
-    doc.getElementsByTagName("head")[0].appendChild(script);
+    let script = doc.createElement('script');
+    script.setAttribute('type', 'text/javascript');
+    script.setAttribute('src', this.settings.script);
+    script.textContent = ' '; // Needed to prevent self closing tag
+    doc.getElementsByTagName('head')[0].appendChild(script);
   }
 
   /**
@@ -39568,12 +39557,12 @@ class Rendition {
    */
   injectIdentifier(doc, section) {
     let ident = this.book.packaging.metadata.identifier;
-    let meta = doc.createElement("meta");
-    meta.setAttribute("name", "dc.relation.ispartof");
+    let meta = doc.createElement('meta');
+    meta.setAttribute('name', 'dc.relation.ispartof');
     if (ident) {
-      meta.setAttribute("content", ident);
+      meta.setAttribute('content', ident);
     }
-    doc.getElementsByTagName("head")[0].appendChild(meta);
+    doc.getElementsByTagName('head')[0].appendChild(meta);
   }
 }
 
@@ -39620,7 +39609,7 @@ __webpack_require__.r(__webpack_exports__);
 class Resources {
   constructor(manifest, options) {
     this.settings = {
-      replacements: options && options.replacements || "base64",
+      replacements: options && options.replacements || 'base64',
       archive: options && options.archive,
       resolver: options && options.resolver,
       request: options && options.request
@@ -39654,21 +39643,21 @@ class Resources {
   split() {
     // HTML
     this.html = this.resources.filter(function (item) {
-      if (item.type === "application/xhtml+xml" || item.type === "text/html") {
+      if (item.type === 'application/xhtml+xml' || item.type === 'text/html') {
         return true;
       }
     });
 
     // Exclude HTML
     this.assets = this.resources.filter(function (item) {
-      if (item.type !== "application/xhtml+xml" && item.type !== "text/html") {
+      if (item.type !== 'application/xhtml+xml' && item.type !== 'text/html') {
         return true;
       }
     });
 
     // Only CSS
     this.css = this.resources.filter(function (item) {
-      if (item.type === "text/css") {
+      if (item.type === 'text/css') {
         return true;
       }
     });
@@ -39700,10 +39689,10 @@ class Resources {
     var mimeType = _utils_mime__WEBPACK_IMPORTED_MODULE_3__["default"].lookup(parsedUrl.filename);
     if (this.settings.archive) {
       return this.settings.archive.createUrl(url, {
-        "base64": this.settings.replacements === "base64"
+        base64: this.settings.replacements === 'base64'
       });
     } else {
-      if (this.settings.replacements === "base64") {
+      if (this.settings.replacements === 'base64') {
         return this.settings.request(url, 'blob').then(blob => {
           return (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.blob2base64)(blob);
         }).then(blob => {
@@ -39722,7 +39711,7 @@ class Resources {
    * @return {Promise}         returns replacement urls
    */
   replacements() {
-    if (this.settings.replacements === "none") {
+    if (this.settings.replacements === 'none') {
       return new Promise(function (resolve) {
         resolve(this.urls);
       }.bind(this));
@@ -39736,7 +39725,7 @@ class Resources {
     });
     return Promise.all(replacements).then(replacementUrls => {
       this.replacementUrls = replacementUrls.filter(url => {
-        return typeof url === "string";
+        return typeof url === 'string';
       });
       return replacementUrls;
     });
@@ -39786,7 +39775,7 @@ class Resources {
     if (this.settings.archive) {
       textResponse = this.settings.archive.getText(absolute);
     } else {
-      textResponse = this.settings.request(absolute, "text");
+      textResponse = this.settings.request(absolute, 'text');
     }
 
     // Get asset links relative to css file
@@ -39806,10 +39795,10 @@ class Resources {
       text = (0,_utils_replacements__WEBPACK_IMPORTED_MODULE_0__.substitute)(text, relUrls, this.replacementUrls);
 
       // Get the new url
-      if (this.settings.replacements === "base64") {
-        newUrl = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.createBase64Url)(text, "text/css");
+      if (this.settings.replacements === 'base64') {
+        newUrl = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.createBase64Url)(text, 'text/css');
       } else {
-        newUrl = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.createBlobUrl)(text, "text/css");
+        newUrl = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.createBlobUrl)(text, 'text/css');
       }
       return newUrl;
     }, err => {
@@ -39923,7 +39912,7 @@ __webpack_require__.r(__webpack_exports__);
 class Section {
   constructor(item, hooks) {
     this.idref = item.idref;
-    this.linear = item.linear === "yes";
+    this.linear = item.linear === 'yes';
     this.properties = item.properties;
     this.index = item.index;
     this.href = item.href;
@@ -39993,7 +39982,7 @@ class Section {
       var userAgent = typeof navigator !== 'undefined' && navigator.userAgent || '';
       var isIE = userAgent.indexOf('Trident') >= 0;
       var Serializer;
-      if (typeof XMLSerializer === "undefined" || isIE) {
+      if (typeof XMLSerializer === 'undefined' || isIE) {
         Serializer = _xmldom_xmldom__WEBPACK_IMPORTED_MODULE_5__.DOMParser;
       } else {
         Serializer = XMLSerializer;
@@ -40043,7 +40032,7 @@ class Section {
             excerpt = node.textContent;
           } else {
             excerpt = node.textContent.substring(pos - limit / 2, pos + limit / 2);
-            excerpt = "..." + excerpt + "...";
+            excerpt = '...' + excerpt + '...';
           }
 
           // Add the CFI to the matches list
@@ -40060,6 +40049,7 @@ class Section {
     });
     return matches;
   }
+
   /**
    * Search a string in multiple sequential Element of the section. If the document.createTreeWalker api is missed(eg: IE8), use `find` as a fallback.
    * @param  {string} _query The query string to search
@@ -40067,7 +40057,7 @@ class Section {
    * @return {object[]} A list of matches, with form {cfi, excerpt}
    */
   search(_query, maxSeqEle = 5) {
-    if (typeof document.createTreeWalker == "undefined") {
+    if (typeof document.createTreeWalker == 'undefined') {
       return this.find(_query);
     }
     let matches = [];
@@ -40077,7 +40067,7 @@ class Section {
     const search = function (nodeList) {
       const textWithCase = nodeList.reduce((acc, current) => {
         return acc + current.textContent;
-      }, "");
+      }, '');
       const text = textWithCase.toLowerCase();
       const pos = text.indexOf(query);
       if (pos != -1) {
@@ -40105,10 +40095,10 @@ class Section {
           cfi = section.cfiFromRange(range);
           let excerpt = nodeList.slice(0, endNodeIndex + 1).reduce((acc, current) => {
             return acc + current.textContent;
-          }, "");
+          }, '');
           if (excerpt.length > excerptLimit) {
             excerpt = excerpt.substring(pos - excerptLimit / 2, pos + excerptLimit / 2);
-            excerpt = "..." + excerpt + "...";
+            excerpt = '...' + excerpt + '...';
           }
           matches.push({
             cfi: cfi,
@@ -40134,11 +40124,11 @@ class Section {
   }
 
   /**
-  * Reconciles the current chapters layout properties with
-  * the global layout properties.
-  * @param {object} globalLayout  The global layout settings object, chapter properties string
-  * @return {object} layoutProperties Object with layout properties
-  */
+   * Reconciles the current chapters layout properties with
+   * the global layout properties.
+   * @param {object} globalLayout  The global layout settings object, chapter properties string
+   * @return {object} layoutProperties Object with layout properties
+   */
   reconcileLayoutSettings(globalLayout) {
     //-- Get the global defaults
     var settings = {
@@ -40149,8 +40139,8 @@ class Section {
 
     //-- Get the chapter's display type
     this.properties.forEach(function (prop) {
-      var rendition = prop.replace("rendition:", "");
-      var split = rendition.indexOf("-");
+      var rendition = prop.replace('rendition:', '');
+      var split = rendition.indexOf('-');
       var property, value;
       if (split != -1) {
         property = rendition.slice(0, split);
@@ -40262,7 +40252,7 @@ class Spine {
     this.items = _package.spine;
     this.manifest = _package.manifest;
     this.spineNodeIndex = _package.spineNodeIndex;
-    this.baseUrl = _package.baseUrl || _package.basePath || "";
+    this.baseUrl = _package.baseUrl || _package.basePath || '';
     this.length = this.items.length;
     this.items.forEach((item, index) => {
       var manifestItem = this.manifest[item.idref];
@@ -40281,7 +40271,7 @@ class Spine {
           item.properties.push.apply(item.properties, manifestItem.properties);
         }
       }
-      if (item.linear === "yes") {
+      if (item.linear === 'yes') {
         item.prev = function () {
           let prevIndex = item.index;
           while (prevIndex > 0) {
@@ -40329,7 +40319,7 @@ class Spine {
    */
   get(target) {
     var index = 0;
-    if (typeof target === "undefined") {
+    if (typeof target === 'undefined') {
       while (index < this.spineItems.length) {
         let next = this.spineItems[index];
         if (next && next.linear) {
@@ -40340,13 +40330,13 @@ class Spine {
     } else if (this.epubcfi.isCfiString(target)) {
       let cfi = new _epubcfi__WEBPACK_IMPORTED_MODULE_0__["default"](target);
       index = cfi.spinePos;
-    } else if (typeof target === "number" || isNaN(target) === false) {
+    } else if (typeof target === 'number' || isNaN(target) === false) {
       index = target;
-    } else if (typeof target === "string" && target.indexOf("#") === 0) {
+    } else if (typeof target === 'string' && target.indexOf('#') === 0) {
       index = this.spineById[target.substring(1)];
-    } else if (typeof target === "string") {
+    } else if (typeof target === 'string') {
       // Remove fragments
-      target = target.split("#")[0];
+      target = target.split('#')[0];
       index = this.spineByHref[target] || this.spineByHref[encodeURI(target)];
     }
     return this.spineItems[index] || null;
@@ -40517,14 +40507,14 @@ class Store {
   checkRequirements() {
     try {
       let store;
-      if (typeof (localforage__WEBPACK_IMPORTED_MODULE_5___default()) === "undefined") {
+      if (typeof (localforage__WEBPACK_IMPORTED_MODULE_5___default()) === 'undefined') {
         store = (localforage__WEBPACK_IMPORTED_MODULE_5___default());
       }
       this.storage = store.createInstance({
         name: this.name
       });
     } catch (e) {
-      throw new Error("localForage lib not loaded");
+      throw new Error('localForage lib not loaded');
     }
   }
 
@@ -40552,13 +40542,13 @@ class Store {
    * Update the online / offline status
    * @private
    */
-  status(event) {
+  status() {
     let online = navigator.onLine;
     this.online = online;
     if (online) {
-      this.emit("online", this);
+      this.emit('online', this);
     } else {
-      this.emit("offline", this);
+      this.emit('offline', this);
     }
   }
 
@@ -40577,7 +40567,7 @@ class Store {
       let encodedUrl = window.encodeURIComponent(url);
       return this.storage.getItem(encodedUrl).then(item => {
         if (!item || force) {
-          return this.requester(url, "binary").then(data => {
+          return this.requester(url, 'binary').then(data => {
             return this.storage.setItem(encodedUrl, data);
           });
         } else {
@@ -40599,7 +40589,7 @@ class Store {
     let encodedUrl = window.encodeURIComponent(url);
     return this.storage.getItem(encodedUrl).then(result => {
       if (!result) {
-        return this.requester(url, "binary", withCredentials, headers).then(data => {
+        return this.requester(url, 'binary', withCredentials, headers).then(data => {
           return this.storage.setItem(encodedUrl, data);
         });
       }
@@ -40636,7 +40626,6 @@ class Store {
    * @return {Promise<Blob | string | JSON | Document | XMLDocument>}
    */
   retrieve(url, type) {
-    var deferred = new _utils_core__WEBPACK_IMPORTED_MODULE_0__.defer();
     var response;
     var path = new _utils_path__WEBPACK_IMPORTED_MODULE_3__["default"](url);
 
@@ -40644,7 +40633,7 @@ class Store {
     if (!type) {
       type = path.extension;
     }
-    if (type == "blob") {
+    if (type == 'blob') {
       response = this.getBlob(url);
     } else {
       response = this.getText(url);
@@ -40657,7 +40646,7 @@ class Store {
         deferred.resolve(result);
       } else {
         deferred.reject({
-          message: "File not found in storage: " + url,
+          message: 'File not found in storage: ' + url,
           stack: new Error().stack
         });
       }
@@ -40674,14 +40663,14 @@ class Store {
    */
   handleResponse(response, type) {
     var r;
-    if (type == "json") {
+    if (type == 'json') {
       r = JSON.parse(response);
     } else if ((0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isXml)(type)) {
-      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, "text/xml");
-    } else if (type == "xhtml") {
-      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, "application/xhtml+xml");
-    } else if (type == "html" || type == "htm") {
-      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, "text/html");
+      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, 'text/xml');
+    } else if (type == 'xhtml') {
+      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, 'application/xhtml+xml');
+    } else if (type == 'html' || type == 'htm') {
+      r = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.parse)(response, 'text/html');
     } else {
       r = response;
     }
@@ -40722,7 +40711,7 @@ class Store {
       blob = new Blob([uint8array], {
         type: mimeType
       });
-      reader.addEventListener("loadend", () => {
+      reader.addEventListener('loadend', () => {
         deferred.resolve(reader.result);
       });
       reader.readAsText(blob, mimeType);
@@ -40747,7 +40736,7 @@ class Store {
       blob = new Blob([uint8array], {
         type: mimeType
       });
-      reader.addEventListener("loadend", () => {
+      reader.addEventListener('loadend', () => {
         deferred.resolve(reader.result);
       });
       reader.readAsDataURL(blob, mimeType);
@@ -40791,7 +40780,7 @@ class Store {
     }
     if (!response) {
       deferred.reject({
-        message: "File not found in storage: " + url,
+        message: 'File not found in storage: ' + url,
         stack: new Error().stack
       });
     }
@@ -40844,14 +40833,14 @@ class Themes {
   constructor(rendition) {
     this.rendition = rendition;
     this._themes = {
-      "default": {
-        "rules": {},
-        "url": "",
-        "serialized": ""
+      default: {
+        rules: {},
+        url: '',
+        serialized: ''
       }
     };
     this._overrides = {};
-    this._current = "default";
+    this._current = 'default';
     this._injected = [];
     this.rendition.hooks.content.register(this.inject.bind(this));
     this.rendition.hooks.content.register(this.overrides.bind(this));
@@ -40868,16 +40857,16 @@ class Themes {
     if (arguments.length === 0) {
       return;
     }
-    if (arguments.length === 1 && typeof arguments[0] === "object") {
+    if (arguments.length === 1 && typeof arguments[0] === 'object') {
       return this.registerThemes(arguments[0]);
     }
-    if (arguments.length === 1 && typeof arguments[0] === "string") {
+    if (arguments.length === 1 && typeof arguments[0] === 'string') {
       return this.default(arguments[0]);
     }
-    if (arguments.length === 2 && typeof arguments[1] === "string") {
+    if (arguments.length === 2 && typeof arguments[1] === 'string') {
       return this.registerUrl(arguments[0], arguments[1]);
     }
-    if (arguments.length === 2 && typeof arguments[1] === "object") {
+    if (arguments.length === 2 && typeof arguments[1] === 'object') {
       return this.registerRules(arguments[0], arguments[1]);
     }
   }
@@ -40892,11 +40881,11 @@ class Themes {
     if (!theme) {
       return;
     }
-    if (typeof theme === "string") {
-      return this.registerUrl("default", theme);
+    if (typeof theme === 'string') {
+      return this.registerUrl('default', theme);
     }
-    if (typeof theme === "object") {
-      return this.registerRules("default", theme);
+    if (typeof theme === 'object') {
+      return this.registerRules('default', theme);
     }
   }
 
@@ -40907,7 +40896,7 @@ class Themes {
   registerThemes(themes) {
     for (var theme in themes) {
       if (themes.hasOwnProperty(theme)) {
-        if (typeof themes[theme] === "string") {
+        if (typeof themes[theme] === 'string') {
           this.registerUrl(theme, themes[theme]);
         } else {
           this.registerRules(theme, themes[theme]);
@@ -40918,12 +40907,12 @@ class Themes {
 
   /**
    * Register a theme by passing its css as string
-   * @param {string} name 
-   * @param {string} css 
+   * @param {string} name
+   * @param {string} css
    */
   registerCss(name, css) {
     this._themes[name] = {
-      "serialized": css
+      serialized: css
     };
     if (this._injected[name] || name == 'default') {
       this.update(name);
@@ -40938,7 +40927,7 @@ class Themes {
   registerUrl(name, input) {
     var url = new _utils_url__WEBPACK_IMPORTED_MODULE_0__["default"](input);
     this._themes[name] = {
-      "url": url.toString()
+      url: url.toString()
     };
     if (this._injected[name] || name == 'default') {
       this.update(name);
@@ -40952,7 +40941,7 @@ class Themes {
    */
   registerRules(name, rules) {
     this._themes[name] = {
-      "rules": rules
+      rules: rules
     };
     // TODO: serialize css rules
     if (this._injected[name] || name == 'default') {
@@ -40996,7 +40985,7 @@ class Themes {
     var themes = this._themes;
     var theme;
     for (var name in themes) {
-      if (themes.hasOwnProperty(name) && (name === this._current || name === "default")) {
+      if (themes.hasOwnProperty(name) && (name === this._current || name === 'default')) {
         theme = themes[name];
         if (theme.rules && Object.keys(theme.rules).length > 0 || theme.url && links.indexOf(theme.url) === -1) {
           this.add(name, contents);
@@ -41004,7 +40993,7 @@ class Themes {
         this._injected.push(name);
       }
     }
-    if (this._current != "default") {
+    if (this._current != 'default') {
       contents.addClass(this._current);
     }
   }
@@ -41072,7 +41061,7 @@ class Themes {
    * @param {number} size
    */
   fontSize(size) {
-    this.override("font-size", size);
+    this.override('font-size', size);
   }
 
   /**
@@ -41080,7 +41069,7 @@ class Themes {
    * @param {string} f
    */
   font(f) {
-    this.override("font-family", f, true);
+    this.override('font-family', f, true);
   }
   destroy() {
     this.rendition = undefined;
@@ -41107,65 +41096,65 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   EPUBJS_VERSION: () => (/* binding */ EPUBJS_VERSION),
 /* harmony export */   EVENTS: () => (/* binding */ EVENTS)
 /* harmony export */ });
-const EPUBJS_VERSION = "0.3";
+const EPUBJS_VERSION = '0.3';
 
 // Dom events to listen for
-const DOM_EVENTS = ["keydown", "keyup", "keypressed", "mouseup", "mousedown", "mousemove", "click", "touchend", "touchstart", "touchmove"];
+const DOM_EVENTS = ['keydown', 'keyup', 'keypressed', 'mouseup', 'mousedown', 'mousemove', 'click', 'touchend', 'touchstart', 'touchmove'];
 const EVENTS = {
   BOOK: {
-    OPEN_FAILED: "openFailed"
+    OPEN_FAILED: 'openFailed'
   },
   CONTENTS: {
-    EXPAND: "expand",
-    RESIZE: "resize",
-    SELECTED: "selected",
-    SELECTED_RANGE: "selectedRange",
-    LINK_CLICKED: "linkClicked"
+    EXPAND: 'expand',
+    RESIZE: 'resize',
+    SELECTED: 'selected',
+    SELECTED_RANGE: 'selectedRange',
+    LINK_CLICKED: 'linkClicked'
   },
   LOCATIONS: {
-    CHANGED: "changed"
+    CHANGED: 'changed'
   },
   MANAGERS: {
-    RESIZE: "resize",
-    RESIZED: "resized",
-    ORIENTATION_CHANGE: "orientationchange",
-    ADDED: "added",
-    SCROLL: "scroll",
-    SCROLLED: "scrolled",
-    REMOVED: "removed"
+    RESIZE: 'resize',
+    RESIZED: 'resized',
+    ORIENTATION_CHANGE: 'orientationchange',
+    ADDED: 'added',
+    SCROLL: 'scroll',
+    SCROLLED: 'scrolled',
+    REMOVED: 'removed'
   },
   VIEWS: {
-    AXIS: "axis",
-    WRITING_MODE: "writingMode",
-    LOAD_ERROR: "loaderror",
-    RENDERED: "rendered",
-    RESIZED: "resized",
-    DISPLAYED: "displayed",
-    SHOWN: "shown",
-    HIDDEN: "hidden",
-    MARK_CLICKED: "markClicked"
+    AXIS: 'axis',
+    WRITING_MODE: 'writingMode',
+    LOAD_ERROR: 'loaderror',
+    RENDERED: 'rendered',
+    RESIZED: 'resized',
+    DISPLAYED: 'displayed',
+    SHOWN: 'shown',
+    HIDDEN: 'hidden',
+    MARK_CLICKED: 'markClicked'
   },
   RENDITION: {
-    STARTED: "started",
-    ATTACHED: "attached",
-    DISPLAYED: "displayed",
-    DISPLAY_ERROR: "displayerror",
-    RENDERED: "rendered",
-    REMOVED: "removed",
-    RESIZED: "resized",
-    ORIENTATION_CHANGE: "orientationchange",
-    LOCATION_CHANGED: "locationChanged",
-    RELOCATED: "relocated",
-    MARK_CLICKED: "markClicked",
-    SELECTED: "selected",
-    LAYOUT: "layout"
+    STARTED: 'started',
+    ATTACHED: 'attached',
+    DISPLAYED: 'displayed',
+    DISPLAY_ERROR: 'displayerror',
+    RENDERED: 'rendered',
+    REMOVED: 'removed',
+    RESIZED: 'resized',
+    ORIENTATION_CHANGE: 'orientationchange',
+    LOCATION_CHANGED: 'locationChanged',
+    RELOCATED: 'relocated',
+    MARK_CLICKED: 'markClicked',
+    SELECTED: 'selected',
+    LAYOUT: 'layout'
   },
   LAYOUT: {
-    UPDATED: "updated"
+    UPDATED: 'updated'
   },
   ANNOTATION: {
-    ATTACH: "attach",
-    DETACH: "detach"
+    ATTACH: 'attach',
+    DETACH: 'detach'
   }
 };
 
@@ -41225,7 +41214,7 @@ __webpack_require__.r(__webpack_exports__);
 /**
  * Core Utilities and Helpers
  * @module Core
-*/
+ */
 
 
 /**
@@ -41233,12 +41222,10 @@ __webpack_require__.r(__webpack_exports__);
  * @returns {function} requestAnimationFrame
  * @memberof Core
  */
-const requestAnimationFrame = typeof window != "undefined" ? window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame : false;
+const requestAnimationFrame = typeof window != 'undefined' ? window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame : false;
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
-const COMMENT_NODE = 8;
-const DOCUMENT_NODE = 9;
-const _URL = typeof URL != "undefined" ? URL : typeof window != "undefined" ? window.URL || window.webkitURL || window.mozURL : undefined;
+const _URL = typeof URL != 'undefined' ? URL : typeof window != 'undefined' ? window.URL || window.webkitURL || window.mozURL : undefined;
 
 /**
  * Generates a UUID
@@ -41248,10 +41235,10 @@ const _URL = typeof URL != "undefined" ? URL : typeof window != "undefined" ? wi
  */
 function uuid() {
   var d = new Date().getTime();
-  var uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     var r = (d + Math.random() * 16) % 16 | 0;
     d = Math.floor(d / 16);
-    return (c == "x" ? r : r & 0x7 | 0x8).toString(16);
+    return (c == 'x' ? r : r & 0x7 | 0x8).toString(16);
   });
   return uuid;
 }
@@ -41294,7 +41281,7 @@ function isFloat(n) {
   if (isNumber(n) === false) {
     return false;
   }
-  if (typeof n === "string" && n.indexOf(".") > -1) {
+  if (typeof n === 'string' && n.indexOf('.') > -1) {
     return true;
   }
   return Math.floor(f) !== f;
@@ -41307,15 +41294,15 @@ function isFloat(n) {
  * @memberof Core
  */
 function prefixed(unprefixed) {
-  var vendors = ["Webkit", "webkit", "Moz", "O", "ms"];
-  var prefixes = ["-webkit-", "-webkit-", "-moz-", "-o-", "-ms-"];
+  var vendors = ['Webkit', 'webkit', 'Moz', 'O', 'ms'];
+  var prefixes = ['-webkit-', '-webkit-', '-moz-', '-o-', '-ms-'];
   var lower = unprefixed.toLowerCase();
   var length = vendors.length;
-  if (typeof document === "undefined" || typeof document.body.style[lower] != "undefined") {
+  if (typeof document === 'undefined' || typeof document.body.style[lower] != 'undefined') {
     return unprefixed;
   }
   for (var i = 0; i < length; i++) {
-    if (typeof document.body.style[prefixes[i] + lower] != "undefined") {
+    if (typeof document.body.style[prefixes[i] + lower] != 'undefined') {
       return prefixes[i] + lower;
     }
   }
@@ -41457,8 +41444,8 @@ function indexOfSorted(item, array, compareFunction, _start, _end) {
  */
 function bounds(el) {
   var style = window.getComputedStyle(el);
-  var widthProps = ["width", "paddingRight", "paddingLeft", "marginRight", "marginLeft", "borderRightWidth", "borderLeftWidth"];
-  var heightProps = ["height", "paddingTop", "paddingBottom", "marginTop", "marginBottom", "borderTopWidth", "borderBottomWidth"];
+  var widthProps = ['width', 'paddingRight', 'paddingLeft', 'marginRight', 'marginLeft', 'borderRightWidth', 'borderLeftWidth'];
+  var heightProps = ['height', 'paddingTop', 'paddingBottom', 'marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth'];
   var width = 0;
   var height = 0;
   widthProps.forEach(function (prop) {
@@ -41482,8 +41469,8 @@ function bounds(el) {
  */
 function borders(el) {
   var style = window.getComputedStyle(el);
-  var widthProps = ["paddingRight", "paddingLeft", "marginRight", "marginLeft", "borderRightWidth", "borderLeftWidth"];
-  var heightProps = ["paddingTop", "paddingBottom", "marginTop", "marginBottom", "borderTopWidth", "borderBottomWidth"];
+  var widthProps = ['paddingRight', 'paddingLeft', 'marginRight', 'marginLeft', 'borderRightWidth', 'borderLeftWidth'];
+  var heightProps = ['paddingTop', 'paddingBottom', 'marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth'];
   var width = 0;
   var height = 0;
   widthProps.forEach(function (prop) {
@@ -41585,7 +41572,7 @@ function indexOfElementNode(elementNode) {
  * @memberof Core
  */
 function isXml(ext) {
-  return ["xml", "opf", "ncx"].indexOf(ext) > -1;
+  return ['xml', 'opf', 'ncx'].indexOf(ext) > -1;
 }
 
 /**
@@ -41634,12 +41621,12 @@ function revokeBlobUrl(url) {
 function createBase64Url(content, mime) {
   var data;
   var datauri;
-  if (typeof content !== "string") {
+  if (typeof content !== 'string') {
     // Only handles strings
     return;
   }
   data = btoa(content);
-  datauri = "data:" + mime + ";base64," + data;
+  datauri = 'data:' + mime + ';base64,' + data;
   return datauri;
 }
 
@@ -41664,7 +41651,7 @@ function type(obj) {
 function parse(markup, mime, forceXMLDom) {
   var doc;
   var Parser;
-  if (typeof DOMParser === "undefined" || forceXMLDom) {
+  if (typeof DOMParser === 'undefined' || forceXMLDom) {
     Parser = _xmldom_xmldom__WEBPACK_IMPORTED_MODULE_0__.DOMParser;
   } else {
     Parser = DOMParser;
@@ -41672,7 +41659,7 @@ function parse(markup, mime, forceXMLDom) {
 
   // Remove byte order mark before parsing
   // https://www.w3.org/International/questions/qa-byte-order-mark
-  if (markup.charCodeAt(0) === 0xFEFF) {
+  if (markup.charCodeAt(0) === 0xfeff) {
     markup = markup.slice(1);
   }
   doc = new Parser().parseFromString(markup, mime);
@@ -41689,9 +41676,9 @@ function parse(markup, mime, forceXMLDom) {
 function qs(el, sel) {
   var elements;
   if (!el) {
-    throw new Error("No Element Provided");
+    throw new Error('No Element Provided');
   }
-  if (typeof el.querySelector != "undefined") {
+  if (typeof el.querySelector != 'undefined') {
     return el.querySelector(sel);
   } else {
     elements = el.getElementsByTagName(sel);
@@ -41709,7 +41696,7 @@ function qs(el, sel) {
  * @memberof Core
  */
 function qsa(el, sel) {
-  if (typeof el.querySelector != "undefined") {
+  if (typeof el.querySelector != 'undefined') {
     return el.querySelectorAll(sel);
   } else {
     return el.getElementsByTagName(sel);
@@ -41726,12 +41713,12 @@ function qsa(el, sel) {
  */
 function qsp(el, sel, props) {
   var q, filtered;
-  if (typeof el.querySelector != "undefined") {
-    sel += "[";
+  if (typeof el.querySelector != 'undefined') {
+    sel += '[';
     for (var prop in props) {
-      sel += prop + "~='" + props[prop] + "'";
+      sel += prop + '~=\'' + props[prop] + '\'';
     }
-    sel += "]";
+    sel += ']';
     return el.querySelector(sel);
   } else {
     q = el.getElementsByTagName(sel);
@@ -41757,7 +41744,7 @@ function qsp(el, sel, props) {
  */
 function sprint(root, func) {
   var doc = root.ownerDocument || root;
-  if (typeof doc.createTreeWalker !== "undefined") {
+  if (typeof doc.createTreeWalker !== 'undefined') {
     treeWalker(root, func, NodeFilter.SHOW_TEXT);
   } else {
     walk(root, function (node) {
@@ -41812,7 +41799,7 @@ function walk(node, callback) {
  * @memberof Core
  */
 function blob2base64(blob) {
-  return new Promise(function (resolve, reject) {
+  return new Promise(function (resolve) {
     var reader = new FileReader();
     reader.readAsDataURL(blob);
     reader.onloadend = function () {
@@ -41866,14 +41853,14 @@ function defer() {
  */
 function querySelectorByType(html, element, type) {
   var query;
-  if (typeof html.querySelector != "undefined") {
+  if (typeof html.querySelector != 'undefined') {
     query = html.querySelector(`${element}[*|type="${type}"]`);
   }
   // Handle IE not supporting namespaced epub:type in querySelector
   if (!query || query.length === 0) {
     query = qsa(html, element);
     for (var i = 0; i < query.length; i++) {
-      if (query[i].getAttributeNS("http://www.idpf.org/2007/ops", "type") === type || query[i].getAttribute("epub:type") === type) {
+      if (query[i].getAttributeNS('http://www.idpf.org/2007/ops', 'type') === type || query[i].getAttribute('epub:type') === type) {
         return query[i];
       }
     }
@@ -42013,7 +42000,6 @@ class RangeObject {
     this.setEnd(parent, index + 1);
   }
   selectNodeContents(referenceNode) {
-    let end = referenceNode.childNodes[referenceNode.childNodes - 1];
     let endIndex = referenceNode.nodeType === 3 ? referenceNode.textContent.length : parent.childNodes.length;
     this.setStart(referenceNode, 0);
     this.setEnd(referenceNode, endIndex);
@@ -42072,7 +42058,7 @@ class Hook {
    */
   register() {
     for (var i = 0; i < arguments.length; ++i) {
-      if (typeof arguments[i] === "function") {
+      if (typeof arguments[i] === 'function') {
         this.hooks.push(arguments[i]);
       } else {
         // unpack array
@@ -42112,7 +42098,7 @@ class Hook {
       } catch (err) {
         console.log(err);
       }
-      if (executing && typeof executing["then"] === "function") {
+      if (executing && typeof executing['then'] === 'function') {
         // Task is a function that returns a promise
         promises.push(executing);
       }
@@ -42150,138 +42136,138 @@ edited down
  */
 
 var table = {
-  "application": {
-    "ecmascript": ["es", "ecma"],
-    "javascript": "js",
-    "ogg": "ogx",
-    "pdf": "pdf",
-    "postscript": ["ps", "ai", "eps", "epsi", "epsf", "eps2", "eps3"],
-    "rdf+xml": "rdf",
-    "smil": ["smi", "smil"],
-    "xhtml+xml": ["xhtml", "xht"],
-    "xml": ["xml", "xsl", "xsd", "opf", "ncx"],
-    "zip": "zip",
-    "x-httpd-eruby": "rhtml",
-    "x-latex": "latex",
-    "x-maker": ["frm", "maker", "frame", "fm", "fb", "book", "fbdoc"],
-    "x-object": "o",
-    "x-shockwave-flash": ["swf", "swfl"],
-    "x-silverlight": "scr",
-    "epub+zip": "epub",
-    "font-tdpfr": "pfr",
-    "inkml+xml": ["ink", "inkml"],
-    "json": "json",
-    "jsonml+json": "jsonml",
-    "mathml+xml": "mathml",
-    "metalink+xml": "metalink",
-    "mp4": "mp4s",
+  application: {
+    ecmascript: ['es', 'ecma'],
+    javascript: 'js',
+    ogg: 'ogx',
+    pdf: 'pdf',
+    postscript: ['ps', 'ai', 'eps', 'epsi', 'epsf', 'eps2', 'eps3'],
+    'rdf+xml': 'rdf',
+    smil: ['smi', 'smil'],
+    'xhtml+xml': ['xhtml', 'xht'],
+    xml: ['xml', 'xsl', 'xsd', 'opf', 'ncx'],
+    zip: 'zip',
+    'x-httpd-eruby': 'rhtml',
+    'x-latex': 'latex',
+    'x-maker': ['frm', 'maker', 'frame', 'fm', 'fb', 'book', 'fbdoc'],
+    'x-object': 'o',
+    'x-shockwave-flash': ['swf', 'swfl'],
+    'x-silverlight': 'scr',
+    'epub+zip': 'epub',
+    'font-tdpfr': 'pfr',
+    'inkml+xml': ['ink', 'inkml'],
+    json: 'json',
+    'jsonml+json': 'jsonml',
+    'mathml+xml': 'mathml',
+    'metalink+xml': 'metalink',
+    mp4: 'mp4s',
     // "oebps-package+xml" : "opf",
-    "omdoc+xml": "omdoc",
-    "oxps": "oxps",
-    "vnd.amazon.ebook": "azw",
-    "widget": "wgt",
+    'omdoc+xml': 'omdoc',
+    oxps: 'oxps',
+    'vnd.amazon.ebook': 'azw',
+    widget: 'wgt',
     // "x-dtbncx+xml" : "ncx",
-    "x-dtbook+xml": "dtb",
-    "x-dtbresource+xml": "res",
-    "x-font-bdf": "bdf",
-    "x-font-ghostscript": "gsf",
-    "x-font-linux-psf": "psf",
-    "x-font-otf": "otf",
-    "x-font-pcf": "pcf",
-    "x-font-snf": "snf",
-    "x-font-ttf": ["ttf", "ttc"],
-    "x-font-type1": ["pfa", "pfb", "pfm", "afm"],
-    "x-font-woff": "woff",
-    "x-mobipocket-ebook": ["prc", "mobi"],
-    "x-mspublisher": "pub",
-    "x-nzb": "nzb",
-    "x-tgif": "obj",
-    "xaml+xml": "xaml",
-    "xml-dtd": "dtd",
-    "xproc+xml": "xpl",
-    "xslt+xml": "xslt",
-    "internet-property-stream": "acx",
-    "x-compress": "z",
-    "x-compressed": "tgz",
-    "x-gzip": "gz"
+    'x-dtbook+xml': 'dtb',
+    'x-dtbresource+xml': 'res',
+    'x-font-bdf': 'bdf',
+    'x-font-ghostscript': 'gsf',
+    'x-font-linux-psf': 'psf',
+    'x-font-otf': 'otf',
+    'x-font-pcf': 'pcf',
+    'x-font-snf': 'snf',
+    'x-font-ttf': ['ttf', 'ttc'],
+    'x-font-type1': ['pfa', 'pfb', 'pfm', 'afm'],
+    'x-font-woff': 'woff',
+    'x-mobipocket-ebook': ['prc', 'mobi'],
+    'x-mspublisher': 'pub',
+    'x-nzb': 'nzb',
+    'x-tgif': 'obj',
+    'xaml+xml': 'xaml',
+    'xml-dtd': 'dtd',
+    'xproc+xml': 'xpl',
+    'xslt+xml': 'xslt',
+    'internet-property-stream': 'acx',
+    'x-compress': 'z',
+    'x-compressed': 'tgz',
+    'x-gzip': 'gz'
   },
-  "audio": {
-    "flac": "flac",
-    "midi": ["mid", "midi", "kar", "rmi"],
-    "mpeg": ["mpga", "mpega", "mp2", "mp3", "m4a", "mp2a", "m2a", "m3a"],
-    "mpegurl": "m3u",
-    "ogg": ["oga", "ogg", "spx"],
-    "x-aiff": ["aif", "aiff", "aifc"],
-    "x-ms-wma": "wma",
-    "x-wav": "wav",
-    "adpcm": "adp",
-    "mp4": "mp4a",
-    "webm": "weba",
-    "x-aac": "aac",
-    "x-caf": "caf",
-    "x-matroska": "mka",
-    "x-pn-realaudio-plugin": "rmp",
-    "xm": "xm",
-    "mid": ["mid", "rmi"]
+  audio: {
+    flac: 'flac',
+    midi: ['mid', 'midi', 'kar', 'rmi'],
+    mpeg: ['mpga', 'mpega', 'mp2', 'mp3', 'm4a', 'mp2a', 'm2a', 'm3a'],
+    mpegurl: 'm3u',
+    ogg: ['oga', 'ogg', 'spx'],
+    'x-aiff': ['aif', 'aiff', 'aifc'],
+    'x-ms-wma': 'wma',
+    'x-wav': 'wav',
+    adpcm: 'adp',
+    mp4: 'mp4a',
+    webm: 'weba',
+    'x-aac': 'aac',
+    'x-caf': 'caf',
+    'x-matroska': 'mka',
+    'x-pn-realaudio-plugin': 'rmp',
+    xm: 'xm',
+    mid: ['mid', 'rmi']
   },
-  "image": {
-    "gif": "gif",
-    "ief": "ief",
-    "jpeg": ["jpeg", "jpg", "jpe"],
-    "pcx": "pcx",
-    "png": "png",
-    "svg+xml": ["svg", "svgz"],
-    "tiff": ["tiff", "tif"],
-    "x-icon": "ico",
-    "bmp": "bmp",
-    "webp": "webp",
-    "x-pict": ["pic", "pct"],
-    "x-tga": "tga",
-    "cis-cod": "cod"
+  image: {
+    gif: 'gif',
+    ief: 'ief',
+    jpeg: ['jpeg', 'jpg', 'jpe'],
+    pcx: 'pcx',
+    png: 'png',
+    'svg+xml': ['svg', 'svgz'],
+    tiff: ['tiff', 'tif'],
+    'x-icon': 'ico',
+    bmp: 'bmp',
+    webp: 'webp',
+    'x-pict': ['pic', 'pct'],
+    'x-tga': 'tga',
+    'cis-cod': 'cod'
   },
-  "text": {
-    "cache-manifest": ["manifest", "appcache"],
-    "css": "css",
-    "csv": "csv",
-    "html": ["html", "htm", "shtml", "stm"],
-    "mathml": "mml",
-    "plain": ["txt", "text", "brf", "conf", "def", "list", "log", "in", "bas"],
-    "richtext": "rtx",
-    "tab-separated-values": "tsv",
-    "x-bibtex": "bib"
+  text: {
+    'cache-manifest': ['manifest', 'appcache'],
+    css: 'css',
+    csv: 'csv',
+    html: ['html', 'htm', 'shtml', 'stm'],
+    mathml: 'mml',
+    plain: ['txt', 'text', 'brf', 'conf', 'def', 'list', 'log', 'in', 'bas'],
+    richtext: 'rtx',
+    'tab-separated-values': 'tsv',
+    'x-bibtex': 'bib'
   },
-  "video": {
-    "mpeg": ["mpeg", "mpg", "mpe", "m1v", "m2v", "mp2", "mpa", "mpv2"],
-    "mp4": ["mp4", "mp4v", "mpg4"],
-    "quicktime": ["qt", "mov"],
-    "ogg": "ogv",
-    "vnd.mpegurl": ["mxu", "m4u"],
-    "x-flv": "flv",
-    "x-la-asf": ["lsf", "lsx"],
-    "x-mng": "mng",
-    "x-ms-asf": ["asf", "asx", "asr"],
-    "x-ms-wm": "wm",
-    "x-ms-wmv": "wmv",
-    "x-ms-wmx": "wmx",
-    "x-ms-wvx": "wvx",
-    "x-msvideo": "avi",
-    "x-sgi-movie": "movie",
-    "x-matroska": ["mpv", "mkv", "mk3d", "mks"],
-    "3gpp2": "3g2",
-    "h261": "h261",
-    "h263": "h263",
-    "h264": "h264",
-    "jpeg": "jpgv",
-    "jpm": ["jpm", "jpgm"],
-    "mj2": ["mj2", "mjp2"],
-    "vnd.ms-playready.media.pyv": "pyv",
-    "vnd.uvvu.mp4": ["uvu", "uvvu"],
-    "vnd.vivo": "viv",
-    "webm": "webm",
-    "x-f4v": "f4v",
-    "x-m4v": "m4v",
-    "x-ms-vob": "vob",
-    "x-smv": "smv"
+  video: {
+    mpeg: ['mpeg', 'mpg', 'mpe', 'm1v', 'm2v', 'mp2', 'mpa', 'mpv2'],
+    mp4: ['mp4', 'mp4v', 'mpg4'],
+    quicktime: ['qt', 'mov'],
+    ogg: 'ogv',
+    'vnd.mpegurl': ['mxu', 'm4u'],
+    'x-flv': 'flv',
+    'x-la-asf': ['lsf', 'lsx'],
+    'x-mng': 'mng',
+    'x-ms-asf': ['asf', 'asx', 'asr'],
+    'x-ms-wm': 'wm',
+    'x-ms-wmv': 'wmv',
+    'x-ms-wmx': 'wmx',
+    'x-ms-wvx': 'wvx',
+    'x-msvideo': 'avi',
+    'x-sgi-movie': 'movie',
+    'x-matroska': ['mpv', 'mkv', 'mk3d', 'mks'],
+    '3gpp2': '3g2',
+    h261: 'h261',
+    h263: 'h263',
+    h264: 'h264',
+    jpeg: 'jpgv',
+    jpm: ['jpm', 'jpgm'],
+    mj2: ['mj2', 'mjp2'],
+    'vnd.ms-playready.media.pyv': 'pyv',
+    'vnd.uvvu.mp4': ['uvu', 'uvvu'],
+    'vnd.vivo': 'viv',
+    webm: 'webm',
+    'x-f4v': 'f4v',
+    'x-m4v': 'm4v',
+    'x-ms-vob': 'vob',
+    'x-smv': 'smv'
   }
 };
 var mimeTypes = function () {
@@ -42295,11 +42281,11 @@ var mimeTypes = function () {
       for (subtype in table[type]) {
         if (table[type].hasOwnProperty(subtype)) {
           val = table[type][subtype];
-          if (typeof val == "string") {
-            mimeTypes[val] = type + "/" + subtype;
+          if (typeof val == 'string') {
+            mimeTypes[val] = type + '/' + subtype;
           } else {
             for (index = 0; index < val.length; index++) {
-              mimeTypes[val[index]] = type + "/" + subtype;
+              mimeTypes[val[index]] = type + '/' + subtype;
             }
           }
         }
@@ -42308,12 +42294,11 @@ var mimeTypes = function () {
   }
   return mimeTypes;
 }();
-var defaultValue = "text/plain"; //"application/octet-stream";
+var defaultValue = 'text/plain'; //"application/octet-stream";
 
 function lookup(filename) {
-  return filename && mimeTypes[filename.split(".").pop().toLowerCase()] || defaultValue;
+  return filename && mimeTypes[filename.split('.').pop().toLowerCase()] || defaultValue;
 }
-;
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   lookup
 });
@@ -42346,7 +42331,7 @@ class Path {
   constructor(pathString) {
     var protocol;
     var parsed;
-    protocol = pathString.indexOf("://");
+    protocol = pathString.indexOf('://');
     if (protocol > -1) {
       pathString = new URL(pathString).pathname;
     }
@@ -42355,7 +42340,7 @@ class Path {
     if (this.isDirectory(pathString)) {
       this.directory = pathString;
     } else {
-      this.directory = parsed.dir + "/";
+      this.directory = parsed.dir + '/';
     }
     this.filename = parsed.base;
     this.extension = parsed.ext.slice(1);
@@ -42384,7 +42369,7 @@ class Path {
    * @returns {boolean}
    */
   isDirectory(what) {
-    return what.charAt(what.length - 1) === "/";
+    return what.charAt(what.length - 1) === '/';
   }
 
   /**
@@ -42406,7 +42391,7 @@ class Path {
    * @returns {string} relative
    */
   relative(what) {
-    var isAbsolute = what && what.indexOf("://") > -1;
+    var isAbsolute = what && what.indexOf('://') > -1;
     if (isAbsolute) {
       return what;
     }
@@ -42472,22 +42457,22 @@ class Queue {
     //   args = [args];
     // }
     if (!task) {
-      throw new Error("No Task Provided");
+      throw new Error('No Task Provided');
     }
-    if (typeof task === "function") {
+    if (typeof task === 'function') {
       deferred = new _core__WEBPACK_IMPORTED_MODULE_0__.defer();
       promise = deferred.promise;
       queued = {
-        "task": task,
-        "args": args,
+        task: task,
+        args: args,
         //"context"  : context,
-        "deferred": deferred,
-        "promise": promise
+        deferred: deferred,
+        promise: promise
       };
     } else {
       // Task is a promise
       queued = {
-        "promise": task
+        promise: task
       };
     }
     this._q.push(queued);
@@ -42514,7 +42499,7 @@ class Queue {
         // console.log(task)
 
         result = task.apply(this.context, inwait.args);
-        if (result && typeof result["then"] === "function") {
+        if (result && typeof result['then'] === 'function') {
           // Task is a function that returns a promise
           return result.then(function () {
             inwait.deferred.resolve.apply(this.context, arguments);
@@ -42672,22 +42657,20 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./core */ "./src/utils/core.js");
 /* harmony import */ var _url__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./url */ "./src/utils/url.js");
-/* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./path */ "./src/utils/path.js");
-
 
 
 function replaceBase(doc, section) {
   var base;
   var head;
   var url = section.url;
-  var absolute = url.indexOf("://") > -1;
+  var absolute = url.indexOf('://') > -1;
   if (!doc) {
     return;
   }
-  head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, "head");
-  base = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, "base");
+  head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'head');
+  base = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, 'base');
   if (!base) {
-    base = doc.createElement("base");
+    base = doc.createElement('base');
     head.insertBefore(base, head.firstChild);
   }
 
@@ -42695,7 +42678,7 @@ function replaceBase(doc, section) {
   if (!absolute && window && window.location) {
     url = window.location.origin + url;
   }
-  base.setAttribute("href", url);
+  base.setAttribute('href', url);
 }
 function replaceCanonical(doc, section) {
   var head;
@@ -42704,14 +42687,14 @@ function replaceCanonical(doc, section) {
   if (!doc) {
     return;
   }
-  head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, "head");
-  link = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, "link[rel='canonical']");
+  head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'head');
+  link = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, 'link[rel=\'canonical\']');
   if (link) {
-    link.setAttribute("href", url);
+    link.setAttribute('href', url);
   } else {
-    link = doc.createElement("link");
-    link.setAttribute("rel", "canonical");
-    link.setAttribute("href", url);
+    link = doc.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    link.setAttribute('href', url);
     head.appendChild(link);
   }
 }
@@ -42722,34 +42705,34 @@ function replaceMeta(doc, section) {
   if (!doc) {
     return;
   }
-  head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, "head");
-  meta = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, "link[property='dc.identifier']");
+  head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'head');
+  meta = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, 'link[property=\'dc.identifier\']');
   if (meta) {
-    meta.setAttribute("content", id);
+    meta.setAttribute('content', id);
   } else {
-    meta = doc.createElement("meta");
-    meta.setAttribute("name", "dc.identifier");
-    meta.setAttribute("content", id);
+    meta = doc.createElement('meta');
+    meta.setAttribute('name', 'dc.identifier');
+    meta.setAttribute('content', id);
     head.appendChild(meta);
   }
 }
 
 // TODO: move me to Contents
 function replaceLinks(contents, fn) {
-  var links = contents.querySelectorAll("a[href]");
+  var links = contents.querySelectorAll('a[href]');
   if (!links.length) {
     return;
   }
-  var base = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(contents.ownerDocument, "base");
-  var location = base ? base.getAttribute("href") : undefined;
+  var base = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(contents.ownerDocument, 'base');
+  var location = base ? base.getAttribute('href') : undefined;
   var replaceLink = function (link) {
-    var href = link.getAttribute("href");
-    if (href.indexOf("mailto:") === 0) {
+    var href = link.getAttribute('href');
+    if (href.indexOf('mailto:') === 0) {
       return;
     }
-    var absolute = href.indexOf("://") > -1;
+    var absolute = href.indexOf('://') > -1;
     if (absolute) {
-      link.setAttribute("target", "_blank");
+      link.setAttribute('target', '_blank');
     } else {
       var linkUrl;
       try {
@@ -42778,8 +42761,8 @@ function substitute(content, urls, replacements) {
     if (url && replacements[i]) {
       // Account for special characters in the file name.
       // See https://stackoverflow.com/a/6318729.
-      url = url.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-      content = content.replace(new RegExp(url, "g"), replacements[i]);
+      url = url.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      content = content.replace(new RegExp(url, 'g'), replacements[i]);
     }
   });
   return content;
@@ -42803,8 +42786,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function request(url, type, withCredentials, headers) {
-  var supportsURL = typeof window != "undefined" ? window.URL : false; // TODO: fallback for url if window isn't defined
-  var BLOB_RESPONSE = supportsURL ? "blob" : "arraybuffer";
+  var supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
+  var BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
   var deferred = new _core__WEBPACK_IMPORTED_MODULE_0__.defer();
   var xhr = new XMLHttpRequest();
 
@@ -42812,9 +42795,9 @@ function request(url, type, withCredentials, headers) {
   //   https://github.com/mozilla/pdf.js/blob/master/web/compatibility.js
   var xhrPrototype = XMLHttpRequest.prototype;
   var header;
-  if (!("overrideMimeType" in xhrPrototype)) {
+  if (!('overrideMimeType' in xhrPrototype)) {
     // IE10 might have response, but not overrideMimeType
-    Object.defineProperty(xhrPrototype, "overrideMimeType", {
+    Object.defineProperty(xhrPrototype, 'overrideMimeType', {
       value: function xmlHttpRequestOverrideMimeType() {}
     });
   }
@@ -42823,33 +42806,33 @@ function request(url, type, withCredentials, headers) {
   }
   xhr.onreadystatechange = handler;
   xhr.onerror = err;
-  xhr.open("GET", url, true);
+  xhr.open('GET', url, true);
   for (header in headers) {
     xhr.setRequestHeader(header, headers[header]);
   }
-  if (type == "json") {
-    xhr.setRequestHeader("Accept", "application/json");
+  if (type == 'json') {
+    xhr.setRequestHeader('Accept', 'application/json');
   }
 
   // If type isn"t set, determine it from the file extension
   if (!type) {
     type = new _path__WEBPACK_IMPORTED_MODULE_1__["default"](url).extension;
   }
-  if (type == "blob") {
+  if (type == 'blob') {
     xhr.responseType = BLOB_RESPONSE;
   }
   if ((0,_core__WEBPACK_IMPORTED_MODULE_0__.isXml)(type)) {
     // xhr.responseType = "document";
-    xhr.overrideMimeType("text/xml"); // for OPF parsing
+    xhr.overrideMimeType('text/xml'); // for OPF parsing
   }
-  if (type == "xhtml") {
+  if (type == 'xhtml') {
     // xhr.responseType = "document";
   }
-  if (type == "html" || type == "htm") {
+  if (type == 'html' || type == 'htm') {
     // xhr.responseType = "document";
   }
-  if (type == "binary") {
-    xhr.responseType = "arraybuffer";
+  if (type == 'binary') {
+    xhr.responseType = 'arraybuffer';
   }
   xhr.send();
   function err(e) {
@@ -42858,7 +42841,7 @@ function request(url, type, withCredentials, headers) {
   function handler() {
     if (this.readyState === XMLHttpRequest.DONE) {
       var responseXML = false;
-      if (this.responseType === "" || this.responseType === "document") {
+      if (this.responseType === '' || this.responseType === 'document') {
         responseXML = this.responseXML;
       }
       if (this.status === 200 || this.status === 0 || responseXML) {
@@ -42867,7 +42850,7 @@ function request(url, type, withCredentials, headers) {
         if (!this.response && !responseXML) {
           deferred.reject({
             status: this.status,
-            message: "Empty Response",
+            message: 'Empty Response',
             stack: new Error().stack
           });
           return deferred.promise;
@@ -42876,7 +42859,7 @@ function request(url, type, withCredentials, headers) {
           deferred.reject({
             status: this.status,
             response: this.response,
-            message: "Forbidden",
+            message: 'Forbidden',
             stack: new Error().stack
           });
           return deferred.promise;
@@ -42886,14 +42869,14 @@ function request(url, type, withCredentials, headers) {
         } else if ((0,_core__WEBPACK_IMPORTED_MODULE_0__.isXml)(type)) {
           // xhr.overrideMimeType("text/xml"); // for OPF parsing
           // If this.responseXML wasn't set, try to parse using a DOMParser from text
-          r = (0,_core__WEBPACK_IMPORTED_MODULE_0__.parse)(this.response, "text/xml");
-        } else if (type == "xhtml") {
-          r = (0,_core__WEBPACK_IMPORTED_MODULE_0__.parse)(this.response, "application/xhtml+xml");
-        } else if (type == "html" || type == "htm") {
-          r = (0,_core__WEBPACK_IMPORTED_MODULE_0__.parse)(this.response, "text/html");
-        } else if (type == "json") {
+          r = (0,_core__WEBPACK_IMPORTED_MODULE_0__.parse)(this.response, 'text/xml');
+        } else if (type == 'xhtml') {
+          r = (0,_core__WEBPACK_IMPORTED_MODULE_0__.parse)(this.response, 'application/xhtml+xml');
+        } else if (type == 'html' || type == 'htm') {
+          r = (0,_core__WEBPACK_IMPORTED_MODULE_0__.parse)(this.response, 'text/html');
+        } else if (type == 'json') {
           r = JSON.parse(this.response);
-        } else if (type == "blob") {
+        } else if (type == 'blob') {
           if (supportsURL) {
             r = this.response;
           } else {
@@ -42934,21 +42917,21 @@ __webpack_require__.r(__webpack_exports__);
 // Detect RTL scroll type
 // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
 function scrollType() {
-  var type = "reverse";
+  var type = 'reverse';
   var definer = createDefiner();
   document.body.appendChild(definer);
   if (definer.scrollLeft > 0) {
-    type = "default";
+    type = 'default';
   } else {
     if (typeof Element !== 'undefined' && Element.prototype.scrollIntoView) {
       definer.children[0].children[1].scrollIntoView();
       if (definer.scrollLeft < 0) {
-        type = "negative";
+        type = 'negative';
       }
     } else {
       definer.scrollLeft = 1;
       if (definer.scrollLeft === 0) {
-        type = "negative";
+        type = 'negative';
       }
     }
   }
@@ -42957,21 +42940,21 @@ function scrollType() {
 }
 function createDefiner() {
   var definer = document.createElement('div');
-  definer.dir = "rtl";
-  definer.style.position = "fixed";
-  definer.style.width = "1px";
-  definer.style.height = "1px";
-  definer.style.top = "0px";
-  definer.style.left = "0px";
-  definer.style.overflow = "hidden";
+  definer.dir = 'rtl';
+  definer.style.position = 'fixed';
+  definer.style.width = '1px';
+  definer.style.height = '1px';
+  definer.style.top = '0px';
+  definer.style.left = '0px';
+  definer.style.overflow = 'hidden';
   var innerDiv = document.createElement('div');
-  innerDiv.style.width = "2px";
+  innerDiv.style.width = '2px';
   var spanA = document.createElement('span');
-  spanA.style.width = "1px";
-  spanA.style.display = "inline-block";
+  spanA.style.width = '1px';
+  spanA.style.display = 'inline-block';
   var spanB = document.createElement('span');
-  spanB.style.width = "1px";
-  spanB.style.display = "inline-block";
+  spanB.style.width = '1px';
+  spanB.style.display = 'inline-block';
   innerDiv.appendChild(spanA);
   innerDiv.appendChild(spanB);
   definer.appendChild(innerDiv);
@@ -43005,18 +42988,18 @@ __webpack_require__.r(__webpack_exports__);
  */
 class Url {
   constructor(urlString, baseString) {
-    var absolute = urlString.indexOf("://") > -1;
+    var absolute = urlString.indexOf('://') > -1;
     var pathname = urlString;
     var basePath;
     this.Url = undefined;
     this.href = urlString;
-    this.protocol = "";
-    this.origin = "";
-    this.hash = "";
-    this.hash = "";
-    this.search = "";
+    this.protocol = '';
+    this.origin = '';
+    this.hash = '';
+    this.hash = '';
+    this.search = '';
     this.base = baseString;
-    if (!absolute && baseString !== false && typeof baseString !== "string" && window && window.location) {
+    if (!absolute && baseString !== false && typeof baseString !== 'string' && window && window.location) {
       this.base = window.location.href;
     }
 
@@ -43064,7 +43047,7 @@ class Url {
    * @returns {string} url
    */
   resolve(what) {
-    var isAbsolute = what.indexOf("://") > -1;
+    var isAbsolute = what.indexOf('://') > -1;
     var fullpath;
     if (isAbsolute) {
       return what;
@@ -43108,55 +43091,55 @@ __webpack_require__.r(__webpack_exports__);
 
 describe('Book', function () {
   describe('Unarchived', function () {
-    var book = new _src_book__WEBPACK_IMPORTED_MODULE_0__["default"]("/fixtures/alice/OPS/package.opf");
+    var book = new _src_book__WEBPACK_IMPORTED_MODULE_0__["default"]('/fixtures/alice/OPS/package.opf');
     it('should open a epub', async function () {
       await book.opened;
-      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, "book is opened");
-      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.url.toString(), "http://localhost:9876/fixtures/alice/OPS/package.opf", "book url is passed to new Book");
+      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, 'book is opened');
+      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.url.toString(), 'http://localhost:9876/fixtures/alice/OPS/package.opf', 'book url is passed to new Book');
     });
     it('should have a local coverUrl', async function () {
-      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(await book.coverUrl(), "http://localhost:9876/fixtures/alice/OPS/images/cover_th.jpg", "cover url is available");
+      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(await book.coverUrl(), 'http://localhost:9876/fixtures/alice/OPS/images/cover_th.jpg', 'cover url is available');
     });
   });
   describe('Archived epub', function () {
-    var book = new _src_book__WEBPACK_IMPORTED_MODULE_0__["default"]("/fixtures/alice.epub");
+    var book = new _src_book__WEBPACK_IMPORTED_MODULE_0__["default"]('/fixtures/alice.epub');
     it('should open a archived epub', async function () {
       await book.opened;
-      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, "book is opened");
-      assert__WEBPACK_IMPORTED_MODULE_1___default()(book.archive, "book is unarchived");
+      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, 'book is opened');
+      assert__WEBPACK_IMPORTED_MODULE_1___default()(book.archive, 'book is unarchived');
     });
     it('should have a blob coverUrl', async function () {
       let coverUrl = await book.coverUrl();
-      assert__WEBPACK_IMPORTED_MODULE_1___default()(/^blob:http:\/\/localhost:9876\/[^\/]+$/.test(coverUrl), "cover url is available and a blob: url");
+      assert__WEBPACK_IMPORTED_MODULE_1___default()(/^blob:http:\/\/localhost:9876\/[^/]+$/.test(coverUrl), 'cover url is available and a blob: url');
     });
   });
   describe('Archived epub in array buffer without options', function () {
     let book;
     before(async function () {
-      const response = await fetch("/fixtures/alice.epub");
+      const response = await fetch('/fixtures/alice.epub');
       const buffer = await response.arrayBuffer();
       book = new _src_book__WEBPACK_IMPORTED_MODULE_0__["default"](buffer);
     });
     it('should open a archived epub', async function () {
       await book.opened;
-      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, "book is opened");
-      assert__WEBPACK_IMPORTED_MODULE_1___default()(book.archive, "book is unarchived");
+      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, 'book is opened');
+      assert__WEBPACK_IMPORTED_MODULE_1___default()(book.archive, 'book is unarchived');
     });
     it('should have a blob coverUrl', async function () {
       let coverUrl = await book.coverUrl();
-      assert__WEBPACK_IMPORTED_MODULE_1___default()(/^blob:http:\/\/localhost:9876\/[^\/]+$/.test(coverUrl), "cover url is available and a blob: url");
+      assert__WEBPACK_IMPORTED_MODULE_1___default()(/^blob:http:\/\/localhost:9876\/[^\/]+$/.test(coverUrl), 'cover url is available and a blob: url');
     });
   });
   describe('Archived epub without cover', function () {
-    var book = new _src_book__WEBPACK_IMPORTED_MODULE_0__["default"]("/fixtures/alice_without_cover.epub");
+    var book = new _src_book__WEBPACK_IMPORTED_MODULE_0__["default"]('/fixtures/alice_without_cover.epub');
     it('should open a archived epub', async function () {
       await book.opened;
-      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, "book is opened");
-      assert__WEBPACK_IMPORTED_MODULE_1___default()(book.archive, "book is unarchived");
+      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(book.isOpen, true, 'book is opened');
+      assert__WEBPACK_IMPORTED_MODULE_1___default()(book.archive, 'book is unarchived');
     });
     it('should have a empty coverUrl', async function () {
       let coverUrl = await book.coverUrl();
-      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(coverUrl, null, "cover url should be null");
+      assert__WEBPACK_IMPORTED_MODULE_1___default().equal(coverUrl, null, 'cover url should be null');
     });
   });
 });
@@ -43181,142 +43164,142 @@ __webpack_require__.r(__webpack_exports__);
 describe('Core', function () {
   before(function () {});
   describe('Url', function () {
-    it("Url()", function () {
-      var url = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"]("http://example.com/fred/chasen/derf.html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.href, "http://example.com/fred/chasen/derf.html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.directory, "/fred/chasen/");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.extension, "html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.filename, "derf.html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.origin, "http://example.com");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.protocol, "http:");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.search, "");
+    it('Url()', function () {
+      var url = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"]('http://example.com/fred/chasen/derf.html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.href, 'http://example.com/fred/chasen/derf.html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.directory, '/fred/chasen/');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.extension, 'html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.filename, 'derf.html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.origin, 'http://example.com');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.protocol, 'http:');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.search, '');
     });
     describe('#resolve()', function () {
-      it("should join subfolders", function () {
-        var a = "http://example.com/fred/chasen/";
-        var b = "ops/derf.html";
+      it('should join subfolders', function () {
+        var a = 'http://example.com/fred/chasen/';
+        var b = 'ops/derf.html';
         var resolved = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "http://example.com/fred/chasen/ops/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, 'http://example.com/fred/chasen/ops/derf.html');
       });
-      it("should resolve up a level", function () {
-        var a = "http://example.com/fred/chasen/index.html";
-        var b = "../derf.html";
+      it('should resolve up a level', function () {
+        var a = 'http://example.com/fred/chasen/index.html';
+        var b = '../derf.html';
         var resolved = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "http://example.com/fred/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, 'http://example.com/fred/derf.html');
       });
-      it("should resolve absolute", function () {
-        var a = "http://example.com/fred/chasen/index.html";
-        var b = "/derf.html";
+      it('should resolve absolute', function () {
+        var a = 'http://example.com/fred/chasen/index.html';
+        var b = '/derf.html';
         var resolved = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "http://example.com/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, 'http://example.com/derf.html');
       });
-      it("should resolve with search strings", function () {
-        var a = "http://example.com/fred/chasen/index.html?debug=true";
-        var b = "/derf.html";
+      it('should resolve with search strings', function () {
+        var a = 'http://example.com/fred/chasen/index.html?debug=true';
+        var b = '/derf.html';
         var resolved = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "http://example.com/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, 'http://example.com/derf.html');
       });
 
       // Doesn't work with path.parse
-      xit("should handle directory with a dot", function () {
-        var a = "http://example.com/fred/chasen/index.epub/";
+      xit('should handle directory with a dot', function () {
+        var a = 'http://example.com/fred/chasen/index.epub/';
         var url = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"](a);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.directory, "/fred/chasen/index.epub/");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.extension, "");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.directory, '/fred/chasen/index.epub/');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.extension, '');
       });
-      it("should handle file urls", function () {
-        var url = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"]("file:///var/mobile/Containers/Data/Application/F47E4434-9B98-4654-93F1-702336B08EE6/Documents/books/moby-dick/derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.href, "file:///var/mobile/Containers/Data/Application/F47E4434-9B98-4654-93F1-702336B08EE6/Documents/books/moby-dick/derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.directory, "/var/mobile/Containers/Data/Application/F47E4434-9B98-4654-93F1-702336B08EE6/Documents/books/moby-dick/");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.extension, "html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.filename, "derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.origin, "file://"); // origin should be blank
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.protocol, "file:");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.search, "");
+      it('should handle file urls', function () {
+        var url = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"]('file:///var/mobile/Containers/Data/Application/F47E4434-9B98-4654-93F1-702336B08EE6/Documents/books/moby-dick/derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.href, 'file:///var/mobile/Containers/Data/Application/F47E4434-9B98-4654-93F1-702336B08EE6/Documents/books/moby-dick/derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.directory, '/var/mobile/Containers/Data/Application/F47E4434-9B98-4654-93F1-702336B08EE6/Documents/books/moby-dick/');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.extension, 'html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.filename, 'derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.origin, 'file://'); // origin should be blank
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.protocol, 'file:');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(url.search, '');
       });
-      it("should resolve with file urls", function () {
-        var a = "file:///var/mobile/Containers/Data/Application/books/";
-        var b = "derf.html";
+      it('should resolve with file urls', function () {
+        var a = 'file:///var/mobile/Containers/Data/Application/books/';
+        var b = 'derf.html';
         var resolved = new _src_utils_url__WEBPACK_IMPORTED_MODULE_1__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "file:///var/mobile/Containers/Data/Application/books/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, 'file:///var/mobile/Containers/Data/Application/books/derf.html');
       });
     });
   });
   describe('Path', function () {
-    it("Path()", function () {
-      var path = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"]("/fred/chasen/derf.html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.path, "/fred/chasen/derf.html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.directory, "/fred/chasen/");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.extension, "html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.filename, "derf.html");
+    it('Path()', function () {
+      var path = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"]('/fred/chasen/derf.html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.path, '/fred/chasen/derf.html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.directory, '/fred/chasen/');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.extension, 'html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.filename, 'derf.html');
     });
-    it("Strip out url", function () {
-      var path = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"]("http://example.com/fred/chasen/derf.html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.path, "/fred/chasen/derf.html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.directory, "/fred/chasen/");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.extension, "html");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.filename, "derf.html");
+    it('Strip out url', function () {
+      var path = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"]('http://example.com/fred/chasen/derf.html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.path, '/fred/chasen/derf.html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.directory, '/fred/chasen/');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.extension, 'html');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.filename, 'derf.html');
     });
     describe('#parse()', function () {
-      it("should parse a path", function () {
-        var path = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.parse("/fred/chasen/derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.dir, "/fred/chasen");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.base, "derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.ext, ".html");
+      it('should parse a path', function () {
+        var path = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.parse('/fred/chasen/derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.dir, '/fred/chasen');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.base, 'derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.ext, '.html');
       });
-      it("should parse a relative path", function () {
-        var path = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.parse("fred/chasen/derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.dir, "fred/chasen");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.base, "derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.ext, ".html");
+      it('should parse a relative path', function () {
+        var path = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.parse('fred/chasen/derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.dir, 'fred/chasen');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.base, 'derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(path.ext, '.html');
       });
     });
     describe('#isDirectory()', function () {
-      it("should recognize a directory", function () {
-        var directory = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.isDirectory("/fred/chasen/");
-        var notDirectory = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.isDirectory("/fred/chasen/derf.html");
-        assert__WEBPACK_IMPORTED_MODULE_0___default()(directory, "/fred/chasen/ is a directory");
-        assert__WEBPACK_IMPORTED_MODULE_0___default()(!notDirectory, "/fred/chasen/derf.html is not directory");
+      it('should recognize a directory', function () {
+        var directory = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.isDirectory('/fred/chasen/');
+        var notDirectory = _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.isDirectory('/fred/chasen/derf.html');
+        assert__WEBPACK_IMPORTED_MODULE_0___default()(directory, '/fred/chasen/ is a directory');
+        assert__WEBPACK_IMPORTED_MODULE_0___default()(!notDirectory, '/fred/chasen/derf.html is not directory');
       });
     });
     describe('#resolve()', function () {
-      it("should resolve a path", function () {
-        var a = "/fred/chasen/index.html";
-        var b = "derf.html";
+      it('should resolve a path', function () {
+        var a = '/fred/chasen/index.html';
+        var b = 'derf.html';
         var resolved = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "/fred/chasen/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, '/fred/chasen/derf.html');
       });
-      it("should resolve a relative path", function () {
-        var a = "fred/chasen/index.html";
-        var b = "derf.html";
+      it('should resolve a relative path', function () {
+        var a = 'fred/chasen/index.html';
+        var b = 'derf.html';
         var resolved = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "/fred/chasen/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, '/fred/chasen/derf.html');
       });
-      it("should resolve a level up", function () {
-        var a = "/fred/chasen/index.html";
-        var b = "../derf.html";
+      it('should resolve a level up', function () {
+        var a = '/fred/chasen/index.html';
+        var b = '../derf.html';
         var resolved = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"](a).resolve(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, "/fred/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(resolved, '/fred/derf.html');
       });
     });
     describe('#relative()', function () {
-      it("should find a relative path at the same level", function () {
-        var a = "/fred/chasen/index.html";
-        var b = "/fred/chasen/derf.html";
+      it('should find a relative path at the same level', function () {
+        var a = '/fred/chasen/index.html';
+        var b = '/fred/chasen/derf.html';
         var relative = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"](a).relative(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(relative, "derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(relative, 'derf.html');
       });
-      it("should find a relative path down a level", function () {
-        var a = "/fred/chasen/index.html";
-        var b = "/fred/chasen/ops/derf.html";
+      it('should find a relative path down a level', function () {
+        var a = '/fred/chasen/index.html';
+        var b = '/fred/chasen/ops/derf.html';
         var relative = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"](a).relative(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(relative, "ops/derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(relative, 'ops/derf.html');
       });
-      it("should resolve a level up", function () {
-        var a = "/fred/chasen/index.html";
-        var b = "/fred/derf.html";
+      it('should resolve a level up', function () {
+        var a = '/fred/chasen/index.html';
+        var b = '/fred/derf.html';
         var relative = new _src_utils_path__WEBPACK_IMPORTED_MODULE_2__["default"](a).relative(b);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(relative, "../derf.html");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(relative, '../derf.html');
       });
     });
   });
@@ -43340,20 +43323,19 @@ __webpack_require__.r(__webpack_exports__);
 // var sinon = require('sinon');
 
 describe('ePub', function () {
-  var server;
   before(function () {
     /*
     // var packageContents = fs.readFileSync(__dirname + '/../books/moby-dick/OPS/package.opf', 'utf8');
     // var tocContents = fs.readFileSync(__dirname + '/../books/moby-dick/OPS/toc.xhtml', 'utf8');
     var packageContents = require('./fixtures/moby-dick/OPS/package.opf');
     var tocContents = require('./fixtures/moby-dick/OPS/toc.xhtml');
-    	server = sinon.fakeServer.create();
+    server = sinon.fakeServer.create();
     server.autoRespond = true;
-    	server.respondWith("moby-dick/OPS/package.opf", [200, {
-    	"Content-Type": "text/xml"
+    server.respondWith("moby-dick/OPS/package.opf", [200, {
+    "Content-Type": "text/xml"
     }, packageContents]);
-    	server.respondWith("moby-dick/OPS/toc.xhtml", [200, {
-    	"Content-Type": "application/xhtml+xml"
+    server.respondWith("moby-dick/OPS/toc.xhtml", [200, {
+    "Content-Type": "application/xhtml+xml"
     }, tocContents]);
     */
   });
@@ -43361,20 +43343,20 @@ describe('ePub', function () {
     // server.restore();
   });
   it('should open a epub', function () {
-    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])("/fixtures/alice/OPS/package.opf");
+    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])('/fixtures/alice/OPS/package.opf');
     return book.opened.then(function () {
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(book.isOpen, true, "book is opened");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(book.url.toString(), "http://localhost:9876/fixtures/alice/OPS/package.opf", "book url is passed to new Book");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(book.isOpen, true, 'book is opened');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(book.url.toString(), 'http://localhost:9876/fixtures/alice/OPS/package.opf', 'book url is passed to new Book');
     });
   });
   it('should open a archived epub', function () {
-    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])("/fixtures/alice.epub");
+    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])('/fixtures/alice.epub');
 
     // assert(typeof (JSZip) !== "undefined", "JSZip is present" );
 
     return book.opened.then(function () {
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(book.isOpen, true, "book is opened");
-      assert__WEBPACK_IMPORTED_MODULE_0___default()(book.archive, "book is unarchived");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(book.isOpen, true, 'book is opened');
+      assert__WEBPACK_IMPORTED_MODULE_0___default()(book.archive, 'book is unarchived');
     });
   });
 });
@@ -43395,46 +43377,46 @@ __webpack_require__.r(__webpack_exports__);
 
 
 // var fs = require('fs');
-if (typeof DOMParser === "undefined") {
+if (typeof DOMParser === 'undefined') {
   __webpack_require__.g.DOMParser = (__webpack_require__(/*! xmldom */ "./node_modules/xmldom/lib/dom-parser.js").DOMParser);
 }
 describe('EpubCFI', function () {
   it('parse a cfi on init', function () {
-    var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]("epubcfi(/6/2[cover]!/6)");
-    assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.spinePos, 0, "spinePos is parsed as the first item");
+    var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]('epubcfi(/6/2[cover]!/6)');
+    assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.spinePos, 0, 'spinePos is parsed as the first item');
   });
   it('parse a cfi and ignore the base if present', function () {
-    var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]("epubcfi(/6/2[cover]!/6)", "/6/6[end]");
-    assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.spinePos, 0, "base is ignored and spinePos is parsed as the first item");
+    var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]('epubcfi(/6/2[cover]!/6)', '/6/6[end]');
+    assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.spinePos, 0, 'base is ignored and spinePos is parsed as the first item');
   });
   describe('#parse()', function () {
     var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]();
     it('parse a cfi on init', function () {
-      var parsed = cfi.parse("epubcfi(/6/2[cover]!/6)");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.spinePos, 0, "spinePos is parsed as the first item");
+      var parsed = cfi.parse('epubcfi(/6/2[cover]!/6)');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.spinePos, 0, 'spinePos is parsed as the first item');
     });
     it('parse a cfi and ignore the base if present', function () {
-      var parsed = cfi.parse("epubcfi(/6/2[cover]!/6)", "/6/6[end]");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.spinePos, 0, "base is ignored and spinePos is parsed as the first item");
+      var parsed = cfi.parse('epubcfi(/6/2[cover]!/6)', '/6/6[end]');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.spinePos, 0, 'base is ignored and spinePos is parsed as the first item');
     });
     it('parse a cfi with a character offset', function () {
-      var parsed = cfi.parse("epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.path.terminal.offset, 3, "Path has a terminal offset of 3");
+      var parsed = cfi.parse('epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.path.terminal.offset, 3, 'Path has a terminal offset of 3');
     });
     it('parse a cfi with a range', function () {
-      var parsed = cfi.parse("epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.range, true, "Range is true");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.start.steps.length, 2, "Start steps are present");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.end.steps.length, 1, "End steps are present");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.start.terminal.offset, 1, "Start has a terminal offset of 1");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.end.terminal.offset, 4, "End has a terminal offset of 4");
+      var parsed = cfi.parse('epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.range, true, 'Range is true');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.start.steps.length, 2, 'Start steps are present');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.end.steps.length, 1, 'End steps are present');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.start.terminal.offset, 1, 'Start has a terminal offset of 1');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(parsed.end.terminal.offset, 4, 'End has a terminal offset of 4');
     });
   });
   describe('#toString()', function () {
     it('parse a cfi and write it back', function () {
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]("epubcfi(/6/2[cover]!/6)").toString(), "epubcfi(/6/2[cover]!/6)", "output cfi string is same as input");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]("epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)").toString(), "epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)", "output cfi string is same as input");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]("epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)").toString(), "epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)", "output cfi string is same as input");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]('epubcfi(/6/2[cover]!/6)').toString(), 'epubcfi(/6/2[cover]!/6)', 'output cfi string is same as input');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]('epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)').toString(), 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)', 'output cfi string is same as input');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]('epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)').toString(), 'epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)', 'output cfi string is same as input');
     });
   });
   describe('#checkType()', function () {
@@ -43444,7 +43426,7 @@ describe('EpubCFI', function () {
       assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.checkType('/6/2[cover]!/6'), false);
     });
     it('determine the type of a cfi', function () {
-      var ogcfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]("epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)");
+      var ogcfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]('epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)');
       var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]();
       assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.checkType(ogcfi), 'EpubCFI');
     });
@@ -43464,96 +43446,95 @@ describe('EpubCFI', function () {
       var epubcfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"]();
 
       // Spines
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/4[cover]!/4)", "epubcfi(/6/2[cover]!/4)"), 1, "First spine is greater");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/4[cover]!/4)", "epubcfi(/6/6[cover]!/4)"), -1, "Second spine is greater");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/4[cover]!/4)', 'epubcfi(/6/2[cover]!/4)'), 1, 'First spine is greater');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/4[cover]!/4)', 'epubcfi(/6/6[cover]!/4)'), -1, 'Second spine is greater');
 
       // First is deeper
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/8/2)", "epubcfi(/6/2[cover]!/6)"), 1, "First Element is after Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/2)", "epubcfi(/6/2[cover]!/6)"), -1, "First Element is before Second");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/8/2)', 'epubcfi(/6/2[cover]!/6)'), 1, 'First Element is after Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/2)', 'epubcfi(/6/2[cover]!/6)'), -1, 'First Element is before Second');
 
       // Second is deeper
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/8/2)", "epubcfi(/6/2[cover]!/6/4/2/2)"), 1, "First Element is after Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/4)", "epubcfi(/6/2[cover]!/6/4/2/2)"), -1, "First Element is before Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/6)", "epubcfi(/6/2[cover]!/4/6/8/1:0)"), -1, "First is less specific, so is before Second");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/8/2)', 'epubcfi(/6/2[cover]!/6/4/2/2)'), 1, 'First Element is after Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/4)', 'epubcfi(/6/2[cover]!/6/4/2/2)'), -1, 'First Element is before Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/6)', 'epubcfi(/6/2[cover]!/4/6/8/1:0)'), -1, 'First is less specific, so is before Second');
 
       // Same Depth
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/6/8)", "epubcfi(/6/2[cover]!/6/2)"), 1, "First Element is after Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/20)", "epubcfi(/6/2[cover]!/6/10)"), -1, "First Element is before Second");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/6/8)', 'epubcfi(/6/2[cover]!/6/2)'), 1, 'First Element is after Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/20)', 'epubcfi(/6/2[cover]!/6/10)'), -1, 'First Element is before Second');
 
       // Text nodes
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/5)", "epubcfi(/6/2[cover]!/4/3)"), 1, "First TextNode is after Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/7)", "epubcfi(/6/2[cover]!/4/13)"), -1, "First TextNode is before Second");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/5)', 'epubcfi(/6/2[cover]!/4/3)'), 1, 'First TextNode is after Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/7)', 'epubcfi(/6/2[cover]!/4/13)'), -1, 'First TextNode is before Second');
 
       // Char offset
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/5:1)", "epubcfi(/6/2[cover]!/4/5:0)"), 1, "First Char Offset after Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/5:2)", "epubcfi(/6/2[cover]!/4/5:30)"), -1, "Second Char Offset before Second");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/5:1)', 'epubcfi(/6/2[cover]!/4/5:0)'), 1, 'First Char Offset after Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/5:2)', 'epubcfi(/6/2[cover]!/4/5:30)'), -1, 'Second Char Offset before Second');
 
       // Normal example
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/8/5:1)", "epubcfi(/6/2[cover]!/4/6/15:2)"), 1, "First Element after Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare("epubcfi(/6/2[cover]!/4/8/1:0)", "epubcfi(/6/2[cover]!/4/8/1:0)"), 0, "All Equal");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/8/5:1)', 'epubcfi(/6/2[cover]!/4/6/15:2)'), 1, 'First Element after Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/2[cover]!/4/8/1:0)', 'epubcfi(/6/2[cover]!/4/8/1:0)'), 0, 'All Equal');
 
       // Different Lengths
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/10/1:317)', 'epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/10/2[page18]/1:0)'), -1, "First CFI is before Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/12/1:0)', 'epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/12/2/1:9)'), -1, "First CFI is before Second");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/16!/4/12/1:0)', 'epubcfi(/6/16!/4/12/2/1:9)'), -1, "First CFI is before Second");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/10/1:317)', 'epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/10/2[page18]/1:0)'), -1, 'First CFI is before Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/12/1:0)', 'epubcfi(/6/16[id42]!/4[5N3C0-8c483216e03a4ff49927fc1a97dc7b2c]/12/2/1:9)'), -1, 'First CFI is before Second');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(epubcfi.compare('epubcfi(/6/16!/4/12/1:0)', 'epubcfi(/6/16!/4/12/2/1:9)'), -1, 'First CFI is before Second');
     });
   });
   describe('#fromNode()', function () {
-    var base = "/6/4[chap01ref]";
+    var base = '/6/4[chap01ref]';
     // var contents = fs.readFileSync(__dirname + '/fixtures/chapter1-highlights.xhtml', 'utf8');
     var contents = (__webpack_require__(/*! ./fixtures/chapter1-highlights.xhtml */ "./test/fixtures/chapter1-highlights.xhtml")["default"]);
 
     // var serializer = new XMLSerializer();
     // var doc = serializer.serializeToString(contents);
-    var doc = new DOMParser().parseFromString(contents, "application/xhtml+xml");
+    var doc = new DOMParser().parseFromString(contents, 'application/xhtml+xml');
     it('get a cfi from a p node', function () {
       var span = doc.getElementById('c001p0004');
       var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](span, base);
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(span.nodeType, Node.ELEMENT_NODE, "provided a element node");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004])");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(span.nodeType, Node.ELEMENT_NODE, 'provided a element node');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004])');
     });
     it('get a cfi from a text node', function () {
       var t = doc.getElementById('c001p0004').childNodes[0];
       var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](t, base);
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(t.nodeType, Node.TEXT_NODE, "provided a text node");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004]/1)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(t.nodeType, Node.TEXT_NODE, 'provided a text node');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004]/1)');
     });
     it('get a cfi from a text node inside a highlight', function () {
       var t = doc.getElementById('highlight-1').childNodes[0];
       var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](t, base, 'annotator-hl');
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(t.nodeType, Node.TEXT_NODE, "provided a text node");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017]/1)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(t.nodeType, Node.TEXT_NODE, 'provided a text node');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017]/1)');
     });
     it('get a cfi from a highlight node', function () {
       var t = doc.getElementById('highlight-1');
       var cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](t, base, 'annotator-hl');
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(t.nodeType, Node.ELEMENT_NODE, "provided a highlight node");
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017])");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(t.nodeType, Node.ELEMENT_NODE, 'provided a highlight node');
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017])');
     });
   });
   describe('#fromRange()', function () {
-    var base = "/6/4[chap01ref]";
+    var base = '/6/4[chap01ref]';
 
     // var contentsClean = fs.readFileSync(__dirname + '/fixtures/chapter1.xhtml', 'utf8');
     var contentsClean = (__webpack_require__(/*! ./fixtures/chapter1.xhtml */ "./test/fixtures/chapter1.xhtml")["default"]);
-    var doc = new DOMParser().parseFromString(contentsClean, "application/xhtml+xml");
+    var doc = new DOMParser().parseFromString(contentsClean, 'application/xhtml+xml');
 
     // var contentsHighlights = fs.readFileSync(__dirname + '/fixtures/chapter1-highlights.xhtml', 'utf8');
     var contentsHighlights = (__webpack_require__(/*! ./fixtures/chapter1-highlights.xhtml */ "./test/fixtures/chapter1-highlights.xhtml")["default"]);
-    var docHighlights = new DOMParser().parseFromString(contentsHighlights, "application/xhtml+xml");
+    var docHighlights = new DOMParser().parseFromString(contentsHighlights, 'application/xhtml+xml');
 
     // var highlightContents = fs.readFileSync(__dirname + '/fixtures/highlight.xhtml', 'utf8');
     var highlightContents = (__webpack_require__(/*! ./fixtures/highlight.xhtml */ "./test/fixtures/highlight.xhtml")["default"]);
-    var docHighlightsAlice = new DOMParser().parseFromString(highlightContents, "application/xhtml+xml");
+    var docHighlightsAlice = new DOMParser().parseFromString(highlightContents, 'application/xhtml+xml');
     it('get a cfi from a collapsed range', function () {
       var t1 = doc.getElementById('c001p0004').childNodes[0];
-      var t2 = doc.getElementById('c001p0007').childNodes[0];
       var range = doc.createRange();
       var cfi;
       range.setStart(t1, 6);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](range, base);
       assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.range, false);
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004]/1:6)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004]/1:6)');
     });
     it('get a cfi from a range', function () {
       var t1 = doc.getElementById('c001p0004').childNodes[0];
@@ -43564,7 +43545,7 @@ describe('EpubCFI', function () {
       range.setEnd(t2, 27);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](range, base);
       assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.range, true);
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2,/10/2[c001p0004]/1:6,/16/2[c001p0007]/1:27)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2,/10/2[c001p0004]/1:6,/16/2[c001p0007]/1:27)');
     });
     it('get a cfi from a range with offset 0', function () {
       var t1 = doc.getElementById('c001p0004').childNodes[0];
@@ -43574,7 +43555,7 @@ describe('EpubCFI', function () {
       range.setEnd(t1, 1);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](range, base);
       assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.range, true);
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004],/1:0,/1:1)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004],/1:0,/1:1)');
     });
     it('get a cfi from a range inside a highlight', function () {
       var t1 = docHighlights.getElementById('highlight-1').childNodes[0];
@@ -43582,7 +43563,7 @@ describe('EpubCFI', function () {
       var cfi;
       range.setStart(t1, 6);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](range, base, 'annotator-hl');
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017]/1:43)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017]/1:43)');
     });
     // TODO: might need to have double ranges in front
     it('get a cfi from a range past a highlight', function () {
@@ -43591,7 +43572,7 @@ describe('EpubCFI', function () {
       var cfi;
       range.setStart(t1, 25);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](range, base, 'annotator-hl');
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/4/2[c001s0001]/1:41)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/4/2[c001s0001]/1:41)');
     });
     it('get a cfi from a range in between two highlights', function () {
       var t1 = docHighlightsAlice.getElementById('p2').childNodes[1];
@@ -43599,7 +43580,7 @@ describe('EpubCFI', function () {
       var cfi;
       range.setStart(t1, 4);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](range, base, 'annotator-hl');
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/4[p2]/1:123)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/4[p2]/1:123)');
     });
     it('correctly count text nodes, independent of any elements present inbetween', function () {
       var t1 = docHighlightsAlice.getElementById('p3').childNodes[2];
@@ -43607,21 +43588,20 @@ describe('EpubCFI', function () {
       var cfi;
       range.setStart(t1, 4);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](range, base);
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/6[p3]/3:4)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/6[p3]/3:4)');
     });
   });
   describe('#toRange()', function () {
-    var base = "/6/4[chap01ref]";
+    var base = '/6/4[chap01ref]';
     // var contents = fs.readFileSync(__dirname + '/fixtures/chapter1-highlights.xhtml', 'utf8');
     var contents = (__webpack_require__(/*! ./fixtures/chapter1-highlights.xhtml */ "./test/fixtures/chapter1-highlights.xhtml")["default"]);
-    var doc = new DOMParser().parseFromString(contents, "application/xhtml+xml");
+    var doc = new DOMParser().parseFromString(contents, 'application/xhtml+xml');
 
     // var serializer = new XMLSerializer();
     // console.log(serializer.serializeToString(doc));
 
     it('get a range from a cfi', function () {
       var t1 = doc.getElementById('c001p0004').childNodes[0];
-      var t2 = doc.getElementById('c001p0007').childNodes[0];
       var ogRange = doc.createRange();
       var cfi;
       var newRange;
@@ -43629,7 +43609,7 @@ describe('EpubCFI', function () {
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](ogRange, base);
 
       // Check it was parse correctly
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004]/1:6)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004]/1:6)');
 
       // Check the range
       newRange = cfi.toRange(doc);
@@ -43648,7 +43628,7 @@ describe('EpubCFI', function () {
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](ogRange, base);
 
       // Check it was parse correctly
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2,/10/2[c001p0004]/1:6,/16/2[c001p0007]/1:27)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2,/10/2[c001p0004]/1:6,/16/2[c001p0007]/1:27)');
 
       // Check the range
       newRange = cfi.toRange(doc);
@@ -43665,7 +43645,7 @@ describe('EpubCFI', function () {
       var newRange;
       ogRange.setStart(t1, 6);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](ogRange, base, 'annotator-hl');
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017]/1:43)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/32/2[c001p0017]/1:43)');
 
       // Check the range
       newRange = cfi.toRange(doc, 'annotator-hl');
@@ -43682,7 +43662,7 @@ describe('EpubCFI', function () {
       ogRange.setStart(t1, 5);
       ogRange.setEnd(t2, 25);
       cfi = new _src_epubcfi_js__WEBPACK_IMPORTED_MODULE_1__["default"](ogRange, base, 'annotator-hl');
-      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), "epubcfi(/6/4[chap01ref]!/4/2/4/2[c001s0001],/1:5,/1:41)");
+      assert__WEBPACK_IMPORTED_MODULE_0___default().equal(cfi.toString(), 'epubcfi(/6/4[chap01ref]!/4/2/4/2[c001s0001],/1:5,/1:41)');
 
       // Check the range
       newRange = cfi.toRange(doc, 'annotator-hl');
@@ -43774,17 +43754,17 @@ describe('Locations', function () {
   describe('#parse', function () {
     var chapter = (__webpack_require__(/*! ./fixtures/locations.xhtml */ "./test/fixtures/locations.xhtml")["default"]);
     it('parse locations from a document', function () {
-      var doc = _src_utils_core__WEBPACK_IMPORTED_MODULE_2__.parse(chapter, "application/xhtml+xml");
+      var doc = _src_utils_core__WEBPACK_IMPORTED_MODULE_2__.parse(chapter, 'application/xhtml+xml');
       var contents = doc.documentElement;
       var locations = new _src_locations__WEBPACK_IMPORTED_MODULE_1__["default"]();
-      var result = locations.parse(contents, "/6/4[chap01ref]", 100);
+      var result = locations.parse(contents, '/6/4[chap01ref]', 100);
       assert__WEBPACK_IMPORTED_MODULE_0___default().equal(result.length, 15);
     });
     it('parse locations from xmldom', function () {
-      var doc = _src_utils_core__WEBPACK_IMPORTED_MODULE_2__.parse(chapter, "application/xhtml+xml", true);
+      var doc = _src_utils_core__WEBPACK_IMPORTED_MODULE_2__.parse(chapter, 'application/xhtml+xml', true);
       var contents = doc.documentElement;
       var locations = new _src_locations__WEBPACK_IMPORTED_MODULE_1__["default"]();
-      var result = locations.parse(contents, "/6/4[chap01ref]", 100);
+      var result = locations.parse(contents, '/6/4[chap01ref]', 100);
       assert__WEBPACK_IMPORTED_MODULE_0___default().equal(result.length, 15);
     });
   });
@@ -43805,80 +43785,80 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _src_epub__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/epub */ "./src/epub.js");
 
 
-describe("section", function () {
-  it.skip("finds a single result in a section", function () {
-    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])("./fixtures/alice/", {
+describe('section', function () {
+  it.skip('finds a single result in a section', function () {
+    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])('./fixtures/alice/', {
       width: 400,
       height: 400
     });
     return book.ready.then(function () {
-      var section = book.section("chapter_001.xhtml");
+      var section = book.section('chapter_001.xhtml');
       return section.load().then(function () {
-        const queryString = "they were filled with cupboards and book-shelves";
+        const queryString = 'they were filled with cupboards and book-shelves';
         const findResults = section.find(queryString);
         const searchResults = section.search(queryString);
         [findResults, searchResults].forEach(results => {
           assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results.length, 1);
-          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].cfi, "epubcfi(/6/8[chapter_001]!/4/2/16,/1:275,/1:323)");
-          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].excerpt, "... see anything; then she looked at the sides of the well and\n\tnoticed that they were filled with cupboards and book-shelves; here and there she saw\n\t...");
+          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].cfi, 'epubcfi(/6/8[chapter_001]!/4/2/16,/1:275,/1:323)');
+          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].excerpt, '... see anything; then she looked at the sides of the well and\n\tnoticed that they were filled with cupboards and book-shelves; here and there she saw\n\t...');
         });
       });
     });
   });
-  it.skip("finds multiple results in a section", function () {
-    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])("./fixtures/alice/", {
+  it.skip('finds multiple results in a section', function () {
+    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])('./fixtures/alice/', {
       width: 400,
       height: 400
     });
     return book.ready.then(function () {
-      var section = book.section("chapter_001.xhtml");
+      var section = book.section('chapter_001.xhtml');
       return section.load().then(function () {
-        const queryString = "white rabbit";
+        const queryString = 'white rabbit';
         const findResults = section.find(queryString);
         const searchResults = section.search(queryString);
         [findResults, searchResults].forEach(results => {
           assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results.length, 2);
-          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].cfi, "epubcfi(/6/8[chapter_001]!/4/2/8,/1:240,/1:252)");
-          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].excerpt, "...e worth the trouble of getting up and picking the daisies, when suddenly a White Rabbit with pink eyes ran close by her....");
-          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[1].cfi, "epubcfi(/6/8[chapter_001]!/4/2/20,/1:148,/1:160)");
-          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[1].excerpt, "...ut it was\n\tall dark overhead; before her was another long passage and the White Rabbit was still\n\tin sight, hurrying down it. There was not a moment...");
+          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].cfi, 'epubcfi(/6/8[chapter_001]!/4/2/8,/1:240,/1:252)');
+          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[0].excerpt, '...e worth the trouble of getting up and picking the daisies, when suddenly a White Rabbit with pink eyes ran close by her....');
+          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[1].cfi, 'epubcfi(/6/8[chapter_001]!/4/2/20,/1:148,/1:160)');
+          assert__WEBPACK_IMPORTED_MODULE_0___default().equal(results[1].excerpt, '...ut it was\n\tall dark overhead; before her was another long passage and the White Rabbit was still\n\tin sight, hurrying down it. There was not a moment...');
         });
       });
     });
   });
-  it.skip("finds result that spanning multiple document nodes, tag at ending", function () {
-    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])("./fixtures/alice/", {
+  it.skip('finds result that spanning multiple document nodes, tag at ending', function () {
+    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])('./fixtures/alice/', {
       width: 400,
       height: 400
     });
     return book.ready.then(function () {
-      var section = book.section("chapter_010.xhtml");
+      var section = book.section('chapter_010.xhtml');
       return section.load().then(function () {
-        const queryString = "I beg";
+        const queryString = 'I beg';
         const findResult = section.find(queryString);
         assert__WEBPACK_IMPORTED_MODULE_0___default().equal(findResult.length, 0);
         const searchResults = section.search(queryString);
         assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults.length, 1);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].cfi, "epubcfi(/6/26[chapter_010]!/4/2/6,/1:5,/2/1:3)");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].excerpt, "\"Oh, I beg");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].cfi, 'epubcfi(/6/26[chapter_010]!/4/2/6,/1:5,/2/1:3)');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].excerpt, '"Oh, I beg');
       });
     });
   });
-  it.skip("finds result that spanning multiple document nodes, tag at middle", function () {
-    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])("./fixtures/alice/", {
+  it.skip('finds result that spanning multiple document nodes, tag at middle', function () {
+    var book = (0,_src_epub__WEBPACK_IMPORTED_MODULE_1__["default"])('./fixtures/alice/', {
       width: 400,
       height: 400
     });
     return book.ready.then(function () {
-      var section = book.section("chapter_010.xhtml");
+      var section = book.section('chapter_010.xhtml');
       return section.load().then(function () {
-        const queryString = "I beg your pardon";
+        const queryString = 'I beg your pardon';
         const findResult = section.find(queryString);
         assert__WEBPACK_IMPORTED_MODULE_0___default().equal(findResult.length, 0);
         const searchResults = section.search(queryString);
         assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults.length, 1);
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].cfi, "epubcfi(/6/26[chapter_010]!/4/2/6,/1:5,/3:12)");
-        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].excerpt, "\"Oh, I beg your pardon!\" she exclaimed in a tone of great dismay.");
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].cfi, 'epubcfi(/6/26[chapter_010]!/4/2/6,/1:5,/3:12)');
+        assert__WEBPACK_IMPORTED_MODULE_0___default().equal(searchResults[0].excerpt, '"Oh, I beg your pardon!" she exclaimed in a tone of great dismay.');
       });
     });
   });

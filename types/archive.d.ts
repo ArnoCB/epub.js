@@ -7,7 +7,10 @@ export default class Archive {
 
   openUrl(zipUrl: string, isBase64?: boolean): Promise<JSZip>;
 
-	request(url: string, type?: string): Promise<Blob | string | JSON | Document | XMLDocument>;
+  request(
+    url: string,
+    type?: string
+  ): Promise<Blob | string | JSON | Document | XMLDocument>;
 
   getBlob(url: string, mimeType?: string): Promise<Blob>;
 
@@ -23,5 +26,8 @@ export default class Archive {
 
   private checkRequirements(): void;
 
-  private handleResponse(response: any, type?: string): Blob | string | JSON | Document | XMLDocument;
+  private handleResponse(
+    response: any,
+    type?: string
+  ): Blob | string | JSON | Document | XMLDocument;
 }

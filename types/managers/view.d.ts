@@ -1,17 +1,17 @@
-import Section from "../section";
-import Contents from "../contents";
-import Layout from "../layout";
+import Section from '../section';
+import Contents from '../contents';
+import Layout from '../layout';
 
 export interface ViewSettings {
-  ignoreClass?: string,
-  axis?: string,
-  flow?: string,
-  layout?: Layout,
-  method?: string,
-  width?: number,
-  height?: number,
-  forceEvenPages?: boolean,
-  allowScriptedContent?: boolean
+  ignoreClass?: string;
+  axis?: string;
+  flow?: string;
+  layout?: Layout;
+  method?: string;
+  width?: number;
+  height?: number;
+  forceEvenPages?: boolean;
+  allowScriptedContent?: boolean;
 }
 
 export default class View {
@@ -23,7 +23,7 @@ export default class View {
 
   reset(): void;
 
-  size(_width: Number, _height: Number): void;
+  size(_width: number, _height: number): void;
 
   load(content: Contents): Promise<any>;
 
@@ -37,15 +37,15 @@ export default class View {
 
   hide(): void;
 
-  offset(): { top: Number, left: Number };
+  offset(): { top: number; left: number };
 
-  width(): Number;
+  width(): number;
 
-  height(): Number;
+  height(): number;
 
   position(): object;
 
-  locationOf(target: string): { top: Number, left: Number };
+  locationOf(target: string): { top: number; left: number };
 
   onDisplayed(view: View): void;
 
@@ -53,11 +53,23 @@ export default class View {
 
   bounds(force?: boolean): object;
 
-  highlight(cfiRange: string, data?: object, cb?: Function, className?: string, styles?: object): void;
+  highlight(
+    cfiRange: string,
+    data?: object,
+    cb?: Function,
+    className?: string,
+    styles?: object
+  ): void;
 
-	underline(cfiRange: string, data?: object, cb?: Function, className?: string, styles?: object): void;
+  underline(
+    cfiRange: string,
+    data?: object,
+    cb?: Function,
+    className?: string,
+    styles?: object
+  ): void;
 
-	mark(cfiRange: string, data?: object, cb?: Function): void;
+  mark(cfiRange: string, data?: object, cb?: Function): void;
 
   unhighlight(cfiRange: string): void;
 

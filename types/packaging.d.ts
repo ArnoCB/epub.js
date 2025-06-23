@@ -1,47 +1,47 @@
-import { SpineItem } from "./section";
+import { SpineItem } from './section';
 
 export interface PackagingObject {
-  metadata: PackagingMetadataObject,
-  spine: Array<SpineItem>,
-  manifest: PackagingManifestObject,
-  navPath: string,
-  ncxPath: string,
-  coverPath: string,
-  spineNodeIndex: number
+  metadata: PackagingMetadataObject;
+  spine: Array<SpineItem>;
+  manifest: PackagingManifestObject;
+  navPath: string;
+  ncxPath: string;
+  coverPath: string;
+  spineNodeIndex: number;
 }
 
 export interface PackagingMetadataObject {
-  title: string,
-  creator: string,
-  description: string,
-  pubdate: string,
-  publisher: string,
-  identifier: string,
-  language: string,
-  rights: string,
-  modified_date: string,
-  layout: string,
-  orientation: string,
-  flow: string,
-  viewport: string,
-  spread: string,
-  direction: string,
+  title: string;
+  creator: string;
+  description: string;
+  pubdate: string;
+  publisher: string;
+  identifier: string;
+  language: string;
+  rights: string;
+  modified_date: string;
+  layout: string;
+  orientation: string;
+  flow: string;
+  viewport: string;
+  spread: string;
+  direction: string;
 }
 
 export interface PackagingSpineItem {
-  idref: string,
-  properties: Array<string>,
-  index: number
+  idref: string;
+  properties: Array<string>;
+  index: number;
 }
 
 export interface PackagingManifestItem {
-  href: string,
-  type: string,
-  properties: Array<string>
+  href: string;
+  type: string;
+  properties: Array<string>;
 }
 
 export interface PackagingManifestObject {
-  [key: string]: PackagingManifestItem
+  [key: string]: PackagingManifestItem;
 }
 
 export default class Packaging {
@@ -65,7 +65,10 @@ export default class Packaging {
 
   private parseManifest(xml: Node): PackagingManifestObject;
 
-  private parseSpine(xml: Node, manifest: PackagingManifestObject): Array<PackagingSpineItem>;
+  private parseSpine(
+    xml: Node,
+    manifest: PackagingManifestObject
+  ): Array<PackagingSpineItem>;
 
   private findNavPath(manifestNode: Node): string | false;
 
@@ -73,7 +76,7 @@ export default class Packaging {
 
   private findCoverPath(packageXml: Node): string;
 
-  private getElementText(xml: Node, tag: string): string
+  private getElementText(xml: Node, tag: string): string;
 
-  private getPropertyText(xml: Node, property: string): string
+  private getPropertyText(xml: Node, property: string): string;
 }

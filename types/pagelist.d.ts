@@ -1,8 +1,8 @@
 export interface PageListItem {
-  href: string,
-  page: string,
-  cfi?: string,
-  packageUrl?: string
+  href: string;
+  page: string;
+  cfi?: string;
+  packageUrl?: string;
 }
 
 export default class Pagelist {
@@ -25,5 +25,4 @@ export default class Pagelist {
   private item(item: Node): PageListItem;
 
   private process(pageList: Array<PageListItem>): void;
-
 }

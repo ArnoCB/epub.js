@@ -1,19 +1,11 @@
 {
   "name": "epubjs",
   "version": "0.3.0",
-  "authors": [
-    "Fred Chasen <fchasen@gmail.com>"
-  ],
+  "authors": ["Fred Chasen <fchasen@gmail.com>"],
   "description": "Enhanced eBooks in the browser.",
   "main": "dist/epub.js",
-  "moduleType": [
-    "amd",
-    "globals",
-    "node"
-  ],
-  "keywords": [
-    "epub"
-  ],
+  "moduleType": ["amd", "globals", "node"],
+  "keywords": ["epub"],
   "license": "MIT",
   "homepage": "http://futurepress.org",
   "ignore": [

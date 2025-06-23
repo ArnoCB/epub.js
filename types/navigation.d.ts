@@ -1,15 +1,15 @@
 export interface NavItem {
-  id: string,
-  href: string,
-  label: string,
-  subitems?: Array<NavItem>,
-  parent?: string
+  id: string;
+  href: string;
+  label: string;
+  subitems?: Array<NavItem>;
+  parent?: string;
 }
 
 export interface LandmarkItem {
-  href?: string,
-  label?: string,
-  type?: string
+  href?: string;
+  label?: string;
+  type?: string;
 }
 
 export default class Navigation {
@@ -20,9 +20,9 @@ export default class Navigation {
 
   parse(xml: XMLDocument): void;
 
-  get(target: string) : NavItem;
+  get(target: string): NavItem;
 
-  landmark(type: string) : LandmarkItem;
+  landmark(type: string): LandmarkItem;
 
   load(json: string): Array<NavItem>;
 
@@ -42,5 +42,9 @@ export default class Navigation {
 
   private ncxItem(item: Element): NavItem;
 
-  private getByIndex(target: string, index: number, navItems: NavItem[]): NavItem;
+  private getByIndex(
+    target: string,
+    index: number,
+    navItems: NavItem[]
+  ): NavItem;
 }

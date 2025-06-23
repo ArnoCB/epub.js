@@ -1,10 +1,10 @@
-import { defer } from "./core";
+import { defer } from './core';
 
 export interface QueuedTask {
-  task: any | Task,
-  args: any[],
-  deferred: any, // should be defer, but not working
-  promise: Promise<any>
+  task: any | Task;
+  args: any[];
+  deferred: any; // should be defer, but not working
+  promise: Promise<any>;
 }
 
 export default class Queue {

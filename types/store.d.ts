@@ -1,5 +1,5 @@
 import localForage = require('localforage');
-import Resources from "./resources";
+import Resources from './resources';
 
 export default class Store {
   constructor(name: string, request?: Function, resolver?: Function);
@@ -8,9 +8,17 @@ export default class Store {
 
   put(url: string, withCredentials?: boolean, headers?: object): Promise<Blob>;
 
-  request(url: string, type?: string, withCredentials?: boolean, headers?: object): Promise<Blob | string | JSON | Document | XMLDocument>;
+  request(
+    url: string,
+    type?: string,
+    withCredentials?: boolean,
+    headers?: object
+  ): Promise<Blob | string | JSON | Document | XMLDocument>;
 
-  retrieve(url: string, type?: string): Promise<Blob | string | JSON | Document | XMLDocument>;
+  retrieve(
+    url: string,
+    type?: string
+  ): Promise<Blob | string | JSON | Document | XMLDocument>;
 
   getBlob(url: string, mimeType?: string): Promise<Blob>;
 
@@ -26,5 +34,8 @@ export default class Store {
 
   private checkRequirements(): void;
 
-  private handleResponse(response: any, type?: string): Blob | string | JSON | Document | XMLDocument;
+  private handleResponse(
+    response: any,
+    type?: string
+  ): Blob | string | JSON | Document | XMLDocument;
 }

@@ -2,7 +2,7 @@
 // Project: https://github.com/futurepress/epub.js#readme
 // Definitions by: Fred Chasen <https://github.com/fchasen>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-import Epub from "./epub";
+import Epub from './epub';
 
 export as namespace ePub;
 
@@ -15,6 +15,4 @@ export { default as Contents } from './contents';
 export { default as Layout } from './layout';
 export { NavItem } from './navigation';
 
-declare namespace ePub {
-
-}
+declare namespace ePub {}

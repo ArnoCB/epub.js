@@ -1,4 +1,4 @@
-import Path from "./path";
+import Path from './path';
 
 export default class Url {
   constructor(urlString: string, baseString: string);

@@ -1,10 +1,10 @@
-import Contents from "./contents";
+import Contents from './contents';
 
 interface LayoutSettings {
-  layout: string,
-  spread: string,
-  minSpreadWidth: number,
-  evenSpreads: boolean
+  layout: string;
+  spread: string;
+  minSpreadWidth: number;
+  evenSpreads: boolean;
 }
 
 export default class Layout {
@@ -13,27 +13,30 @@ export default class Layout {
   settings: LayoutSettings;
   name: string;
   props: {
-    name: string,
-    spread: string,
-    flow: string,
-    width: number,
-    height: number,
-    spreadWidth: number,
-    delta: number,
-    columnWidth: number,
-    gap: number,
-    divisor: number
+    name: string;
+    spread: string;
+    flow: string;
+    width: number;
+    height: number;
+    spreadWidth: number;
+    delta: number;
+    columnWidth: number;
+    gap: number;
+    divisor: number;
   };
 
   flow(flow: string): string;
 
   spread(spread: string, min: number): boolean;
 
-  calculate(_width:number, _height:number, _gap?:number): void;
+  calculate(_width: number, _height: number, _gap?: number): void;
 
   format(contents: Contents): void | Promise<void>;
 
-  count(totalLength: number, pageLength: number): {spreads: Number, pages: Number};
+  count(
+    totalLength: number,
+    pageLength: number
+  ): { spreads: number; pages: number };
 
   // Event emitters
   emit(type: any, ...args: any[]): void;

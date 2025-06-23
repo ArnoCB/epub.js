@@ -1,27 +1,27 @@
-import { HooksObject } from "./utils/hook";
+import { HooksObject } from './utils/hook';
 
 export interface GlobalLayout {
-  layout: string,
-  spread: string,
-  orientation: string
+  layout: string;
+  spread: string;
+  orientation: string;
 }
 
 export interface LayoutSettings {
-  layout: string,
-  spread: string,
-  orientation: string
+  layout: string;
+  spread: string;
+  orientation: string;
 }
 
 export interface SpineItem {
-  index: number,
-  cfiBase: string,
-  href?: string,
-  url?: string,
-  canonical?: string,
-  properties?: Array<string>,
-  linear?: string,
-  next: () => SpineItem,
-  prev: () => SpineItem,
+  index: number;
+  cfiBase: string;
+  href?: string;
+  url?: string;
+  canonical?: string;
+  properties?: Array<string>;
+  linear?: string;
+  next: () => SpineItem;
+  prev: () => SpineItem;
 }
 
 export default class Section {
