@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/h"
+
+# always build the project and add it to the commit
+npm run build && git add dist/"
