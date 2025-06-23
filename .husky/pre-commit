@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-. "$(dirname "$0")/h"
+. "$(dirname "$0")/_/husky.sh"
 
-# always build the project and add it to the commit
-npm run build && git add dist/"
+npm run precommit
+
+git add dist/

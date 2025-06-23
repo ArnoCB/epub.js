@@ -1,0 +1,23 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.mts", "**/*.cts"],
+      "parser": "@typescript-eslint/parser",
+      "extends": [
+        "plugin:@typescript-eslint/recommended"
+      ]
+    }
+  ],
+  "rules": {}
+}
