@@ -239,7 +239,7 @@ class Resources {
 
         return newUrl;
       },
-      (err) => {
+      () => {
         // handle response errors
         return new Promise(function (resolve) {
           resolve();
@@ -279,7 +279,7 @@ class Resources {
     }
     if (this.replacementUrls.length) {
       return new Promise(
-        function (resolve, reject) {
+        function (resolve) {
           resolve(this.replacementUrls[indexInUrls]);
         }.bind(this)
       );

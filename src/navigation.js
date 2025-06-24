@@ -1,10 +1,4 @@
-import {
-  qs,
-  qsa,
-  querySelectorByType,
-  filterChildren,
-  getParentByTagName,
-} from './utils/core';
+import { qs, qsa, querySelectorByType, filterChildren } from './utils/core';
 
 /**
  * Navigation Parser

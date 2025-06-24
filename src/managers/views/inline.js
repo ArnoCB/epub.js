@@ -220,7 +220,7 @@ class InlineView {
   }
 
   // Resize a single axis based on content dimensions
-  expand(force) {
+  expand() {
     var width = this.lockedWidth;
     var height = this.lockedHeight;
 
@@ -247,11 +247,11 @@ class InlineView {
     this._expanding = false;
   }
 
-  contentWidth(min) {
+  contentWidth() {
     return this.frame.scrollWidth;
   }
 
-  contentHeight(min) {
+  contentHeight() {
     return this.frame.scrollHeight;
   }
 
@@ -334,7 +334,7 @@ class InlineView {
     //TODO: Add content listeners for expanding
   }
 
-  removeListeners(layoutFunc) {
+  removeListeners(_layoutFunc) {
     //TODO: remove content listeners for expanding
   }
 
@@ -392,12 +392,28 @@ class InlineView {
     };
   }
 
+  /**
+   * Called when a view is displayed.
+   * Override this method to add custom behavior.
+   * @param {InlineView} view - The view that was displayed.
+   * @suppress {eslint}
+   */
   onDisplayed(view) {
-    // Stub, override with a custom functions
+    // Stub: override with a custom function
+    void view; // Suppress eslint no-unused-vars
   }
 
+  /**
+   * Called when a view is resized.
+   * Override this method to add custom behavior.
+   * @param {InlineView} view - The view being resized.
+   * @param {Event} e - The resize event.
+   * @suppress {eslint}
+   */
   onResize(view, e) {
-    // Stub, override with a custom functions
+    // Stub: override with a custom function
+    void view;
+    void e; // Suppress eslint no-unused-vars
   }
 
   bounds() {

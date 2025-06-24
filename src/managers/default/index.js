@@ -118,7 +118,7 @@ class DefaultViewManager {
 
     window.addEventListener(
       'unload',
-      function (e) {
+      function () {
         this.destroy();
       }.bind(this)
     );
@@ -170,7 +170,7 @@ class DefaultViewManager {
 		*/
   }
 
-  onOrientationChange(e) {
+  onOrientationChange() {
     let { orientation } = window;
 
     if (this.optsSettings.resizeOnOrientationChange) {
@@ -197,7 +197,7 @@ class DefaultViewManager {
     );
   }
 
-  onResized(e) {
+  onResized() {
     this.resize();
   }
 
@@ -725,7 +725,7 @@ class DefaultViewManager {
     let pageWidth =
       container.width < window.innerWidth ? container.width : window.innerWidth;
     let vertical = this.settings.axis === 'vertical';
-    let rtl = this.settings.direction === 'rtl';
+    this.settings.direction === 'rtl';
 
     let offset = 0;
     let used = 0;

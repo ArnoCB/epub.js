@@ -261,7 +261,7 @@ class Contents {
    */
   viewport(options) {
     // var width, height, scale, minimum, maximum, scalable;
-    var $viewport = this.document.querySelector('meta[name=\'viewport\']');
+    var $viewport = this.document.querySelector("meta[name='viewport']");
     var parsed = {
       width: undefined,
       height: undefined,
@@ -513,7 +513,7 @@ class Contents {
    */
   resizeObservers() {
     // create an observer instance
-    this.observer = new ResizeObserver((e) => {
+    this.observer = new ResizeObserver(() => {
       requestAnimationFrame(this.resizeCheck.bind(this));
     });
 
@@ -690,7 +690,7 @@ class Contents {
    */
   addStylesheet(src) {
     return new Promise(
-      function (resolve, reject) {
+      function (resolve) {
         var $stylesheet;
         var ready = false;
 
@@ -700,7 +700,7 @@ class Contents {
         }
 
         // Check if link already exists
-        $stylesheet = this.document.querySelector('link[href=\'' + src + '\']');
+        $stylesheet = this.document.querySelector("link[href='" + src + "']");
         if ($stylesheet) {
           resolve(true);
           return; // already present
@@ -836,7 +836,7 @@ class Contents {
    */
   addScript(src) {
     return new Promise(
-      function (resolve, reject) {
+      function (resolve) {
         var $script;
         var ready = false;
 
@@ -971,7 +971,7 @@ class Contents {
    * Handle getting text on selection
    * @private
    */
-  onSelectionChange(e) {
+  onSelectionChange() {
     if (this.selectionEndTimeout) {
       clearTimeout(this.selectionEndTimeout);
     }
@@ -1263,20 +1263,20 @@ class Contents {
       layoutStyle: this.layoutStyle(),
       hasFeature: function (feature) {
         switch (feature) {
-        case 'dom-manipulation':
-          return true;
-        case 'layout-changes':
-          return true;
-        case 'touch-events':
-          return true;
-        case 'mouse-events':
-          return true;
-        case 'keyboard-events':
-          return true;
-        case 'spine-scripting':
-          return false;
-        default:
-          return false;
+          case 'dom-manipulation':
+            return true;
+          case 'layout-changes':
+            return true;
+          case 'touch-events':
+            return true;
+          case 'mouse-events':
+            return true;
+          case 'keyboard-events':
+            return true;
+          case 'spine-scripting':
+            return false;
+          default:
+            return false;
         }
       },
     };

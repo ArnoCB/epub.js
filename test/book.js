@@ -58,7 +58,7 @@ describe('Book', function () {
     it('should have a blob coverUrl', async function () {
       let coverUrl = await book.coverUrl();
       assert(
-        /^blob:http:\/\/localhost:9876\/[^\/]+$/.test(coverUrl),
+        /^blob:http:\/\/localhost:9876\/[^/]+$/.test(coverUrl),
         'cover url is available and a blob: url'
       );
     });

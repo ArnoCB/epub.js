@@ -37,7 +37,7 @@ export function replaceCanonical(doc, section) {
   }
 
   head = qs(doc, 'head');
-  link = qs(head, 'link[rel=\'canonical\']');
+  link = qs(head, "link[rel='canonical']");
 
   if (link) {
     link.setAttribute('href', url);
@@ -58,7 +58,7 @@ export function replaceMeta(doc, section) {
   }
 
   head = qs(doc, 'head');
-  meta = qs(head, 'link[property=\'dc.identifier\']');
+  meta = qs(head, "link[property='dc.identifier']");
 
   if (meta) {
     meta.setAttribute('content', id);

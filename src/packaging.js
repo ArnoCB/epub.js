@@ -152,7 +152,7 @@ class Packaging {
    * @param  {Packaging.manifest} manifest
    * @return {object} spine
    */
-  parseSpine(spineXml, manifest) {
+  parseSpine(spineXml, _manifest) {
     var spine = [];
 
     var selected = qsa(spineXml, 'itemref');
@@ -267,7 +267,7 @@ class Packaging {
    */
   findCoverPath(packageXml) {
     var pkg = qs(packageXml, 'package');
-    var epubVersion = pkg.getAttribute('version');
+    pkg.getAttribute('version');
 
     // Try parsing cover with epub 3.
     // var node = packageXml.querySelector("item[properties='cover-image']");
@@ -354,7 +354,7 @@ class Packaging {
 
     this.spineNodeIndex = 0;
 
-    this.toc = json.toc.map((item, index) => {
+    this.toc = json.toc.map((item) => {
       item.label = item.title;
       return item;
     });

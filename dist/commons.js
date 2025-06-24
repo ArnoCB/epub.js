@@ -30406,7 +30406,6 @@ class Annotation {
       cfiRange,
       data,
       type,
-      mark,
       cb,
       className,
       styles
@@ -30614,7 +30613,7 @@ class Archive {
    * @param  {string} [encoding]
    * @return {string}
    */
-  getText(url, encoding) {
+  getText(url) {
     var decodededUrl = window.decodeURIComponent(url.substr(1)); // Remove first slash
     var entry = this.zip.file(decodededUrl);
     if (entry) {
@@ -30948,7 +30947,7 @@ class Book {
       this.store(this.settings.store);
     }
     if (url) {
-      this.open(url, this.settings.openAs).catch(error => {
+      this.open(url, this.settings.openAs).catch(() => {
         var err = new Error('Cannot load book at ' + url);
         this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_17__.EVENTS.BOOK.OPEN_FAILED, err);
       });
@@ -31154,7 +31153,7 @@ class Book {
       this.load(this.url.resolve(IBOOKS_DISPLAY_OPTIONS_PATH)).then(xml => {
         this.displayOptions = new _displayoptions__WEBPACK_IMPORTED_MODULE_16__["default"](xml);
         this.loading.displayOptions.resolve(this.displayOptions);
-      }).catch(err => {
+      }).catch(() => {
         this.displayOptions = new _displayoptions__WEBPACK_IMPORTED_MODULE_16__["default"]();
         this.loading.displayOptions.resolve(this.displayOptions);
       });
@@ -31211,7 +31210,7 @@ class Book {
 
     // From json manifest
     if (toc) {
-      return new Promise((resolve, reject) => {
+      return new Promise(resolve => {
         this.navigation = new _navigation__WEBPACK_IMPORTED_MODULE_8__["default"](toc);
         if (packaging.pageList) {
           this.pageList = new _pagelist__WEBPACK_IMPORTED_MODULE_10__["default"](packaging.pageList); // TODO: handle page lists from Manifest
@@ -31220,7 +31219,7 @@ class Book {
       });
     }
     if (!navPath) {
-      return new Promise((resolve, reject) => {
+      return new Promise(resolve => {
         this.navigation = new _navigation__WEBPACK_IMPORTED_MODULE_8__["default"]();
         this.pageList = new _pagelist__WEBPACK_IMPORTED_MODULE_10__["default"]();
         resolve(this.navigation);
@@ -31377,7 +31376,7 @@ class Book {
         reject('CFI could not be found');
       });
     }
-    return item.load(_request).then(function (contents) {
+    return item.load(_request).then(function () {
       var range = cfi.toRange(item.document);
       return range;
     });
@@ -31521,7 +31520,6 @@ const hasNavigator = typeof navigator !== 'undefined';
 const isChrome = hasNavigator && /Chrome/.test(navigator.userAgent);
 const isWebkit = hasNavigator && !isChrome && /AppleWebKit/.test(navigator.userAgent);
 const ELEMENT_NODE = 1;
-const TEXT_NODE = 3;
 
 /**
  * Handles DOM manipulation, queries and events for View contents
@@ -31742,9 +31740,8 @@ class Contents {
    * @param {string} [options.scalable]
    */
   viewport(options) {
-    var _width, _height, _scale, _minimum, _maximum, _scalable;
     // var width, height, scale, minimum, maximum, scalable;
-    var $viewport = this.document.querySelector('meta[name=\'viewport\']');
+    var $viewport = this.document.querySelector("meta[name='viewport']");
     var parsed = {
       width: undefined,
       height: undefined,
@@ -31895,7 +31892,6 @@ class Contents {
    * @private
    */
   resizeListeners() {
-    var width, height;
     // Test size again
     clearTimeout(this.expanding);
     requestAnimationFrame(this.resizeCheck.bind(this));
@@ -31970,7 +31966,7 @@ class Contents {
    */
   resizeObservers() {
     // create an observer instance
-    this.observer = new ResizeObserver(e => {
+    this.observer = new ResizeObserver(() => {
       requestAnimationFrame(this.resizeCheck.bind(this));
     });
 
@@ -31984,7 +31980,7 @@ class Contents {
    */
   mutationObservers() {
     // create an observer instance
-    this.observer = new MutationObserver(mutations => {
+    this.observer = new MutationObserver(() => {
       this.resizeCheck();
     });
 
@@ -32129,7 +32125,7 @@ class Contents {
    * @param {string} src url
    */
   addStylesheet(src) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
       var $stylesheet;
       var ready = false;
       if (!this.document) {
@@ -32138,7 +32134,7 @@ class Contents {
       }
 
       // Check if link already exists
-      $stylesheet = this.document.querySelector('link[href=\'' + src + '\']');
+      $stylesheet = this.document.querySelector("link[href='" + src + "']");
       if ($stylesheet) {
         resolve(true);
         return; // already present
@@ -32249,7 +32245,7 @@ class Contents {
    * @returns {Promise} loaded
    */
   addScript(src) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
       var $script;
       var ready = false;
       if (!this.document) {
@@ -32370,7 +32366,7 @@ class Contents {
    * Handle getting text on selection
    * @private
    */
-  onSelectionChange(e) {
+  onSelectionChange() {
     if (this.selectionEndTimeout) {
       clearTimeout(this.selectionEndTimeout);
     }
@@ -32807,7 +32803,6 @@ __webpack_require__.r(__webpack_exports__);
 
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
-const COMMENT_NODE = 8;
 const DOCUMENT_NODE = 9;
 
 /**
@@ -33083,10 +33078,6 @@ class EpubCFI {
   compare(cfiOne, cfiTwo) {
     var stepsA, stepsB;
     var terminalA, terminalB;
-    var rangeAStartSteps, rangeAEndSteps;
-    var rangeBEndSteps, rangeBEndSteps;
-    var rangeAStartTerminal, rangeAEndTerminal;
-    var rangeBStartTerminal, rangeBEndTerminal;
     if (typeof cfiOne === 'string') {
       cfiOne = new EpubCFI(cfiOne);
     }
@@ -33448,7 +33439,7 @@ class EpubCFI {
     steps.forEach(function (step) {
       var position = step.index + 1;
       if (step.id) {
-        xpath.push('*[position()=' + position + ' and @id=\'' + step.id + '\']');
+        xpath.push('*[position()=' + position + " and @id='" + step.id + "']");
       } else if (step.type === 'text') {
         xpath.push('text()[' + position + ']');
       } else {
@@ -33548,7 +33539,7 @@ class EpubCFI {
     var len;
     var lastStepIndex = steps[steps.length - 1].index;
     for (let childIndex in map) {
-      if (!map.hasOwnProperty(childIndex)) return;
+      if (!Object.prototype.hasOwnProperty.call(map, childIndex)) return;
       if (map[childIndex] === lastStepIndex) {
         child = children[childIndex];
         len = child.textContent.length;
@@ -34150,7 +34141,6 @@ class Locations {
     var locations = [];
     var doc = contents.ownerDocument;
     var body = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'body');
-    var prev;
     var _break = wordCount;
     var foundStartNode = startCfi ? startCfi.spinePos !== section.index : true;
     var startNode;
@@ -34205,7 +34195,6 @@ class Locations {
           this._wordCounter = 0;
         }
       }
-      prev = node;
     };
     (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.sprint)(body, parser.bind(this));
     return locations;
@@ -34469,14 +34458,10 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     // var dist = Math.floor(offset.top / bounds.height) * bounds.height;
     var distX = 0,
       distY = 0;
-    var offsetX = 0,
-      offsetY = 0;
     if (!this.isPaginated) {
       distY = offset.top;
-      offsetY = offset.top + this.settings.offsetDelta;
     } else {
       distX = Math.floor(offset.left / this.layout.delta) * this.layout.delta;
-      offsetX = distX + this.settings.offsetDelta;
     }
     if (distX > 0 || distY > 0) {
       this.scrollBy(distX, distY, true);
@@ -34495,7 +34480,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
   add(section) {
     var view = this.createView(section);
     this.views.append(view);
-    view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_3__.EVENTS.VIEWS.RESIZED, bounds => {
+    view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_3__.EVENTS.VIEWS.RESIZED, () => {
       view.expanded = true;
     });
     view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_3__.EVENTS.VIEWS.AXIS, axis => {
@@ -34512,7 +34497,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
   }
   append(section) {
     var view = this.createView(section);
-    view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_3__.EVENTS.VIEWS.RESIZED, bounds => {
+    view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_3__.EVENTS.VIEWS.RESIZED, () => {
       view.expanded = true;
     });
     view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_3__.EVENTS.VIEWS.AXIS, axis => {
@@ -34567,7 +34552,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
         if (!view.displayed) {
           let displayed = view.display(this.request).then(function (view) {
             view.show();
-          }, err => {
+          }, () => {
             view.hide();
           });
           promises.push(displayed);
@@ -34722,8 +34707,8 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
       }
     }
   }
-  addEventListeners(stage) {
-    window.addEventListener('unload', function (e) {
+  addEventListeners() {
+    window.addEventListener('unload', function () {
       this.ignore = true;
       // this.scrollTo(0,0);
       this.destroy();
@@ -34980,7 +34965,7 @@ class DefaultViewManager {
   }
   addEventListeners() {
     var scroller;
-    window.addEventListener('unload', function (e) {
+    window.addEventListener('unload', function () {
       this.destroy();
     }.bind(this));
     if (!this.settings.fullsize) {
@@ -35019,7 +35004,7 @@ class DefaultViewManager {
     }
     */
   }
-  onOrientationChange(e) {
+  onOrientationChange() {
     let {
       orientation
     } = window;
@@ -35041,7 +35026,7 @@ class DefaultViewManager {
       this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_7__.EVENTS.MANAGERS.ORIENTATION_CHANGE, orientation);
     }.bind(this), 500);
   }
-  onResized(e) {
+  onResized() {
     this.resize();
   }
   resize(width, height, epubcfi) {
@@ -35414,7 +35399,7 @@ class DefaultViewManager {
     let pageHeight = container.height < window.innerHeight ? container.height : window.innerHeight;
     let pageWidth = container.width < window.innerWidth ? container.width : window.innerWidth;
     let vertical = this.settings.axis === 'vertical';
-    let rtl = this.settings.direction === 'rtl';
+    this.settings.direction === 'rtl';
     let offset = 0;
     let used = 0;
     if (this.settings.fullsize) {
@@ -35779,8 +35764,7 @@ class Snap {
   }
   setup(manager) {
     this.manager = manager;
-    this.layout = this.manager.layout;
-    this.fullsize = this.manager.settings.fullsize;
+    this.layout = this.manager.settings.fullsize;
     if (this.fullsize) {
       this.element = this.manager.stage.element;
       this.scroller = window;
@@ -35816,7 +35800,9 @@ class Snap {
     this.addListeners();
   }
   supportsTouch() {
-    if ('ontouchstart' in window || window.DocumentTouch && document instanceof DocumentTouch) {
+    if ('ontouchstart' in window ||
+    // eslint-disable-next-line no-undef
+    typeof DocumentTouch !== 'undefined' && window.DocumentTouch && document instanceof DocumentTouch) {
       return true;
     }
     return false;
@@ -35882,11 +35868,11 @@ class Snap {
   triggerViewEvent(e, contents) {
     this.emit(e.type, e, contents);
   }
-  onScroll(e) {
+  onScroll() {
     this.scrollLeft = this.fullsize ? window.scrollX : this.scroller.scrollLeft;
     this.scrollTop = this.fullsize ? window.scrollY : this.scroller.scrollTop;
   }
-  onResize(e) {
+  onResize() {
     this.resizeCanceler = true;
   }
   onTouchStart(e) {
@@ -35921,7 +35907,7 @@ class Snap {
     this.endTouchY = screenY;
     this.endTime = this.now();
   }
-  onTouchEnd(e) {
+  onTouchEnd() {
     if (this.fullsize) {
       this.disableScroll();
     }
@@ -35976,14 +35962,12 @@ class Snap {
     const start = this.scrollLeft;
     const startTime = this.now();
     const duration = this.settings.duration;
-    const easing = this.settings.easing;
     this.snapping = true;
 
     // add animation loop
     function tick() {
       const now = this.now();
       const time = Math.min(1, (now - startTime) / duration);
-      const timeFunction = easing(time);
       if (this.touchCanceler || this.resizeCanceler) {
         this.resizeCanceler = false;
         this.snapping = false;
@@ -36139,10 +36123,10 @@ class Stage {
   }
   attachTo(what) {
     var element = this.getElement(what);
-    var base;
     if (!element) {
       return;
     }
+    var base;
     if (this.settings.hidden) {
       base = this.wrapper;
     } else {
@@ -36260,7 +36244,7 @@ class Stage {
     }
     rulesArray.forEach(function (set) {
       for (var prop in set) {
-        if (set.hasOwnProperty(prop)) {
+        if (Object.prototype.hasOwnProperty.call(set, prop)) {
           rules += prop + ':' + set[prop] + ';';
         }
       }
@@ -36313,12 +36297,11 @@ class Stage {
     this.settings.overflow = overflow;
   }
   destroy() {
-    var base;
     if (this.element) {
       if (this.settings.hidden) {
-        base = this.wrapper;
+        this.wrapper;
       } else {
-        base = this.container;
+        this.container;
       }
       if (this.element.contains(this.container)) {
         this.element.removeChild(this.container);
@@ -36617,7 +36600,7 @@ class IframeView {
     }
     return this.iframe;
   }
-  render(request, show) {
+  render(request) {
     // view.onLayout = this.layout.format.bind(this.layout);
     this.create();
 
@@ -36654,7 +36637,7 @@ class IframeView {
 
       // Listen for events that require an expansion of the iframe
       this.addListeners();
-      return new Promise((resolve, reject) => {
+      return new Promise(resolve => {
         // Expand the iframe to the full size of the content
         this.expand();
         if (this.settings.forceRight) {
@@ -36732,11 +36715,10 @@ class IframeView {
   }
 
   // Resize a single axis based on content dimensions
-  expand(force) {
+  expand() {
     var width = this.lockedWidth;
     var height = this.lockedHeight;
     var columns;
-    var textWidth, textHeight;
     if (!this.iframe || this._expanding) return;
     this._expanding = true;
     if (this.layout.name === 'pre-paginated') {
@@ -36796,7 +36778,7 @@ class IframeView {
     requestAnimationFrame(() => {
       let mark;
       for (let m in this.marks) {
-        if (this.marks.hasOwnProperty(m)) {
+        if (Object.prototype.hasOwnProperty.call(this.marks, m)) {
           mark = this.marks[m];
           this.placeMark(mark.element, mark.range);
         }
@@ -36833,9 +36815,9 @@ class IframeView {
       }
       this.iframe.contentDocument.open();
       // For Cordova windows platform
-      if (window.MSApp && MSApp.execUnsafeLocalFunction) {
+      if (typeof window.MSApp !== 'undefined' && window.MSApp.execUnsafeLocalFunction) {
         var outerThis = this;
-        MSApp.execUnsafeLocalFunction(function () {
+        window.MSApp.execUnsafeLocalFunction(function () {
           outerThis.iframe.contentDocument.write(contents);
         });
       } else {
@@ -36850,7 +36832,7 @@ class IframeView {
     this.document = this.iframe.contentDocument;
     this.contents = new _contents__WEBPACK_IMPORTED_MODULE_3__["default"](this.document, this.document.body, this.section.cfiBase, this.section.index);
     this.rendering = false;
-    var link = this.document.querySelector('link[rel=\'canonical\']');
+    var link = this.document.querySelector("link[rel='canonical']");
     if (link) {
       link.setAttribute('href', this.section.canonical);
     } else {
@@ -36867,7 +36849,7 @@ class IframeView {
         }
       }
     });
-    this.contents.on(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.CONTENTS.RESIZE, e => {
+    this.contents.on(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.CONTENTS.RESIZE, () => {
       if (this.displayed && this.iframe) {
         this.expand();
         if (this.contents) {
@@ -36900,7 +36882,7 @@ class IframeView {
   addListeners() {
     //TODO: Add content listeners for expanding
   }
-  removeListeners(layoutFunc) {
+  removeListeners() {
     //TODO: remove content listeners for expanding
   }
   display(request) {
@@ -36954,17 +36936,16 @@ class IframeView {
     return this.element.getBoundingClientRect();
   }
   locationOf(target) {
-    var parentPos = this.iframe.getBoundingClientRect();
     var targetPos = this.contents.locationOf(target, this.settings.ignoreClass);
     return {
       left: targetPos.left,
       top: targetPos.top
     };
   }
-  onDisplayed(view) {
+  onDisplayed() {
     // Stub, override with a custom functions
   }
-  onResize(view, e) {
+  onResize() {
     // Stub, override with a custom functions
   }
   bounds(force) {
@@ -37053,7 +37034,7 @@ class IframeView {
     }
     let container = range.commonAncestorContainer;
     let parent = container.nodeType === 1 ? container : container.parentNode;
-    let emitter = e => {
+    let emitter = () => {
       this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
     };
     if (range.collapsed && container.nodeType === 1) {
@@ -38090,7 +38071,7 @@ class Packaging {
    * @param  {Packaging.manifest} manifest
    * @return {object} spine
    */
-  parseSpine(spineXml, manifest) {
+  parseSpine(spineXml, _manifest) {
     var spine = [];
     var selected = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qsa)(spineXml, 'itemref');
     var items = Array.prototype.slice.call(selected);
@@ -38196,7 +38177,7 @@ class Packaging {
    */
   findCoverPath(packageXml) {
     var pkg = (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.qs)(packageXml, 'package');
-    var epubVersion = pkg.getAttribute('version');
+    pkg.getAttribute('version');
 
     // Try parsing cover with epub 3.
     // var node = packageXml.querySelector("item[properties='cover-image']");
@@ -38274,7 +38255,7 @@ class Packaging {
       }
     });
     this.spineNodeIndex = 0;
-    this.toc = json.toc.map((item, index) => {
+    this.toc = json.toc.map(item => {
       item.label = item.title;
       return item;
     });
@@ -38583,12 +38564,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_queue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils/queue */ "./src/utils/queue.js");
 /* harmony import */ var _layout__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./layout */ "./src/layout.js");
 /* harmony import */ var _themes__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./themes */ "./src/themes.js");
-/* harmony import */ var _contents__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./contents */ "./src/contents.js");
-/* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./annotations */ "./src/annotations.js");
-/* harmony import */ var _utils_constants__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./utils/constants */ "./src/utils/constants.js");
-/* harmony import */ var _managers_views_iframe__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./managers/views/iframe */ "./src/managers/views/iframe.js");
-/* harmony import */ var _managers_default_index__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./managers/default/index */ "./src/managers/default/index.js");
-/* harmony import */ var _managers_continuous_index__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./managers/continuous/index */ "./src/managers/continuous/index.js");
+/* harmony import */ var _annotations__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./annotations */ "./src/annotations.js");
+/* harmony import */ var _utils_constants__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./utils/constants */ "./src/utils/constants.js");
+/* harmony import */ var _managers_views_iframe__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./managers/views/iframe */ "./src/managers/views/iframe.js");
+/* harmony import */ var _managers_default_index__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./managers/default/index */ "./src/managers/default/index.js");
+/* harmony import */ var _managers_continuous_index__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./managers/continuous/index */ "./src/managers/continuous/index.js");
 
 
 
@@ -38596,7 +38576,6 @@ __webpack_require__.r(__webpack_exports__);
 
 
 // import Mapping from "./mapping";
-
 
 
 
@@ -38692,7 +38671,7 @@ class Rendition {
      * @member {Annotations} annotations
      * @memberof Rendition
      */
-    this.annotations = new _annotations__WEBPACK_IMPORTED_MODULE_8__["default"](this);
+    this.annotations = new _annotations__WEBPACK_IMPORTED_MODULE_7__["default"](this);
     this.epubcfi = new _epubcfi__WEBPACK_IMPORTED_MODULE_3__["default"]();
     this.q = new _utils_queue__WEBPACK_IMPORTED_MODULE_4__["default"](this);
 
@@ -38755,9 +38734,9 @@ class Rendition {
 
     // If manager is a string, try to load from imported managers
     if (typeof manager === 'string' && manager === 'default') {
-      viewManager = _managers_default_index__WEBPACK_IMPORTED_MODULE_11__["default"];
+      viewManager = _managers_default_index__WEBPACK_IMPORTED_MODULE_10__["default"];
     } else if (typeof manager === 'string' && manager === 'continuous') {
-      viewManager = _managers_continuous_index__WEBPACK_IMPORTED_MODULE_12__["default"];
+      viewManager = _managers_continuous_index__WEBPACK_IMPORTED_MODULE_11__["default"];
     } else {
       // otherwise, assume we were passed a class function
       viewManager = manager;
@@ -38775,7 +38754,7 @@ class Rendition {
 
     // If view is a string, try to load from imported views,
     if (typeof view == 'string' && view === 'iframe') {
-      View = _managers_views_iframe__WEBPACK_IMPORTED_MODULE_10__["default"];
+      View = _managers_views_iframe__WEBPACK_IMPORTED_MODULE_9__["default"];
     } else {
       // otherwise, assume we were passed a class function
       View = view;
@@ -38817,24 +38796,24 @@ class Rendition {
     this.layout(this.settings.globalLayoutProperties);
 
     // Listen for displayed views
-    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
-    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
+    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
+    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
 
     // Listen for resizing
-    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
+    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
 
     // Listen for rotation
-    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
+    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
 
     // Listen for scroll changes
-    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
+    this.manager.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
 
     /**
      * Emit that rendering has started
      * @event started
      * @memberof Rendition
      */
-    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.STARTED);
+    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.STARTED);
 
     // Start processing queue
     this.starting.resolve();
@@ -38859,7 +38838,7 @@ class Rendition {
        * @event attached
        * @memberof Rendition
        */
-      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.ATTACHED);
+      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.ATTACHED);
     }.bind(this));
   }
 
@@ -38888,11 +38867,9 @@ class Rendition {
     if (!this.book) {
       return;
     }
-    var isCfiString = this.epubcfi.isCfiString(target);
     var displaying = new _utils_core__WEBPACK_IMPORTED_MODULE_1__.defer();
     var displayed = displaying.promise;
     var section;
-    var moveTo;
     this.displaying = displaying;
 
     // Check if this is a book percentage
@@ -38914,7 +38891,7 @@ class Rendition {
        * @param {Section} section
        * @memberof Rendition
        */
-      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.DISPLAYED, section);
+      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.DISPLAYED, section);
       this.reportLocation();
     }, err => {
       /**
@@ -38923,7 +38900,7 @@ class Rendition {
        * @param {Section} section
        * @memberof Rendition
        */
-      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.DISPLAY_ERROR, err);
+      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.DISPLAY_ERROR, err);
     });
     return displayed;
   }
@@ -38974,7 +38951,7 @@ class Rendition {
    * @param  {*} view
    */
   afterDisplayed(view) {
-    view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
+    view.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
     this.hooks.render.trigger(view, this).then(() => {
       if (view.contents) {
         this.hooks.content.trigger(view.contents, this).then(() => {
@@ -38985,10 +38962,10 @@ class Rendition {
            * @param {View} view
            * @memberof Rendition
            */
-          this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.RENDERED, view.section, view);
+          this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.RENDERED, view.section, view);
         });
       } else {
-        this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.RENDERED, view.section, view);
+        this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.RENDERED, view.section, view);
       }
     });
   }
@@ -39007,7 +38984,7 @@ class Rendition {
        * @param {View} view
        * @memberof Rendition
        */
-      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.REMOVED, view.section, view);
+      this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.REMOVED, view.section, view);
     });
   }
 
@@ -39024,7 +39001,7 @@ class Rendition {
      * @param {string} epubcfi (optional)
      * @memberof Rendition
      */
-    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.RESIZED, {
+    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.RESIZED, {
       width: size.width,
       height: size.height
     }, epubcfi);
@@ -39044,7 +39021,7 @@ class Rendition {
      * @param {string} orientation
      * @memberof Rendition
      */
-    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.ORIENTATION_CHANGE, orientation);
+    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.ORIENTATION_CHANGE, orientation);
   }
 
   /**
@@ -39166,8 +39143,8 @@ class Rendition {
 
       // this.mapping = new Mapping(this._layout.props);
 
-      this._layout.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.LAYOUT.UPDATED, (props, changed) => {
-        this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.LAYOUT, props, changed);
+      this._layout.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.LAYOUT.UPDATED, (props, changed) => {
+        this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.LAYOUT, props, changed);
       });
     }
     if (this.manager && this._layout) {
@@ -39225,14 +39202,14 @@ class Rendition {
               return;
             }
             this.location = located;
-            this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.LOCATION_CHANGED, {
+            this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.LOCATION_CHANGED, {
               index: this.location.start.index,
               href: this.location.start.href,
               start: this.location.start.cfi,
               end: this.location.end.cfi,
               percentage: this.location.start.percentage
             });
-            this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.RELOCATED, this.location);
+            this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.RELOCATED, this.location);
           }.bind(this));
         } else if (location) {
           let located = this.located(location);
@@ -39252,7 +39229,7 @@ class Rendition {
            * @property {number} percentage
            * @memberof Rendition
            */
-          this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.LOCATION_CHANGED, {
+          this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.LOCATION_CHANGED, {
             index: this.location.start.index,
             href: this.location.start.href,
             start: this.location.start.cfi,
@@ -39265,7 +39242,7 @@ class Rendition {
            * @type {displayedLocation}
            * @memberof Rendition
            */
-          this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.RELOCATED, this.location);
+          this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.RELOCATED, this.location);
         }
       }.bind(this));
     }.bind(this));
@@ -39383,10 +39360,10 @@ class Rendition {
    * @param  {Contents} view contents
    */
   passEvents(contents) {
-    _utils_constants__WEBPACK_IMPORTED_MODULE_9__.DOM_EVENTS.forEach(e => {
+    _utils_constants__WEBPACK_IMPORTED_MODULE_8__.DOM_EVENTS.forEach(e => {
       contents.on(e, ev => this.triggerViewEvent(ev, contents));
     });
-    contents.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.CONTENTS.SELECTED, e => this.triggerSelectedEvent(e, contents));
+    contents.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.CONTENTS.SELECTED, e => this.triggerSelectedEvent(e, contents));
   }
 
   /**
@@ -39411,7 +39388,7 @@ class Rendition {
      * @param {Contents} contents
      * @memberof Rendition
      */
-    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.SELECTED, cfirange, contents);
+    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.SELECTED, cfirange, contents);
   }
 
   /**
@@ -39428,7 +39405,7 @@ class Rendition {
      * @param {Contents} contents
      * @memberof Rendition
      */
-    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
+    this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
   }
 
   /**
@@ -39479,7 +39456,7 @@ class Rendition {
         'break-inside': 'avoid'
       }
     });
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
       // Wait to apply
       setTimeout(function () {
         resolve();
@@ -39511,7 +39488,7 @@ class Rendition {
    */
   handleLinks(contents) {
     if (contents) {
-      contents.on(_utils_constants__WEBPACK_IMPORTED_MODULE_9__.EVENTS.CONTENTS.LINK_CLICKED, href => {
+      contents.on(_utils_constants__WEBPACK_IMPORTED_MODULE_8__.EVENTS.CONTENTS.LINK_CLICKED, href => {
         let relative = this.book.path.relative(href);
         this.display(relative);
       });
@@ -39525,7 +39502,7 @@ class Rendition {
    * @param  {Section} section
    * @private
    */
-  injectStylesheet(doc, section) {
+  injectStylesheet(doc) {
     let style = doc.createElement('link');
     style.setAttribute('type', 'text/css');
     style.setAttribute('rel', 'stylesheet');
@@ -39540,7 +39517,7 @@ class Rendition {
    * @param  {Section} section
    * @private
    */
-  injectScript(doc, section) {
+  injectScript(doc) {
     let script = doc.createElement('script');
     script.setAttribute('type', 'text/javascript');
     script.setAttribute('src', this.settings.script);
@@ -39555,7 +39532,7 @@ class Rendition {
    * @param  {Section} section
    * @private
    */
-  injectIdentifier(doc, section) {
+  injectIdentifier(doc) {
     let ident = this.book.packaging.metadata.identifier;
     let meta = doc.createElement('meta');
     meta.setAttribute('name', 'dc.relation.ispartof');
@@ -39801,7 +39778,7 @@ class Resources {
         newUrl = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.createBlobUrl)(text, 'text/css');
       }
       return newUrl;
-    }, err => {
+    }, () => {
       // handle response errors
       return new Promise(function (resolve) {
         resolve();
@@ -39837,7 +39814,7 @@ class Resources {
       return;
     }
     if (this.replacementUrls.length) {
-      return new Promise(function (resolve, reject) {
+      return new Promise(function (resolve) {
         resolve(this.replacementUrls[indexInUrls]);
       }.bind(this));
     } else {
@@ -40895,7 +40872,7 @@ class Themes {
    */
   registerThemes(themes) {
     for (var theme in themes) {
-      if (themes.hasOwnProperty(theme)) {
+      if (Object.prototype.hasOwnProperty.call(themes, theme)) {
         if (typeof themes[theme] === 'string') {
           this.registerUrl(theme, themes[theme]);
         } else {
@@ -40985,7 +40962,7 @@ class Themes {
     var themes = this._themes;
     var theme;
     for (var name in themes) {
-      if (themes.hasOwnProperty(name) && (name === this._current || name === 'default')) {
+      if (Object.prototype.hasOwnProperty.call(themes, name) && (name === this._current || name === 'default')) {
         theme = themes[name];
         if (theme.rules && Object.keys(theme.rules).length > 0 || theme.url && links.indexOf(theme.url) === -1) {
           this.add(name, contents);
@@ -41050,7 +41027,7 @@ class Themes {
   overrides(contents) {
     var overrides = this._overrides;
     for (var rule in overrides) {
-      if (overrides.hasOwnProperty(rule)) {
+      if (Object.prototype.hasOwnProperty.call(overrides, rule)) {
         contents.css(rule, overrides[rule].value, overrides[rule].priority);
       }
     }
@@ -41716,7 +41693,7 @@ function qsp(el, sel, props) {
   if (typeof el.querySelector != 'undefined') {
     sel += '[';
     for (var prop in props) {
-      sel += prop + '~=\'' + props[prop] + '\'';
+      sel += prop + "~='" + props[prop] + "'";
     }
     sel += ']';
     return el.querySelector(sel);
@@ -42277,9 +42254,9 @@ var mimeTypes = function () {
     index,
     mimeTypes = {};
   for (type in table) {
-    if (table.hasOwnProperty(type)) {
+    if (Object.prototype.hasOwnProperty.call(table, type)) {
       for (subtype in table[type]) {
-        if (table[type].hasOwnProperty(subtype)) {
+        if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
           val = table[type][subtype];
           if (typeof val == 'string') {
             mimeTypes[val] = type + '/' + subtype;
@@ -42688,7 +42665,7 @@ function replaceCanonical(doc, section) {
     return;
   }
   head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'head');
-  link = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, 'link[rel=\'canonical\']');
+  link = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, "link[rel='canonical']");
   if (link) {
     link.setAttribute('href', url);
   } else {
@@ -42706,7 +42683,7 @@ function replaceMeta(doc, section) {
     return;
   }
   head = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(doc, 'head');
-  meta = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, 'link[property=\'dc.identifier\']');
+  meta = (0,_core__WEBPACK_IMPORTED_MODULE_0__.qs)(head, "link[property='dc.identifier']");
   if (meta) {
     meta.setAttribute('content', id);
   } else {
@@ -43127,7 +43104,7 @@ describe('Book', function () {
     });
     it('should have a blob coverUrl', async function () {
       let coverUrl = await book.coverUrl();
-      assert__WEBPACK_IMPORTED_MODULE_1___default()(/^blob:http:\/\/localhost:9876\/[^\/]+$/.test(coverUrl), 'cover url is available and a blob: url');
+      assert__WEBPACK_IMPORTED_MODULE_1___default()(/^blob:http:\/\/localhost:9876\/[^/]+$/.test(coverUrl), 'cover url is available and a blob: url');
     });
   });
   describe('Archived epub without cover', function () {

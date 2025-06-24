@@ -148,7 +148,7 @@ class Mapping {
       found = this.walk($el, (node) => {
         var left, right, top, bottom;
         var elPos;
- 
+
         elPos = nodeBounds(node);
 
         if (this.horizontal && this.direction === 'ltr') {
@@ -219,7 +219,7 @@ class Mapping {
       found = this.walk($el, (node) => {
         var left, right, top, bottom;
         var elPos;
- 
+
         elPos = nodeBounds(node);
 
         if (this.horizontal && this.direction === 'ltr') {

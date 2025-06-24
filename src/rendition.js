@@ -6,7 +6,6 @@ import Queue from './utils/queue';
 import Layout from './layout';
 // import Mapping from "./mapping";
 import Themes from './themes';
-import Contents from './contents';
 import Annotations from './annotations';
 import { EVENTS, DOM_EVENTS } from './utils/constants';
 
@@ -217,12 +216,12 @@ class Rendition {
       this.settings.layout = 'pre-paginated';
     }
     switch (this.book.package.metadata.spread) {
-    case 'none':
-      this.settings.spread = 'none';
-      break;
-    case 'both':
-      this.settings.spread = true;
-      break;
+      case 'none':
+        this.settings.spread = 'none';
+        break;
+      case 'both':
+        this.settings.spread = true;
+        break;
     }
 
     if (!this.manager) {
@@ -327,11 +326,10 @@ class Rendition {
     if (!this.book) {
       return;
     }
-    var isCfiString = this.epubcfi.isCfiString(target);
+
     var displaying = new defer();
     var displayed = displaying.promise;
     var section;
-    var moveTo;
 
     this.displaying = displaying;
 
@@ -1022,7 +1020,7 @@ class Rendition {
       },
     });
 
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
       // Wait to apply
       setTimeout(function () {
         resolve();
@@ -1068,7 +1066,7 @@ class Rendition {
    * @param  {Section} section
    * @private
    */
-  injectStylesheet(doc, section) {
+  injectStylesheet(doc) {
     let style = doc.createElement('link');
     style.setAttribute('type', 'text/css');
     style.setAttribute('rel', 'stylesheet');
@@ -1083,7 +1081,7 @@ class Rendition {
    * @param  {Section} section
    * @private
    */
-  injectScript(doc, section) {
+  injectScript(doc) {
     let script = doc.createElement('script');
     script.setAttribute('type', 'text/javascript');
     script.setAttribute('src', this.settings.script);
@@ -1098,7 +1096,7 @@ class Rendition {
    * @param  {Section} section
    * @private
    */
-  injectIdentifier(doc, section) {
+  injectIdentifier(doc) {
     let ident = this.book.packaging.metadata.identifier;
     let meta = doc.createElement('meta');
     meta.setAttribute('name', 'dc.relation.ispartof');

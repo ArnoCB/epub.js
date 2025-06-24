@@ -768,7 +768,7 @@ class EpubCFI {
       var position = step.index + 1;
 
       if (step.id) {
-        xpath.push('*[position()=' + position + ' and @id=\'' + step.id + '\']');
+        xpath.push('*[position()=' + position + " and @id='" + step.id + "']");
       } else if (step.type === 'text') {
         xpath.push('text()[' + position + ']');
       } else {

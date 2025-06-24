@@ -423,7 +423,10 @@ class IframeView {
 
       this.iframe.contentDocument.open();
       // For Cordova windows platform
-      if (typeof window.MSApp !== 'undefined' && window.MSApp.execUnsafeLocalFunction) {
+      if (
+        typeof window.MSApp !== 'undefined' &&
+        window.MSApp.execUnsafeLocalFunction
+      ) {
         var outerThis = this;
         window.MSApp.execUnsafeLocalFunction(function () {
           outerThis.iframe.contentDocument.write(contents);
@@ -450,7 +453,7 @@ class IframeView {
 
     this.rendering = false;
 
-    var link = this.document.querySelector('link[rel=\'canonical\']');
+    var link = this.document.querySelector("link[rel='canonical']");
     if (link) {
       link.setAttribute('href', this.section.canonical);
     } else {
@@ -706,7 +709,7 @@ class IframeView {
     let container = range.commonAncestorContainer;
     let parent = container.nodeType === 1 ? container : container.parentNode;
 
-    let emitter = (e) => {
+    let emitter = () => {
       this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
     };
 

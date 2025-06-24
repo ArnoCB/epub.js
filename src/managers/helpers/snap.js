@@ -1,7 +1,4 @@
-import {
-  extend,
-  defer,
-} from '../../utils/core';
+import { extend, defer } from '../../utils/core';
 import { EVENTS } from '../../utils/constants';
 import EventEmitter from 'event-emitter';
 
@@ -92,7 +89,9 @@ class Snap {
     if (
       'ontouchstart' in window ||
       // eslint-disable-next-line no-undef
-      (typeof DocumentTouch !== 'undefined' && window.DocumentTouch && document instanceof DocumentTouch)
+      (typeof DocumentTouch !== 'undefined' &&
+        window.DocumentTouch &&
+        document instanceof DocumentTouch)
     ) {
       return true;
     }

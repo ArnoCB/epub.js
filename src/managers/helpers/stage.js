@@ -333,13 +333,11 @@ class Stage {
   }
 
   destroy() {
-    var base;
-
     if (this.element) {
       if (this.settings.hidden) {
-        base = this.wrapper;
+        this.wrapper;
       } else {
-        base = this.container;
+        this.container;
       }
 
       if (this.element.contains(this.container)) {

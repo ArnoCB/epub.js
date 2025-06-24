@@ -16,3 +16,12 @@ export default class Hook {
 
   clear(): void;
 }
+
+export type HookName =
+  | 'display'
+  | 'serialize'
+  | 'content'
+  | 'unloaded'
+  | 'layout'
+  | 'render'
+  | 'show';
