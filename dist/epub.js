@@ -12187,6 +12187,9 @@ class Section {
  */
 class Spine {
   constructor() {
+    /**
+     * @type {Section[]}
+     */
     this.spineItems = [];
     this.spineByHref = {};
     this.spineById = {};

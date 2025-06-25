@@ -22,6 +22,8 @@ export default class Spine {
 
   destroy(): void;
 
+  spineItems: Section[];
+
   private append(section: Section): number;
 
   private prepend(section: Section): number;

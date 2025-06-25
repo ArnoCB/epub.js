@@ -39456,6 +39456,9 @@ __webpack_require__.r(__webpack_exports__);
  */
 class Spine {
   constructor() {
+    /**
+     * @type {Section[]}
+     */
     this.spineItems = [];
     this.spineByHref = {};
     this.spineById = {};
