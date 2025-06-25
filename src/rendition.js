@@ -216,12 +216,12 @@ class Rendition {
       this.settings.layout = 'pre-paginated';
     }
     switch (this.book.package.metadata.spread) {
-      case 'none':
-        this.settings.spread = 'none';
-        break;
-      case 'both':
-        this.settings.spread = true;
-        break;
+    case 'none':
+      this.settings.spread = 'none';
+      break;
+    case 'both':
+      this.settings.spread = true;
+      break;
     }
 
     if (!this.manager) {

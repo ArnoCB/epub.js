@@ -17,6 +17,7 @@ export default class Hook {
   clear(): void;
 }
 
+// to be used for keeping track of the hooks
 export type HookName =
   | 'display'
   | 'serialize'
@@ -25,3 +26,4 @@ export type HookName =
   | 'layout'
   | 'render'
   | 'show';
+  

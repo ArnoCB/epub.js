@@ -1263,20 +1263,20 @@ class Contents {
       layoutStyle: this.layoutStyle(),
       hasFeature: function (feature) {
         switch (feature) {
-          case 'dom-manipulation':
-            return true;
-          case 'layout-changes':
-            return true;
-          case 'touch-events':
-            return true;
-          case 'mouse-events':
-            return true;
-          case 'keyboard-events':
-            return true;
-          case 'spine-scripting':
-            return false;
-          default:
-            return false;
+        case 'dom-manipulation':
+          return true;
+        case 'layout-changes':
+          return true;
+        case 'touch-events':
+          return true;
+        case 'mouse-events':
+          return true;
+        case 'keyboard-events':
+          return true;
+        case 'spine-scripting':
+          return false;
+        default:
+          return false;
         }
       },
     };

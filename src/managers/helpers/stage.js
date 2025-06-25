@@ -5,7 +5,7 @@ import {
   windowBounds,
   extend,
 } from '../../utils/core';
-import throttle from 'lodash/throttle';
+import throttle from 'just-throttle';
 
 class Stage {
   constructor(_options) {

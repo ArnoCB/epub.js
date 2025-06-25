@@ -1,4 +1,4 @@
-import Book from '../src/book';
+import Book from '../src/book.js';
 import assert from 'assert';
 
 describe('Book', function () {

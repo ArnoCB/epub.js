@@ -41,18 +41,18 @@ class DisplayOptions {
       }
 
       switch (el.attributes.name.value) {
-        case 'interactive':
-          this.interactive = value;
-          break;
-        case 'fixed-layout':
-          this.fixedLayout = value;
-          break;
-        case 'open-to-spread':
-          this.openToSpread = value;
-          break;
-        case 'orientation-lock':
-          this.orientationLock = value;
-          break;
+      case 'interactive':
+        this.interactive = value;
+        break;
+      case 'fixed-layout':
+        this.fixedLayout = value;
+        break;
+      case 'open-to-spread':
+        this.openToSpread = value;
+        break;
+      case 'orientation-lock':
+        this.orientationLock = value;
+        break;
       }
     });
 
