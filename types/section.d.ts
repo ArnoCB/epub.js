@@ -24,6 +24,14 @@ export interface SpineItem {
   prev: () => SpineItem;
 }
 
+/**
+ * Represents a match found in a section.
+ */
+export interface Match {
+  cfi: string;
+  excerpt: string;
+}
+
 export default class Section {
   constructor(item: SpineItem, hooks: HooksObject);
 
@@ -48,7 +56,7 @@ export default class Section {
 
   render(_request?: Function): string;
 
-  find(_query: string): Array<Element>;
+  find(_query: string): Array<Match>;
 
   reconcileLayoutSettings(globalLayout: GlobalLayout): LayoutSettings;
 

@@ -136,6 +136,15 @@ class Section {
    */
   find(_query) {
     var section = this;
+    /**
+     * @typedef {Object} Match
+     * @property {string} cfi - The CFI string.
+     * @property {string} excerpt - The excerpt text.
+     */
+
+    /**
+     * @type {Match[]}
+     */
     var matches = [];
     var query = _query.toLowerCase();
     var find = function (node) {
