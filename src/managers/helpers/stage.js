@@ -5,7 +5,7 @@ import {
   windowBounds,
   extend,
 } from '../../utils/core';
-import throttle from 'just-throttle';
+import { throttle } from '../../utils/helpers';
 
 class Stage {
   constructor(_options) {

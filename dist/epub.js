@@ -9541,47 +9541,6 @@ module.exports = function (value) {
 
 /***/ }),
 
-/***/ 945:
-/***/ ((module) => {
-
-module.exports = debounce;
-
-function debounce(fn, delay, atStart, guarantee) {
-  var timeout;
-  var args;
-  var self;
-
-  return function debounced() {
-    self = this;
-    args = Array.prototype.slice.call(arguments);
-
-    if (timeout && (atStart || guarantee)) {
-      return;
-    } else if (!atStart) {
-      clear();
-
-      timeout = setTimeout(run, delay);
-      return timeout;
-    }
-
-    timeout = setTimeout(clear, delay);
-    fn.apply(self, args);
-
-    function run() {
-      clear();
-      fn.apply(self, args);
-    }
-
-    function clear() {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-  };
-}
-
-
-/***/ }),
-
 /***/ 978:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -17650,76 +17609,43 @@ function createDefiner() {
   definer.appendChild(innerDiv);
   return definer;
 }
-;// ./node_modules/just-throttle/index.mjs
-var functionThrottle = throttle;
+;// ./src/utils/helpers.js
+// Utility functions
 
-function throttle(fn, interval, options) {
-  var timeoutId = null;
-  var throttledFn = null;
-  var leading = (options && options.leading);
-  var trailing = (options && options.trailing);
-
-  if (leading == null) {
-    leading = true; // default
-  }
-
-  if (trailing == null) {
-    trailing = !leading; //default
-  }
-
-  if (leading == true) {
-    trailing = false; // forced because there should be invocation per call
-  }
-
-  var cancel = function() {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
+/**
+ * Creates a debounced function that delays invoking the provided function
+ * until after the specified wait time has elapsed since the last invocation.
+ * @param {Function} func - The function to debounce.
+ * @param {number} wait - The number of milliseconds to delay.
+ * @returns {Function} - The debounced function.
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
   };
-
-  var flush = function() {
-    var call = throttledFn;
-    cancel();
-
-    if (call) {
-      call();
-    }
-  };
-
-  var throttleWrapper = function() {
-    var callNow = leading && !timeoutId;
-    var context = this;
-    var args = arguments;
-
-    throttledFn = function() {
-      return fn.apply(context, args);
-    };
-
-    if (!timeoutId) {
-      timeoutId = setTimeout(function() {
-        timeoutId = null;
-
-        if (trailing) {
-          return throttledFn();
-        }
-      }, interval);
-    }
-
-    if (callNow) {
-      callNow = false;
-      return throttledFn();
-    }
-  };
-
-  throttleWrapper.cancel = cancel;
-  throttleWrapper.flush = flush;
-
-  return throttleWrapper;
 }
 
+/**
+ * Creates a throttled function that only invokes the provided function
+ * at most once per every specified wait time.
+ * @param {Function} func - The function to throttle.
+ * @param {number} wait - The number of milliseconds to throttle.
+ * @returns {Function} - The throttled function.
+ */
+function throttle(func, wait) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall >= wait) {
+      lastCall = now;
+      func.apply(this, args);
+    }
+  };
+}
 
-
+// Add other helper functions here as needed
 ;// ./src/managers/helpers/stage.js
 
 
@@ -17837,7 +17763,7 @@ class Stage {
     // Only listen to window for resize event if width and height are not fixed.
     // This applies if it is set to a percent or auto.
     if (!isNumber(this.settings.width) || !isNumber(this.settings.height)) {
-      this.resizeFunc = functionThrottle(func, 50);
+      this.resizeFunc = throttle(func, 50);
       window.addEventListener('resize', this.resizeFunc, false);
     }
   }
@@ -19268,9 +19194,6 @@ class Snap {
 }
 event_emitter_default()(Snap.prototype);
 /* harmony default export */ const snap = (Snap);
-// EXTERNAL MODULE: ./node_modules/just-debounce/index.js
-var just_debounce = __webpack_require__(945);
-var just_debounce_default = /*#__PURE__*/__webpack_require__.n(just_debounce);
 ;// ./src/managers/continuous/index.js
 
 
@@ -19616,7 +19539,7 @@ class ContinuousViewManager extends managers_default {
     }
     this._onScroll = this.onScroll.bind(this);
     scroller.addEventListener('scroll', this._onScroll);
-    this._scrolled = just_debounce_default()(this.scrolled.bind(this), 30);
+    this._scrolled = debounce(this.scrolled.bind(this), 30);
     // this.tick.call(window, this.onScroll.bind(this));
 
     this.didScroll = false;

@@ -2,7 +2,7 @@ import { extend, defer, requestAnimationFrame } from '../../utils/core';
 import DefaultViewManager from '../default';
 import Snap from '../helpers/snap';
 import { EVENTS } from '../../utils/constants';
-import debounce from 'just-debounce';
+import { debounce } from '../../utils/helpers';
 
 class ContinuousViewManager extends DefaultViewManager {
   constructor(options) {
