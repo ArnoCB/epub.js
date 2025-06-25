@@ -88,10 +88,8 @@ class Snap {
   supportsTouch() {
     if (
       'ontouchstart' in window ||
-      // eslint-disable-next-line no-undef
-      (typeof DocumentTouch !== 'undefined' &&
-        window.DocumentTouch &&
-        document instanceof DocumentTouch)
+      (typeof window.DocumentTouch !== 'undefined' &&
+        document instanceof window.DocumentTouch)
     ) {
       return true;
     }

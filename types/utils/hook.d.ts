@@ -26,4 +26,3 @@ export type HookName =
   | 'layout'
   | 'render'
   | 'show';
-  
