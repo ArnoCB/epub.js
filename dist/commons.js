@@ -20882,6 +20882,133 @@ module.exports = ZStream;
 
 /***/ }),
 
+/***/ "./node_modules/just-debounce/index.js":
+/*!*********************************************!*\
+  !*** ./node_modules/just-debounce/index.js ***!
+  \*********************************************/
+/***/ ((module) => {
+
+module.exports = debounce;
+
+function debounce(fn, delay, atStart, guarantee) {
+  var timeout;
+  var args;
+  var self;
+
+  return function debounced() {
+    self = this;
+    args = Array.prototype.slice.call(arguments);
+
+    if (timeout && (atStart || guarantee)) {
+      return;
+    } else if (!atStart) {
+      clear();
+
+      timeout = setTimeout(run, delay);
+      return timeout;
+    }
+
+    timeout = setTimeout(clear, delay);
+    fn.apply(self, args);
+
+    function run() {
+      clear();
+      fn.apply(self, args);
+    }
+
+    function clear() {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/just-throttle/index.mjs":
+/*!**********************************************!*\
+  !*** ./node_modules/just-throttle/index.mjs ***!
+  \**********************************************/
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ functionThrottle)
+/* harmony export */ });
+var functionThrottle = throttle;
+
+function throttle(fn, interval, options) {
+  var timeoutId = null;
+  var throttledFn = null;
+  var leading = (options && options.leading);
+  var trailing = (options && options.trailing);
+
+  if (leading == null) {
+    leading = true; // default
+  }
+
+  if (trailing == null) {
+    trailing = !leading; //default
+  }
+
+  if (leading == true) {
+    trailing = false; // forced because there should be invocation per call
+  }
+
+  var cancel = function() {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+
+  var flush = function() {
+    var call = throttledFn;
+    cancel();
+
+    if (call) {
+      call();
+    }
+  };
+
+  var throttleWrapper = function() {
+    var callNow = leading && !timeoutId;
+    var context = this;
+    var args = arguments;
+
+    throttledFn = function() {
+      return fn.apply(context, args);
+    };
+
+    if (!timeoutId) {
+      timeoutId = setTimeout(function() {
+        timeoutId = null;
+
+        if (trailing) {
+          return throttledFn();
+        }
+      }, interval);
+    }
+
+    if (callNow) {
+      callNow = false;
+      return throttledFn();
+    }
+  };
+
+  throttleWrapper.cancel = cancel;
+  throttleWrapper.flush = flush;
+
+  return throttleWrapper;
+}
+
+
+
+
+/***/ }),
+
 /***/ "./node_modules/localforage/dist/localforage.js":
 /*!******************************************************!*\
   !*** ./node_modules/localforage/dist/localforage.js ***!
@@ -33650,7 +33777,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _default__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../default */ "./src/managers/default/index.js");
 /* harmony import */ var _helpers_snap__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/snap */ "./src/managers/helpers/snap.js");
 /* harmony import */ var _utils_constants__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../utils/constants */ "./src/utils/constants.js");
-Object(function webpackMissingModule() { var e = new Error("Cannot find module 'just-debounce'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
+/* harmony import */ var just_debounce__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! just-debounce */ "./node_modules/just-debounce/index.js");
+/* harmony import */ var just_debounce__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(just_debounce__WEBPACK_IMPORTED_MODULE_4__);
 
 
 
@@ -33995,7 +34123,7 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
     }
     this._onScroll = this.onScroll.bind(this);
     scroller.addEventListener('scroll', this._onScroll);
-    this._scrolled = Object(function webpackMissingModule() { var e = new Error("Cannot find module 'just-debounce'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(this.scrolled.bind(this), 30);
+    this._scrolled = just_debounce__WEBPACK_IMPORTED_MODULE_4___default()(this.scrolled.bind(this), 30);
     // this.tick.call(window, this.onScroll.bind(this));
 
     this.didScroll = false;
@@ -35283,7 +35411,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _utils_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../utils/core */ "./src/utils/core.js");
-Object(function webpackMissingModule() { var e = new Error("Cannot find module 'just-throttle'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
+/* harmony import */ var just_throttle__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! just-throttle */ "./node_modules/just-throttle/index.mjs");
 
 
 class Stage {
@@ -35400,7 +35528,7 @@ class Stage {
     // Only listen to window for resize event if width and height are not fixed.
     // This applies if it is set to a percent or auto.
     if (!(0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(this.settings.width) || !(0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.isNumber)(this.settings.height)) {
-      this.resizeFunc = Object(function webpackMissingModule() { var e = new Error("Cannot find module 'just-throttle'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(func, 50);
+      this.resizeFunc = (0,just_throttle__WEBPACK_IMPORTED_MODULE_1__["default"])(func, 50);
       window.addEventListener('resize', this.resizeFunc, false);
     }
   }

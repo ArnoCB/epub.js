@@ -69,6 +69,8 @@
     "core-js": "^3.18.3",
     "event-emitter": "^0.3.5",
     "jszip": "^3.7.1",
+    "just-debounce": "^1.1.0",
+    "just-throttle": "^4.2.0",
     "localforage": "^1.10.0",
     "marks-pane": "^1.0.9",
     "path-webpack": "0.0.3"
