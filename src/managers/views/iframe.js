@@ -12,7 +12,24 @@ import {
 import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import { EVENTS } from '../../utils/constants';
-import { Pane, Highlight, Underline } from 'marks-pane';
+import { Pane as OriginalPane, Highlight, Underline } from 'marks-pane';
+
+// Subclass Pane to inject custom SVG styling
+class StyledPane extends OriginalPane {
+  constructor(target, container, transparency) {
+    super(target, container);
+    console.debug('[StyledPane] Used for overlay');
+    // Add custom styling to the SVG element only if transparency is true
+    if (transparency) {
+      console.debug('[StyledPane] Transparency block executed');
+      this.element.style.zIndex = '-3';
+      this.element.style.position = 'absolute';
+    }
+    // You can add more styles if needed
+    this.element.style.zIndex = '-3';
+    this.element.style.position = 'absolute';
+  }
+}
 
 class IframeView {
   constructor(section, options) {
@@ -29,6 +46,7 @@ class IframeView {
         forceRight: false,
         allowScriptedContent: false,
         allowPopups: false,
+        transparency: false, // New option for transparent background
       },
       options || {}
     );
@@ -97,8 +115,13 @@ class IframeView {
     this.iframe.scrolling = 'no'; // Might need to be removed: breaks ios width calculations
     this.iframe.style.overflow = 'hidden';
     this.iframe.seamless = 'seamless';
-    // Back up if seamless isn't supported
     this.iframe.style.border = 'none';
+
+    // Set transparent background if option is enabled
+    if (this.settings.transparency) {
+      this.iframe.style.background = 'transparent';
+      this.iframe.allowTransparency = 'true';
+    }
 
     // sandbox
     this.iframe.sandbox = 'allow-same-origin';
@@ -444,6 +467,15 @@ class IframeView {
     this.window = this.iframe.contentWindow;
     this.document = this.iframe.contentDocument;
 
+    // Inject transparent background if option is enabled
+    if (this.settings.transparency && this.document && this.document.body) {
+      this.document.body.style.background = 'transparent';
+      // Also inject a style tag for full coverage
+      const style = this.document.createElement('style');
+      style.innerHTML = 'html, body { background: transparent !important; }';
+      this.document.head.appendChild(style);
+    }
+
     this.contents = new Contents(
       this.document,
       this.document.body,
@@ -613,10 +645,19 @@ class IframeView {
     if (!this.contents) {
       return;
     }
-    const attributes = Object.assign(
-      { fill: 'yellow', 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' },
-      styles
-    );
+
+    let attributes;
+    if (this.settings.transparency) {
+      attributes = Object.assign(
+        { fill: 'yellow', 'fill-opacity': '1.0', 'mix-blend-mode': 'normal' },
+        styles
+      );
+    } else {
+      attributes = Object.assign(
+        { fill: 'yellow', 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' },
+        styles
+      );
+    }
     let range = this.contents.range(cfiRange);
 
     let emitter = () => {
@@ -626,7 +667,11 @@ class IframeView {
     data['epubcfi'] = cfiRange;
 
     if (!this.pane) {
-      this.pane = new Pane(this.iframe, this.element);
+      this.pane = new StyledPane(
+        this.iframe,
+        this.element,
+        this.settings.transparency
+      );
     }
 
     let m = new Highlight(range, className, data, attributes);
@@ -669,7 +714,11 @@ class IframeView {
     data['epubcfi'] = cfiRange;
 
     if (!this.pane) {
-      this.pane = new Pane(this.iframe, this.element);
+      this.pane = new StyledPane(
+        this.iframe,
+        this.element,
+        this.settings.transparency
+      );
     }
 
     let m = new Underline(range, className, data, attributes);

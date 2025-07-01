@@ -201,6 +201,10 @@ rendition.hooks.unloaded; // Section contents are being unloaded
 
 The reader has moved to its own repo at: https://github.com/futurepress/epubjs-reader/
 
+## Highlighting
+
+https://github.com/fchasen/marks
+
 ## Additional Resources
 
 [![Gitter Chat](https://badges.gitter.im/futurepress/epub.js.png)](https://gitter.im/futurepress/epub.js 'Gitter Chat')

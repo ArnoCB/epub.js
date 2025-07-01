@@ -24760,571 +24760,6 @@ module.exports = function getPolyfill() {
 
 /***/ }),
 
-/***/ "./node_modules/path-webpack/path.js":
-/*!*******************************************!*\
-  !*** ./node_modules/path-webpack/path.js ***!
-  \*******************************************/
-/***/ ((module) => {
-
-"use strict";
-
-
-if (!process) {
-  var process = {
-    "cwd" : function () { return '/' }
-  };
-}
-
-function assertPath(path) {
-  if (typeof path !== 'string') {
-    throw new TypeError('Path must be a string. Received ' + path);
-  }
-}
-
-// Resolves . and .. elements in a path with directory names
-function normalizeStringPosix(path, allowAboveRoot) {
-  var res = '';
-  var lastSlash = -1;
-  var dots = 0;
-  var code;
-  for (var i = 0; i <= path.length; ++i) {
-    if (i < path.length)
-      code = path.charCodeAt(i);
-    else if (code === 47/*/*/)
-      break;
-    else
-      code = 47/*/*/;
-    if (code === 47/*/*/) {
-      if (lastSlash === i - 1 || dots === 1) {
-        // NOOP
-      } else if (lastSlash !== i - 1 && dots === 2) {
-        if (res.length < 2 ||
-            res.charCodeAt(res.length - 1) !== 46/*.*/ ||
-            res.charCodeAt(res.length - 2) !== 46/*.*/) {
-          if (res.length > 2) {
-            var start = res.length - 1;
-            var j = start;
-            for (; j >= 0; --j) {
-              if (res.charCodeAt(j) === 47/*/*/)
-                break;
-            }
-            if (j !== start) {
-              if (j === -1)
-                res = '';
-              else
-                res = res.slice(0, j);
-              lastSlash = i;
-              dots = 0;
-              continue;
-            }
-          } else if (res.length === 2 || res.length === 1) {
-            res = '';
-            lastSlash = i;
-            dots = 0;
-            continue;
-          }
-        }
-        if (allowAboveRoot) {
-          if (res.length > 0)
-            res += '/..';
-          else
-            res = '..';
-        }
-      } else {
-        if (res.length > 0)
-          res += '/' + path.slice(lastSlash + 1, i);
-        else
-          res = path.slice(lastSlash + 1, i);
-      }
-      lastSlash = i;
-      dots = 0;
-    } else if (code === 46/*.*/ && dots !== -1) {
-      ++dots;
-    } else {
-      dots = -1;
-    }
-  }
-  return res;
-}
-
-function _format(sep, pathObject) {
-  var dir = pathObject.dir || pathObject.root;
-  var base = pathObject.base ||
-    ((pathObject.name || '') + (pathObject.ext || ''));
-  if (!dir) {
-    return base;
-  }
-  if (dir === pathObject.root) {
-    return dir + base;
-  }
-  return dir + sep + base;
-}
-
-var posix = {
-  // path.resolve([from ...], to)
-  resolve: function resolve() {
-    var resolvedPath = '';
-    var resolvedAbsolute = false;
-    var cwd;
-
-    for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-      var path;
-      if (i >= 0)
-        path = arguments[i];
-      else {
-        if (cwd === undefined)
-          cwd = process.cwd();
-        path = cwd;
-      }
-
-      assertPath(path);
-
-      // Skip empty entries
-      if (path.length === 0) {
-        continue;
-      }
-
-      resolvedPath = path + '/' + resolvedPath;
-      resolvedAbsolute = path.charCodeAt(0) === 47/*/*/;
-    }
-
-    // At this point the path should be resolved to a full absolute path, but
-    // handle relative paths to be safe (might happen when process.cwd() fails)
-
-    // Normalize the path
-    resolvedPath = normalizeStringPosix(resolvedPath, !resolvedAbsolute);
-
-    if (resolvedAbsolute) {
-      if (resolvedPath.length > 0)
-        return '/' + resolvedPath;
-      else
-        return '/';
-    } else if (resolvedPath.length > 0) {
-      return resolvedPath;
-    } else {
-      return '.';
-    }
-  },
-
-
-  normalize: function normalize(path) {
-    assertPath(path);
-
-    if (path.length === 0)
-      return '.';
-
-    var isAbsolute = path.charCodeAt(0) === 47/*/*/;
-    var trailingSeparator = path.charCodeAt(path.length - 1) === 47/*/*/;
-
-    // Normalize the path
-    path = normalizeStringPosix(path, !isAbsolute);
-
-    if (path.length === 0 && !isAbsolute)
-      path = '.';
-    if (path.length > 0 && trailingSeparator)
-      path += '/';
-
-    if (isAbsolute)
-      return '/' + path;
-    return path;
-  },
-
-
-  isAbsolute: function isAbsolute(path) {
-    assertPath(path);
-    return path.length > 0 && path.charCodeAt(0) === 47/*/*/;
-  },
-
-
-  join: function join() {
-    if (arguments.length === 0)
-      return '.';
-    var joined;
-    for (var i = 0; i < arguments.length; ++i) {
-      var arg = arguments[i];
-      assertPath(arg);
-      if (arg.length > 0) {
-        if (joined === undefined)
-          joined = arg;
-        else
-          joined += '/' + arg;
-      }
-    }
-    if (joined === undefined)
-      return '.';
-    return posix.normalize(joined);
-  },
-
-
-  relative: function relative(from, to) {
-    assertPath(from);
-    assertPath(to);
-
-    if (from === to)
-      return '';
-
-    from = posix.resolve(from);
-    to = posix.resolve(to);
-
-    if (from === to)
-      return '';
-
-    // Trim any leading backslashes
-    var fromStart = 1;
-    for (; fromStart < from.length; ++fromStart) {
-      if (from.charCodeAt(fromStart) !== 47/*/*/)
-        break;
-    }
-    var fromEnd = from.length;
-    var fromLen = (fromEnd - fromStart);
-
-    // Trim any leading backslashes
-    var toStart = 1;
-    for (; toStart < to.length; ++toStart) {
-      if (to.charCodeAt(toStart) !== 47/*/*/)
-        break;
-    }
-    var toEnd = to.length;
-    var toLen = (toEnd - toStart);
-
-    // Compare paths to find the longest common path from root
-    var length = (fromLen < toLen ? fromLen : toLen);
-    var lastCommonSep = -1;
-    var i = 0;
-    for (; i <= length; ++i) {
-      if (i === length) {
-        if (toLen > length) {
-          if (to.charCodeAt(toStart + i) === 47/*/*/) {
-            // We get here if `from` is the exact base path for `to`.
-            // For example: from='/foo/bar'; to='/foo/bar/baz'
-            return to.slice(toStart + i + 1);
-          } else if (i === 0) {
-            // We get here if `from` is the root
-            // For example: from='/'; to='/foo'
-            return to.slice(toStart + i);
-          }
-        } else if (fromLen > length) {
-          if (from.charCodeAt(fromStart + i) === 47/*/*/) {
-            // We get here if `to` is the exact base path for `from`.
-            // For example: from='/foo/bar/baz'; to='/foo/bar'
-            lastCommonSep = i;
-          } else if (i === 0) {
-            // We get here if `to` is the root.
-            // For example: from='/foo'; to='/'
-            lastCommonSep = 0;
-          }
-        }
-        break;
-      }
-      var fromCode = from.charCodeAt(fromStart + i);
-      var toCode = to.charCodeAt(toStart + i);
-      if (fromCode !== toCode)
-        break;
-      else if (fromCode === 47/*/*/)
-        lastCommonSep = i;
-    }
-
-    var out = '';
-    // Generate the relative path based on the path difference between `to`
-    // and `from`
-    for (i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i) {
-      if (i === fromEnd || from.charCodeAt(i) === 47/*/*/) {
-        if (out.length === 0)
-          out += '..';
-        else
-          out += '/..';
-      }
-    }
-
-    // Lastly, append the rest of the destination (`to`) path that comes after
-    // the common path parts
-    if (out.length > 0)
-      return out + to.slice(toStart + lastCommonSep);
-    else {
-      toStart += lastCommonSep;
-      if (to.charCodeAt(toStart) === 47/*/*/)
-        ++toStart;
-      return to.slice(toStart);
-    }
-  },
-
-
-  _makeLong: function _makeLong(path) {
-    return path;
-  },
-
-
-  dirname: function dirname(path) {
-    assertPath(path);
-    if (path.length === 0)
-      return '.';
-    var code = path.charCodeAt(0);
-    var hasRoot = (code === 47/*/*/);
-    var end = -1;
-    var matchedSlash = true;
-    for (var i = path.length - 1; i >= 1; --i) {
-      code = path.charCodeAt(i);
-      if (code === 47/*/*/) {
-        if (!matchedSlash) {
-          end = i;
-          break;
-        }
-      } else {
-        // We saw the first non-path separator
-        matchedSlash = false;
-      }
-    }
-
-    if (end === -1)
-      return hasRoot ? '/' : '.';
-    if (hasRoot && end === 1)
-      return '//';
-    return path.slice(0, end);
-  },
-
-
-  basename: function basename(path, ext) {
-    if (ext !== undefined && typeof ext !== 'string')
-      throw new TypeError('"ext" argument must be a string');
-    assertPath(path);
-
-    var start = 0;
-    var end = -1;
-    var matchedSlash = true;
-    var i;
-
-    if (ext !== undefined && ext.length > 0 && ext.length <= path.length) {
-      if (ext.length === path.length && ext === path)
-        return '';
-      var extIdx = ext.length - 1;
-      var firstNonSlashEnd = -1;
-      for (i = path.length - 1; i >= 0; --i) {
-        var code = path.charCodeAt(i);
-        if (code === 47/*/*/) {
-          // If we reached a path separator that was not part of a set of path
-          // separators at the end of the string, stop now
-          if (!matchedSlash) {
-            start = i + 1;
-            break;
-          }
-        } else {
-          if (firstNonSlashEnd === -1) {
-            // We saw the first non-path separator, remember this index in case
-            // we need it if the extension ends up not matching
-            matchedSlash = false;
-            firstNonSlashEnd = i + 1;
-          }
-          if (extIdx >= 0) {
-            // Try to match the explicit extension
-            if (code === ext.charCodeAt(extIdx)) {
-              if (--extIdx === -1) {
-                // We matched the extension, so mark this as the end of our path
-                // component
-                end = i;
-              }
-            } else {
-              // Extension does not match, so our result is the entire path
-              // component
-              extIdx = -1;
-              end = firstNonSlashEnd;
-            }
-          }
-        }
-      }
-
-      if (start === end)
-        end = firstNonSlashEnd;
-      else if (end === -1)
-        end = path.length;
-      return path.slice(start, end);
-    } else {
-      for (i = path.length - 1; i >= 0; --i) {
-        if (path.charCodeAt(i) === 47/*/*/) {
-          // If we reached a path separator that was not part of a set of path
-          // separators at the end of the string, stop now
-          if (!matchedSlash) {
-            start = i + 1;
-            break;
-          }
-        } else if (end === -1) {
-          // We saw the first non-path separator, mark this as the end of our
-          // path component
-          matchedSlash = false;
-          end = i + 1;
-        }
-      }
-
-      if (end === -1)
-        return '';
-      return path.slice(start, end);
-    }
-  },
-
-
-  extname: function extname(path) {
-    assertPath(path);
-    var startDot = -1;
-    var startPart = 0;
-    var end = -1;
-    var matchedSlash = true;
-    // Track the state of characters (if any) we see before our first dot and
-    // after any path separator we find
-    var preDotState = 0;
-    for (var i = path.length - 1; i >= 0; --i) {
-      var code = path.charCodeAt(i);
-      if (code === 47/*/*/) {
-        // If we reached a path separator that was not part of a set of path
-        // separators at the end of the string, stop now
-        if (!matchedSlash) {
-          startPart = i + 1;
-          break;
-        }
-        continue;
-      }
-      if (end === -1) {
-        // We saw the first non-path separator, mark this as the end of our
-        // extension
-        matchedSlash = false;
-        end = i + 1;
-      }
-      if (code === 46/*.*/) {
-        // If this is our first dot, mark it as the start of our extension
-        if (startDot === -1)
-          startDot = i;
-        else if (preDotState !== 1)
-          preDotState = 1;
-      } else if (startDot !== -1) {
-        // We saw a non-dot and non-path separator before our dot, so we should
-        // have a good chance at having a non-empty extension
-        preDotState = -1;
-      }
-    }
-
-    if (startDot === -1 ||
-        end === -1 ||
-        // We saw a non-dot character immediately before the dot
-        preDotState === 0 ||
-        // The (right-most) trimmed path component is exactly '..'
-        (preDotState === 1 &&
-         startDot === end - 1 &&
-         startDot === startPart + 1)) {
-      return '';
-    }
-    return path.slice(startDot, end);
-  },
-
-
-  format: function format(pathObject) {
-    if (pathObject === null || typeof pathObject !== 'object') {
-      throw new TypeError(
-        'Parameter "pathObject" must be an object, not ' + typeof(pathObject)
-      );
-    }
-    return _format('/', pathObject);
-  },
-
-
-  parse: function parse(path) {
-    assertPath(path);
-
-    var ret = { root: '', dir: '', base: '', ext: '', name: '' };
-    if (path.length === 0)
-      return ret;
-    var code = path.charCodeAt(0);
-    var isAbsolute = (code === 47/*/*/);
-    var start;
-    if (isAbsolute) {
-      ret.root = '/';
-      start = 1;
-    } else {
-      start = 0;
-    }
-    var startDot = -1;
-    var startPart = 0;
-    var end = -1;
-    var matchedSlash = true;
-    var i = path.length - 1;
-
-    // Track the state of characters (if any) we see before our first dot and
-    // after any path separator we find
-    var preDotState = 0;
-
-    // Get non-dir info
-    for (; i >= start; --i) {
-      code = path.charCodeAt(i);
-      if (code === 47/*/*/) {
-        // If we reached a path separator that was not part of a set of path
-        // separators at the end of the string, stop now
-        if (!matchedSlash) {
-          startPart = i + 1;
-          break;
-        }
-        continue;
-      }
-      if (end === -1) {
-        // We saw the first non-path separator, mark this as the end of our
-        // extension
-        matchedSlash = false;
-        end = i + 1;
-      }
-      if (code === 46/*.*/) {
-        // If this is our first dot, mark it as the start of our extension
-        if (startDot === -1)
-          startDot = i;
-        else if (preDotState !== 1)
-          preDotState = 1;
-      } else if (startDot !== -1) {
-        // We saw a non-dot and non-path separator before our dot, so we should
-        // have a good chance at having a non-empty extension
-        preDotState = -1;
-      }
-    }
-
-    if (startDot === -1 ||
-        end === -1 ||
-        // We saw a non-dot character immediately before the dot
-        preDotState === 0 ||
-        // The (right-most) trimmed path component is exactly '..'
-        (preDotState === 1 &&
-         startDot === end - 1 &&
-         startDot === startPart + 1)) {
-      if (end !== -1) {
-        if (startPart === 0 && isAbsolute)
-          ret.base = ret.name = path.slice(1, end);
-        else
-          ret.base = ret.name = path.slice(startPart, end);
-      }
-    } else {
-      if (startPart === 0 && isAbsolute) {
-        ret.name = path.slice(1, startDot);
-        ret.base = path.slice(1, end);
-      } else {
-        ret.name = path.slice(startPart, startDot);
-        ret.base = path.slice(startPart, end);
-      }
-      ret.ext = path.slice(startDot, end);
-    }
-
-    if (startPart > 0)
-      ret.dir = path.slice(0, startPart - 1);
-    else if (isAbsolute)
-      ret.dir = '/';
-
-    return ret;
-  },
-
-
-  sep: '/',
-  delimiter: ':',
-  posix: null
-};
-
-
-module.exports = posix;
-
-
-/***/ }),
-
 /***/ "./node_modules/possible-typed-array-names/index.js":
 /*!**********************************************************!*\
   !*** ./node_modules/possible-typed-array-names/index.js ***!
@@ -30704,8 +30139,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! path-webpack */ "./node_modules/path-webpack/path.js");
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(path_webpack__WEBPACK_IMPORTED_MODULE_0__);
+Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
 /* harmony import */ var _utils_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils/core */ "./src/utils/core.js");
 
 
@@ -30740,7 +30174,7 @@ class Container {
       throw new Error('No RootFile Found');
     }
     this.packagePath = rootfile.getAttribute('full-path');
-    this.directory = path_webpack__WEBPACK_IMPORTED_MODULE_0___default().dirname(this.packagePath);
+    this.directory = Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(this.packagePath);
     this.encoding = containerDocument.xmlEncoding;
   }
   destroy() {
@@ -33673,7 +33107,8 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
       snap: false,
       afterScrolledTimeout: 10,
       allowScriptedContent: false,
-      allowPopups: false
+      allowPopups: false,
+      transparency: false
     });
     (0,_utils_core__WEBPACK_IMPORTED_MODULE_0__.extend)(this.settings, options.settings || {});
 
@@ -33690,7 +33125,8 @@ class ContinuousViewManager extends _default__WEBPACK_IMPORTED_MODULE_1__["defau
       height: 0,
       forceEvenPages: false,
       allowScriptedContent: this.settings.allowScriptedContent,
-      allowPopups: this.settings.allowPopups
+      allowPopups: this.settings.allowPopups,
+      transparency: this.settings.transparency
     };
     this.scrollTop = 0;
     this.scrollLeft = 0;
@@ -35744,6 +35180,23 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+// Subclass Pane to inject custom SVG styling
+class StyledPane extends marks_pane__WEBPACK_IMPORTED_MODULE_5__.Pane {
+  constructor(target, container, transparency) {
+    super(target, container);
+    console.debug('[StyledPane] Used for overlay');
+    // Add custom styling to the SVG element only if transparency is true
+    if (transparency) {
+      console.debug('[StyledPane] Transparency block executed');
+      this.element.style.zIndex = '-3';
+      this.element.style.position = 'absolute';
+    }
+    // You can add more styles if needed
+    this.element.style.zIndex = '-3';
+    this.element.style.position = 'absolute';
+  }
+}
 class IframeView {
   constructor(section, options) {
     this.settings = (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.extend)({
@@ -35758,7 +35211,8 @@ class IframeView {
       method: undefined,
       forceRight: false,
       allowScriptedContent: false,
-      allowPopups: false
+      allowPopups: false,
+      transparency: false // New option for transparent background
     }, options || {});
     this.id = 'epubjs-view-' + (0,_utils_core__WEBPACK_IMPORTED_MODULE_1__.uuid)();
     this.section = section;
@@ -35814,8 +35268,13 @@ class IframeView {
     this.iframe.scrolling = 'no'; // Might need to be removed: breaks ios width calculations
     this.iframe.style.overflow = 'hidden';
     this.iframe.seamless = 'seamless';
-    // Back up if seamless isn't supported
     this.iframe.style.border = 'none';
+
+    // Set transparent background if option is enabled
+    if (this.settings.transparency) {
+      this.iframe.style.background = 'transparent';
+      this.iframe.allowTransparency = 'true';
+    }
 
     // sandbox
     this.iframe.sandbox = 'allow-same-origin';
@@ -36087,6 +35546,15 @@ class IframeView {
   onLoad(event, promise) {
     this.window = this.iframe.contentWindow;
     this.document = this.iframe.contentDocument;
+
+    // Inject transparent background if option is enabled
+    if (this.settings.transparency && this.document && this.document.body) {
+      this.document.body.style.background = 'transparent';
+      // Also inject a style tag for full coverage
+      const style = this.document.createElement('style');
+      style.innerHTML = 'html, body { background: transparent !important; }';
+      this.document.head.appendChild(style);
+    }
     this.contents = new _contents__WEBPACK_IMPORTED_MODULE_3__["default"](this.document, this.document.body, this.section.cfiBase, this.section.index);
     this.rendering = false;
     var link = this.document.querySelector("link[rel='canonical']");
@@ -36215,18 +35683,27 @@ class IframeView {
     if (!this.contents) {
       return;
     }
-    const attributes = Object.assign({
-      fill: 'yellow',
-      'fill-opacity': '0.3',
-      'mix-blend-mode': 'multiply'
-    }, styles);
+    let attributes;
+    if (this.settings.transparency) {
+      attributes = Object.assign({
+        fill: 'yellow',
+        'fill-opacity': '1.0',
+        'mix-blend-mode': 'normal'
+      }, styles);
+    } else {
+      attributes = Object.assign({
+        fill: 'yellow',
+        'fill-opacity': '0.3',
+        'mix-blend-mode': 'multiply'
+      }, styles);
+    }
     let range = this.contents.range(cfiRange);
     let emitter = () => {
       this.emit(_utils_constants__WEBPACK_IMPORTED_MODULE_4__.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
     };
     data['epubcfi'] = cfiRange;
     if (!this.pane) {
-      this.pane = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Pane(this.iframe, this.element);
+      this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
     }
     let m = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Highlight(range, className, data, attributes);
     let h = this.pane.addMark(m);
@@ -36259,7 +35736,7 @@ class IframeView {
     };
     data['epubcfi'] = cfiRange;
     if (!this.pane) {
-      this.pane = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Pane(this.iframe, this.element);
+      this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
     }
     let m = new marks_pane__WEBPACK_IMPORTED_MODULE_5__.Underline(range, className, data, attributes);
     let h = this.pane.addMark(m);
@@ -38822,8 +38299,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _utils_url__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./utils/url */ "./src/utils/url.js");
 /* harmony import */ var _utils_mime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./utils/mime */ "./src/utils/mime.js");
 /* harmony import */ var _utils_path__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils/path */ "./src/utils/path.js");
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! path-webpack */ "./node_modules/path-webpack/path.js");
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(path_webpack__WEBPACK_IMPORTED_MODULE_5__);
+Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
 
 
 
@@ -38997,7 +38473,7 @@ class Resources {
    */
   createCssFile(href) {
     var newUrl;
-    if (path_webpack__WEBPACK_IMPORTED_MODULE_5___default().isAbsolute(href)) {
+    if (Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(href)) {
       return new Promise(function (resolve) {
         resolve();
       });
@@ -41613,8 +41089,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! path-webpack */ "./node_modules/path-webpack/path.js");
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(path_webpack__WEBPACK_IMPORTED_MODULE_0__);
+Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
 
 
 /**
@@ -41649,7 +41124,7 @@ class Path {
    * @returns {object}
    */
   parse(what) {
-    return path_webpack__WEBPACK_IMPORTED_MODULE_0___default().parse(what);
+    return Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(what);
   }
 
   /**
@@ -41657,7 +41132,7 @@ class Path {
    * @returns {boolean}
    */
   isAbsolute(what) {
-    return path_webpack__WEBPACK_IMPORTED_MODULE_0___default().isAbsolute(what || this.path);
+    return Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(what || this.path);
   }
 
   /**
@@ -41677,7 +41152,7 @@ class Path {
    * @returns {string} resolved
    */
   resolve(what) {
-    return path_webpack__WEBPACK_IMPORTED_MODULE_0___default().resolve(this.directory, what);
+    return Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(this.directory, what);
   }
 
   /**
@@ -41692,7 +41167,7 @@ class Path {
     if (isAbsolute) {
       return what;
     }
-    return path_webpack__WEBPACK_IMPORTED_MODULE_0___default().relative(this.directory, what);
+    return Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(this.directory, what);
   }
   splitPath(filename) {
     return this.splitPathRe.exec(filename).slice(1);
@@ -42272,8 +41747,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./path */ "./src/utils/path.js");
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! path-webpack */ "./node_modules/path-webpack/path.js");
-/* harmony import */ var path_webpack__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(path_webpack__WEBPACK_IMPORTED_MODULE_1__);
+Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
 
 
 
@@ -42349,7 +41823,7 @@ class Url {
     if (isAbsolute) {
       return what;
     }
-    fullpath = path_webpack__WEBPACK_IMPORTED_MODULE_1___default().resolve(this.directory, what);
+    fullpath = Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(this.directory, what);
     return this.origin + fullpath;
   }
 
@@ -42359,7 +41833,7 @@ class Url {
    * @returns {string} path
    */
   relative(what) {
-    return path_webpack__WEBPACK_IMPORTED_MODULE_1___default().relative(what, this.directory);
+    return Object(function webpackMissingModule() { var e = new Error("Cannot find module 'path-webpack'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())(what, this.directory);
   }
 
   /**

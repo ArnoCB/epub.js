@@ -16890,6 +16890,23 @@ var marks = __webpack_require__(628);
 
 
 
+
+// Subclass Pane to inject custom SVG styling
+class StyledPane extends marks/* Pane */.Zv {
+  constructor(target, container, transparency) {
+    super(target, container);
+    console.debug('[StyledPane] Used for overlay');
+    // Add custom styling to the SVG element only if transparency is true
+    if (transparency) {
+      console.debug('[StyledPane] Transparency block executed');
+      this.element.style.zIndex = '-3';
+      this.element.style.position = 'absolute';
+    }
+    // You can add more styles if needed
+    this.element.style.zIndex = '-3';
+    this.element.style.position = 'absolute';
+  }
+}
 class IframeView {
   constructor(section, options) {
     this.settings = extend({
@@ -16904,7 +16921,8 @@ class IframeView {
       method: undefined,
       forceRight: false,
       allowScriptedContent: false,
-      allowPopups: false
+      allowPopups: false,
+      transparency: false // New option for transparent background
     }, options || {});
     this.id = 'epubjs-view-' + uuid();
     this.section = section;
@@ -16960,8 +16978,13 @@ class IframeView {
     this.iframe.scrolling = 'no'; // Might need to be removed: breaks ios width calculations
     this.iframe.style.overflow = 'hidden';
     this.iframe.seamless = 'seamless';
-    // Back up if seamless isn't supported
     this.iframe.style.border = 'none';
+
+    // Set transparent background if option is enabled
+    if (this.settings.transparency) {
+      this.iframe.style.background = 'transparent';
+      this.iframe.allowTransparency = 'true';
+    }
 
     // sandbox
     this.iframe.sandbox = 'allow-same-origin';
@@ -17233,6 +17256,15 @@ class IframeView {
   onLoad(event, promise) {
     this.window = this.iframe.contentWindow;
     this.document = this.iframe.contentDocument;
+
+    // Inject transparent background if option is enabled
+    if (this.settings.transparency && this.document && this.document.body) {
+      this.document.body.style.background = 'transparent';
+      // Also inject a style tag for full coverage
+      const style = this.document.createElement('style');
+      style.innerHTML = 'html, body { background: transparent !important; }';
+      this.document.head.appendChild(style);
+    }
     this.contents = new contents(this.document, this.document.body, this.section.cfiBase, this.section.index);
     this.rendering = false;
     var link = this.document.querySelector("link[rel='canonical']");
@@ -17361,18 +17393,27 @@ class IframeView {
     if (!this.contents) {
       return;
     }
-    const attributes = Object.assign({
-      fill: 'yellow',
-      'fill-opacity': '0.3',
-      'mix-blend-mode': 'multiply'
-    }, styles);
+    let attributes;
+    if (this.settings.transparency) {
+      attributes = Object.assign({
+        fill: 'yellow',
+        'fill-opacity': '1.0',
+        'mix-blend-mode': 'normal'
+      }, styles);
+    } else {
+      attributes = Object.assign({
+        fill: 'yellow',
+        'fill-opacity': '0.3',
+        'mix-blend-mode': 'multiply'
+      }, styles);
+    }
     let range = this.contents.range(cfiRange);
     let emitter = () => {
       this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
     };
     data['epubcfi'] = cfiRange;
     if (!this.pane) {
-      this.pane = new marks/* Pane */.Zv(this.iframe, this.element);
+      this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
     }
     let m = new marks/* Highlight */.f4(range, className, data, attributes);
     let h = this.pane.addMark(m);
@@ -17405,7 +17446,7 @@ class IframeView {
     };
     data['epubcfi'] = cfiRange;
     if (!this.pane) {
-      this.pane = new marks/* Pane */.Zv(this.iframe, this.element);
+      this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
     }
     let m = new marks/* Underline */.z2(range, className, data, attributes);
     let h = this.pane.addMark(m);
@@ -19229,7 +19270,8 @@ class ContinuousViewManager extends managers_default {
       snap: false,
       afterScrolledTimeout: 10,
       allowScriptedContent: false,
-      allowPopups: false
+      allowPopups: false,
+      transparency: false
     });
     extend(this.settings, options.settings || {});
 
@@ -19246,7 +19288,8 @@ class ContinuousViewManager extends managers_default {
       height: 0,
       forceEvenPages: false,
       allowScriptedContent: this.settings.allowScriptedContent,
-      allowPopups: this.settings.allowPopups
+      allowPopups: this.settings.allowPopups,
+      transparency: this.settings.transparency
     };
     this.scrollTop = 0;
     this.scrollLeft = 0;

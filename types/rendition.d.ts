@@ -27,6 +27,7 @@ export interface RenditionOptions {
   defaultDirection?: string;
   allowScriptedContent?: boolean;
   allowPopups?: boolean;
+  transparency?: boolean;
 }
 
 export interface DisplayedLocation {
