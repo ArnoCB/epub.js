@@ -5,6 +5,7 @@
   "main": "dist/epub.js",
   "module": "src/index.js",
   "types": "types/index.d.ts",
+  "type": "module",
   "repository": "https://github.com/ArnoCB/epub.js",
   "directories": {
     "test": "test"
@@ -43,7 +44,9 @@
     "eslint": "^8.57.1",
     "globals": "^16.2.0",
     "husky": "^8.0.0",
+    "jest": "^30.0.4",
     "jsdoc": "^3.6.3",
+    "jsdom": "^26.1.0",
     "karma": "^6.4.3",
     "karma-chrome-launcher": "^3.2.0",
     "karma-mocha": "^2.0.1",
