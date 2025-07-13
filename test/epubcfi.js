@@ -1,9 +1,6 @@
 import assert from 'assert';
 import EpubCFI from '../src/epubcfi.js';
-// var fs = require('fs');
-if (typeof DOMParser === 'undefined') {
-  global.DOMParser = require('xmldom').DOMParser;
-}
+import { DOMParser } from '@xmldom/xmldom';
 
 describe('EpubCFI', function () {
   it('parse a cfi on init', function () {

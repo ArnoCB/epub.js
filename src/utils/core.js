@@ -2,7 +2,6 @@
  * Core Utilities and Helpers
  * @module Core
  */
-import { DOMParser as XMLDOMParser } from '@xmldom/xmldom';
 
 /**
  * Vendor prefixed requestAnimationFrame
@@ -512,29 +511,16 @@ export function type(obj) {
  * Parse xml (or html) markup
  * @param {string} markup
  * @param {string} mime
- * @param {boolean} forceXMLDom force using xmlDom to parse instead of native parser
  * @returns {document} document
  * @memberof Core
  */
-export function parse(markup, mime, forceXMLDom) {
-  var doc;
-  var Parser;
-
-  if (typeof DOMParser === 'undefined' || forceXMLDom) {
-    Parser = XMLDOMParser;
-  } else {
-    Parser = DOMParser;
-  }
-
+export function parse(markup, mime) {
   // Remove byte order mark before parsing
   // https://www.w3.org/International/questions/qa-byte-order-mark
   if (markup.charCodeAt(0) === 0xfeff) {
     markup = markup.slice(1);
   }
-
-  doc = new Parser().parseFromString(markup, mime);
-
-  return doc;
+  return new DOMParser().parseFromString(markup, mime);
 }
 
 /**
