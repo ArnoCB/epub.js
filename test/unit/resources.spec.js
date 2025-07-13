@@ -2,9 +2,9 @@ import Resources from '../../src/resources';
 describe('Resources', () => {
   it('splits resources and uses path.isAbsolute', () => {
     const manifest = {
-      'item1': { href: 'file1.txt', type: 'text/html' },
-      'item2': { href: 'file2.css', type: 'text/css' },
-      'item3': { href: 'file3.png', type: 'image/png' }
+      item1: { href: 'file1.txt', type: 'text/html' },
+      item2: { href: 'file2.css', type: 'text/css' },
+      item3: { href: 'file3.png', type: 'image/png' },
     };
     const options = {
       resolver: (x) => x,

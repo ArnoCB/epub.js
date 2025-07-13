@@ -47,7 +47,9 @@ describe('Path (unit, path-webpack)', () => {
   test('relative uses path-webpack', () => {
     const p = new Path('folder/file.txt');
     expect(p.relative('folder/another.txt')).toBe('another.txt');
-    expect(p.relative('http://example.com/other.txt')).toBe('http://example.com/other.txt');
+    expect(p.relative('http://example.com/other.txt')).toBe(
+      'http://example.com/other.txt'
+    );
   });
 
   test('toString returns the path', () => {
