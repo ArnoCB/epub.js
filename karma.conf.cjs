@@ -1,4 +1,5 @@
-let webpackConfig = require('./webpack.config.js');
+const webpackConfig = require('./webpack.config.js');
+
 webpackConfig.mode = 'development';
 webpackConfig.externals = {};
 webpackConfig.module.rules.push({
