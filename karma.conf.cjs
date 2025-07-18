@@ -130,6 +130,14 @@ module.exports = function (config) {
       },
     },
 
+    plugins: [
+      'karma-chrome-launcher',
+      'karma-mocha',
+      'karma-mocha-reporter',
+      'karma-sourcemap-loader',
+      'karma-webpack',
+    ],
+
     customLaunchers: {
       ChromeHeadlessNoSandbox: {
         base: 'ChromeHeadless',
