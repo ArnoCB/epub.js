@@ -1,6 +1,6 @@
 import assert from 'assert';
 import EpubCFI from '../src/epubcfi.js';
-import { DOMParser } from '@xmldom/xmldom';
+// Use browser's native DOMParser in tests
 
 describe('EpubCFI', function () {
   it('parse a cfi on init', function () {
@@ -288,16 +288,21 @@ describe('EpubCFI', function () {
 
     // var serializer = new XMLSerializer();
     // var doc = serializer.serializeToString(contents);
-    var doc = new DOMParser().parseFromString(
+    var doc = new window.DOMParser().parseFromString(
       contents,
       'application/xhtml+xml'
     );
 
     it('get a cfi from a p node', function () {
       var span = doc.getElementById('c001p0004');
+      console.log('span:', span);
+      console.log('span.id:', span && span.id);
+      console.log('span.nodeType:', span && span.nodeType);
       var cfi = new EpubCFI(span, base);
 
+      assert.ok(span, 'span should not be null');
       assert.equal(span.nodeType, Node.ELEMENT_NODE, 'provided a element node');
+      assert.equal(span.id, 'c001p0004', 'span.id should be c001p0004');
       assert.equal(
         cfi.toString(),
         'epubcfi(/6/4[chap01ref]!/4/2/10/2[c001p0004])'

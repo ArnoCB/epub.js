@@ -1,11 +1,4 @@
-const webpackConfig = require('./webpack.config.js');
-
-webpackConfig.mode = 'development';
-webpackConfig.externals = {};
-webpackConfig.module.rules.push({
-  test: /\.xhtml$/i,
-  use: 'raw-loader',
-});
+const webpackConfig = require('./webpack.karma.config.cjs');
 
 module.exports = function (config) {
   config.set({
@@ -18,68 +11,30 @@ module.exports = function (config) {
 
     // list of files / patterns to load in the browser
     files: [
-      { pattern: 'src/*.js', watched: true, included: false, served: false },
-
-      { pattern: 'test/*.js', watched: false },
-
+      {
+        pattern: 'test/test-setup.js',
+        watched: false,
+        included: true,
+        served: true,
+      },
+      { pattern: 'test/*.js', watched: false, included: true, served: true },
       {
         pattern: 'test/fixtures/**/*',
         watched: false,
         included: false,
         served: true,
       },
-
-      // {pattern: 'node_modules/jszip/dist/jszip.js', watched: false, included: true, served: true},
-
-      // {pattern: 'node_modules/es6-promise/dist/es6-promise.auto.js', watched: false, included: true, served: true},
-
-      // {pattern: 'libs/url/url-polyfill.js', watched: false, included: true, served: true}
     ],
 
-    // list of files to exclude
     exclude: [],
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-      // add webpack as preprocessor
       'test/*.js': ['webpack', 'sourcemap'],
-      // 'test/**/*.js': ['webpack', 'sourcemap']
     },
 
     webpack: webpackConfig,
-
-    // {
-    //   mode: "development",
-    //   externals: {
-    //     "jszip": "JSZip"
-    //     // "xmldom": "xmldom"
-    //   },
-    //   devtool: 'inline-source-map',
-    //   resolve: {
-    //     alias: {
-    //       path: "path-webpack"
-    //     }
-    //   },
-    //   module: {
-    //     rules: [
-    //       {
-    //         test: /\.js$/,
-    //         exclude: /node_modules/,
-    //         loader: "babel-loader",
-    //         query: {
-    //           presets: [["@babel/preset-env", {
-    //             targets: "defaults",
-    //           }]],
-    //         }
-    //       },
-    //       {
-    //         test: /\.xhtml$/i,
-    //         use: 'raw-loader',
-    //       }
-    //     ]
-    //   }
-    // },
 
     webpackMiddleware: {
       stats: 'errors-only',
@@ -105,8 +60,8 @@ module.exports = function (config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['ChromeHeadless', 'ChromeHeadlessNoSandbox'],
-
+    browsers: ['ChromeHeadless'],
+    // browsers: ['ChromeHeadless', 'ChromeHeadlessNoSandbox'],
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
     singleRun: false,

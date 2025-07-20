@@ -5,13 +5,12 @@
   "main": "dist/epub.js",
   "module": "src/index.js",
   "types": "types/index.d.ts",
-  "type": "module",
   "repository": "https://github.com/ArnoCB/epub.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "karma start --single-run --browsers ChromeHeadlessNoSandbox",
+    "test": "karma start karma.conf.cjs",
     "docs": "documentation build src/epub.js -f html -o documentation/html/",
     "docs:html": "documentation build src/epub.js -f html -o documentation/html/",
     "docs:md": "documentation build src/epub.js -f md -o documentation/md/API.md",
@@ -71,7 +70,7 @@
     "event-emitter": "^0.3.5",
     "jszip": "^3.7.1",
     "localforage": "^1.10.0",
-    "marks-pane": "github:ArnoCB/marks-pane#master",
+    "marks-pane": "github:ArnoCB/marks-pane",
     "path-webpack": "0.0.3"
   }
 }
