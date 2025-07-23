@@ -2,11 +2,16 @@
  * Hooks allow for injecting functions that must all complete in order before finishing
  * They will execute in parallel but all must finish before continuing
  * Functions may return a promise if they are async.
- * @param {any} context scope of this
  * @example this.content = new EPUBJS.Hook(this);
  */
+
+type HookTask = (...args: unknown[]) => unknown;
+
 class Hook {
-  constructor(context) {
+  context: unknown;
+  hooks: HookTask[];
+
+  constructor(context: unknown) {
     this.context = context || this;
     this.hooks = [];
   }
@@ -15,14 +20,15 @@ class Hook {
    * Adds a function to be run before a hook completes
    * @example this.content.register(function(){...});
    */
-  register() {
-    for (var i = 0; i < arguments.length; ++i) {
-      if (typeof arguments[i] === 'function') {
-        this.hooks.push(arguments[i]);
-      } else {
-        // unpack array
-        for (var j = 0; j < arguments[i].length; ++j) {
-          this.hooks.push(arguments[i][j]);
+  register(...tasks: (HookTask | HookTask[])[]): void {
+    for (const task of tasks) {
+      if (typeof task === 'function') {
+        this.hooks.push(task);
+      } else if (Array.isArray(task)) {
+        for (const fn of task) {
+          if (typeof fn === 'function') {
+            this.hooks.push(fn);
+          }
         }
       }
     }
@@ -32,14 +38,10 @@ class Hook {
    * Removes a function
    * @example this.content.deregister(function(){...});
    */
-  deregister(func) {
-    let hook;
-    for (let i = 0; i < this.hooks.length; i++) {
-      hook = this.hooks[i];
-      if (hook === func) {
-        this.hooks.splice(i, 1);
-        break;
-      }
+  deregister(func: HookTask): void {
+    const idx = this.hooks.indexOf(func);
+    if (idx !== -1) {
+      this.hooks.splice(idx, 1);
     }
   }
 
@@ -47,21 +49,22 @@ class Hook {
    * Triggers a hook to run all functions
    * @example this.content.trigger(args).then(function(){...});
    */
-  trigger() {
-    var args = arguments;
-    var context = this.context;
-    var promises = [];
+  trigger(...args: unknown[]): Promise<unknown[]> {
+    const context = this.context;
+    const promises: Promise<unknown>[] = [];
 
-    this.hooks.forEach(function (task) {
+    this.hooks.forEach((task) => {
       try {
-        var executing = task.apply(context, args);
+        const executing = task.apply(context, args);
+        if (
+          executing &&
+          typeof executing === 'object' &&
+          typeof (executing as Promise<unknown>).then === 'function'
+        ) {
+          promises.push(executing as Promise<unknown>);
+        }
       } catch (err) {
         console.log(err);
-      }
-
-      if (executing && typeof executing['then'] === 'function') {
-        // Task is a function that returns a promise
-        promises.push(executing);
       }
       // Otherwise Task resolves immediately, continue
     });

@@ -8,3 +8,8 @@ books
 lib
 documentation/html
 types/*.js
+# Ignore generated JS and type files in utils
+src/utils/*.js
+src/utils/*.d.ts
+# Ignore test specs for linting, but allow .spec.ts for commit
+src/**/*.spec.js

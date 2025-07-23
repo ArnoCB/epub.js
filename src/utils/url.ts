@@ -8,11 +8,22 @@ import path from 'path-webpack';
  * default to window.location.href
  */
 class Url {
-  constructor(urlString, baseString) {
-    var absolute = urlString.indexOf('://') > -1;
-    var pathname = urlString;
-    var basePath;
+  Url: URL | undefined;
+  Path: Path;
+  href: string;
+  protocol: string;
+  origin: string;
+  hash: string;
+  search: string;
+  base: string | undefined;
+  directory: string;
+  filename: string;
+  extension: string;
 
+  constructor(urlString: string, baseString?: string | undefined) {
+    const absolute = urlString.indexOf('://') > -1;
+    let pathname = urlString;
+    let basePath;
     this.Url = undefined;
     this.href = urlString;
     this.protocol = '';
@@ -24,12 +35,13 @@ class Url {
 
     if (
       !absolute &&
-      baseString !== false &&
+      baseString !== undefined &&
       typeof baseString !== 'string' &&
       window &&
       window.location
     ) {
       this.base = window.location.href;
+      console.log('[Url] base set from window.location.href:', this.base);
     }
 
     // URL Polyfill doesn't throw an error if base is empty
@@ -49,9 +61,10 @@ class Url {
         this.search = this.Url.search;
 
         pathname = this.Url.pathname + (this.Url.search ? this.Url.search : '');
-      } catch (e) {
+      } catch {
         // Skip URL parsing
         this.Url = undefined;
+
         // resolve the pathname from the base
         if (this.base) {
           basePath = new Path(this.base);
@@ -61,48 +74,34 @@ class Url {
     }
 
     this.Path = new Path(pathname);
-
     this.directory = this.Path.directory;
     this.filename = this.Path.filename;
     this.extension = this.Path.extension;
   }
 
-  /**
-   * @returns {Path}
-   */
   path() {
     return this.Path;
   }
 
   /**
    * Resolves a relative path to a absolute url
-   * @param {string} what
-   * @returns {string} url
    */
-  resolve(what) {
-    var isAbsolute = what.indexOf('://') > -1;
-    var fullpath;
-
+  resolve(what: string) {
+    const isAbsolute = what.indexOf('://') > -1;
     if (isAbsolute) {
       return what;
     }
-
-    fullpath = path.resolve(this.directory, what);
+    const fullpath = path.resolve(this.directory, what);
     return this.origin + fullpath;
   }
 
   /**
    * Resolve a path relative to the url
-   * @param {string} what
-   * @returns {string} path
    */
-  relative(what) {
+  relative(what: string) {
     return path.relative(what, this.directory);
   }
 
-  /**
-   * @returns {string}
-   */
   toString() {
     return this.href;
   }

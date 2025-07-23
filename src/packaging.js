@@ -1,4 +1,32 @@
-import { qs, qsa, qsp, indexOfElementNode } from './utils/core';
+import { qs, qsa, qsp } from './utils/core';
+
+const ELEMENT_NODE = 1;
+/**
+ * Gets the index of a node in its parent
+ * @param {Node} node
+ * @param {string} typeId
+ * @return {number} index
+ * @memberof Core
+ */
+export function indexOfNode(node, typeId) {
+  var parent = node.parentNode;
+  var children = parent.childNodes;
+  var sib;
+  var index = -1;
+  for (var i = 0; i < children.length; i++) {
+    sib = children[i];
+    if (sib.nodeType === typeId) {
+      index++;
+    }
+    if (sib == node) break;
+  }
+
+  return index;
+}
+
+function indexOfElementNode(elementNode) {
+  return indexOfNode(elementNode, ELEMENT_NODE);
+}
 
 /**
  * Open Packaging Format Parser

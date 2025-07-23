@@ -4,39 +4,56 @@ import path from 'path-webpack';
  * Creates a Path object for parsing and manipulation of a path strings
  *
  * Uses a polyfill for Nodejs path: https://nodejs.org/api/path.html
- * @param	{string} pathString	a url string (relative or absolute)
+ * @param	pathString	a url string (relative or absolute)
  * @class
  */
 class Path {
-  constructor(pathString) {
-    var protocol;
-    var parsed;
+  private _path: string;
+  private _directory: string;
+  private _filename: string;
+  private _extension: string;
 
-    protocol = pathString.indexOf('://');
+  constructor(pathString: string) {
+    const protocol = pathString.indexOf('://');
+
     if (protocol > -1) {
       pathString = new URL(pathString).pathname;
     }
 
-    parsed = this.parse(pathString);
+    const parsed = this.parse(pathString);
 
-    this.path = pathString;
+    this._path = pathString;
 
     if (this.isDirectory(pathString)) {
-      this.directory = pathString;
+      this._directory = pathString;
     } else {
-      this.directory = parsed.dir + '/';
+      this._directory = parsed.dir + '/';
     }
 
-    this.filename = parsed.base;
-    this.extension = parsed.ext.slice(1);
+    this._filename = parsed.base;
+    this._extension = parsed.ext.slice(1);
+  }
+
+  public get directory(): string {
+    return this._directory;
+  }
+
+  public get path(): string {
+    return this._path;
+  }
+
+  public get filename(): string {
+    return this._filename;
+  }
+
+  public get extension(): string {
+    return this._extension;
   }
 
   /**
    * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
-   * @param	{string} what
-   * @returns {object}
    */
-  parse(what) {
+  parse(what: string) {
     return path.parse(what);
   }
 
@@ -44,7 +61,7 @@ class Path {
    * @param	{string} what
    * @returns {boolean}
    */
-  isAbsolute(what) {
+  isAbsolute(what: string | undefined): boolean {
     return path.isAbsolute(what || this.path);
   }
 
@@ -53,7 +70,7 @@ class Path {
    * @param	{string} what
    * @returns {boolean}
    */
-  isDirectory(what) {
+  isDirectory(what: string): boolean {
     return what.charAt(what.length - 1) === '/';
   }
 
@@ -64,7 +81,7 @@ class Path {
    * @param	{string} what
    * @returns {string} resolved
    */
-  resolve(what) {
+  resolve(what: string): string {
     return path.resolve(this.directory, what);
   }
 
@@ -75,8 +92,8 @@ class Path {
    * @param	{string} what
    * @returns {string} relative
    */
-  relative(what) {
-    var isAbsolute = what && what.indexOf('://') > -1;
+  relative(what: string): string {
+    const isAbsolute = what && what.indexOf('://') > -1;
 
     if (isAbsolute) {
       return what;
@@ -85,14 +102,6 @@ class Path {
     return path.relative(this.directory, what);
   }
 
-  splitPath(filename) {
-    return this.splitPathRe.exec(filename).slice(1);
-  }
-
-  /**
-   * Return the path string
-   * @returns {string} path
-   */
   toString() {
     return this.path;
   }

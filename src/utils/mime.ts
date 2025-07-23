@@ -3,7 +3,7 @@
 edited down
  */
 
-var table = {
+const table: Record<string, Record<string, string | string[]>> = {
   application: {
     ecmascript: ['es', 'ecma'],
     javascript: 'js',
@@ -139,12 +139,10 @@ var table = {
   },
 };
 
-var mimeTypes = (function () {
-  var type,
-    subtype,
-    val,
-    index,
-    mimeTypes = {};
+const mimeTypes = (function () {
+  let type, subtype, val, index;
+  const mimeTypes: Record<string, string> = {};
+
   for (type in table) {
     if (Object.prototype.hasOwnProperty.call(table, type)) {
       for (subtype in table[type]) {
@@ -164,13 +162,13 @@ var mimeTypes = (function () {
   return mimeTypes;
 })();
 
-var defaultValue = 'text/plain'; //"application/octet-stream";
+const defaultValue = 'text/plain';
 
-function lookup(filename) {
-  return (
-    (filename && mimeTypes[filename.split('.').pop().toLowerCase()]) ||
-    defaultValue
-  );
+function lookup(filename: string | undefined): string {
+  if (!filename) return defaultValue;
+  const ext = filename.split('.').pop();
+  if (!ext) return defaultValue;
+  return mimeTypes[ext.toLowerCase()] || defaultValue;
 }
 
 export default { lookup };

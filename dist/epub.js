@@ -11,6 +11,189 @@
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 10:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+var __webpack_unused_export__;
+
+
+/*
+ From Zip.js, by Gildas Lormeau
+edited down
+ */
+__webpack_unused_export__ = ({
+  value: true
+});
+var table = {
+  application: {
+    ecmascript: ['es', 'ecma'],
+    javascript: 'js',
+    ogg: 'ogx',
+    pdf: 'pdf',
+    postscript: ['ps', 'ai', 'eps', 'epsi', 'epsf', 'eps2', 'eps3'],
+    'rdf+xml': 'rdf',
+    smil: ['smi', 'smil'],
+    'xhtml+xml': ['xhtml', 'xht'],
+    xml: ['xml', 'xsl', 'xsd', 'opf', 'ncx'],
+    zip: 'zip',
+    'x-httpd-eruby': 'rhtml',
+    'x-latex': 'latex',
+    'x-maker': ['frm', 'maker', 'frame', 'fm', 'fb', 'book', 'fbdoc'],
+    'x-object': 'o',
+    'x-shockwave-flash': ['swf', 'swfl'],
+    'x-silverlight': 'scr',
+    'epub+zip': 'epub',
+    'font-tdpfr': 'pfr',
+    'inkml+xml': ['ink', 'inkml'],
+    json: 'json',
+    'jsonml+json': 'jsonml',
+    'mathml+xml': 'mathml',
+    'metalink+xml': 'metalink',
+    mp4: 'mp4s',
+    // "oebps-package+xml" : "opf",
+    'omdoc+xml': 'omdoc',
+    oxps: 'oxps',
+    'vnd.amazon.ebook': 'azw',
+    widget: 'wgt',
+    // "x-dtbncx+xml" : "ncx",
+    'x-dtbook+xml': 'dtb',
+    'x-dtbresource+xml': 'res',
+    'x-font-bdf': 'bdf',
+    'x-font-ghostscript': 'gsf',
+    'x-font-linux-psf': 'psf',
+    'x-font-otf': 'otf',
+    'x-font-pcf': 'pcf',
+    'x-font-snf': 'snf',
+    'x-font-ttf': ['ttf', 'ttc'],
+    'x-font-type1': ['pfa', 'pfb', 'pfm', 'afm'],
+    'x-font-woff': 'woff',
+    'x-mobipocket-ebook': ['prc', 'mobi'],
+    'x-mspublisher': 'pub',
+    'x-nzb': 'nzb',
+    'x-tgif': 'obj',
+    'xaml+xml': 'xaml',
+    'xml-dtd': 'dtd',
+    'xproc+xml': 'xpl',
+    'xslt+xml': 'xslt',
+    'internet-property-stream': 'acx',
+    'x-compress': 'z',
+    'x-compressed': 'tgz',
+    'x-gzip': 'gz'
+  },
+  audio: {
+    flac: 'flac',
+    midi: ['mid', 'midi', 'kar', 'rmi'],
+    mpeg: ['mpga', 'mpega', 'mp2', 'mp3', 'm4a', 'mp2a', 'm2a', 'm3a'],
+    mpegurl: 'm3u',
+    ogg: ['oga', 'ogg', 'spx'],
+    'x-aiff': ['aif', 'aiff', 'aifc'],
+    'x-ms-wma': 'wma',
+    'x-wav': 'wav',
+    adpcm: 'adp',
+    mp4: 'mp4a',
+    webm: 'weba',
+    'x-aac': 'aac',
+    'x-caf': 'caf',
+    'x-matroska': 'mka',
+    'x-pn-realaudio-plugin': 'rmp',
+    xm: 'xm',
+    mid: ['mid', 'rmi']
+  },
+  image: {
+    gif: 'gif',
+    ief: 'ief',
+    jpeg: ['jpeg', 'jpg', 'jpe'],
+    pcx: 'pcx',
+    png: 'png',
+    'svg+xml': ['svg', 'svgz'],
+    tiff: ['tiff', 'tif'],
+    'x-icon': 'ico',
+    bmp: 'bmp',
+    webp: 'webp',
+    'x-pict': ['pic', 'pct'],
+    'x-tga': 'tga',
+    'cis-cod': 'cod'
+  },
+  text: {
+    'cache-manifest': ['manifest', 'appcache'],
+    css: 'css',
+    csv: 'csv',
+    html: ['html', 'htm', 'shtml', 'stm'],
+    mathml: 'mml',
+    plain: ['txt', 'text', 'brf', 'conf', 'def', 'list', 'log', 'in', 'bas'],
+    richtext: 'rtx',
+    'tab-separated-values': 'tsv',
+    'x-bibtex': 'bib'
+  },
+  video: {
+    mpeg: ['mpeg', 'mpg', 'mpe', 'm1v', 'm2v', 'mp2', 'mpa', 'mpv2'],
+    mp4: ['mp4', 'mp4v', 'mpg4'],
+    quicktime: ['qt', 'mov'],
+    ogg: 'ogv',
+    'vnd.mpegurl': ['mxu', 'm4u'],
+    'x-flv': 'flv',
+    'x-la-asf': ['lsf', 'lsx'],
+    'x-mng': 'mng',
+    'x-ms-asf': ['asf', 'asx', 'asr'],
+    'x-ms-wm': 'wm',
+    'x-ms-wmv': 'wmv',
+    'x-ms-wmx': 'wmx',
+    'x-ms-wvx': 'wvx',
+    'x-msvideo': 'avi',
+    'x-sgi-movie': 'movie',
+    'x-matroska': ['mpv', 'mkv', 'mk3d', 'mks'],
+    '3gpp2': '3g2',
+    h261: 'h261',
+    h263: 'h263',
+    h264: 'h264',
+    jpeg: 'jpgv',
+    jpm: ['jpm', 'jpgm'],
+    mj2: ['mj2', 'mjp2'],
+    'vnd.ms-playready.media.pyv': 'pyv',
+    'vnd.uvvu.mp4': ['uvu', 'uvvu'],
+    'vnd.vivo': 'viv',
+    webm: 'webm',
+    'x-f4v': 'f4v',
+    'x-m4v': 'm4v',
+    'x-ms-vob': 'vob',
+    'x-smv': 'smv'
+  }
+};
+var mimeTypes = function () {
+  var type, subtype, val, index;
+  var mimeTypes = {};
+  for (type in table) {
+    if (Object.prototype.hasOwnProperty.call(table, type)) {
+      for (subtype in table[type]) {
+        if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
+          val = table[type][subtype];
+          if (typeof val == 'string') {
+            mimeTypes[val] = type + '/' + subtype;
+          } else {
+            for (index = 0; index < val.length; index++) {
+              mimeTypes[val[index]] = type + '/' + subtype;
+            }
+          }
+        }
+      }
+    }
+  }
+  return mimeTypes;
+}();
+var defaultValue = 'text/plain';
+function lookup(filename) {
+  if (!filename) return defaultValue;
+  var ext = filename.split('.').pop();
+  if (!ext) return defaultValue;
+  return mimeTypes[ext.toLowerCase()] || defaultValue;
+}
+exports.A = {
+  lookup: lookup
+};
+
+/***/ }),
+
 /***/ 11:
 /***/ ((module) => {
 
@@ -20,6 +203,57 @@ return /******/ (() => { // webpackBootstrap
 // eslint-disable-next-line no-empty-function
 module.exports = function () {};
 
+
+/***/ }),
+
+/***/ 17:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+var __webpack_unused_export__;
+
+
+__webpack_unused_export__ = ({
+  value: true
+});
+exports.sg = debounce;
+exports.nF = throttle;
+/**
+ * Creates a debounced function that delays invoking the provided function
+ * until after the specified wait time has elapsed since the last invocation.
+ */
+function debounce(func, wait) {
+  var timeout;
+  return function () {
+    var _this = this;
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+      args[_i] = arguments[_i];
+    }
+    clearTimeout(timeout);
+    timeout = setTimeout(function () {
+      return func.apply(_this, args);
+    }, wait);
+  };
+}
+/**
+ * Creates a throttled function that only invokes the provided function
+ * at most once per every specified wait time.
+ */
+function throttle(func, wait) {
+  var lastCall = 0;
+  return function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+      args[_i] = arguments[_i];
+    }
+    var now = Date.now();
+    if (now - lastCall >= wait) {
+      lastCall = now;
+      func.apply(this, args);
+    }
+  };
+}
 
 /***/ }),
 
@@ -299,6 +533,80 @@ module.exports = function (value) {
 
 /***/ }),
 
+/***/ 209:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+var __webpack_unused_export__;
+
+
+__webpack_unused_export__ = ({
+  value: true
+});
+exports.qY = exports.py = exports.JX = void 0;
+exports.JX = '0.3';
+// Dom events to listen for
+exports.py = ['keydown', 'keyup', 'keypressed', 'mouseup', 'mousedown', 'mousemove', 'click', 'touchend', 'touchstart', 'touchmove'];
+exports.qY = {
+  BOOK: {
+    OPEN_FAILED: 'openFailed'
+  },
+  CONTENTS: {
+    EXPAND: 'expand',
+    RESIZE: 'resize',
+    SELECTED: 'selected',
+    SELECTED_RANGE: 'selectedRange',
+    LINK_CLICKED: 'linkClicked'
+  },
+  LOCATIONS: {
+    CHANGED: 'changed'
+  },
+  MANAGERS: {
+    RESIZE: 'resize',
+    RESIZED: 'resized',
+    ORIENTATION_CHANGE: 'orientationchange',
+    ADDED: 'added',
+    SCROLL: 'scroll',
+    SCROLLED: 'scrolled',
+    REMOVED: 'removed'
+  },
+  VIEWS: {
+    AXIS: 'axis',
+    WRITING_MODE: 'writingMode',
+    LOAD_ERROR: 'loaderror',
+    RENDERED: 'rendered',
+    RESIZED: 'resized',
+    DISPLAYED: 'displayed',
+    SHOWN: 'shown',
+    HIDDEN: 'hidden',
+    MARK_CLICKED: 'markClicked'
+  },
+  RENDITION: {
+    STARTED: 'started',
+    ATTACHED: 'attached',
+    DISPLAYED: 'displayed',
+    DISPLAY_ERROR: 'displayerror',
+    RENDERED: 'rendered',
+    REMOVED: 'removed',
+    RESIZED: 'resized',
+    ORIENTATION_CHANGE: 'orientationchange',
+    LOCATION_CHANGED: 'locationChanged',
+    RELOCATED: 'relocated',
+    MARK_CLICKED: 'markClicked',
+    SELECTED: 'selected',
+    LAYOUT: 'layout'
+  },
+  LAYOUT: {
+    UPDATED: 'updated'
+  },
+  ANNOTATION: {
+    ATTACH: 'attach',
+    DETACH: 'detach'
+  }
+};
+
+/***/ }),
+
 /***/ 214:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -395,6 +703,104 @@ d.gs = function (dscr, get, set/*, options*/) {
 
 /***/ }),
 
+/***/ 293:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+var path_1 = __importDefault(__webpack_require__(821));
+var path_webpack_1 = __importDefault(__webpack_require__(841));
+/**
+ * creates a Url object for parsing and manipulation of a url string
+ * @param	{string} urlString	a url string (relative or absolute)
+ * @param	{string} [baseString] optional base for the url,
+ * default to window.location.href
+ */
+var Url = /** @class */function () {
+  function Url(urlString, baseString) {
+    var absolute = urlString.indexOf('://') > -1;
+    var pathname = urlString;
+    var basePath;
+    this.Url = undefined;
+    this.href = urlString;
+    this.protocol = '';
+    this.origin = '';
+    this.hash = '';
+    this.hash = '';
+    this.search = '';
+    this.base = baseString;
+    if (!absolute && baseString !== undefined && typeof baseString !== 'string' && window && window.location) {
+      this.base = window.location.href;
+      console.log('[Url] base set from window.location.href:', this.base);
+    }
+    // URL Polyfill doesn't throw an error if base is empty
+    if (absolute || this.base) {
+      try {
+        if (this.base) {
+          // Safari doesn't like an undefined base
+          this.Url = new URL(urlString, this.base);
+        } else {
+          this.Url = new URL(urlString);
+        }
+        this.href = this.Url.href;
+        this.protocol = this.Url.protocol;
+        this.origin = this.Url.origin;
+        this.hash = this.Url.hash;
+        this.search = this.Url.search;
+        pathname = this.Url.pathname + (this.Url.search ? this.Url.search : '');
+      } catch (_a) {
+        // Skip URL parsing
+        this.Url = undefined;
+        // resolve the pathname from the base
+        if (this.base) {
+          basePath = new path_1.default(this.base);
+          pathname = basePath.resolve(pathname);
+        }
+      }
+    }
+    this.Path = new path_1.default(pathname);
+    this.directory = this.Path.directory;
+    this.filename = this.Path.filename;
+    this.extension = this.Path.extension;
+  }
+  Url.prototype.path = function () {
+    return this.Path;
+  };
+  /**
+   * Resolves a relative path to a absolute url
+   */
+  Url.prototype.resolve = function (what) {
+    var isAbsolute = what.indexOf('://') > -1;
+    if (isAbsolute) {
+      return what;
+    }
+    var fullpath = path_webpack_1.default.resolve(this.directory, what);
+    return this.origin + fullpath;
+  };
+  /**
+   * Resolve a path relative to the url
+   */
+  Url.prototype.relative = function (what) {
+    return path_webpack_1.default.relative(what, this.directory);
+  };
+  Url.prototype.toString = function () {
+    return this.href;
+  };
+  return Url;
+}();
+exports["default"] = Url;
+
+/***/ }),
+
 /***/ 339:
 /***/ ((module) => {
 
@@ -409,6 +815,138 @@ module.exports = function () {
 	return obj.foo + obj.bar + obj.trzy === "razdwatrzy";
 };
 
+
+/***/ }),
+
+/***/ 375:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.replaceBase = replaceBase;
+exports.replaceCanonical = replaceCanonical;
+exports.replaceMeta = replaceMeta;
+exports.replaceLinks = replaceLinks;
+exports.substitute = substitute;
+var url_1 = __importDefault(__webpack_require__(293));
+function replaceBase(doc, section) {
+  var _a;
+  var base;
+  var url = (_a = section.url) !== null && _a !== void 0 ? _a : '';
+  var absolute = url.indexOf('://') > -1;
+  if (!doc) {
+    return;
+  }
+  var head = doc.querySelector('head');
+  if (!head) return;
+  base = head.querySelector('base');
+  if (!base) {
+    base = doc.createElement('base');
+    head.insertBefore(base, head.firstChild);
+  }
+  // Fix for Safari (from or before 2019) crashing if the url doesn't have an origin
+  if (!absolute && globalThis.window && globalThis.window.location) {
+    url = globalThis.window.location.origin + url;
+  }
+  base.setAttribute('href', url);
+}
+function replaceCanonical(doc, section) {
+  var link;
+  var url = section.canonical;
+  if (!doc) {
+    return;
+  }
+  var head = doc.querySelector('head');
+  if (!head) return;
+  link = head.querySelector("link[rel='canonical']");
+  if (link) {
+    link.setAttribute('href', url !== null && url !== void 0 ? url : '');
+  } else {
+    link = doc.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    link.setAttribute('href', url !== null && url !== void 0 ? url : '');
+    head.appendChild(link);
+  }
+}
+function replaceMeta(doc, section) {
+  var meta;
+  var id = section.idref;
+  if (!doc) {
+    return;
+  }
+  var head = doc.querySelector('head');
+  if (!head) return;
+  meta = head.querySelector("link[property='dc.identifier']");
+  if (meta) {
+    meta.setAttribute('content', id !== null && id !== void 0 ? id : '');
+  } else {
+    meta = doc.createElement('meta');
+    meta.setAttribute('name', 'dc.identifier');
+    meta.setAttribute('content', id !== null && id !== void 0 ? id : '');
+    head.appendChild(meta);
+  }
+}
+// TODO: move me to Contents
+function replaceLinks(contents, fn) {
+  var _a;
+  var links = contents.querySelectorAll('a[href]');
+  if (!links.length) {
+    return;
+  }
+  var base = contents.ownerDocument.documentElement.querySelector('base');
+  var location = base ? (_a = base.getAttribute('href')) !== null && _a !== void 0 ? _a : undefined : undefined;
+  var replaceLink = function (link) {
+    var _a;
+    var href = (_a = link.getAttribute('href')) !== null && _a !== void 0 ? _a : '';
+    if (href.indexOf('mailto:') === 0) {
+      return;
+    }
+    var absolute = href.indexOf('://') > -1;
+    if (absolute) {
+      link.setAttribute('target', '_blank');
+    } else {
+      var linkUrl_1;
+      try {
+        linkUrl_1 = new url_1.default(href, location);
+      } catch (_b) {
+        // NOOP
+      }
+      link.onclick = function () {
+        if (linkUrl_1 && linkUrl_1.hash) {
+          fn(linkUrl_1.Path.path + linkUrl_1.hash);
+        } else if (linkUrl_1) {
+          fn(linkUrl_1.Path.path);
+        } else {
+          fn(href);
+        }
+        return false;
+      };
+    }
+  };
+  for (var i = 0; i < links.length; i++) {
+    replaceLink(links[i]);
+  }
+}
+function substitute(content, urls, replacements) {
+  urls.forEach(function (url, i) {
+    if (url && replacements[i]) {
+      // Account for special characters in the file name.
+      // See https://stackoverflow.com/a/6318729.
+      url = url.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      content = content.replace(new RegExp(url, 'g'), replacements[i]);
+    }
+  });
+  return content;
+}
 
 /***/ }),
 
@@ -427,6 +965,710 @@ module.exports = function () {
 	}
 };
 
+
+/***/ }),
+
+/***/ 381:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+/**
+ * Core Utilities and Helpers
+ * @module Core
+ */
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.defer = exports.requestAnimationFrame = void 0;
+exports.uuid = uuid;
+exports.documentHeight = documentHeight;
+exports.isElement = isElement;
+exports.isNumber = isNumber;
+exports.isFloat = isFloat;
+exports.prefixed = prefixed;
+exports.defaults = defaults;
+exports.extend = extend;
+exports.insert = insert;
+exports.locationOf = locationOf;
+exports.indexOfSorted = indexOfSorted;
+exports.bounds = bounds;
+exports.borders = borders;
+exports.nodeBounds = nodeBounds;
+exports.windowBounds = windowBounds;
+exports.isXml = isXml;
+exports.createBlob = createBlob;
+exports.createBlobUrl = createBlobUrl;
+exports.revokeBlobUrl = revokeBlobUrl;
+exports.createBase64Url = createBase64Url;
+exports.type = type;
+exports.parse = parse;
+exports.qs = qs;
+exports.qsa = qsa;
+exports.qsp = qsp;
+exports.sprint = sprint;
+exports.treeWalker = treeWalker;
+exports.walk = walk;
+exports.blob2base64 = blob2base64;
+exports.querySelectorByType = querySelectorByType;
+exports.findChildren = findChildren;
+exports.parents = parents;
+exports.filterChildren = filterChildren;
+exports.getParentByTagName = getParentByTagName;
+/**
+ * Vendor prefixed requestAnimationFrame
+ * @returns {function} requestAnimationFrame
+ * @memberof Core
+ */
+exports.requestAnimationFrame = typeof window !== 'undefined' ? window.requestAnimationFrame : undefined;
+var _URL;
+if (typeof URL !== 'undefined') {
+  _URL = URL;
+} else if (typeof window !== 'undefined' && typeof window.URL !== 'undefined') {
+  _URL = window.URL;
+} else {
+  _URL = undefined;
+}
+/**
+ * Generates a UUID
+ * based on: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+ * @memberof Core
+ */
+function uuid() {
+  var d = new Date().getTime();
+  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = (d + Math.random() * 16) % 16 | 0;
+    d = Math.floor(d / 16);
+    return (c == 'x' ? r : r & 0x7 | 0x8).toString(16);
+  });
+  return uuid;
+}
+/**
+ * Gets the height of a document
+ * @returns {number} height
+ * @memberof Core
+ */
+function documentHeight() {
+  return Math.max(document.documentElement.clientHeight, document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight, document.documentElement.offsetHeight);
+}
+/**
+ * Checks if a node is an element
+ * @memberof Core
+ */
+function isElement(obj) {
+  return !!(obj && obj.nodeType === Node.ELEMENT_NODE);
+}
+/**
+ * @memberof Core
+ */
+function isNumber(n) {
+  return typeof n === 'number' && isFinite(n);
+}
+/**
+ * Checks if a value is a float
+ * @memberof Core
+ */
+function isFloat(n) {
+  if (typeof n === 'number') {
+    return Number.isFinite(n) && Math.floor(n) !== n;
+  }
+  if (typeof n === 'string') {
+    var f = parseFloat(n);
+    return !isNaN(f) && n.indexOf('.') > -1 && Math.floor(f) !== f;
+  }
+  return false;
+}
+/**
+ * Get a prefixed css property
+ * @memberof Core
+ */
+function prefixed(unprefixed) {
+  var vendors = ['Webkit', 'webkit', 'Moz', 'O', 'ms'];
+  var prefixes = ['-webkit-', '-webkit-', '-moz-', '-o-', '-ms-'];
+  var lower = unprefixed.toLowerCase();
+  var length = vendors.length;
+  if (typeof document === 'undefined' || lower in document.body.style) {
+    return unprefixed;
+  }
+  for (var i = 0; i < length; i++) {
+    var prop = prefixes[i] + lower;
+    if (prop in document.body.style) {
+      return prop;
+    }
+  }
+  return unprefixed;
+}
+/**
+ * Apply defaults to an object
+ * @param {object} obj
+ * @returns {object}
+ * @memberof Core
+ */
+function defaults(obj) {
+  var sources = [];
+  for (var _i = 1; _i < arguments.length; _i++) {
+    sources[_i - 1] = arguments[_i];
+  }
+  for (var _a = 0, sources_1 = sources; _a < sources_1.length; _a++) {
+    var source = sources_1[_a];
+    for (var prop in source) {
+      var key = prop;
+      if (obj[key] === void 0) obj[key] = source[key];
+    }
+  }
+  return obj;
+}
+/**
+ * Extend properties of an object
+ * @param {object} target
+ * @returns {object}
+ * @memberof Core
+ */
+function extend(target) {
+  var sources = [];
+  for (var _i = 1; _i < arguments.length; _i++) {
+    sources[_i - 1] = arguments[_i];
+  }
+  sources.forEach(function (source) {
+    if (!source) return;
+    Object.getOwnPropertyNames(source).forEach(function (propName) {
+      Object.defineProperty(target, propName, Object.getOwnPropertyDescriptor(source, propName));
+    });
+  });
+  return target;
+}
+/**
+ * Fast quicksort insert for sorted array -- based on:
+ *  http://stackoverflow.com/questions/1344500/efficient-way-to-insert-a-number-into-a-sorted-array-of-numbers
+ * @memberof Core
+ */
+function insert(item, array, compareFunction) {
+  var location = locationOf(item, array, compareFunction);
+  array.splice(location, 0, item);
+  return location;
+}
+/**
+ * Finds where something would fit into a sorted array
+ * @memberof Core
+ */
+function locationOf(item, array, compareFunction, _start, _end) {
+  var start = _start !== null && _start !== void 0 ? _start : 0;
+  var end = _end !== null && _end !== void 0 ? _end : array.length;
+  var pivot = Math.floor(start + (end - start) / 2);
+  if (!compareFunction) {
+    compareFunction = function (a, b) {
+      if (a > b) return 1;
+      if (a < b) return -1;
+      return 0;
+    };
+  }
+  if (end - start <= 0) {
+    return pivot;
+  }
+  var compared = compareFunction(array[pivot], item);
+  if (end - start === 1) {
+    return compared >= 0 ? pivot : pivot + 1;
+  }
+  if (compared === 0) {
+    return pivot;
+  }
+  if (compared === -1) {
+    return locationOf(item, array, compareFunction, pivot, end);
+  }
+  return locationOf(item, array, compareFunction, start, pivot);
+}
+/**
+ * Finds index of something in a sorted array
+ * Returns -1 if not found
+ * @memberof Core
+ */
+function indexOfSorted(item, array, compareFunction, _start, _end) {
+  var start = _start !== null && _start !== void 0 ? _start : 0;
+  var end = _end !== null && _end !== void 0 ? _end : array.length;
+  var pivot = Math.floor(start + (end - start) / 2);
+  if (!compareFunction) {
+    compareFunction = function (a, b) {
+      if (a > b) return 1;
+      if (a < b) return -1;
+      return 0;
+    };
+  }
+  if (end - start <= 0) {
+    return -1;
+  }
+  var compared = compareFunction(array[pivot], item);
+  if (end - start === 1) {
+    return compared === 0 ? pivot : -1;
+  }
+  if (compared === 0) {
+    return pivot; // Found
+  }
+  if (compared === -1) {
+    return indexOfSorted(item, array, compareFunction, pivot, end);
+  }
+  return indexOfSorted(item, array, compareFunction, start, pivot);
+}
+/**
+ * Find the bounds of an element
+ * taking padding and margin into account
+ * @param {element} el
+ * @returns {{ width: Number, height: Number}}
+ * @memberof Core
+ */
+function bounds(el) {
+  var style = window.getComputedStyle(el);
+  var widthProps = ['width', 'paddingRight', 'paddingLeft', 'marginRight', 'marginLeft', 'borderRightWidth', 'borderLeftWidth'];
+  var heightProps = ['height', 'paddingTop', 'paddingBottom', 'marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth'];
+  var width = 0;
+  var height = 0;
+  widthProps.forEach(function (prop) {
+    width += parseFloat(style[prop]) || 0;
+  });
+  heightProps.forEach(function (prop) {
+    height += parseFloat(style[prop]) || 0;
+  });
+  return {
+    height: height,
+    width: width
+  };
+}
+/**
+ * Find the bounds of an element
+ * taking padding, margin and borders into account
+ * @memberof Core
+ */
+function borders(el) {
+  var style = window.getComputedStyle(el);
+  var widthProps = ['paddingRight', 'paddingLeft', 'marginRight', 'marginLeft', 'borderRightWidth', 'borderLeftWidth'];
+  var heightProps = ['paddingTop', 'paddingBottom', 'marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth'];
+  var width = 0;
+  var height = 0;
+  widthProps.forEach(function (prop) {
+    width += parseFloat(style[prop]) || 0;
+  });
+  heightProps.forEach(function (prop) {
+    height += parseFloat(style[prop]) || 0;
+  });
+  return {
+    height: height,
+    width: width
+  };
+}
+/**
+ * Find the bounds of any node (Element or Text)
+ * If node is a text node, wraps it in a Range and returns its bounding rect.
+ * If node is an element, returns its bounding rect directly.
+ * Throws if node is not an Element or Text node, or if ownerDocument is missing for text nodes.
+ * @memberof Core
+ * @throws Error if node is not an Element or Text node, or if ownerDocument is missing for text nodes.
+ */
+function nodeBounds(node) {
+  if (node.nodeType === Node.TEXT_NODE) {
+    var doc = node.ownerDocument;
+    if (!doc) throw new Error('Text node does not have an ownerDocument');
+    var range = doc.createRange();
+    range.selectNodeContents(node);
+    return range.getBoundingClientRect();
+  }
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    return node.getBoundingClientRect();
+  }
+  throw new Error('Node does not support getBoundingClientRect');
+}
+/**
+ * Find the equivalent of getBoundingClientRect of a browser window
+ * @memberof Core
+ */
+function windowBounds() {
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+  return {
+    top: 0,
+    left: 0,
+    right: width,
+    bottom: height,
+    width: width,
+    height: height
+  };
+}
+/**
+ * Check if extension is xml
+ * @memberof Core
+ */
+function isXml(ext) {
+  return ['xml', 'opf', 'ncx'].indexOf(ext) > -1;
+}
+/**
+ * Create a new blob
+ * @memberof Core
+ */
+function createBlob(content, mime) {
+  return new Blob([content], {
+    type: mime
+  });
+}
+/**
+ * Create a new blob url
+ * @param {BlobPart} content
+ * @param {string} mime
+ * @returns {string | undefined} url, or undefined if URL API is not available
+ * @memberof Core
+ */
+function createBlobUrl(content, mime) {
+  if (!_URL) return undefined;
+  var blob = createBlob(content, mime);
+  return _URL.createObjectURL(blob);
+}
+/**
+ * Remove a blob url
+ * @param {string} url
+ * @memberof Core
+ */
+function revokeBlobUrl(url) {
+  if (!_URL) return;
+  return _URL.revokeObjectURL(url);
+}
+/**
+ * Create a new base64 encoded url
+ * @memberof Core
+ */
+function createBase64Url(content, mime) {
+  if (typeof content !== 'string') {
+    return;
+  }
+  var data = btoa(content);
+  var datauri = 'data:' + mime + ';base64,' + data;
+  return datauri;
+}
+/**
+ * Get type of an object
+ * @memberof Core
+ */
+function type(obj) {
+  return Object.prototype.toString.call(obj).slice(8, -1);
+}
+/**
+ * Parse xml (or html) markup
+ * @memberof Core
+ */
+function parse(markup, mime) {
+  // Remove byte order mark before parsing
+  // https://www.w3.org/International/questions/qa-byte-order-mark
+  if (markup.charCodeAt(0) === 0xfeff) {
+    markup = markup.slice(1);
+  }
+  return new DOMParser().parseFromString(markup, mime);
+}
+/**
+ * @deprecated Use `Element.querySelector` directly instead.
+ * querySelector polyfill
+ * @memberof Core
+ */
+function qs(el, sel) {
+  var elements;
+  if (!el) {
+    throw new Error('No Element Provided');
+  }
+  if (typeof el.querySelector != 'undefined') {
+    return el.querySelector(sel);
+  } else {
+    elements = el.getElementsByTagName(sel);
+    if (elements.length) {
+      return elements[0];
+    }
+  }
+  return null;
+}
+/**
+ * querySelectorAll polyfill
+ * @memberof Core
+ * @deprecated Use `Element.querySelectorAll` directly instead.
+ */
+function qsa(el, sel) {
+  if (typeof el.querySelector != 'undefined') {
+    return el.querySelectorAll(sel);
+  }
+  return el.getElementsByTagName(sel);
+}
+/**
+ * querySelector by property
+ * @memberof Core
+ * @deprecated Use `Element.querySelector` with attribute selectors directly instead.
+ * querySelector by property
+ */
+function qsp(el, sel, props) {
+  var q, filtered;
+  if (typeof el.querySelector != 'undefined') {
+    sel += '[';
+    for (var prop in props) {
+      sel += prop + "~='" + props[prop] + "'";
+    }
+    sel += ']';
+    return el.querySelector(sel);
+  } else {
+    q = el.getElementsByTagName(sel);
+    filtered = Array.prototype.slice.call(q, 0).filter(function (el) {
+      for (var prop in props) {
+        if (el.getAttribute(prop) === props[prop]) {
+          return true;
+        }
+      }
+      return false;
+    });
+    if (filtered) {
+      return filtered[0];
+    }
+  }
+  return null;
+}
+/**
+ * Sprint through all text nodes in a document
+ * @memberof Core
+ */
+function sprint(root, func) {
+  var doc = root.ownerDocument || root;
+  if (doc && 'createTreeWalker' in doc && typeof doc.createTreeWalker !== 'undefined') {
+    treeWalker(root, func, NodeFilter.SHOW_TEXT);
+  } else {
+    walk(root, function (node) {
+      if (node && node.nodeType === Node.TEXT_NODE) {
+        func(node);
+      }
+      return false;
+    });
+  }
+}
+/**
+ * Create a treeWalker
+ * @memberof Core
+ */
+function treeWalker(root, func, filter) {
+  var treeWalker = document.createTreeWalker(root, filter, null);
+  var node;
+  while (node = treeWalker.nextNode()) {
+    func(node);
+  }
+}
+/**
+ * @memberof Core
+ * @param {node} node
+ * @param {callback} return false for continue,true for break inside callback
+ */
+function walk(node, callback) {
+  if (callback(node)) {
+    return true;
+  }
+  var child = node.firstChild;
+  while (child) {
+    var walked = walk(child, callback);
+    if (walked) {
+      return true;
+    }
+    child = child.nextSibling;
+  }
+  return false;
+}
+/**
+ * Convert a blob to a base64 encoded string
+ * @memberof Core
+ */
+function blob2base64(blob) {
+  return new Promise(function (resolve) {
+    var reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = function () {
+      resolve(reader.result);
+    };
+  });
+}
+/**
+ * querySelector with filter by epub type
+ * @param {element} html
+ * @param element element type to find
+ * @param type epub type to find
+ * @memberof Core
+ */
+function querySelectorByType(html, element, type) {
+  return html.querySelector("".concat(element, "[*|type=\"").concat(type, "\"]"));
+}
+/**
+ * Find direct descendents of an element
+
+ * @memberof Core
+ */
+function findChildren(el) {
+  var result = [];
+  var childNodes = el.childNodes;
+  for (var i = 0; i < childNodes.length; i++) {
+    var node = childNodes[i];
+    if (node.nodeType === 1) {
+      result.push(node);
+    }
+  }
+  return result;
+}
+/**
+ * Find all parents (ancestors) of an element
+ * @memberof Core
+ */
+function parents(node) {
+  var nodes = [];
+  var current = node;
+  while (current) {
+    nodes.unshift(current);
+    current = current.parentNode;
+  }
+  return nodes;
+}
+/**
+ * Find all direct descendents of a specific type
+ * @param {element} el
+ * @param {string} nodeName
+ * @param {boolean} [single]
+ * @returns {element[]} children
+ * @memberof Core
+ */
+function filterChildren(el, nodeName, single) {
+  var result = [];
+  var childNodes = el.childNodes;
+  for (var i = 0; i < childNodes.length; i++) {
+    var node = childNodes[i];
+    if (node.nodeType === 1 && node.nodeName.toLowerCase() === nodeName) {
+      result.push(node);
+      if (single) {
+        break;
+      }
+    }
+  }
+  return result;
+}
+/**
+ * Filter all parents (ancestors) with tag name
+ * @memberof Core
+ */
+function getParentByTagName(node, tagname) {
+  var result = [];
+  if (node === null || tagname === '') return result;
+  var parent = node.parentNode;
+  while (parent && parent.nodeType === Node.ELEMENT_NODE) {
+    var el = parent;
+    if (el.tagName.toLowerCase() === tagname) {
+      result.push(el);
+    }
+    parent = parent.parentNode;
+  }
+  return result;
+}
+/**
+ * Creates a new pending promise and provides methods to resolve or reject it.
+ * From: https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred#backwards_forwards_compatible
+ * @memberof Core
+ */
+var defer = /** @class */function () {
+  function defer() {
+    var _this = this;
+    this.id = uuid();
+    this.promise = new Promise(function (resolve, reject) {
+      _this.resolve = resolve;
+      _this.reject = reject;
+    });
+    // Removed Object.freeze(this) to allow resolve/reject to work as expected
+  }
+  return defer;
+}();
+exports.defer = defer;
+
+/***/ }),
+
+/***/ 481:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+var __webpack_unused_export__;
+
+
+/**
+ * Hooks allow for injecting functions that must all complete in order before finishing
+ * They will execute in parallel but all must finish before continuing
+ * Functions may return a promise if they are async.
+ * @example this.content = new EPUBJS.Hook(this);
+ */
+__webpack_unused_export__ = ({
+  value: true
+});
+var Hook = /** @class */function () {
+  function Hook(context) {
+    this.context = context || this;
+    this.hooks = [];
+  }
+  /**
+   * Adds a function to be run before a hook completes
+   * @example this.content.register(function(){...});
+   */
+  Hook.prototype.register = function () {
+    var tasks = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+      tasks[_i] = arguments[_i];
+    }
+    for (var _a = 0, tasks_1 = tasks; _a < tasks_1.length; _a++) {
+      var task = tasks_1[_a];
+      if (typeof task === 'function') {
+        this.hooks.push(task);
+      } else if (Array.isArray(task)) {
+        for (var _b = 0, task_1 = task; _b < task_1.length; _b++) {
+          var fn = task_1[_b];
+          if (typeof fn === 'function') {
+            this.hooks.push(fn);
+          }
+        }
+      }
+    }
+  };
+  /**
+   * Removes a function
+   * @example this.content.deregister(function(){...});
+   */
+  Hook.prototype.deregister = function (func) {
+    var idx = this.hooks.indexOf(func);
+    if (idx !== -1) {
+      this.hooks.splice(idx, 1);
+    }
+  };
+  /**
+   * Triggers a hook to run all functions
+   * @example this.content.trigger(args).then(function(){...});
+   */
+  Hook.prototype.trigger = function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+      args[_i] = arguments[_i];
+    }
+    var context = this.context;
+    var promises = [];
+    this.hooks.forEach(function (task) {
+      try {
+        var executing = task.apply(context, args);
+        if (executing && typeof executing === 'object' && typeof executing.then === 'function') {
+          promises.push(executing);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+      // Otherwise Task resolves immediately, continue
+    });
+    return Promise.all(promises);
+  };
+  // Adds a function to be run before a hook completes
+  Hook.prototype.list = function () {
+    return this.hooks;
+  };
+  Hook.prototype.clear = function () {
+    return this.hooks = [];
+  };
+  return Hook;
+}();
+exports.A = Hook;
 
 /***/ }),
 
@@ -527,6 +1769,306 @@ var _undefined = __webpack_require__(11)(); // Support ES3 engines
 
 module.exports = function (val) { return val !== _undefined && val !== null; };
 
+
+/***/ }),
+
+/***/ 763:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+var __generator = this && this.__generator || function (thisArg, body) {
+  var _ = {
+      label: 0,
+      sent: function () {
+        if (t[0] & 1) throw t[1];
+        return t[1];
+      },
+      trys: [],
+      ops: []
+    },
+    f,
+    y,
+    t,
+    g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+  return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+    while (g && (g = 0, op[0] && (_ = 0)), _) try {
+      if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+      if (y = 0, t) op = [op[0] & 2, t.value];
+      switch (op[0]) {
+        case 0:
+        case 1:
+          t = op;
+          break;
+        case 4:
+          _.label++;
+          return {
+            value: op[1],
+            done: false
+          };
+        case 5:
+          _.label++;
+          y = op[1];
+          op = [0];
+          continue;
+        case 7:
+          op = _.ops.pop();
+          _.trys.pop();
+          continue;
+        default:
+          if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+            _ = 0;
+            continue;
+          }
+          if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+            _.label = op[1];
+            break;
+          }
+          if (op[0] === 6 && _.label < t[1]) {
+            _.label = t[1];
+            t = op;
+            break;
+          }
+          if (t && _.label < t[2]) {
+            _.label = t[2];
+            _.ops.push(op);
+            break;
+          }
+          if (t[2]) _.ops.pop();
+          _.trys.pop();
+          continue;
+      }
+      op = body.call(thisArg, _);
+    } catch (e) {
+      op = [6, e];
+      y = 0;
+    } finally {
+      f = t = 0;
+    }
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+var core_1 = __webpack_require__(381);
+var Queue = /** @class */function () {
+  function Queue(context) {
+    this._q = [];
+    this.context = context;
+    this.tick = core_1.requestAnimationFrame;
+    this.running = false;
+    this.paused = false;
+  }
+  /**
+   * End the queue
+   */
+  Queue.prototype.stop = function () {
+    this._q = [];
+    this.running = false;
+    this.paused = true;
+  };
+  /**
+   * Add an item to the queue
+   */
+  Queue.prototype.enqueue = function () {
+    var _this = this;
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+      args[_i] = arguments[_i];
+    }
+    var taskOrPromise = args.shift();
+    if (!taskOrPromise) {
+      throw new Error('No Task Provided');
+    }
+    if (typeof taskOrPromise === 'function') {
+      // Always execute with the queue's context
+      var promise = new Promise(function (resolve, reject) {
+        _this._q.push({
+          task: function () {
+            var taskArgs = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+              taskArgs[_i] = arguments[_i];
+            }
+            return __awaiter(_this, void 0, void 0, function () {
+              var result, err_1;
+              return __generator(this, function (_a) {
+                switch (_a.label) {
+                  case 0:
+                    _a.trys.push([0, 2,, 3]);
+                    return [4 /*yield*/, taskOrPromise.apply(this.context, taskArgs)];
+                  case 1:
+                    result = _a.sent();
+                    resolve(result);
+                    return [2 /*return*/, result];
+                  case 2:
+                    err_1 = _a.sent();
+                    reject(err_1);
+                    throw err_1;
+                  case 3:
+                    return [2 /*return*/];
+                }
+              });
+            });
+          },
+          args: args
+        });
+        if (_this.paused == false && !_this.running) {
+          _this.run();
+        }
+      });
+      return promise;
+    } else if (isPromise(taskOrPromise)) {
+      var promise = taskOrPromise;
+      this._q.push({
+        promise: promise
+      });
+      if (this.paused == false && !this.running) {
+        this.run();
+      }
+      return promise;
+    } else {
+      // If not a function or promise, wrap as resolved promise
+      var promise = Promise.resolve(taskOrPromise);
+      this._q.push({
+        promise: promise
+      });
+      if (this.paused == false && !this.running) {
+        this.run();
+      }
+      return promise;
+    }
+  };
+  /**
+   * Run one item
+   */
+  // Run All Immediately
+  Queue.prototype.dump = function () {
+    while (this._q.length) {
+      this.dequeue();
+    }
+  };
+  /**
+   * Run all tasks sequentially, at convince
+   */
+  Queue.prototype.run = function () {
+    var _this = this;
+    if (!this.running) {
+      this.running = true;
+      this._deferredPromise = new Promise(function (resolve) {
+        _this._resolveDeferred = resolve;
+      });
+    }
+    if (this.tick) {
+      this.tick.call(globalThis, function () {
+        if (_this._q.length) {
+          _this.dequeue().then(function () {
+            _this.run();
+          });
+        } else {
+          if (_this._resolveDeferred) _this._resolveDeferred(undefined);
+          _this.running = undefined;
+        }
+      });
+    }
+  };
+  /**
+   * Run one item
+   */
+  Queue.prototype.dequeue = function () {
+    var _a;
+    if (this._q.length && !this.paused) {
+      var inwait_1 = this._q.shift();
+      if (!inwait_1) return Promise.resolve(undefined);
+      var task = inwait_1.task;
+      var args = Array.isArray(inwait_1.args) ? inwait_1.args : [];
+      if (task) {
+        try {
+          var result = task.apply(this.context, args);
+          if (isPromise(result)) {
+            return result.then(function (value) {
+              if (inwait_1.resolve) inwait_1.resolve(value);
+              return value;
+            }, function (err) {
+              if (inwait_1.reject) inwait_1.reject(err);
+              return undefined;
+            });
+          } else {
+            if (inwait_1.resolve) inwait_1.resolve(result);
+            return (_a = inwait_1.promise) !== null && _a !== void 0 ? _a : Promise.resolve(result);
+          }
+        } catch (err) {
+          if (inwait_1.reject) inwait_1.reject(err);
+          return Promise.resolve(undefined);
+        }
+      } else if (inwait_1.promise) {
+        return inwait_1.promise;
+      }
+    }
+    return Promise.resolve(undefined);
+  };
+  Queue.prototype.clear = function () {
+    this._q = [];
+  };
+  /**
+   * Get the number of tasks in the queue
+   */
+  Queue.prototype.length = function () {
+    return this._q.length;
+  };
+  /**
+   * Pause a running queue
+   */
+  Queue.prototype.pause = function () {
+    this.paused = true;
+  };
+  return Queue;
+}();
+function isPromise(value) {
+  return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
+}
+exports["default"] = Queue;
 
 /***/ }),
 
@@ -3354,6 +4896,126 @@ module.exports = localforage_js;
 
 /***/ }),
 
+/***/ 821:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+var path_webpack_1 = __importDefault(__webpack_require__(841));
+/**
+ * Creates a Path object for parsing and manipulation of a path strings
+ *
+ * Uses a polyfill for Nodejs path: https://nodejs.org/api/path.html
+ * @param	pathString	a url string (relative or absolute)
+ * @class
+ */
+var Path = /** @class */function () {
+  function Path(pathString) {
+    var protocol = pathString.indexOf('://');
+    if (protocol > -1) {
+      pathString = new URL(pathString).pathname;
+    }
+    var parsed = this.parse(pathString);
+    this._path = pathString;
+    if (this.isDirectory(pathString)) {
+      this._directory = pathString;
+    } else {
+      this._directory = parsed.dir + '/';
+    }
+    this._filename = parsed.base;
+    this._extension = parsed.ext.slice(1);
+  }
+  Object.defineProperty(Path.prototype, "directory", {
+    get: function () {
+      return this._directory;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Path.prototype, "path", {
+    get: function () {
+      return this._path;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Path.prototype, "filename", {
+    get: function () {
+      return this._filename;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Object.defineProperty(Path.prototype, "extension", {
+    get: function () {
+      return this._extension;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  /**
+   * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
+   */
+  Path.prototype.parse = function (what) {
+    return path_webpack_1.default.parse(what);
+  };
+  /**
+   * @param	{string} what
+   * @returns {boolean}
+   */
+  Path.prototype.isAbsolute = function (what) {
+    return path_webpack_1.default.isAbsolute(what || this.path);
+  };
+  /**
+   * Check if path ends with a directory
+   * @param	{string} what
+   * @returns {boolean}
+   */
+  Path.prototype.isDirectory = function (what) {
+    return what.charAt(what.length - 1) === '/';
+  };
+  /**
+   * Resolve a path against the directory of the Path
+   *
+   * https://nodejs.org/api/path.html#path_path_resolve_paths
+   * @param	{string} what
+   * @returns {string} resolved
+   */
+  Path.prototype.resolve = function (what) {
+    return path_webpack_1.default.resolve(this.directory, what);
+  };
+  /**
+   * Resolve a path relative to the directory of the Path
+   *
+   * https://nodejs.org/api/path.html#path_path_relative_from_to
+   * @param	{string} what
+   * @returns {string} relative
+   */
+  Path.prototype.relative = function (what) {
+    var isAbsolute = what && what.indexOf('://') > -1;
+    if (isAbsolute) {
+      return what;
+    }
+    return path_webpack_1.default.relative(this.directory, what);
+  };
+  Path.prototype.toString = function () {
+    return this.path;
+  };
+  return Path;
+}();
+exports["default"] = Path;
+
+/***/ }),
+
 /***/ 838:
 /***/ ((module) => {
 
@@ -3941,6 +5603,192 @@ module.exports = function (value) {
 };
 
 
+/***/ }),
+
+/***/ 889:
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+var core_1 = __webpack_require__(381);
+var path_1 = __importDefault(__webpack_require__(821));
+function request(url, type, withCredentials, headers) {
+  var supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
+  var BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    //-- Check from PDF.js:
+    //   https://github.com/mozilla/pdf.js/blob/master/web/compatibility.js
+    var xhrPrototype = XMLHttpRequest.prototype;
+    var header;
+    if (!('overrideMimeType' in xhrPrototype)) {
+      // IE10 might have response, but not overrideMimeType
+      Object.defineProperty(xhrPrototype, 'overrideMimeType', {
+        value: function xmlHttpRequestOverrideMimeType() {}
+      });
+    }
+    if (withCredentials) {
+      xhr.withCredentials = true;
+    }
+    xhr.onreadystatechange = handler;
+    xhr.onerror = err;
+    xhr.open('GET', url, true);
+    for (header in headers) {
+      xhr.setRequestHeader(header, headers[header]);
+    }
+    if (type == 'json') {
+      xhr.setRequestHeader('Accept', 'application/json');
+    }
+    // If type isn"t set, determine it from the file extension
+    if (!type) {
+      type = new path_1.default(url).extension;
+    }
+    if (type == 'blob') {
+      xhr.responseType = BLOB_RESPONSE;
+    }
+    if ((0, core_1.isXml)(type)) {
+      // xhr.responseType = "document";
+      xhr.overrideMimeType('text/xml'); // for OPF parsing
+    }
+    if (type == 'xhtml') {
+      // xhr.responseType = "document";
+    }
+    if (type == 'html' || type == 'htm') {
+      // xhr.responseType = "document";
+    }
+    if (type == 'binary') {
+      xhr.responseType = 'arraybuffer';
+    }
+    xhr.send();
+    function err(e) {
+      reject(e);
+    }
+    function handler() {
+      if (this.readyState === XMLHttpRequest.DONE) {
+        var responseXML = null;
+        if (this.responseType === '' || this.responseType === 'document') {
+          responseXML = this.responseXML;
+        }
+        if (this.status === 200 || this.status === 0 || responseXML) {
+          //-- Firefox is reporting 0 for blob urls
+          var r = void 0;
+          if (!this.response && !responseXML) {
+            reject({
+              status: this.status,
+              message: 'Empty Response',
+              stack: new Error().stack
+            });
+            return;
+          }
+          if (this.status === 403) {
+            reject({
+              status: this.status,
+              response: this.response,
+              message: 'Forbidden',
+              stack: new Error().stack
+            });
+            return;
+          }
+          if (responseXML) {
+            r = this.responseXML;
+          } else if ((0, core_1.isXml)(type)) {
+            // xhr.overrideMimeType("text/xml"); // for OPF parsing
+            // If this.responseXML wasn't set, try to parse using a DOMParser from text
+            r = (0, core_1.parse)(this.response, 'text/xml');
+          } else if (type == 'xhtml') {
+            r = (0, core_1.parse)(this.response, 'application/xhtml+xml');
+          } else if (type == 'html' || type == 'htm') {
+            r = (0, core_1.parse)(this.response, 'text/html');
+          } else if (type == 'json') {
+            r = JSON.parse(this.response);
+          } else if (type == 'blob') {
+            if (supportsURL) {
+              r = this.response;
+            } else {
+              //-- Safari doesn't support responseType blob, so create a blob from arraybuffer
+              r = new Blob([this.response]);
+            }
+          } else {
+            r = this.response;
+          }
+          resolve(r);
+        } else {
+          reject({
+            status: this.status,
+            message: this.response,
+            stack: new Error().stack
+          });
+        }
+      }
+    }
+  });
+}
+exports["default"] = request;
+
+/***/ }),
+
+/***/ 895:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+var __webpack_unused_export__;
+
+
+__webpack_unused_export__ = ({
+  value: true
+});
+exports.Ay = scrollType;
+__webpack_unused_export__ = createDefiner;
+// Detect RTL scroll type
+// Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
+function scrollType() {
+  var type = 'reverse';
+  var definer = createDefiner();
+  document.body.appendChild(definer);
+  if (definer.scrollLeft > 0) {
+    type = 'default';
+  } else {
+    // Modern browsers: always use scrollIntoView logic
+    definer.children[0].children[1].scrollIntoView();
+    if (definer.scrollLeft < 0) {
+      type = 'negative';
+    }
+  }
+  document.body.removeChild(definer);
+  return type;
+}
+function createDefiner() {
+  var definer = document.createElement('div');
+  definer.dir = 'rtl';
+  definer.style.position = 'fixed';
+  definer.style.width = '1px';
+  definer.style.height = '1px';
+  definer.style.top = '0px';
+  definer.style.left = '0px';
+  definer.style.overflow = 'hidden';
+  var innerDiv = document.createElement('div');
+  innerDiv.style.width = '2px';
+  var spanA = document.createElement('span');
+  spanA.style.width = '1px';
+  spanA.style.display = 'inline-block';
+  var spanB = document.createElement('span');
+  spanB.style.width = '1px';
+  spanB.style.display = 'inline-block';
+  innerDiv.appendChild(spanA);
+  innerDiv.appendChild(spanB);
+  definer.appendChild(innerDiv);
+  return definer;
+}
+
 /***/ })
 
 /******/ 	});
@@ -3963,7 +5811,7 @@ module.exports = function (value) {
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
@@ -4011,17 +5859,6 @@ module.exports = function (value) {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
@@ -4033,1074 +5870,39 @@ __webpack_require__.d(__webpack_exports__, {
   "default": () => (/* binding */ epub)
 });
 
-// NAMESPACE OBJECT: ./src/utils/core.js
-var core_namespaceObject = {};
-__webpack_require__.r(core_namespaceObject);
-__webpack_require__.d(core_namespaceObject, {
-  RangeObject: () => (RangeObject),
-  blob2base64: () => (blob2base64),
-  borders: () => (borders),
-  bounds: () => (bounds),
-  createBase64Url: () => (createBase64Url),
-  createBlob: () => (createBlob),
-  createBlobUrl: () => (createBlobUrl),
-  defaults: () => (defaults),
-  defer: () => (defer),
-  documentHeight: () => (documentHeight),
-  extend: () => (extend),
-  filterChildren: () => (filterChildren),
-  findChildren: () => (findChildren),
-  getParentByTagName: () => (getParentByTagName),
-  indexOfElementNode: () => (indexOfElementNode),
-  indexOfNode: () => (indexOfNode),
-  indexOfSorted: () => (indexOfSorted),
-  indexOfTextNode: () => (indexOfTextNode),
-  insert: () => (insert),
-  isElement: () => (isElement),
-  isFloat: () => (isFloat),
-  isNumber: () => (isNumber),
-  isXml: () => (isXml),
-  locationOf: () => (locationOf),
-  nodeBounds: () => (nodeBounds),
-  parents: () => (parents),
-  parse: () => (parse),
-  prefixed: () => (prefixed),
-  qs: () => (qs),
-  qsa: () => (qsa),
-  qsp: () => (qsp),
-  querySelectorByType: () => (querySelectorByType),
-  requestAnimationFrame: () => (core_requestAnimationFrame),
-  revokeBlobUrl: () => (revokeBlobUrl),
-  sprint: () => (sprint),
-  treeWalker: () => (treeWalker),
-  type: () => (type),
-  uuid: () => (uuid),
-  walk: () => (walk),
-  windowBounds: () => (windowBounds)
-});
-
 // EXTERNAL MODULE: ./node_modules/event-emitter/index.js
 var event_emitter = __webpack_require__(68);
 var event_emitter_default = /*#__PURE__*/__webpack_require__.n(event_emitter);
-;// ./src/utils/core.js
-/**
- * Core Utilities and Helpers
- * @module Core
- */
-
-/**
- * Vendor prefixed requestAnimationFrame
- * @returns {function} requestAnimationFrame
- * @memberof Core
- */
-const core_requestAnimationFrame = typeof window != 'undefined' ? window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame : false;
-const ELEMENT_NODE = 1;
-const TEXT_NODE = 3;
-const _URL = typeof URL != 'undefined' ? URL : typeof window != 'undefined' ? window.URL || window.webkitURL || window.mozURL : undefined;
-
-/**
- * Generates a UUID
- * based on: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
- * @returns {string} uuid
- * @memberof Core
- */
-function uuid() {
-  var d = new Date().getTime();
-  var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    var r = (d + Math.random() * 16) % 16 | 0;
-    d = Math.floor(d / 16);
-    return (c == 'x' ? r : r & 0x7 | 0x8).toString(16);
-  });
-  return uuid;
-}
-
-/**
- * Gets the height of a document
- * @returns {number} height
- * @memberof Core
- */
-function documentHeight() {
-  return Math.max(document.documentElement.clientHeight, document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight, document.documentElement.offsetHeight);
-}
-
-/**
- * Checks if a node is an element
- * @param {object} obj
- * @returns {boolean}
- * @memberof Core
- */
-function isElement(obj) {
-  return !!(obj && obj.nodeType == 1);
-}
-
-/**
- * @param {any} n
- * @returns {boolean}
- * @memberof Core
- */
-function isNumber(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
-/**
- * @param {any} n
- * @returns {boolean}
- * @memberof Core
- */
-function isFloat(n) {
-  let f = parseFloat(n);
-  if (isNumber(n) === false) {
-    return false;
-  }
-  if (typeof n === 'string' && n.indexOf('.') > -1) {
-    return true;
-  }
-  return Math.floor(f) !== f;
-}
-
-/**
- * Get a prefixed css property
- * @param {string} unprefixed
- * @returns {string}
- * @memberof Core
- */
-function prefixed(unprefixed) {
-  var vendors = ['Webkit', 'webkit', 'Moz', 'O', 'ms'];
-  var prefixes = ['-webkit-', '-webkit-', '-moz-', '-o-', '-ms-'];
-  var lower = unprefixed.toLowerCase();
-  var length = vendors.length;
-  if (typeof document === 'undefined' || typeof document.body.style[lower] != 'undefined') {
-    return unprefixed;
-  }
-  for (var i = 0; i < length; i++) {
-    if (typeof document.body.style[prefixes[i] + lower] != 'undefined') {
-      return prefixes[i] + lower;
-    }
-  }
-  return unprefixed;
-}
-
-/**
- * Apply defaults to an object
- * @param {object} obj
- * @returns {object}
- * @memberof Core
- */
-function defaults(obj) {
-  for (var i = 1, length = arguments.length; i < length; i++) {
-    var source = arguments[i];
-    for (var prop in source) {
-      if (obj[prop] === void 0) obj[prop] = source[prop];
-    }
-  }
-  return obj;
-}
-
-/**
- * Extend properties of an object
- * @param {object} target
- * @returns {object}
- * @memberof Core
- */
-function extend(target) {
-  var sources = [].slice.call(arguments, 1);
-  sources.forEach(function (source) {
-    if (!source) return;
-    Object.getOwnPropertyNames(source).forEach(function (propName) {
-      Object.defineProperty(target, propName, Object.getOwnPropertyDescriptor(source, propName));
-    });
-  });
-  return target;
-}
-
-/**
- * Fast quicksort insert for sorted array -- based on:
- *  http://stackoverflow.com/questions/1344500/efficient-way-to-insert-a-number-into-a-sorted-array-of-numbers
- * @param {any} item
- * @param {array} array
- * @param {function} [compareFunction]
- * @returns {number} location (in array)
- * @memberof Core
- */
-function insert(item, array, compareFunction) {
-  var location = locationOf(item, array, compareFunction);
-  array.splice(location, 0, item);
-  return location;
-}
-
-/**
- * Finds where something would fit into a sorted array
- * @param {any} item
- * @param {array} array
- * @param {function} [compareFunction]
- * @param {function} [_start]
- * @param {function} [_end]
- * @returns {number} location (in array)
- * @memberof Core
- */
-function locationOf(item, array, compareFunction, _start, _end) {
-  var start = _start || 0;
-  var end = _end || array.length;
-  var pivot = parseInt(start + (end - start) / 2);
-  var compared;
-  if (!compareFunction) {
-    compareFunction = function (a, b) {
-      if (a > b) return 1;
-      if (a < b) return -1;
-      if (a == b) return 0;
-    };
-  }
-  if (end - start <= 0) {
-    return pivot;
-  }
-  compared = compareFunction(array[pivot], item);
-  if (end - start === 1) {
-    return compared >= 0 ? pivot : pivot + 1;
-  }
-  if (compared === 0) {
-    return pivot;
-  }
-  if (compared === -1) {
-    return locationOf(item, array, compareFunction, pivot, end);
-  } else {
-    return locationOf(item, array, compareFunction, start, pivot);
-  }
-}
-
-/**
- * Finds index of something in a sorted array
- * Returns -1 if not found
- * @param {any} item
- * @param {array} array
- * @param {function} [compareFunction]
- * @param {function} [_start]
- * @param {function} [_end]
- * @returns {number} index (in array) or -1
- * @memberof Core
- */
-function indexOfSorted(item, array, compareFunction, _start, _end) {
-  var start = _start || 0;
-  var end = _end || array.length;
-  var pivot = parseInt(start + (end - start) / 2);
-  var compared;
-  if (!compareFunction) {
-    compareFunction = function (a, b) {
-      if (a > b) return 1;
-      if (a < b) return -1;
-      if (a == b) return 0;
-    };
-  }
-  if (end - start <= 0) {
-    return -1; // Not found
-  }
-  compared = compareFunction(array[pivot], item);
-  if (end - start === 1) {
-    return compared === 0 ? pivot : -1;
-  }
-  if (compared === 0) {
-    return pivot; // Found
-  }
-  if (compared === -1) {
-    return indexOfSorted(item, array, compareFunction, pivot, end);
-  } else {
-    return indexOfSorted(item, array, compareFunction, start, pivot);
-  }
-}
-/**
- * Find the bounds of an element
- * taking padding and margin into account
- * @param {element} el
- * @returns {{ width: Number, height: Number}}
- * @memberof Core
- */
-function bounds(el) {
-  var style = window.getComputedStyle(el);
-  var widthProps = ['width', 'paddingRight', 'paddingLeft', 'marginRight', 'marginLeft', 'borderRightWidth', 'borderLeftWidth'];
-  var heightProps = ['height', 'paddingTop', 'paddingBottom', 'marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth'];
-  var width = 0;
-  var height = 0;
-  widthProps.forEach(function (prop) {
-    width += parseFloat(style[prop]) || 0;
-  });
-  heightProps.forEach(function (prop) {
-    height += parseFloat(style[prop]) || 0;
-  });
-  return {
-    height: height,
-    width: width
-  };
-}
-
-/**
- * Find the bounds of an element
- * taking padding, margin and borders into account
- * @param {element} el
- * @returns {{ width: Number, height: Number}}
- * @memberof Core
- */
-function borders(el) {
-  var style = window.getComputedStyle(el);
-  var widthProps = ['paddingRight', 'paddingLeft', 'marginRight', 'marginLeft', 'borderRightWidth', 'borderLeftWidth'];
-  var heightProps = ['paddingTop', 'paddingBottom', 'marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth'];
-  var width = 0;
-  var height = 0;
-  widthProps.forEach(function (prop) {
-    width += parseFloat(style[prop]) || 0;
-  });
-  heightProps.forEach(function (prop) {
-    height += parseFloat(style[prop]) || 0;
-  });
-  return {
-    height: height,
-    width: width
-  };
-}
-
-/**
- * Find the bounds of any node
- * allows for getting bounds of text nodes by wrapping them in a range
- * @param {node} node
- * @returns {BoundingClientRect}
- * @memberof Core
- */
-function nodeBounds(node) {
-  let elPos;
-  let doc = node.ownerDocument;
-  if (node.nodeType == Node.TEXT_NODE) {
-    let elRange = doc.createRange();
-    elRange.selectNodeContents(node);
-    elPos = elRange.getBoundingClientRect();
-  } else {
-    elPos = node.getBoundingClientRect();
-  }
-  return elPos;
-}
-
-/**
- * Find the equivalent of getBoundingClientRect of a browser window
- * @returns {{ width: Number, height: Number, top: Number, left: Number, right: Number, bottom: Number }}
- * @memberof Core
- */
-function windowBounds() {
-  var width = window.innerWidth;
-  var height = window.innerHeight;
-  return {
-    top: 0,
-    left: 0,
-    right: width,
-    bottom: height,
-    width: width,
-    height: height
-  };
-}
-
-/**
- * Gets the index of a node in its parent
- * @param {Node} node
- * @param {string} typeId
- * @return {number} index
- * @memberof Core
- */
-function indexOfNode(node, typeId) {
-  var parent = node.parentNode;
-  var children = parent.childNodes;
-  var sib;
-  var index = -1;
-  for (var i = 0; i < children.length; i++) {
-    sib = children[i];
-    if (sib.nodeType === typeId) {
-      index++;
-    }
-    if (sib == node) break;
-  }
-  return index;
-}
-
-/**
- * Gets the index of a text node in its parent
- * @param {node} textNode
- * @returns {number} index
- * @memberof Core
- */
-function indexOfTextNode(textNode) {
-  return indexOfNode(textNode, TEXT_NODE);
-}
-
-/**
- * Gets the index of an element node in its parent
- * @param {element} elementNode
- * @returns {number} index
- * @memberof Core
- */
-function indexOfElementNode(elementNode) {
-  return indexOfNode(elementNode, ELEMENT_NODE);
-}
-
-/**
- * Check if extension is xml
- * @param {string} ext
- * @returns {boolean}
- * @memberof Core
- */
-function isXml(ext) {
-  return ['xml', 'opf', 'ncx'].indexOf(ext) > -1;
-}
-
-/**
- * Create a new blob
- * @param {any} content
- * @param {string} mime
- * @returns {Blob}
- * @memberof Core
- */
-function createBlob(content, mime) {
-  return new Blob([content], {
-    type: mime
-  });
-}
-
-/**
- * Create a new blob url
- * @param {any} content
- * @param {string} mime
- * @returns {string} url
- * @memberof Core
- */
-function createBlobUrl(content, mime) {
-  var tempUrl;
-  var blob = createBlob(content, mime);
-  tempUrl = _URL.createObjectURL(blob);
-  return tempUrl;
-}
-
-/**
- * Remove a blob url
- * @param {string} url
- * @memberof Core
- */
-function revokeBlobUrl(url) {
-  return _URL.revokeObjectURL(url);
-}
-
-/**
- * Create a new base64 encoded url
- * @param {any} content
- * @param {string} mime
- * @returns {string} url
- * @memberof Core
- */
-function createBase64Url(content, mime) {
-  var data;
-  var datauri;
-  if (typeof content !== 'string') {
-    // Only handles strings
-    return;
-  }
-  data = btoa(content);
-  datauri = 'data:' + mime + ';base64,' + data;
-  return datauri;
-}
-
-/**
- * Get type of an object
- * @param {object} obj
- * @returns {string} type
- * @memberof Core
- */
-function type(obj) {
-  return Object.prototype.toString.call(obj).slice(8, -1);
-}
-
-/**
- * Parse xml (or html) markup
- * @param {string} markup
- * @param {string} mime
- * @returns {document} document
- * @memberof Core
- */
-function parse(markup, mime) {
-  // Remove byte order mark before parsing
-  // https://www.w3.org/International/questions/qa-byte-order-mark
-  if (markup.charCodeAt(0) === 0xfeff) {
-    markup = markup.slice(1);
-  }
-  return new DOMParser().parseFromString(markup, mime);
-}
-
-/**
- * querySelector polyfill
- * @param {element} el
- * @param {string} sel selector string
- * @returns {element} element
- * @memberof Core
- */
-function qs(el, sel) {
-  var elements;
-  if (!el) {
-    throw new Error('No Element Provided');
-  }
-  if (typeof el.querySelector != 'undefined') {
-    return el.querySelector(sel);
-  } else {
-    elements = el.getElementsByTagName(sel);
-    if (elements.length) {
-      return elements[0];
-    }
-  }
-}
-
-/**
- * querySelectorAll polyfill
- * @param {element} el
- * @param {string} sel selector string
- * @returns {element[]} elements
- * @memberof Core
- */
-function qsa(el, sel) {
-  if (typeof el.querySelector != 'undefined') {
-    return el.querySelectorAll(sel);
-  } else {
-    return el.getElementsByTagName(sel);
-  }
-}
-
-/**
- * querySelector by property
- * @param {element} el
- * @param {string} sel selector string
- * @param {object[]} props
- * @returns {element[]} elements
- * @memberof Core
- */
-function qsp(el, sel, props) {
-  var q, filtered;
-  if (typeof el.querySelector != 'undefined') {
-    sel += '[';
-    for (var prop in props) {
-      sel += prop + "~='" + props[prop] + "'";
-    }
-    sel += ']';
-    return el.querySelector(sel);
-  } else {
-    q = el.getElementsByTagName(sel);
-    filtered = Array.prototype.slice.call(q, 0).filter(function (el) {
-      for (var prop in props) {
-        if (el.getAttribute(prop) === props[prop]) {
-          return true;
-        }
-      }
-      return false;
-    });
-    if (filtered) {
-      return filtered[0];
-    }
-  }
-}
-
-/**
- * Sprint through all text nodes in a document
- * @memberof Core
- * @param  {element} root element to start with
- * @param  {function} func function to run on each element
- */
-function sprint(root, func) {
-  var doc = root.ownerDocument || root;
-  if (typeof doc.createTreeWalker !== 'undefined') {
-    treeWalker(root, func, NodeFilter.SHOW_TEXT);
-  } else {
-    walk(root, function (node) {
-      if (node && node.nodeType === 3) {
-        // Node.TEXT_NODE
-        func(node);
-      }
-    }, true);
-  }
-}
-
-/**
- * Create a treeWalker
- * @memberof Core
- * @param  {element} root element to start with
- * @param  {function} func function to run on each element
- * @param  {function | object} filter function or object to filter with
- */
-function treeWalker(root, func, filter) {
-  var treeWalker = document.createTreeWalker(root, filter, null, false);
-  let node;
-  while (node = treeWalker.nextNode()) {
-    func(node);
-  }
-}
-
-/**
- * @memberof Core
- * @param {node} node
- * @param {callback} return false for continue,true for break inside callback
- */
-function walk(node, callback) {
-  if (callback(node)) {
-    return true;
-  }
-  node = node.firstChild;
-  if (node) {
-    do {
-      let walked = walk(node, callback);
-      if (walked) {
-        return true;
-      }
-      node = node.nextSibling;
-    } while (node);
-  }
-}
-
-/**
- * Convert a blob to a base64 encoded string
- * @param {Blog} blob
- * @returns {string}
- * @memberof Core
- */
-function blob2base64(blob) {
-  return new Promise(function (resolve) {
-    var reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = function () {
-      resolve(reader.result);
-    };
-  });
-}
-
-/**
- * Creates a new pending promise and provides methods to resolve or reject it.
- * From: https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/Promise.jsm/Deferred#backwards_forwards_compatible
- * @memberof Core
- */
-function defer() {
-  /* A method to resolve the associated Promise with the value passed.
-   * If the promise is already settled it does nothing.
-   *
-   * @param {anything} value : This value is used to resolve the promise
-   * If the value is a Promise then the associated promise assumes the state
-   * of Promise passed as value.
-   */
-  this.resolve = null;
-
-  /* A method to reject the associated Promise with the value passed.
-   * If the promise is already settled it does nothing.
-   *
-   * @param {anything} reason: The reason for the rejection of the Promise.
-   * Generally its an Error object. If however a Promise is passed, then the Promise
-   * itself will be the reason for rejection no matter the state of the Promise.
-   */
-  this.reject = null;
-  this.id = uuid();
-
-  /* A newly created Pomise object.
-   * Initially in pending state.
-   */
-  this.promise = new Promise((resolve, reject) => {
-    this.resolve = resolve;
-    this.reject = reject;
-  });
-  Object.freeze(this);
-}
-
-/**
- * querySelector with filter by epub type
- * @param {element} html
- * @param {string} element element type to find
- * @param {string} type epub type to find
- * @returns {element[]} elements
- * @memberof Core
- */
-function querySelectorByType(html, element, type) {
-  var query;
-  if (typeof html.querySelector != 'undefined') {
-    query = html.querySelector(`${element}[*|type="${type}"]`);
-  }
-  // Handle IE not supporting namespaced epub:type in querySelector
-  if (!query || query.length === 0) {
-    query = qsa(html, element);
-    for (var i = 0; i < query.length; i++) {
-      if (query[i].getAttributeNS('http://www.idpf.org/2007/ops', 'type') === type || query[i].getAttribute('epub:type') === type) {
-        return query[i];
-      }
-    }
-  } else {
-    return query;
-  }
-}
-
-/**
- * Find direct descendents of an element
- * @param {element} el
- * @returns {element[]} children
- * @memberof Core
- */
-function findChildren(el) {
-  var result = [];
-  var childNodes = el.childNodes;
-  for (var i = 0; i < childNodes.length; i++) {
-    let node = childNodes[i];
-    if (node.nodeType === 1) {
-      result.push(node);
-    }
-  }
-  return result;
-}
-
-/**
- * Find all parents (ancestors) of an element
- * @param {element} node
- * @returns {element[]} parents
- * @memberof Core
- */
-function parents(node) {
-  var nodes = [node];
-  for (; node; node = node.parentNode) {
-    nodes.unshift(node);
-  }
-  return nodes;
-}
-
-/**
- * Find all direct descendents of a specific type
- * @param {element} el
- * @param {string} nodeName
- * @param {boolean} [single]
- * @returns {element[]} children
- * @memberof Core
- */
-function filterChildren(el, nodeName, single) {
-  var result = [];
-  var childNodes = el.childNodes;
-  for (var i = 0; i < childNodes.length; i++) {
-    let node = childNodes[i];
-    if (node.nodeType === 1 && node.nodeName.toLowerCase() === nodeName) {
-      if (single) {
-        return node;
-      } else {
-        result.push(node);
-      }
-    }
-  }
-  if (!single) {
-    return result;
-  }
-}
-
-/**
- * Filter all parents (ancestors) with tag name
- * @param {element} node
- * @param {string} tagname
- * @returns {element[]} parents
- * @memberof Core
- */
-function getParentByTagName(node, tagname) {
-  let parent;
-  if (node === null || tagname === '') return;
-  parent = node.parentNode;
-  while (parent.nodeType === 1) {
-    if (parent.tagName.toLowerCase() === tagname) {
-      return parent;
-    }
-    parent = parent.parentNode;
-  }
-}
-
-/**
- * Lightweight Polyfill for DOM Range
- * @class
- * @memberof Core
- */
-class RangeObject {
-  constructor() {
-    this.collapsed = false;
-    this.commonAncestorContainer = undefined;
-    this.endContainer = undefined;
-    this.endOffset = undefined;
-    this.startContainer = undefined;
-    this.startOffset = undefined;
-  }
-  setStart(startNode, startOffset) {
-    this.startContainer = startNode;
-    this.startOffset = startOffset;
-    if (!this.endContainer) {
-      this.collapse(true);
-    } else {
-      this.commonAncestorContainer = this._commonAncestorContainer();
-    }
-    this._checkCollapsed();
-  }
-  setEnd(endNode, endOffset) {
-    this.endContainer = endNode;
-    this.endOffset = endOffset;
-    if (!this.startContainer) {
-      this.collapse(false);
-    } else {
-      this.collapsed = false;
-      this.commonAncestorContainer = this._commonAncestorContainer();
-    }
-    this._checkCollapsed();
-  }
-  collapse(toStart) {
-    this.collapsed = true;
-    if (toStart) {
-      this.endContainer = this.startContainer;
-      this.endOffset = this.startOffset;
-      this.commonAncestorContainer = this.startContainer.parentNode;
-    } else {
-      this.startContainer = this.endContainer;
-      this.startOffset = this.endOffset;
-      this.commonAncestorContainer = this.endOffset.parentNode;
-    }
-  }
-  selectNode(referenceNode) {
-    let parent = referenceNode.parentNode;
-    let index = Array.prototype.indexOf.call(parent.childNodes, referenceNode);
-    this.setStart(parent, index);
-    this.setEnd(parent, index + 1);
-  }
-  selectNodeContents(referenceNode) {
-    let endIndex = referenceNode.nodeType === 3 ? referenceNode.textContent.length : parent.childNodes.length;
-    this.setStart(referenceNode, 0);
-    this.setEnd(referenceNode, endIndex);
-  }
-  _commonAncestorContainer(startContainer, endContainer) {
-    var startParents = parents(startContainer || this.startContainer);
-    var endParents = parents(endContainer || this.endContainer);
-    if (startParents[0] != endParents[0]) return undefined;
-    for (var i = 0; i < startParents.length; i++) {
-      if (startParents[i] != endParents[i]) {
-        return startParents[i - 1];
-      }
-    }
-  }
-  _checkCollapsed() {
-    if (this.startContainer === this.endContainer && this.startOffset === this.endOffset) {
-      this.collapsed = true;
-    } else {
-      this.collapsed = false;
-    }
-  }
-  toString() {
-    // TODO: implement walking between start and end to find text
-  }
-}
-// EXTERNAL MODULE: ./node_modules/path-webpack/path.js
-var path = __webpack_require__(841);
-var path_default = /*#__PURE__*/__webpack_require__.n(path);
-;// ./src/utils/path.js
-
-
-/**
- * Creates a Path object for parsing and manipulation of a path strings
- *
- * Uses a polyfill for Nodejs path: https://nodejs.org/api/path.html
- * @param	{string} pathString	a url string (relative or absolute)
- * @class
- */
-class Path {
-  constructor(pathString) {
-    var protocol;
-    var parsed;
-    protocol = pathString.indexOf('://');
-    if (protocol > -1) {
-      pathString = new URL(pathString).pathname;
-    }
-    parsed = this.parse(pathString);
-    this.path = pathString;
-    if (this.isDirectory(pathString)) {
-      this.directory = pathString;
-    } else {
-      this.directory = parsed.dir + '/';
-    }
-    this.filename = parsed.base;
-    this.extension = parsed.ext.slice(1);
-  }
-
-  /**
-   * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
-   * @param	{string} what
-   * @returns {object}
-   */
-  parse(what) {
-    return path_default().parse(what);
-  }
-
-  /**
-   * @param	{string} what
-   * @returns {boolean}
-   */
-  isAbsolute(what) {
-    return path_default().isAbsolute(what || this.path);
-  }
-
-  /**
-   * Check if path ends with a directory
-   * @param	{string} what
-   * @returns {boolean}
-   */
-  isDirectory(what) {
-    return what.charAt(what.length - 1) === '/';
-  }
-
-  /**
-   * Resolve a path against the directory of the Path
-   *
-   * https://nodejs.org/api/path.html#path_path_resolve_paths
-   * @param	{string} what
-   * @returns {string} resolved
-   */
-  resolve(what) {
-    return path_default().resolve(this.directory, what);
-  }
-
-  /**
-   * Resolve a path relative to the directory of the Path
-   *
-   * https://nodejs.org/api/path.html#path_path_relative_from_to
-   * @param	{string} what
-   * @returns {string} relative
-   */
-  relative(what) {
-    var isAbsolute = what && what.indexOf('://') > -1;
-    if (isAbsolute) {
-      return what;
-    }
-    return path_default().relative(this.directory, what);
-  }
-  splitPath(filename) {
-    return this.splitPathRe.exec(filename).slice(1);
-  }
-
-  /**
-   * Return the path string
-   * @returns {string} path
-   */
-  toString() {
-    return this.path;
-  }
-}
-/* harmony default export */ const utils_path = (Path);
-;// ./src/utils/url.js
-
-
-
-/**
- * creates a Url object for parsing and manipulation of a url string
- * @param	{string} urlString	a url string (relative or absolute)
- * @param	{string} [baseString] optional base for the url,
- * default to window.location.href
- */
-class Url {
-  constructor(urlString, baseString) {
-    var absolute = urlString.indexOf('://') > -1;
-    var pathname = urlString;
-    var basePath;
-    this.Url = undefined;
-    this.href = urlString;
-    this.protocol = '';
-    this.origin = '';
-    this.hash = '';
-    this.hash = '';
-    this.search = '';
-    this.base = baseString;
-    if (!absolute && baseString !== false && typeof baseString !== 'string' && window && window.location) {
-      this.base = window.location.href;
-    }
-
-    // URL Polyfill doesn't throw an error if base is empty
-    if (absolute || this.base) {
-      try {
-        if (this.base) {
-          // Safari doesn't like an undefined base
-          this.Url = new URL(urlString, this.base);
-        } else {
-          this.Url = new URL(urlString);
-        }
-        this.href = this.Url.href;
-        this.protocol = this.Url.protocol;
-        this.origin = this.Url.origin;
-        this.hash = this.Url.hash;
-        this.search = this.Url.search;
-        pathname = this.Url.pathname + (this.Url.search ? this.Url.search : '');
-      } catch (e) {
-        // Skip URL parsing
-        this.Url = undefined;
-        // resolve the pathname from the base
-        if (this.base) {
-          basePath = new utils_path(this.base);
-          pathname = basePath.resolve(pathname);
-        }
-      }
-    }
-    this.Path = new utils_path(pathname);
-    this.directory = this.Path.directory;
-    this.filename = this.Path.filename;
-    this.extension = this.Path.extension;
-  }
-
-  /**
-   * @returns {Path}
-   */
-  path() {
-    return this.Path;
-  }
-
-  /**
-   * Resolves a relative path to a absolute url
-   * @param {string} what
-   * @returns {string} url
-   */
-  resolve(what) {
-    var isAbsolute = what.indexOf('://') > -1;
-    var fullpath;
-    if (isAbsolute) {
-      return what;
-    }
-    fullpath = path_default().resolve(this.directory, what);
-    return this.origin + fullpath;
-  }
-
-  /**
-   * Resolve a path relative to the url
-   * @param {string} what
-   * @returns {string} path
-   */
-  relative(what) {
-    return path_default().relative(what, this.directory);
-  }
-
-  /**
-   * @returns {string}
-   */
-  toString() {
-    return this.href;
-  }
-}
-/* harmony default export */ const utils_url = (Url);
+// EXTERNAL MODULE: ./src/utils/core.js
+var core = __webpack_require__(381);
+// EXTERNAL MODULE: ./src/utils/url.js
+var utils_url = __webpack_require__(293);
+var url_default = /*#__PURE__*/__webpack_require__.n(utils_url);
+// EXTERNAL MODULE: ./src/utils/path.js
+var utils_path = __webpack_require__(821);
+var path_default = /*#__PURE__*/__webpack_require__.n(utils_path);
 ;// ./src/epubcfi.js
 
-const epubcfi_ELEMENT_NODE = 1;
-const epubcfi_TEXT_NODE = 3;
+const ELEMENT_NODE = 1;
+const TEXT_NODE = 3;
 const DOCUMENT_NODE = 9;
 
 /**
-	* Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
+  * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
 
-	* Implements:
-	* - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
-	* - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
+  * Implements:
+  * - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
+  * - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
 
-	* Does Not Implement:
-	* - Temporal Offset (~)
-	* - Spatial Offset (@)
-	* - Temporal-Spatial Offset (~ + @)
-	* - Text Location Assertion ([)
-	* @class
-	@param {string | Range | Node } [cfiFrom]
-	@param {string | object} [base]
-	@param {string} [ignoreClass] class to ignore when parsing DOM
+  * Does Not Implement:
+  * - Temporal Offset (~)
+  * - Spatial Offset (@)
+  * - Temporal-Spatial Offset (~ + @)
+  * - Text Location Assertion ([)
+  * @class
+  @param {string | Range | Node } [cfiFrom]
+  @param {string | object} [base]
+  @param {string} [ignoreClass] class to ignore when parsing DOM
 */
 class EpubCFI {
   constructor(cfiFrom, base, ignoreClass) {
@@ -5127,11 +5929,11 @@ class EpubCFI {
     type = this.checkType(cfiFrom);
     if (type === 'string') {
       this.str = cfiFrom;
-      return extend(this, this.parse(cfiFrom));
+      return (0,core.extend)(this, this.parse(cfiFrom));
     } else if (type === 'range') {
-      return extend(this, this.fromRange(cfiFrom, this.base, ignoreClass));
+      return (0,core.extend)(this, this.fromRange(cfiFrom, this.base, ignoreClass));
     } else if (type === 'node') {
-      return extend(this, this.fromNode(cfiFrom, this.base, ignoreClass));
+      return (0,core.extend)(this, this.fromNode(cfiFrom, this.base, ignoreClass));
     } else if (type === 'EpubCFI' && cfiFrom.path) {
       return cfiFrom;
     } else if (!cfiFrom) {
@@ -5149,7 +5951,7 @@ class EpubCFI {
     if (this.isCfiString(cfi)) {
       return 'string';
       // Is a range object
-    } else if (cfi && typeof cfi === 'object' && (type(cfi) === 'Range' || typeof cfi.startContainer != 'undefined')) {
+    } else if (cfi && typeof cfi === 'object' && ((0,core.type)(cfi) === 'Range' || typeof cfi.startContainer != 'undefined')) {
       return 'range';
     } else if (cfi && typeof cfi === 'object' && typeof cfi.nodeType != 'undefined') {
       // || typeof cfi === "function"
@@ -5268,7 +6070,7 @@ class EpubCFI {
     } else {
       characterOffset = parseInt(termialStr);
     }
-    if (!isNumber(characterOffset)) {
+    if (!(0,core.isNumber)(characterOffset)) {
       characterOffset = null;
     }
     return {
@@ -5420,7 +6222,7 @@ class EpubCFI {
     return 0;
   }
   step(node) {
-    var nodeType = node.nodeType === epubcfi_TEXT_NODE ? 'text' : 'element';
+    var nodeType = node.nodeType === TEXT_NODE ? 'text' : 'element';
     return {
       id: node.id,
       tagName: node.tagName,
@@ -5438,7 +6240,7 @@ class EpubCFI {
     }
 
     // Otherwise add the filter node in
-    nodeType = filteredNode.nodeType === epubcfi_TEXT_NODE ? 'text' : 'element';
+    nodeType = filteredNode.nodeType === TEXT_NODE ? 'text' : 'element';
     return {
       id: filteredNode.id,
       tagName: filteredNode.tagName,
@@ -5599,7 +6401,7 @@ class EpubCFI {
     var sibling; // to join with
     var parent, previousSibling, nextSibling;
     var isText = false;
-    if (anchor.nodeType === epubcfi_TEXT_NODE) {
+    if (anchor.nodeType === TEXT_NODE) {
       isText = true;
       parent = anchor.parentNode;
       needsIgnoring = anchor.parentNode.classList.contains(ignoreClass);
@@ -5612,9 +6414,9 @@ class EpubCFI {
       nextSibling = parent.nextSibling;
 
       // If the sibling is a text node, join the nodes
-      if (previousSibling && previousSibling.nodeType === epubcfi_TEXT_NODE) {
+      if (previousSibling && previousSibling.nodeType === TEXT_NODE) {
         sibling = previousSibling;
-      } else if (nextSibling && nextSibling.nodeType === epubcfi_TEXT_NODE) {
+      } else if (nextSibling && nextSibling.nodeType === TEXT_NODE) {
         sibling = nextSibling;
       }
       if (sibling) {
@@ -5632,7 +6434,7 @@ class EpubCFI {
     }
   }
   patchOffset(anchor, offset, ignoreClass) {
-    if (anchor.nodeType != epubcfi_TEXT_NODE) {
+    if (anchor.nodeType != TEXT_NODE) {
       throw new Error('Anchor must be a text node');
     }
     var curr = anchor;
@@ -5643,7 +6445,7 @@ class EpubCFI {
       curr = anchor.parentNode;
     }
     while (curr.previousSibling) {
-      if (curr.previousSibling.nodeType === epubcfi_ELEMENT_NODE) {
+      if (curr.previousSibling.nodeType === ELEMENT_NODE) {
         // Originally a text node, so join
         if (curr.previousSibling.classList.contains(ignoreClass)) {
           totalOffset += curr.previousSibling.textContent.length;
@@ -5669,10 +6471,10 @@ class EpubCFI {
       currNodeType = children[i].nodeType;
 
       // Check if needs ignoring
-      if (currNodeType === epubcfi_ELEMENT_NODE && children[i].classList.contains(ignoreClass)) {
-        currNodeType = epubcfi_TEXT_NODE;
+      if (currNodeType === ELEMENT_NODE && children[i].classList.contains(ignoreClass)) {
+        currNodeType = TEXT_NODE;
       }
-      if (i > 0 && currNodeType === epubcfi_TEXT_NODE && prevNodeType === epubcfi_TEXT_NODE) {
+      if (i > 0 && currNodeType === TEXT_NODE && prevNodeType === TEXT_NODE) {
         // join text nodes
         output[i] = prevIndex;
       } else if (nodeType === currNodeType) {
@@ -5685,10 +6487,10 @@ class EpubCFI {
   }
   position(anchor) {
     var children, index;
-    if (anchor.nodeType === epubcfi_ELEMENT_NODE) {
+    if (anchor.nodeType === ELEMENT_NODE) {
       children = anchor.parentNode.children;
       if (!children) {
-        children = findChildren(anchor.parentNode);
+        children = (0,core.findChildren)(anchor.parentNode);
       }
       index = Array.prototype.indexOf.call(children, anchor);
     } else {
@@ -5699,9 +6501,9 @@ class EpubCFI {
   }
   filteredPosition(anchor, ignoreClass) {
     var children, index, map;
-    if (anchor.nodeType === epubcfi_ELEMENT_NODE) {
+    if (anchor.nodeType === ELEMENT_NODE) {
       children = anchor.parentNode.children;
-      map = this.normalizedMap(children, epubcfi_ELEMENT_NODE, ignoreClass);
+      map = this.normalizedMap(children, ELEMENT_NODE, ignoreClass);
     } else {
       children = anchor.parentNode.childNodes;
       // Inside an ignored node
@@ -5709,7 +6511,7 @@ class EpubCFI {
         anchor = anchor.parentNode;
         children = anchor.parentNode.childNodes;
       }
-      map = this.normalizedMap(children, epubcfi_TEXT_NODE, ignoreClass);
+      map = this.normalizedMap(children, TEXT_NODE, ignoreClass);
     }
     index = Array.prototype.indexOf.call(children, anchor);
     return map[index];
@@ -5730,8 +6532,8 @@ class EpubCFI {
   }
 
   /*
-  To get the last step if needed:
-  // Get the terminal step
+   To get the last step if needed:
+   // Get the terminal step
   lastStep = steps[steps.length-1];
   // Get the query string
   query = this.stepsToQuery(steps);
@@ -5739,7 +6541,7 @@ class EpubCFI {
   startContainerParent = doc.querySelector(query);
   // Find the text node within that element
   if(startContainerParent && lastStep.type == "text") {
-  container = startContainerParent.childNodes[lastStep.index];
+    container = startContainerParent.childNodes[lastStep.index];
   }
   */
   stepsToQuerySelector(steps) {
@@ -5759,7 +6561,7 @@ class EpubCFI {
   }
   textNodes(container, ignoreClass) {
     return Array.prototype.slice.call(container.childNodes).filter(function (node) {
-      if (node.nodeType === epubcfi_TEXT_NODE) {
+      if (node.nodeType === TEXT_NODE) {
         return true;
       } else if (ignoreClass && node.classList.contains(ignoreClass)) {
         return true;
@@ -5782,7 +6584,7 @@ class EpubCFI {
         if (step.id) {
           container = doc.getElementById(step.id);
         } else {
-          children = container.children || findChildren(container);
+          children = container.children || (0,core.findChildren)(container);
           container = children[step.index];
         }
       } else if (step.type === 'text') {
@@ -5814,7 +6616,7 @@ class EpubCFI {
   fixMiss(steps, offset, _doc, ignoreClass) {
     var container = this.findNode(steps.slice(0, -1), _doc, ignoreClass);
     var children = container.childNodes;
-    var map = this.normalizedMap(children, epubcfi_TEXT_NODE, ignoreClass);
+    var map = this.normalizedMap(children, TEXT_NODE, ignoreClass);
     var child;
     var len;
     var lastStepIndex = steps[steps.length - 1].index;
@@ -5826,7 +6628,7 @@ class EpubCFI {
         if (offset > len) {
           offset = offset - len;
         } else {
-          if (child.nodeType === epubcfi_ELEMENT_NODE) {
+          if (child.nodeType === ELEMENT_NODE) {
             container = child.childNodes[0];
           } else {
             container = child;
@@ -5855,11 +6657,7 @@ class EpubCFI {
     var startSteps, endSteps;
     var needsIgnoring = ignoreClass ? doc.querySelector('.' + ignoreClass) != null : false;
     var missed;
-    if (typeof doc.createRange !== 'undefined') {
-      range = doc.createRange();
-    } else {
-      range = new RangeObject();
-    }
+    range = doc.createRange();
     if (cfi.range) {
       start = cfi.start;
       startSteps = cfi.path.steps.concat(start.steps);
@@ -5946,312 +6744,13 @@ class EpubCFI {
   }
 }
 /* harmony default export */ const epubcfi = (EpubCFI);
-;// ./src/utils/hook.js
-/**
- * Hooks allow for injecting functions that must all complete in order before finishing
- * They will execute in parallel but all must finish before continuing
- * Functions may return a promise if they are async.
- * @param {any} context scope of this
- * @example this.content = new EPUBJS.Hook(this);
- */
-class Hook {
-  constructor(context) {
-    this.context = context || this;
-    this.hooks = [];
-  }
-
-  /**
-   * Adds a function to be run before a hook completes
-   * @example this.content.register(function(){...});
-   */
-  register() {
-    for (var i = 0; i < arguments.length; ++i) {
-      if (typeof arguments[i] === 'function') {
-        this.hooks.push(arguments[i]);
-      } else {
-        // unpack array
-        for (var j = 0; j < arguments[i].length; ++j) {
-          this.hooks.push(arguments[i][j]);
-        }
-      }
-    }
-  }
-
-  /**
-   * Removes a function
-   * @example this.content.deregister(function(){...});
-   */
-  deregister(func) {
-    let hook;
-    for (let i = 0; i < this.hooks.length; i++) {
-      hook = this.hooks[i];
-      if (hook === func) {
-        this.hooks.splice(i, 1);
-        break;
-      }
-    }
-  }
-
-  /**
-   * Triggers a hook to run all functions
-   * @example this.content.trigger(args).then(function(){...});
-   */
-  trigger() {
-    var args = arguments;
-    var context = this.context;
-    var promises = [];
-    this.hooks.forEach(function (task) {
-      try {
-        var executing = task.apply(context, args);
-      } catch (err) {
-        console.log(err);
-      }
-      if (executing && typeof executing['then'] === 'function') {
-        // Task is a function that returns a promise
-        promises.push(executing);
-      }
-      // Otherwise Task resolves immediately, continue
-    });
-    return Promise.all(promises);
-  }
-
-  // Adds a function to be run before a hook completes
-  list() {
-    return this.hooks;
-  }
-  clear() {
-    return this.hooks = [];
-  }
-}
-/* harmony default export */ const hook = (Hook);
-;// ./src/utils/replacements.js
-
-
-function replaceBase(doc, section) {
-  var base;
-  var head;
-  var url = section.url;
-  var absolute = url.indexOf('://') > -1;
-  if (!doc) {
-    return;
-  }
-  head = qs(doc, 'head');
-  base = qs(head, 'base');
-  if (!base) {
-    base = doc.createElement('base');
-    head.insertBefore(base, head.firstChild);
-  }
-
-  // Fix for Safari crashing if the url doesn't have an origin
-  if (!absolute && window && window.location) {
-    url = window.location.origin + url;
-  }
-  base.setAttribute('href', url);
-}
-function replaceCanonical(doc, section) {
-  var head;
-  var link;
-  var url = section.canonical;
-  if (!doc) {
-    return;
-  }
-  head = qs(doc, 'head');
-  link = qs(head, "link[rel='canonical']");
-  if (link) {
-    link.setAttribute('href', url);
-  } else {
-    link = doc.createElement('link');
-    link.setAttribute('rel', 'canonical');
-    link.setAttribute('href', url);
-    head.appendChild(link);
-  }
-}
-function replaceMeta(doc, section) {
-  var head;
-  var meta;
-  var id = section.idref;
-  if (!doc) {
-    return;
-  }
-  head = qs(doc, 'head');
-  meta = qs(head, "link[property='dc.identifier']");
-  if (meta) {
-    meta.setAttribute('content', id);
-  } else {
-    meta = doc.createElement('meta');
-    meta.setAttribute('name', 'dc.identifier');
-    meta.setAttribute('content', id);
-    head.appendChild(meta);
-  }
-}
-
-// TODO: move me to Contents
-function replaceLinks(contents, fn) {
-  var links = contents.querySelectorAll('a[href]');
-  if (!links.length) {
-    return;
-  }
-  var base = qs(contents.ownerDocument, 'base');
-  var location = base ? base.getAttribute('href') : undefined;
-  var replaceLink = function (link) {
-    var href = link.getAttribute('href');
-    if (href.indexOf('mailto:') === 0) {
-      return;
-    }
-    var absolute = href.indexOf('://') > -1;
-    if (absolute) {
-      link.setAttribute('target', '_blank');
-    } else {
-      var linkUrl;
-      try {
-        linkUrl = new utils_url(href, location);
-      } catch (error) {
-        // NOOP
-      }
-      link.onclick = function () {
-        if (linkUrl && linkUrl.hash) {
-          fn(linkUrl.Path.path + linkUrl.hash);
-        } else if (linkUrl) {
-          fn(linkUrl.Path.path);
-        } else {
-          fn(href);
-        }
-        return false;
-      };
-    }
-  }.bind(this);
-  for (var i = 0; i < links.length; i++) {
-    replaceLink(links[i]);
-  }
-}
-function substitute(content, urls, replacements) {
-  urls.forEach(function (url, i) {
-    if (url && replacements[i]) {
-      // Account for special characters in the file name.
-      // See https://stackoverflow.com/a/6318729.
-      url = url.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-      content = content.replace(new RegExp(url, 'g'), replacements[i]);
-    }
-  });
-  return content;
-}
-;// ./src/utils/request.js
-
-
-function request(url, type, withCredentials, headers) {
-  var supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
-  var BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
-  var deferred = new defer();
-  var xhr = new XMLHttpRequest();
-
-  //-- Check from PDF.js:
-  //   https://github.com/mozilla/pdf.js/blob/master/web/compatibility.js
-  var xhrPrototype = XMLHttpRequest.prototype;
-  var header;
-  if (!('overrideMimeType' in xhrPrototype)) {
-    // IE10 might have response, but not overrideMimeType
-    Object.defineProperty(xhrPrototype, 'overrideMimeType', {
-      value: function xmlHttpRequestOverrideMimeType() {}
-    });
-  }
-  if (withCredentials) {
-    xhr.withCredentials = true;
-  }
-  xhr.onreadystatechange = handler;
-  xhr.onerror = err;
-  xhr.open('GET', url, true);
-  for (header in headers) {
-    xhr.setRequestHeader(header, headers[header]);
-  }
-  if (type == 'json') {
-    xhr.setRequestHeader('Accept', 'application/json');
-  }
-
-  // If type isn"t set, determine it from the file extension
-  if (!type) {
-    type = new utils_path(url).extension;
-  }
-  if (type == 'blob') {
-    xhr.responseType = BLOB_RESPONSE;
-  }
-  if (isXml(type)) {
-    // xhr.responseType = "document";
-    xhr.overrideMimeType('text/xml'); // for OPF parsing
-  }
-  if (type == 'xhtml') {
-    // xhr.responseType = "document";
-  }
-  if (type == 'html' || type == 'htm') {
-    // xhr.responseType = "document";
-  }
-  if (type == 'binary') {
-    xhr.responseType = 'arraybuffer';
-  }
-  xhr.send();
-  function err(e) {
-    deferred.reject(e);
-  }
-  function handler() {
-    if (this.readyState === XMLHttpRequest.DONE) {
-      var responseXML = false;
-      if (this.responseType === '' || this.responseType === 'document') {
-        responseXML = this.responseXML;
-      }
-      if (this.status === 200 || this.status === 0 || responseXML) {
-        //-- Firefox is reporting 0 for blob urls
-        var r;
-        if (!this.response && !responseXML) {
-          deferred.reject({
-            status: this.status,
-            message: 'Empty Response',
-            stack: new Error().stack
-          });
-          return deferred.promise;
-        }
-        if (this.status === 403) {
-          deferred.reject({
-            status: this.status,
-            response: this.response,
-            message: 'Forbidden',
-            stack: new Error().stack
-          });
-          return deferred.promise;
-        }
-        if (responseXML) {
-          r = this.responseXML;
-        } else if (isXml(type)) {
-          // xhr.overrideMimeType("text/xml"); // for OPF parsing
-          // If this.responseXML wasn't set, try to parse using a DOMParser from text
-          r = parse(this.response, 'text/xml');
-        } else if (type == 'xhtml') {
-          r = parse(this.response, 'application/xhtml+xml');
-        } else if (type == 'html' || type == 'htm') {
-          r = parse(this.response, 'text/html');
-        } else if (type == 'json') {
-          r = JSON.parse(this.response);
-        } else if (type == 'blob') {
-          if (supportsURL) {
-            r = this.response;
-          } else {
-            //-- Safari doesn't support responseType blob, so create a blob from arraybuffer
-            r = new Blob([this.response]);
-          }
-        } else {
-          r = this.response;
-        }
-        deferred.resolve(r);
-      } else {
-        deferred.reject({
-          status: this.status,
-          message: this.response,
-          stack: new Error().stack
-        });
-      }
-    }
-  }
-  return deferred.promise;
-}
-/* harmony default export */ const utils_request = (request);
+// EXTERNAL MODULE: ./src/utils/hook.js
+var hook = __webpack_require__(481);
+// EXTERNAL MODULE: ./src/utils/replacements.js
+var replacements = __webpack_require__(375);
+// EXTERNAL MODULE: ./src/utils/request.js
+var utils_request = __webpack_require__(889);
+var request_default = /*#__PURE__*/__webpack_require__.n(utils_request);
 ;// ./src/section.js
 
 
@@ -6283,8 +6782,8 @@ class Section {
       this.hooks = hooks;
     } else {
       this.hooks = {};
-      this.hooks.serialize = new hook(this);
-      this.hooks.content = new hook(this);
+      this.hooks.serialize = new hook/* default */.A(this);
+      this.hooks.content = new hook/* default */.A(this);
     }
     this.document = undefined;
     this.contents = undefined;
@@ -6297,8 +6796,8 @@ class Section {
    * @return {document} a promise with the xml document
    */
   load(_request) {
-    var request = _request || this.request || utils_request;
-    var loading = new defer();
+    var request = _request || this.request || (request_default());
+    var loading = new core.defer();
     var loaded = loading.promise;
     if (this.contents) {
       loading.resolve(this.contents);
@@ -6323,7 +6822,7 @@ class Section {
    * @private
    */
   base() {
-    return replaceBase(this.document, this);
+    return (0,replacements.replaceBase)(this.document, this);
   }
 
   /**
@@ -6332,7 +6831,7 @@ class Section {
    * @return {string} output a serialized XML Document
    */
   render(_request) {
-    var rendering = new defer();
+    var rendering = new core.defer();
     var rendered = rendering.promise;
     this.output; // TODO: better way to return this from hooks?
 
@@ -6403,7 +6902,7 @@ class Section {
         last = pos;
       }
     };
-    sprint(section.document, function (node) {
+    (0,core.sprint)(section.document, function (node) {
       find(node);
     });
     return matches;
@@ -6571,13 +7070,13 @@ class Spine {
     this.spineByHref = {};
     this.spineById = {};
     this.hooks = {};
-    this.hooks.serialize = new hook();
-    this.hooks.content = new hook();
+    this.hooks.serialize = new hook/* default */.A();
+    this.hooks.content = new hook/* default */.A();
 
     // Register replacements
-    this.hooks.content.register(replaceBase);
-    this.hooks.content.register(replaceCanonical);
-    this.hooks.content.register(replaceMeta);
+    this.hooks.content.register(replacements.replaceBase);
+    this.hooks.content.register(replacements.replaceCanonical);
+    this.hooks.content.register(replacements.replaceMeta);
     this.epubcfi = new epubcfi();
     this.loaded = false;
     this.items = undefined;
@@ -6796,280 +7295,11 @@ class Spine {
   }
 }
 /* harmony default export */ const spine = (Spine);
-;// ./src/utils/queue.js
-
-
-/**
- * Queue for handling tasks one at a time
- * @class
- * @param {scope} context what this will resolve to in the tasks
- */
-class Queue {
-  constructor(context) {
-    this._q = [];
-    this.context = context;
-    this.tick = core_requestAnimationFrame;
-    this.running = false;
-    this.paused = false;
-  }
-
-  /**
-   * Add an item to the queue
-   * @return {Promise}
-   */
-  enqueue() {
-    var deferred, promise;
-    var queued;
-    var task = [].shift.call(arguments);
-    var args = arguments;
-
-    // Handle single args without context
-    // if(args && !Array.isArray(args)) {
-    //   args = [args];
-    // }
-    if (!task) {
-      throw new Error('No Task Provided');
-    }
-    if (typeof task === 'function') {
-      deferred = new defer();
-      promise = deferred.promise;
-      queued = {
-        task: task,
-        args: args,
-        //"context"  : context,
-        deferred: deferred,
-        promise: promise
-      };
-    } else {
-      // Task is a promise
-      queued = {
-        promise: task
-      };
-    }
-    this._q.push(queued);
-
-    // Wait to start queue flush
-    if (this.paused == false && !this.running) {
-      // setTimeout(this.flush.bind(this), 0);
-      // this.tick.call(window, this.run.bind(this));
-      this.run();
-    }
-    return queued.promise;
-  }
-
-  /**
-   * Run one item
-   * @return {Promise}
-   */
-  dequeue() {
-    var inwait, task, result;
-    if (this._q.length && !this.paused) {
-      inwait = this._q.shift();
-      task = inwait.task;
-      if (task) {
-        // console.log(task)
-
-        result = task.apply(this.context, inwait.args);
-        if (result && typeof result['then'] === 'function') {
-          // Task is a function that returns a promise
-          return result.then(function () {
-            inwait.deferred.resolve.apply(this.context, arguments);
-          }.bind(this), function () {
-            inwait.deferred.reject.apply(this.context, arguments);
-          }.bind(this));
-        } else {
-          // Task resolves immediately
-          inwait.deferred.resolve.apply(this.context, result);
-          return inwait.promise;
-        }
-      } else if (inwait.promise) {
-        // Task is a promise
-        return inwait.promise;
-      }
-    } else {
-      inwait = new defer();
-      inwait.deferred.resolve();
-      return inwait.promise;
-    }
-  }
-
-  // Run All Immediately
-  dump() {
-    while (this._q.length) {
-      this.dequeue();
-    }
-  }
-
-  /**
-   * Run all tasks sequentially, at convince
-   * @return {Promise}
-   */
-  run() {
-    if (!this.running) {
-      this.running = true;
-      this.defered = new defer();
-    }
-    this.tick.call(window, () => {
-      if (this._q.length) {
-        this.dequeue().then(function () {
-          this.run();
-        }.bind(this));
-      } else {
-        this.defered.resolve();
-        this.running = undefined;
-      }
-    });
-
-    // Unpause
-    if (this.paused == true) {
-      this.paused = false;
-    }
-    return this.defered.promise;
-  }
-
-  /**
-   * Flush all, as quickly as possible
-   * @return {Promise}
-   */
-  flush() {
-    if (this.running) {
-      return this.running;
-    }
-    if (this._q.length) {
-      this.running = this.dequeue().then(function () {
-        this.running = undefined;
-        return this.flush();
-      }.bind(this));
-      return this.running;
-    }
-  }
-
-  /**
-   * Clear all items in wait
-   */
-  clear() {
-    this._q = [];
-  }
-
-  /**
-   * Get the number of tasks in the queue
-   * @return {number} tasks
-   */
-  length() {
-    return this._q.length;
-  }
-
-  /**
-   * Pause a running queue
-   */
-  pause() {
-    this.paused = true;
-  }
-
-  /**
-   * End the queue
-   */
-  stop() {
-    this._q = [];
-    this.running = false;
-    this.paused = true;
-  }
-}
-
-/**
- * Create a new task from a callback
- * @class
- * @private
- * @param {function} task
- * @param {array} args
- * @param {scope} context
- * @return {function} task
- */
-class Task {
-  constructor(task, args, context) {
-    return function () {
-      var toApply = arguments || [];
-      return new Promise((resolve, reject) => {
-        var callback = function (value, err) {
-          if (!value && err) {
-            reject(err);
-          } else {
-            resolve(value);
-          }
-        };
-        // Add the callback to the arguments list
-        toApply.push(callback);
-
-        // Apply all arguments to the functions
-        task.apply(context || this, toApply);
-      });
-    };
-  }
-}
-/* harmony default export */ const queue = (Queue);
-
-;// ./src/utils/constants.js
-const EPUBJS_VERSION = '0.3';
-
-// Dom events to listen for
-const DOM_EVENTS = ['keydown', 'keyup', 'keypressed', 'mouseup', 'mousedown', 'mousemove', 'click', 'touchend', 'touchstart', 'touchmove'];
-const EVENTS = {
-  BOOK: {
-    OPEN_FAILED: 'openFailed'
-  },
-  CONTENTS: {
-    EXPAND: 'expand',
-    RESIZE: 'resize',
-    SELECTED: 'selected',
-    SELECTED_RANGE: 'selectedRange',
-    LINK_CLICKED: 'linkClicked'
-  },
-  LOCATIONS: {
-    CHANGED: 'changed'
-  },
-  MANAGERS: {
-    RESIZE: 'resize',
-    RESIZED: 'resized',
-    ORIENTATION_CHANGE: 'orientationchange',
-    ADDED: 'added',
-    SCROLL: 'scroll',
-    SCROLLED: 'scrolled',
-    REMOVED: 'removed'
-  },
-  VIEWS: {
-    AXIS: 'axis',
-    WRITING_MODE: 'writingMode',
-    LOAD_ERROR: 'loaderror',
-    RENDERED: 'rendered',
-    RESIZED: 'resized',
-    DISPLAYED: 'displayed',
-    SHOWN: 'shown',
-    HIDDEN: 'hidden',
-    MARK_CLICKED: 'markClicked'
-  },
-  RENDITION: {
-    STARTED: 'started',
-    ATTACHED: 'attached',
-    DISPLAYED: 'displayed',
-    DISPLAY_ERROR: 'displayerror',
-    RENDERED: 'rendered',
-    REMOVED: 'removed',
-    RESIZED: 'resized',
-    ORIENTATION_CHANGE: 'orientationchange',
-    LOCATION_CHANGED: 'locationChanged',
-    RELOCATED: 'relocated',
-    MARK_CLICKED: 'markClicked',
-    SELECTED: 'selected',
-    LAYOUT: 'layout'
-  },
-  LAYOUT: {
-    UPDATED: 'updated'
-  },
-  ANNOTATION: {
-    ATTACH: 'attach',
-    DETACH: 'detach'
-  }
-};
+// EXTERNAL MODULE: ./src/utils/queue.js
+var queue = __webpack_require__(763);
+var queue_default = /*#__PURE__*/__webpack_require__.n(queue);
+// EXTERNAL MODULE: ./src/utils/constants.js
+var constants = __webpack_require__(209);
 ;// ./src/locations.js
 
 
@@ -7088,7 +7318,7 @@ class Locations {
     this.spine = spine;
     this.request = request;
     this.pause = pause || 100;
-    this.q = new queue(this);
+    this.q = new (queue_default())(this);
     this.epubcfi = new epubcfi();
     this._locations = [];
     this._locationsWords = [];
@@ -7135,7 +7365,7 @@ class Locations {
   }
   process(section) {
     return section.load(this.request).then(function (contents) {
-      var completed = new defer();
+      var completed = new core.defer();
       var locations = this.parse(contents, section.cfiBase);
       this._locations = this._locations.concat(locations);
       section.unload();
@@ -7147,7 +7377,7 @@ class Locations {
     var locations = [];
     var range;
     var doc = contents.ownerDocument;
-    var body = qs(doc, 'body');
+    var body = (0,core.qs)(doc, 'body');
     var counter = 0;
     var prev;
     var _break = chars || this.break;
@@ -7207,7 +7437,7 @@ class Locations {
       }
       prev = node;
     };
-    sprint(body, parser.bind(this));
+    (0,core.sprint)(body, parser.bind(this));
 
     // Close remaining
     if (range && range.startContainer && prev) {
@@ -7255,7 +7485,7 @@ class Locations {
       return Promise.resolve();
     }
     return section.load(this.request).then(function (contents) {
-      var completed = new defer();
+      var completed = new core.defer();
       var locations = this.parseWords(contents, section, wordCount, startCfi);
       var remainingCount = count - this._locationsWords.length;
       this._locationsWords = this._locationsWords.concat(locations.length >= count ? locations.slice(0, remainingCount) : locations);
@@ -7276,7 +7506,7 @@ class Locations {
     var cfiBase = section.cfiBase;
     var locations = [];
     var doc = contents.ownerDocument;
-    var body = qs(doc, 'body');
+    var body = (0,core.qs)(doc, 'body');
     var _break = wordCount;
     var foundStartNode = startCfi ? startCfi.spinePos !== section.index : true;
     var startNode;
@@ -7332,7 +7562,7 @@ class Locations {
         }
       }
     };
-    sprint(body, parser.bind(this));
+    (0,core.sprint)(body, parser.bind(this));
     return locations;
   }
 
@@ -7350,7 +7580,7 @@ class Locations {
     if (this._locations.length === 0) {
       return -1;
     }
-    loc = locationOf(cfi, this._locations, this.epubcfi.compare);
+    loc = (0,core.locationOf)(cfi, this._locations, this.epubcfi.compare);
     if (loc > this.total) {
       return this.total;
     }
@@ -7464,7 +7694,7 @@ class Locations {
     } else {
       loc = curr;
     }
-    this.emit(EVENTS.LOCATIONS.CHANGED, {
+    this.emit(constants/* EVENTS */.qY.LOCATIONS.CHANGED, {
       percentage: this.percentageFromLocation(loc)
     });
   }
@@ -7507,6 +7737,9 @@ class Locations {
 }
 event_emitter_default()(Locations.prototype);
 /* harmony default export */ const locations = (Locations);
+// EXTERNAL MODULE: ./node_modules/path-webpack/path.js
+var path = __webpack_require__(841);
+var path_webpack_path_default = /*#__PURE__*/__webpack_require__.n(path);
 ;// ./src/container.js
 
 
@@ -7536,12 +7769,12 @@ class Container {
     if (!containerDocument) {
       throw new Error('Container File Not Found');
     }
-    rootfile = qs(containerDocument, 'rootfile');
+    rootfile = (0,core.qs)(containerDocument, 'rootfile');
     if (!rootfile) {
       throw new Error('No RootFile Found');
     }
     this.packagePath = rootfile.getAttribute('full-path');
-    this.directory = path_default().dirname(this.packagePath);
+    this.directory = path_webpack_path_default().dirname(this.packagePath);
     this.encoding = containerDocument.xmlEncoding;
   }
   destroy() {
@@ -7553,6 +7786,31 @@ class Container {
 /* harmony default export */ const container = (Container);
 ;// ./src/packaging.js
 
+const packaging_ELEMENT_NODE = 1;
+/**
+ * Gets the index of a node in its parent
+ * @param {Node} node
+ * @param {string} typeId
+ * @return {number} index
+ * @memberof Core
+ */
+function indexOfNode(node, typeId) {
+  var parent = node.parentNode;
+  var children = parent.childNodes;
+  var sib;
+  var index = -1;
+  for (var i = 0; i < children.length; i++) {
+    sib = children[i];
+    if (sib.nodeType === typeId) {
+      index++;
+    }
+    if (sib == node) break;
+  }
+  return index;
+}
+function indexOfElementNode(elementNode) {
+  return indexOfNode(elementNode, packaging_ELEMENT_NODE);
+}
 
 /**
  * Open Packaging Format Parser
@@ -7583,15 +7841,15 @@ class Packaging {
     if (!packageDocument) {
       throw new Error('Package File Not Found');
     }
-    metadataNode = qs(packageDocument, 'metadata');
+    metadataNode = (0,core.qs)(packageDocument, 'metadata');
     if (!metadataNode) {
       throw new Error('No Metadata Found');
     }
-    manifestNode = qs(packageDocument, 'manifest');
+    manifestNode = (0,core.qs)(packageDocument, 'manifest');
     if (!manifestNode) {
       throw new Error('No Manifest Found');
     }
-    spineNode = qs(packageDocument, 'spine');
+    spineNode = (0,core.qs)(packageDocument, 'spine');
     if (!spineNode) {
       throw new Error('No Spine Found');
     }
@@ -7654,7 +7912,7 @@ class Packaging {
 
     //-- Turn items into an array
     // var selected = manifestXml.querySelectorAll("item");
-    var selected = qsa(manifestXml, 'item');
+    var selected = (0,core.qsa)(manifestXml, 'item');
     var items = Array.prototype.slice.call(selected);
 
     //-- Create an object with the id as key
@@ -7684,7 +7942,7 @@ class Packaging {
    */
   parseSpine(spineXml, _manifest) {
     var spine = [];
-    var selected = qsa(spineXml, 'itemref');
+    var selected = (0,core.qsa)(spineXml, 'itemref');
     var items = Array.prototype.slice.call(selected);
 
     // var epubcfi = new EpubCFI();
@@ -7744,7 +8002,7 @@ class Packaging {
     // Find item with property "nav"
     // Should catch nav regardless of order
     // var node = manifestNode.querySelector("item[properties$='nav'], item[properties^='nav '], item[properties*=' nav ']");
-    var node = qsp(manifestNode, 'item', {
+    var node = (0,core.qsp)(manifestNode, 'item', {
       properties: 'nav'
     });
     return node ? node.getAttribute('href') : false;
@@ -7760,7 +8018,7 @@ class Packaging {
    */
   findNcxPath(manifestNode, spineNode) {
     // var node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
-    var node = qsp(manifestNode, 'item', {
+    var node = (0,core.qsp)(manifestNode, 'item', {
       'media-type': 'application/x-dtbncx+xml'
     });
     var tocId;
@@ -7787,18 +8045,18 @@ class Packaging {
    * @return {string} href
    */
   findCoverPath(packageXml) {
-    var pkg = qs(packageXml, 'package');
+    var pkg = (0,core.qs)(packageXml, 'package');
     pkg.getAttribute('version');
 
     // Try parsing cover with epub 3.
     // var node = packageXml.querySelector("item[properties='cover-image']");
-    var node = qsp(packageXml, 'item', {
+    var node = (0,core.qsp)(packageXml, 'item', {
       properties: 'cover-image'
     });
     if (node) return node.getAttribute('href');
 
     // Fallback to epub 2.
-    var metaCover = qsp(packageXml, 'meta', {
+    var metaCover = (0,core.qsp)(packageXml, 'meta', {
       name: 'cover'
     });
     if (metaCover) {
@@ -7837,7 +8095,7 @@ class Packaging {
    * @return {string} text
    */
   getPropertyText(xml, property) {
-    var el = qsp(xml, 'meta', {
+    var el = (0,core.qsp)(xml, 'meta', {
       property: property
     });
     if (el && el.childNodes.length) {
@@ -7921,8 +8179,8 @@ class Navigation {
     let html;
     let ncx;
     if (isXml) {
-      html = qs(xml, 'html');
-      ncx = qs(xml, 'ncx');
+      html = (0,core.qs)(xml, 'html');
+      ncx = (0,core.qs)(xml, 'ncx');
     }
     if (!isXml) {
       this.toc = this.load(xml);
@@ -8024,10 +8282,10 @@ class Navigation {
    * @return {array} navigation list
    */
   parseNav(navHtml) {
-    var navElement = querySelectorByType(navHtml, 'nav', 'toc');
+    var navElement = (0,core.querySelectorByType)(navHtml, 'nav', 'toc');
     var list = [];
     if (!navElement) return list;
-    let navList = filterChildren(navElement, 'ol', true);
+    let navList = (0,core.filterChildren)(navElement, 'ol', true);
     if (!navList) return list;
     list = this.parseNavList(navList);
     return list;
@@ -8060,7 +8318,7 @@ class Navigation {
    */
   navItem(item, parent) {
     let id = item.getAttribute('id') || undefined;
-    let content = filterChildren(item, 'a', true) || filterChildren(item, 'span', true);
+    let content = (0,core.filterChildren)(item, 'a', true) || (0,core.filterChildren)(item, 'span', true);
     if (!content) {
       return;
     }
@@ -8070,7 +8328,7 @@ class Navigation {
     }
     let text = content.textContent || '';
     let subitems = [];
-    let nested = filterChildren(item, 'ol', true);
+    let nested = (0,core.filterChildren)(item, 'ol', true);
     if (nested) {
       subitems = this.parseNavList(nested, id);
     }
@@ -8090,8 +8348,8 @@ class Navigation {
    * @return {array} landmarks list
    */
   parseLandmarks(navHtml) {
-    var navElement = querySelectorByType(navHtml, 'nav', 'landmarks');
-    var navItems = navElement ? qsa(navElement, 'li') : [];
+    var navElement = (0,core.querySelectorByType)(navHtml, 'nav', 'landmarks');
+    var navItems = navElement ? (0,core.qsa)(navElement, 'li') : [];
     var length = navItems.length;
     var i;
     var list = [];
@@ -8114,7 +8372,7 @@ class Navigation {
    * @return {object} landmarkItem
    */
   landmarkItem(item) {
-    let content = filterChildren(item, 'a', true);
+    let content = (0,core.filterChildren)(item, 'a', true);
     if (!content) {
       return;
     }
@@ -8135,7 +8393,7 @@ class Navigation {
    * @return {array} navigation list
    */
   parseNcx(tocXml) {
-    var navPoints = qsa(tocXml, 'navPoint');
+    var navPoints = (0,core.qsa)(tocXml, 'navPoint');
     var length = navPoints.length;
     var i;
     var toc = {};
@@ -8163,9 +8421,9 @@ class Navigation {
    */
   ncxItem(item) {
     var id = item.getAttribute('id') || false,
-      content = qs(item, 'content'),
+      content = (0,core.qs)(item, 'content'),
       src = content.getAttribute('src'),
-      navLabel = qs(item, 'navLabel'),
+      navLabel = (0,core.qs)(item, 'navLabel'),
       text = navLabel.textContent ? navLabel.textContent : '',
       subitems = [],
       parentNode = item.parentNode,
@@ -8205,179 +8463,8 @@ class Navigation {
   }
 }
 /* harmony default export */ const navigation = (Navigation);
-;// ./src/utils/mime.js
-/*
- From Zip.js, by Gildas Lormeau
-edited down
- */
-
-var table = {
-  application: {
-    ecmascript: ['es', 'ecma'],
-    javascript: 'js',
-    ogg: 'ogx',
-    pdf: 'pdf',
-    postscript: ['ps', 'ai', 'eps', 'epsi', 'epsf', 'eps2', 'eps3'],
-    'rdf+xml': 'rdf',
-    smil: ['smi', 'smil'],
-    'xhtml+xml': ['xhtml', 'xht'],
-    xml: ['xml', 'xsl', 'xsd', 'opf', 'ncx'],
-    zip: 'zip',
-    'x-httpd-eruby': 'rhtml',
-    'x-latex': 'latex',
-    'x-maker': ['frm', 'maker', 'frame', 'fm', 'fb', 'book', 'fbdoc'],
-    'x-object': 'o',
-    'x-shockwave-flash': ['swf', 'swfl'],
-    'x-silverlight': 'scr',
-    'epub+zip': 'epub',
-    'font-tdpfr': 'pfr',
-    'inkml+xml': ['ink', 'inkml'],
-    json: 'json',
-    'jsonml+json': 'jsonml',
-    'mathml+xml': 'mathml',
-    'metalink+xml': 'metalink',
-    mp4: 'mp4s',
-    // "oebps-package+xml" : "opf",
-    'omdoc+xml': 'omdoc',
-    oxps: 'oxps',
-    'vnd.amazon.ebook': 'azw',
-    widget: 'wgt',
-    // "x-dtbncx+xml" : "ncx",
-    'x-dtbook+xml': 'dtb',
-    'x-dtbresource+xml': 'res',
-    'x-font-bdf': 'bdf',
-    'x-font-ghostscript': 'gsf',
-    'x-font-linux-psf': 'psf',
-    'x-font-otf': 'otf',
-    'x-font-pcf': 'pcf',
-    'x-font-snf': 'snf',
-    'x-font-ttf': ['ttf', 'ttc'],
-    'x-font-type1': ['pfa', 'pfb', 'pfm', 'afm'],
-    'x-font-woff': 'woff',
-    'x-mobipocket-ebook': ['prc', 'mobi'],
-    'x-mspublisher': 'pub',
-    'x-nzb': 'nzb',
-    'x-tgif': 'obj',
-    'xaml+xml': 'xaml',
-    'xml-dtd': 'dtd',
-    'xproc+xml': 'xpl',
-    'xslt+xml': 'xslt',
-    'internet-property-stream': 'acx',
-    'x-compress': 'z',
-    'x-compressed': 'tgz',
-    'x-gzip': 'gz'
-  },
-  audio: {
-    flac: 'flac',
-    midi: ['mid', 'midi', 'kar', 'rmi'],
-    mpeg: ['mpga', 'mpega', 'mp2', 'mp3', 'm4a', 'mp2a', 'm2a', 'm3a'],
-    mpegurl: 'm3u',
-    ogg: ['oga', 'ogg', 'spx'],
-    'x-aiff': ['aif', 'aiff', 'aifc'],
-    'x-ms-wma': 'wma',
-    'x-wav': 'wav',
-    adpcm: 'adp',
-    mp4: 'mp4a',
-    webm: 'weba',
-    'x-aac': 'aac',
-    'x-caf': 'caf',
-    'x-matroska': 'mka',
-    'x-pn-realaudio-plugin': 'rmp',
-    xm: 'xm',
-    mid: ['mid', 'rmi']
-  },
-  image: {
-    gif: 'gif',
-    ief: 'ief',
-    jpeg: ['jpeg', 'jpg', 'jpe'],
-    pcx: 'pcx',
-    png: 'png',
-    'svg+xml': ['svg', 'svgz'],
-    tiff: ['tiff', 'tif'],
-    'x-icon': 'ico',
-    bmp: 'bmp',
-    webp: 'webp',
-    'x-pict': ['pic', 'pct'],
-    'x-tga': 'tga',
-    'cis-cod': 'cod'
-  },
-  text: {
-    'cache-manifest': ['manifest', 'appcache'],
-    css: 'css',
-    csv: 'csv',
-    html: ['html', 'htm', 'shtml', 'stm'],
-    mathml: 'mml',
-    plain: ['txt', 'text', 'brf', 'conf', 'def', 'list', 'log', 'in', 'bas'],
-    richtext: 'rtx',
-    'tab-separated-values': 'tsv',
-    'x-bibtex': 'bib'
-  },
-  video: {
-    mpeg: ['mpeg', 'mpg', 'mpe', 'm1v', 'm2v', 'mp2', 'mpa', 'mpv2'],
-    mp4: ['mp4', 'mp4v', 'mpg4'],
-    quicktime: ['qt', 'mov'],
-    ogg: 'ogv',
-    'vnd.mpegurl': ['mxu', 'm4u'],
-    'x-flv': 'flv',
-    'x-la-asf': ['lsf', 'lsx'],
-    'x-mng': 'mng',
-    'x-ms-asf': ['asf', 'asx', 'asr'],
-    'x-ms-wm': 'wm',
-    'x-ms-wmv': 'wmv',
-    'x-ms-wmx': 'wmx',
-    'x-ms-wvx': 'wvx',
-    'x-msvideo': 'avi',
-    'x-sgi-movie': 'movie',
-    'x-matroska': ['mpv', 'mkv', 'mk3d', 'mks'],
-    '3gpp2': '3g2',
-    h261: 'h261',
-    h263: 'h263',
-    h264: 'h264',
-    jpeg: 'jpgv',
-    jpm: ['jpm', 'jpgm'],
-    mj2: ['mj2', 'mjp2'],
-    'vnd.ms-playready.media.pyv': 'pyv',
-    'vnd.uvvu.mp4': ['uvu', 'uvvu'],
-    'vnd.vivo': 'viv',
-    webm: 'webm',
-    'x-f4v': 'f4v',
-    'x-m4v': 'm4v',
-    'x-ms-vob': 'vob',
-    'x-smv': 'smv'
-  }
-};
-var mime_mimeTypes = function () {
-  var type,
-    subtype,
-    val,
-    index,
-    mimeTypes = {};
-  for (type in table) {
-    if (Object.prototype.hasOwnProperty.call(table, type)) {
-      for (subtype in table[type]) {
-        if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
-          val = table[type][subtype];
-          if (typeof val == 'string') {
-            mimeTypes[val] = type + '/' + subtype;
-          } else {
-            for (index = 0; index < val.length; index++) {
-              mimeTypes[val[index]] = type + '/' + subtype;
-            }
-          }
-        }
-      }
-    }
-  }
-  return mimeTypes;
-}();
-var defaultValue = 'text/plain'; //"application/octet-stream";
-
-function lookup(filename) {
-  return filename && mime_mimeTypes[filename.split('.').pop().toLowerCase()] || defaultValue;
-}
-/* harmony default export */ const mime = ({
-  lookup
-});
+// EXTERNAL MODULE: ./src/utils/mime.js
+var mime = __webpack_require__(10);
 ;// ./src/resources.js
 
 
@@ -8474,8 +8561,8 @@ class Resources {
    * @return {Promise<string>} Promise resolves with url string
    */
   createUrl(url) {
-    var parsedUrl = new utils_url(url);
-    var mimeType = mime.lookup(parsedUrl.filename);
+    var parsedUrl = new (url_default())(url);
+    var mimeType = mime/* default */.A.lookup(parsedUrl.filename);
     if (this.settings.archive) {
       return this.settings.archive.createUrl(url, {
         base64: this.settings.replacements === 'base64'
@@ -8483,13 +8570,13 @@ class Resources {
     } else {
       if (this.settings.replacements === 'base64') {
         return this.settings.request(url, 'blob').then(blob => {
-          return blob2base64(blob);
+          return (0,core.blob2base64)(blob);
         }).then(blob => {
-          return createBase64Url(blob, mimeType);
+          return (0,core.createBase64Url)(blob, mimeType);
         });
       } else {
         return this.settings.request(url, 'blob').then(blob => {
-          return createBlobUrl(blob, mimeType);
+          return (0,core.createBlobUrl)(blob, mimeType);
         });
       }
     }
@@ -8552,7 +8639,7 @@ class Resources {
    */
   createCssFile(href) {
     var newUrl;
-    if (path_default().isAbsolute(href)) {
+    if (path_webpack_path_default().isAbsolute(href)) {
       return new Promise(function (resolve) {
         resolve();
       });
@@ -8570,7 +8657,7 @@ class Resources {
     // Get asset links relative to css file
     var relUrls = this.urls.map(assetHref => {
       var resolved = this.settings.resolver(assetHref);
-      var relative = new utils_path(absolute).relative(resolved);
+      var relative = new (path_default())(absolute).relative(resolved);
       return relative;
     });
     if (!textResponse) {
@@ -8581,13 +8668,13 @@ class Resources {
     }
     return textResponse.then(text => {
       // Replacements in the css text
-      text = substitute(text, relUrls, this.replacementUrls);
+      text = (0,replacements.substitute)(text, relUrls, this.replacementUrls);
 
       // Get the new url
       if (this.settings.replacements === 'base64') {
-        newUrl = createBase64Url(text, 'text/css');
+        newUrl = (0,core.createBase64Url)(text, 'text/css');
       } else {
-        newUrl = createBlobUrl(text, 'text/css');
+        newUrl = (0,core.createBlobUrl)(text, 'text/css');
       }
       return newUrl;
     }, () => {
@@ -8610,7 +8697,7 @@ class Resources {
     // Get Urls relative to current sections
     return this.urls.map(function (href) {
       var resolved = resolver(href);
-      var relative = new utils_path(absolute).relative(resolved);
+      var relative = new (path_default())(absolute).relative(resolved);
       return relative;
     }.bind(this));
   }
@@ -8648,7 +8735,7 @@ class Resources {
     } else {
       relUrls = this.urls;
     }
-    return substitute(content, relUrls, this.replacementUrls);
+    return (0,replacements.substitute)(content, relUrls, this.replacementUrls);
   }
   destroy() {
     this.settings = undefined;
@@ -8694,8 +8781,8 @@ class PageList {
    * @param  {document} xml
    */
   parse(xml) {
-    var html = qs(xml, 'html');
-    var ncx = qs(xml, 'ncx');
+    var html = (0,core.qs)(xml, 'html');
+    var ncx = (0,core.qs)(xml, 'ncx');
     if (html) {
       return this.parseNav(xml);
     } else if (ncx) {
@@ -8710,8 +8797,8 @@ class PageList {
    * @return {PageList.item[]} list
    */
   parseNav(navHtml) {
-    var navElement = querySelectorByType(navHtml, 'nav', 'page-list');
-    var navItems = navElement ? qsa(navElement, 'li') : [];
+    var navElement = (0,core.querySelectorByType)(navHtml, 'nav', 'page-list');
+    var navItems = navElement ? (0,core.qsa)(navElement, 'li') : [];
     var length = navItems.length;
     var i;
     var list = [];
@@ -8730,9 +8817,9 @@ class PageList {
     var pageList;
     var pageTargets;
     var length = 0;
-    pageList = qs(navXml, 'pageList');
+    pageList = (0,core.qs)(navXml, 'pageList');
     if (!pageList) return list;
-    pageTargets = qsa(pageList, 'pageTarget');
+    pageTargets = (0,core.qsa)(pageList, 'pageTarget');
     length = pageTargets.length;
     if (!pageTargets || pageTargets.length === 0) {
       return list;
@@ -8744,10 +8831,10 @@ class PageList {
     return list;
   }
   ncxItem(item) {
-    var navLabel = qs(item, 'navLabel');
-    var navLabelText = qs(navLabel, 'text');
+    var navLabel = (0,core.qs)(item, 'navLabel');
+    var navLabelText = (0,core.qs)(navLabel, 'text');
     var pageText = navLabelText.textContent;
-    var content = qs(item, 'content');
+    var content = (0,core.qs)(item, 'content');
     var href = content.getAttribute('src');
     var page = parseInt(pageText, 10);
     return {
@@ -8763,7 +8850,7 @@ class PageList {
    * @return {object} pageListItem
    */
   item(item) {
-    var content = qs(item, 'a'),
+    var content = (0,core.qs)(item, 'a'),
       href = content.getAttribute('href') || '',
       text = content.textContent || '',
       page = parseInt(text),
@@ -8823,14 +8910,14 @@ class PageList {
 
     // check if the cfi is in the location list
     // var index = this.locations.indexOf(cfi);
-    var index = indexOfSorted(cfi, this.locations, this.epubcfi.compare);
+    var index = (0,core.indexOfSorted)(cfi, this.locations, this.epubcfi.compare);
     if (index != -1) {
       pg = this.pages[index];
     } else {
       // Otherwise add it to the list of locations
       // Insert it in the correct position in the locations page
       //index = EPUBJS.core.insert(cfi, this.locations, this.epubcfi.compare);
-      index = locationOf(cfi, this.locations, this.epubcfi.compare);
+      index = (0,core.locationOf)(cfi, this.locations, this.epubcfi.compare);
       // Get the page at the location just before the new one, or return the first
       pg = index - 1 >= 0 ? this.pages[index - 1] : this.pages[0];
       if (pg !== undefined) {
@@ -9134,8 +9221,8 @@ class Layout {
       }
     });
     if (Object.keys(props).length > 0) {
-      let newProps = extend(this.props, props);
-      this.emit(EVENTS.LAYOUT.UPDATED, newProps, props);
+      let newProps = (0,core.extend)(this.props, props);
+      this.emit(constants/* EVENTS */.qY.LAYOUT.UPDATED, newProps, props);
     }
   }
 }
@@ -9245,7 +9332,7 @@ class Themes {
    * @param {string} input
    */
   registerUrl(name, input) {
-    var url = new utils_url(input);
+    var url = new (url_default())(input);
     this._themes[name] = {
       url: url.toString()
     };
@@ -9648,7 +9735,7 @@ class Annotation {
       result = view.mark(cfiRange, data, cb);
     }
     this.mark = result;
-    this.emit(EVENTS.ANNOTATION.ATTACH, result);
+    this.emit(constants/* EVENTS */.qY.ANNOTATION.ATTACH, result);
     return result;
   }
 
@@ -9672,7 +9759,7 @@ class Annotation {
       }
     }
     this.mark = undefined;
-    this.emit(EVENTS.ANNOTATION.DETACH, result);
+    this.emit(constants/* EVENTS */.qY.ANNOTATION.DETACH, result);
     return result;
   }
 
@@ -9817,7 +9904,7 @@ class Mapping {
       found = this.walk($el, node => {
         var left, right, top, bottom;
         var elPos;
-        elPos = nodeBounds(node);
+        elPos = (0,core.nodeBounds)(node);
         if (this.horizontal && this.direction === 'ltr') {
           left = this.horizontal ? elPos.left : elPos.top;
           right = this.horizontal ? elPos.right : elPos.bottom;
@@ -9880,7 +9967,7 @@ class Mapping {
       found = this.walk($el, node => {
         var left, right, top, bottom;
         var elPos;
-        elPos = nodeBounds(node);
+        elPos = (0,core.nodeBounds)(node);
         if (this.horizontal && this.direction === 'ltr') {
           left = Math.round(elPos.left);
           right = Math.round(elPos.right);
@@ -10131,7 +10218,7 @@ class Contents {
     };
     this.sectionIndex = sectionIndex || 0;
     this.cfiBase = cfiBase || '';
-    this.epubReadingSystem('epub.js', EPUBJS_VERSION);
+    this.epubReadingSystem('epub.js', constants/* EPUBJS_VERSION */.JX);
     this.called = 0;
     this.active = true;
     this.listeners();
@@ -10141,7 +10228,7 @@ class Contents {
    * Get DOM events that are listened for and passed along
    */
   static get listenedEvents() {
-    return DOM_EVENTS;
+    return constants/* DOM_EVENTS */.py;
   }
 
   /**
@@ -10152,7 +10239,7 @@ class Contents {
   width(w) {
     // var frame = this.documentElement;
     var frame = this.content;
-    if (w && isNumber(w)) {
+    if (w && (0,core.isNumber)(w)) {
       w = w + 'px';
     }
     if (w) {
@@ -10170,7 +10257,7 @@ class Contents {
   height(h) {
     // var frame = this.documentElement;
     var frame = this.content;
-    if (h && isNumber(h)) {
+    if (h && (0,core.isNumber)(h)) {
       h = h + 'px';
     }
     if (h) {
@@ -10187,7 +10274,7 @@ class Contents {
    */
   contentWidth(w) {
     var content = this.content || this.document.body;
-    if (w && isNumber(w)) {
+    if (w && (0,core.isNumber)(w)) {
       w = w + 'px';
     }
     if (w) {
@@ -10203,7 +10290,7 @@ class Contents {
    */
   contentHeight(h) {
     var content = this.content || this.document.body;
-    if (h && isNumber(h)) {
+    if (h && (0,core.isNumber)(h)) {
       h = h + 'px';
     }
     if (h) {
@@ -10221,7 +10308,7 @@ class Contents {
     let width;
     let range = this.document.createRange();
     let content = this.content || this.document.body;
-    let border = borders(content);
+    let border = (0,core.borders)(content);
 
     // Select the contents of frame
     range.selectNodeContents(content);
@@ -10372,7 +10459,7 @@ class Contents {
         parsed.scalable = _scalable[1];
       }
     }
-    settings = defaults(options || {}, parsed);
+    settings = (0,core.defaults)(options || {}, parsed);
     if (options) {
       if (settings.width) {
         newContent.push('width=' + settings.width);
@@ -10414,7 +10501,7 @@ class Contents {
    * @private
    */
   expand() {
-    this.emit(EVENTS.CONTENTS.EXPAND);
+    this.emit(constants/* EVENTS */.qY.CONTENTS.EXPAND);
   }
 
   /**
@@ -10471,7 +10558,7 @@ class Contents {
         height: height
       };
       this.onResize && this.onResize(this._size);
-      this.emit(EVENTS.CONTENTS.RESIZE, this._size);
+      this.emit(constants/* EVENTS */.qY.CONTENTS.RESIZE, this._size);
     }
   }
 
@@ -10891,7 +10978,7 @@ class Contents {
       return;
     }
     this._triggerEvent = this.triggerEvent.bind(this);
-    DOM_EVENTS.forEach(function (eventName) {
+    constants/* DOM_EVENTS */.py.forEach(function (eventName) {
       this.document.addEventListener(eventName, this._triggerEvent, {
         passive: true
       });
@@ -10906,7 +10993,7 @@ class Contents {
     if (!this.document) {
       return;
     }
-    DOM_EVENTS.forEach(function (eventName) {
+    constants/* DOM_EVENTS */.py.forEach(function (eventName) {
       this.document.removeEventListener(eventName, this._triggerEvent, {
         passive: true
       });
@@ -10975,8 +11062,8 @@ class Contents {
       if (!range.collapsed) {
         // cfirange = this.section.cfiFromRange(range);
         cfirange = new epubcfi(range, this.cfiBase).toString();
-        this.emit(EVENTS.CONTENTS.SELECTED, cfirange);
-        this.emit(EVENTS.CONTENTS.SELECTED_RANGE, range);
+        this.emit(constants/* EVENTS */.qY.CONTENTS.SELECTED, cfirange);
+        this.emit(constants/* EVENTS */.qY.CONTENTS.SELECTED_RANGE, range);
       }
     }
   }
@@ -11051,10 +11138,10 @@ class Contents {
    * @param {number} gap
    */
   columns(width, height, columnWidth, gap, dir) {
-    let COLUMN_AXIS = prefixed('column-axis');
-    let COLUMN_GAP = prefixed('column-gap');
-    let COLUMN_WIDTH = prefixed('column-width');
-    let COLUMN_FILL = prefixed('column-fill');
+    let COLUMN_AXIS = (0,core.prefixed)('column-axis');
+    let COLUMN_GAP = (0,core.prefixed)('column-gap');
+    let COLUMN_WIDTH = (0,core.prefixed)('column-width');
+    let COLUMN_FILL = (0,core.prefixed)('column-fill');
     let writingMode = this.writingMode();
     let axis = writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
     this.layoutStyle('paginated');
@@ -11179,8 +11266,8 @@ class Contents {
    * @private
    */
   linksHandler() {
-    replaceLinks(this.content, href => {
-      this.emit(EVENTS.CONTENTS.LINK_CLICKED, href);
+    (0,replacements.replaceLinks)(this.content, href => {
+      this.emit(constants/* EVENTS */.qY.CONTENTS.LINK_CLICKED, href);
     });
   }
 
@@ -11189,7 +11276,7 @@ class Contents {
    * @param {string} [mode="horizontal-tb"] "horizontal-tb" | "vertical-rl" | "vertical-lr"
    */
   writingMode(mode) {
-    let WRITING_MODE = prefixed('writing-mode');
+    let WRITING_MODE = (0,core.prefixed)('writing-mode');
     if (mode && this.documentElement) {
       this.documentElement.style[WRITING_MODE] = mode;
     }
@@ -11565,7 +11652,7 @@ class StyledPane extends Pane {
 }
 class IframeView {
   constructor(section, options) {
-    this.settings = extend({
+    this.settings = (0,core.extend)({
       ignoreClass: '',
       axis: undefined,
       //options.layout && options.layout.props.flow === "scrolled" ? "vertical" : "horizontal",
@@ -11580,7 +11667,7 @@ class IframeView {
       allowPopups: false,
       transparency: false // New option for transparent background
     }, options || {});
-    this.id = 'epubjs-view-' + uuid();
+    this.id = 'epubjs-view-' + (0,core.uuid)();
     this.section = section;
     this.index = section.index;
     this.element = this.container(this.settings.axis);
@@ -11662,7 +11749,7 @@ class IframeView {
     this._height = 0;
     this.element.setAttribute('ref', this.index);
     this.added = true;
-    this.elementBounds = bounds(this.element);
+    this.elementBounds = (0,core.bounds)(this.element);
 
     // if(width || height){
     //   this.resize(width, height);
@@ -11710,9 +11797,9 @@ class IframeView {
         this.layout.delta = this.layout.height;
       }
       this.setAxis(axis);
-      this.emit(EVENTS.VIEWS.AXIS, axis);
+      this.emit(constants/* EVENTS */.qY.VIEWS.AXIS, axis);
       this.setWritingMode(writingMode);
-      this.emit(EVENTS.VIEWS.WRITING_MODE, writingMode);
+      this.emit(constants/* EVENTS */.qY.VIEWS.WRITING_MODE, writingMode);
 
       // apply the layout function to the contents
       this.layout.format(this.contents, this.section, this.axis);
@@ -11728,12 +11815,12 @@ class IframeView {
         resolve();
       });
     }.bind(this), function (e) {
-      this.emit(EVENTS.VIEWS.LOAD_ERROR, e);
+      this.emit(constants/* EVENTS */.qY.VIEWS.LOAD_ERROR, e);
       return new Promise((resolve, reject) => {
         reject(e);
       });
     }.bind(this)).then(function () {
-      this.emit(EVENTS.VIEWS.RENDERED, this.section);
+      this.emit(constants/* EVENTS */.qY.VIEWS.RENDERED, this.section);
     }.bind(this));
   }
   reset() {
@@ -11767,25 +11854,25 @@ class IframeView {
 
   // Lock an axis to element dimensions, taking borders into account
   lock(what, width, height) {
-    var elBorders = borders(this.element);
+    var elBorders = (0,core.borders)(this.element);
     var iframeBorders;
     if (this.iframe) {
-      iframeBorders = borders(this.iframe);
+      iframeBorders = (0,core.borders)(this.iframe);
     } else {
       iframeBorders = {
         width: 0,
         height: 0
       };
     }
-    if (what == 'width' && isNumber(width)) {
+    if (what == 'width' && (0,core.isNumber)(width)) {
       this.lockedWidth = width - elBorders.width - iframeBorders.width;
       // this.resize(this.lockedWidth, width); //  width keeps ratio correct
     }
-    if (what == 'height' && isNumber(height)) {
+    if (what == 'height' && (0,core.isNumber)(height)) {
       this.lockedHeight = height - elBorders.height - iframeBorders.height;
       // this.resize(width, this.lockedHeight);
     }
-    if (what === 'both' && isNumber(width) && isNumber(height)) {
+    if (what === 'both' && (0,core.isNumber)(width) && (0,core.isNumber)(height)) {
       this.lockedWidth = width - elBorders.width - iframeBorders.width;
       this.lockedHeight = height - elBorders.height - iframeBorders.height;
       // this.resize(this.lockedWidth, this.lockedHeight);
@@ -11838,12 +11925,12 @@ class IframeView {
   }
   reframe(width, height) {
     var size;
-    if (isNumber(width)) {
+    if ((0,core.isNumber)(width)) {
       this.element.style.width = width + 'px';
       this.iframe.style.width = width + 'px';
       this._width = width;
     }
-    if (isNumber(height)) {
+    if ((0,core.isNumber)(height)) {
       this.element.style.height = height + 'px';
       this.iframe.style.height = height + 'px';
       this._height = height;
@@ -11867,12 +11954,12 @@ class IframeView {
       }
     });
     this.onResize(this, size);
-    this.emit(EVENTS.VIEWS.RESIZED, size);
+    this.emit(constants/* EVENTS */.qY.VIEWS.RESIZED, size);
     this.prevBounds = size;
-    this.elementBounds = bounds(this.element);
+    this.elementBounds = (0,core.bounds)(this.element);
   }
   load(contents) {
-    var loading = new defer();
+    var loading = new core.defer();
     var loaded = loading.promise;
     if (!this.iframe) {
       loading.reject(new Error('No Iframe Available'));
@@ -11882,7 +11969,7 @@ class IframeView {
       this.onLoad(event, loading);
     }.bind(this);
     if (this.settings.method === 'blobUrl') {
-      this.blobUrl = createBlobUrl(contents, 'application/xhtml+xml');
+      this.blobUrl = (0,core.createBlobUrl)(contents, 'application/xhtml+xml');
       this.iframe.src = this.blobUrl;
       this.element.appendChild(this.iframe);
     } else if (this.settings.method === 'srcdoc') {
@@ -11932,7 +12019,7 @@ class IframeView {
       link.setAttribute('href', this.section.canonical);
       this.document.querySelector('head').appendChild(link);
     }
-    this.contents.on(EVENTS.CONTENTS.EXPAND, () => {
+    this.contents.on(constants/* EVENTS */.qY.CONTENTS.EXPAND, () => {
       if (this.displayed && this.iframe) {
         this.expand();
         if (this.contents) {
@@ -11940,7 +12027,7 @@ class IframeView {
         }
       }
     });
-    this.contents.on(EVENTS.CONTENTS.RESIZE, () => {
+    this.contents.on(constants/* EVENTS */.qY.CONTENTS.RESIZE, () => {
       if (this.displayed && this.iframe) {
         this.expand();
         if (this.contents) {
@@ -11977,10 +12064,10 @@ class IframeView {
     //TODO: remove content listeners for expanding
   }
   display(request) {
-    var displayed = new defer();
+    var displayed = new core.defer();
     if (!this.displayed) {
       this.render(request).then(function () {
-        this.emit(EVENTS.VIEWS.DISPLAYED, this);
+        this.emit(constants/* EVENTS */.qY.VIEWS.DISPLAYED, this);
         this.onDisplayed(this);
         this.displayed = true;
         displayed.resolve(this);
@@ -12002,14 +12089,14 @@ class IframeView {
       this.iframe.offsetWidth;
       this.iframe.style.transform = null;
     }
-    this.emit(EVENTS.VIEWS.SHOWN, this);
+    this.emit(constants/* EVENTS */.qY.VIEWS.SHOWN, this);
   }
   hide() {
     // this.iframe.style.display = "none";
     this.element.style.visibility = 'hidden';
     this.iframe.style.visibility = 'hidden';
     this.stopExpanding = true;
-    this.emit(EVENTS.VIEWS.HIDDEN, this);
+    this.emit(constants/* EVENTS */.qY.VIEWS.HIDDEN, this);
   }
   offset() {
     return {
@@ -12041,7 +12128,7 @@ class IframeView {
   }
   bounds(force) {
     if (force || !this.elementBounds) {
-      this.elementBounds = bounds(this.element);
+      this.elementBounds = (0,core.bounds)(this.element);
     }
     return this.elementBounds;
   }
@@ -12065,7 +12152,7 @@ class IframeView {
     }
     let range = this.contents.range(cfiRange);
     let emitter = () => {
-      this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
+      this.emit(constants/* EVENTS */.qY.VIEWS.MARK_CLICKED, cfiRange, data);
     };
     data['epubcfi'] = cfiRange;
     if (!this.pane) {
@@ -12098,7 +12185,7 @@ class IframeView {
     }, styles);
     let range = this.contents.range(cfiRange);
     let emitter = () => {
-      this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
+      this.emit(constants/* EVENTS */.qY.VIEWS.MARK_CLICKED, cfiRange, data);
     };
     data['epubcfi'] = cfiRange;
     if (!this.pane) {
@@ -12135,7 +12222,7 @@ class IframeView {
     let container = range.commonAncestorContainer;
     let parent = container.nodeType === 1 ? container : container.parentNode;
     let emitter = () => {
-      this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
+      this.emit(constants/* EVENTS */.qY.VIEWS.MARK_CLICKED, cfiRange, data);
     };
     if (range.collapsed && container.nodeType === 1) {
       range = new Range();
@@ -12245,7 +12332,7 @@ class IframeView {
       this.unmark(cfiRange);
     }
     if (this.blobUrl) {
-      revokeBlobUrl(this.blobUrl);
+      (0,core.revokeBlobUrl)(this.blobUrl);
     }
     if (this.displayed) {
       this.displayed = false;
@@ -12271,97 +12358,17 @@ class IframeView {
 }
 event_emitter_default()(IframeView.prototype);
 /* harmony default export */ const iframe = (IframeView);
-;// ./src/utils/scrolltype.js
-// Detect RTL scroll type
-// Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
-function scrollType() {
-  var type = 'reverse';
-  var definer = createDefiner();
-  document.body.appendChild(definer);
-  if (definer.scrollLeft > 0) {
-    type = 'default';
-  } else {
-    if (typeof Element !== 'undefined' && Element.prototype.scrollIntoView) {
-      definer.children[0].children[1].scrollIntoView();
-      if (definer.scrollLeft < 0) {
-        type = 'negative';
-      }
-    } else {
-      definer.scrollLeft = 1;
-      if (definer.scrollLeft === 0) {
-        type = 'negative';
-      }
-    }
-  }
-  document.body.removeChild(definer);
-  return type;
-}
-function createDefiner() {
-  var definer = document.createElement('div');
-  definer.dir = 'rtl';
-  definer.style.position = 'fixed';
-  definer.style.width = '1px';
-  definer.style.height = '1px';
-  definer.style.top = '0px';
-  definer.style.left = '0px';
-  definer.style.overflow = 'hidden';
-  var innerDiv = document.createElement('div');
-  innerDiv.style.width = '2px';
-  var spanA = document.createElement('span');
-  spanA.style.width = '1px';
-  spanA.style.display = 'inline-block';
-  var spanB = document.createElement('span');
-  spanB.style.width = '1px';
-  spanB.style.display = 'inline-block';
-  innerDiv.appendChild(spanA);
-  innerDiv.appendChild(spanB);
-  definer.appendChild(innerDiv);
-  return definer;
-}
-;// ./src/utils/helpers.js
-// Utility functions
-
-/**
- * Creates a debounced function that delays invoking the provided function
- * until after the specified wait time has elapsed since the last invocation.
- * @param {Function} func - The function to debounce.
- * @param {number} wait - The number of milliseconds to delay.
- * @returns {Function} - The debounced function.
- */
-function debounce(func, wait) {
-  let timeout;
-  return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
-
-/**
- * Creates a throttled function that only invokes the provided function
- * at most once per every specified wait time.
- * @param {Function} func - The function to throttle.
- * @param {number} wait - The number of milliseconds to throttle.
- * @returns {Function} - The throttled function.
- */
-function throttle(func, wait) {
-  let lastCall = 0;
-  return function (...args) {
-    const now = Date.now();
-    if (now - lastCall >= wait) {
-      lastCall = now;
-      func.apply(this, args);
-    }
-  };
-}
-
-// Add other helper functions here as needed
+// EXTERNAL MODULE: ./src/utils/scrolltype.js
+var scrolltype = __webpack_require__(895);
+// EXTERNAL MODULE: ./src/utils/helpers.js
+var helpers = __webpack_require__(17);
 ;// ./src/managers/helpers/stage.js
 
 
 class Stage {
   constructor(_options) {
     this.settings = _options || {};
-    this.id = 'epubjs-container-' + uuid();
+    this.id = 'epubjs-container-' + (0,core.uuid)();
     this.container = this.create(this.settings);
     if (this.settings.hidden) {
       this.wrapper = this.wrap(this.container);
@@ -12378,11 +12385,11 @@ class Stage {
     let overflow = options.overflow || false;
     let axis = options.axis || 'vertical';
     let direction = options.direction;
-    extend(this.settings, options);
-    if (options.height && isNumber(options.height)) {
+    (0,core.extend)(this.settings, options);
+    if (options.height && (0,core.isNumber)(options.height)) {
       height = options.height + 'px';
     }
-    if (options.width && isNumber(options.width)) {
+    if (options.width && (0,core.isNumber)(options.width)) {
       width = options.width + 'px';
     }
 
@@ -12440,7 +12447,7 @@ class Stage {
   }
   getElement(_element) {
     var element;
-    if (isElement(_element)) {
+    if ((0,core.isElement)(_element)) {
       element = _element;
     } else if (typeof _element === 'string') {
       element = document.getElementById(_element);
@@ -12471,8 +12478,8 @@ class Stage {
   onResize(func) {
     // Only listen to window for resize event if width and height are not fixed.
     // This applies if it is set to a percent or auto.
-    if (!isNumber(this.settings.width) || !isNumber(this.settings.height)) {
-      this.resizeFunc = throttle(func, 50);
+    if (!(0,core.isNumber)(this.settings.width) || !(0,core.isNumber)(this.settings.height)) {
+      this.resizeFunc = (0,helpers/* throttle */.nF)(func, 50);
       window.addEventListener('resize', this.resizeFunc, false);
     }
   }
@@ -12493,7 +12500,7 @@ class Stage {
         this.container.style.width = width + 'px';
       }
     } else {
-      if (isNumber(width)) {
+      if ((0,core.isNumber)(width)) {
         this.container.style.width = width + 'px';
       } else {
         this.container.style.width = width;
@@ -12506,16 +12513,16 @@ class Stage {
         this.container.style.height = height + 'px';
       }
     } else {
-      if (isNumber(height)) {
+      if ((0,core.isNumber)(height)) {
         this.container.style.height = height + 'px';
       } else {
         this.container.style.height = height;
       }
     }
-    if (!isNumber(width)) {
+    if (!(0,core.isNumber)(width)) {
       width = this.container.clientWidth;
     }
-    if (!isNumber(height)) {
+    if (!(0,core.isNumber)(height)) {
       height = this.container.clientHeight;
     }
     this.containerStyles = window.getComputedStyle(this.container);
@@ -12527,7 +12534,7 @@ class Stage {
     };
 
     // Bounds not set, get them from window
-    let _windowBounds = windowBounds();
+    let _windowBounds = (0,core.windowBounds)();
     let bodyStyles = window.getComputedStyle(document.body);
     let bodyPadding = {
       left: parseFloat(bodyStyles['padding-left']) || 0,
@@ -12552,7 +12559,7 @@ class Stage {
       box = this.container && this.container.getBoundingClientRect();
     }
     if (!box || !box.width || !box.height) {
-      return windowBounds();
+      return (0,core.windowBounds)();
     } else {
       return box;
     }
@@ -12792,8 +12799,8 @@ class DefaultViewManager {
     this.View = options.view;
     this.request = options.request;
     this.renditionQueue = options.queue;
-    this.q = new queue(this);
-    this.settings = extend(this.settings || {}, {
+    this.q = new (queue_default())(this);
+    this.settings = (0,core.extend)(this.settings || {}, {
       infinite: true,
       hidden: false,
       width: undefined,
@@ -12806,7 +12813,7 @@ class DefaultViewManager {
       allowScriptedContent: false,
       allowPopups: false
     });
-    extend(this.settings, options.settings || {});
+    (0,core.extend)(this.settings, options.settings || {});
     this.viewSettings = {
       ignoreClass: this.settings.ignoreClass,
       axis: this.settings.axis,
@@ -12832,7 +12839,7 @@ class DefaultViewManager {
       this.overflow = this.settings.overflow;
     }
     this.settings.size = size;
-    this.settings.rtlScrollType = scrollType();
+    this.settings.rtlScrollType = (0,scrolltype/* default */.Ay)();
 
     // Save the stage
     this.stage = new stage({
@@ -12908,12 +12915,12 @@ class DefaultViewManager {
     this.rendered = false;
 
     /*
-    clearTimeout(this.trimTimeout);
-    if(this.settings.hidden) {
-    this.element.removeChild(this.wrapper);
-    } else {
-    this.element.removeChild(this.container);
-    }
+       clearTimeout(this.trimTimeout);
+      if(this.settings.hidden) {
+        this.element.removeChild(this.wrapper);
+      } else {
+        this.element.removeChild(this.container);
+      }
     */
   }
   onOrientationChange() {
@@ -12935,7 +12942,7 @@ class DefaultViewManager {
       if (this.optsSettings.resizeOnOrientationChange) {
         this.resize();
       }
-      this.emit(EVENTS.MANAGERS.ORIENTATION_CHANGE, orientation);
+      this.emit(constants/* EVENTS */.qY.MANAGERS.ORIENTATION_CHANGE, orientation);
     }.bind(this), 500);
   }
   onResized() {
@@ -12946,7 +12953,7 @@ class DefaultViewManager {
 
     // For Safari, wait for orientation to catch up
     // if the window is a square
-    this.winBounds = windowBounds();
+    this.winBounds = (0,core.windowBounds)();
     if (this.orientationTimeout && this.winBounds.width === this.winBounds.height) {
       // reset the stage size for next resize
       this._stageSize = undefined;
@@ -12966,13 +12973,13 @@ class DefaultViewManager {
     this.viewSettings.width = this._stageSize.width;
     this.viewSettings.height = this._stageSize.height;
     this.updateLayout();
-    this.emit(EVENTS.MANAGERS.RESIZED, {
+    this.emit(constants/* EVENTS */.qY.MANAGERS.RESIZED, {
       width: this._stageSize.width,
       height: this._stageSize.height
     }, epubcfi);
   }
   createView(section, forceRight) {
-    return new this.View(section, extend(this.viewSettings, {
+    return new this.View(section, (0,core.extend)(this.viewSettings, {
       forceRight
     }));
   }
@@ -12990,11 +12997,11 @@ class DefaultViewManager {
     }
   }
   display(section, target) {
-    var displaying = new defer();
+    var displaying = new core.defer();
     var displayed = displaying.promise;
 
     // Check if moving to target is needed
-    if (target === section.href || isNumber(target)) {
+    if (target === section.href || (0,core.isNumber)(target)) {
       target = undefined;
     }
 
@@ -13049,10 +13056,10 @@ class DefaultViewManager {
     return displayed;
   }
   afterDisplayed(view) {
-    this.emit(EVENTS.MANAGERS.ADDED, view);
+    this.emit(constants/* EVENTS */.qY.MANAGERS.ADDED, view);
   }
   afterResized(view) {
-    this.emit(EVENTS.MANAGERS.RESIZE, view.section);
+    this.emit(constants/* EVENTS */.qY.MANAGERS.RESIZE, view.section);
   }
   moveTo(offset, width) {
     var distX = 0,
@@ -13071,9 +13078,9 @@ class DefaultViewManager {
     }
     if (this.settings.direction === 'rtl') {
       /***
-      the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
-      to distX or use `Math.ceil` function, or multiply offset.left by -1
-      before `Math.floor`
+        the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
+        to distX or use `Math.ceil` function, or multiply offset.left by -1
+        before `Math.floor`
       */
       distX = distX + this.layout.delta;
       distX = distX - width;
@@ -13087,10 +13094,10 @@ class DefaultViewManager {
     // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
     view.onDisplayed = this.afterDisplayed.bind(this);
     view.onResize = this.afterResized.bind(this);
-    view.on(EVENTS.VIEWS.AXIS, axis => {
+    view.on(constants/* EVENTS */.qY.VIEWS.AXIS, axis => {
       this.updateAxis(axis);
     });
-    view.on(EVENTS.VIEWS.WRITING_MODE, mode => {
+    view.on(constants/* EVENTS */.qY.VIEWS.WRITING_MODE, mode => {
       this.updateWritingMode(mode);
     });
     return view.display(this.request);
@@ -13100,26 +13107,26 @@ class DefaultViewManager {
     this.views.append(view);
     view.onDisplayed = this.afterDisplayed.bind(this);
     view.onResize = this.afterResized.bind(this);
-    view.on(EVENTS.VIEWS.AXIS, axis => {
+    view.on(constants/* EVENTS */.qY.VIEWS.AXIS, axis => {
       this.updateAxis(axis);
     });
-    view.on(EVENTS.VIEWS.WRITING_MODE, mode => {
+    view.on(constants/* EVENTS */.qY.VIEWS.WRITING_MODE, mode => {
       this.updateWritingMode(mode);
     });
     return view.display(this.request);
   }
   prepend(section, forceRight) {
     var view = this.createView(section, forceRight);
-    view.on(EVENTS.VIEWS.RESIZED, bounds => {
+    view.on(constants/* EVENTS */.qY.VIEWS.RESIZED, bounds => {
       this.counter(bounds);
     });
     this.views.prepend(view);
     view.onDisplayed = this.afterDisplayed.bind(this);
     view.onResize = this.afterResized.bind(this);
-    view.on(EVENTS.VIEWS.AXIS, axis => {
+    view.on(constants/* EVENTS */.qY.VIEWS.AXIS, axis => {
       this.updateAxis(axis);
     });
-    view.on(EVENTS.VIEWS.WRITING_MODE, mode => {
+    view.on(constants/* EVENTS */.qY.VIEWS.WRITING_MODE, mode => {
       this.updateWritingMode(mode);
     });
     return view.display(this.request);
@@ -13495,13 +13502,13 @@ class DefaultViewManager {
     this.scrollTop = scrollTop;
     this.scrollLeft = scrollLeft;
     if (!this.ignore) {
-      this.emit(EVENTS.MANAGERS.SCROLL, {
+      this.emit(constants/* EVENTS */.qY.MANAGERS.SCROLL, {
         top: scrollTop,
         left: scrollLeft
       });
       clearTimeout(this.afterScrolled);
       this.afterScrolled = setTimeout(function () {
-        this.emit(EVENTS.MANAGERS.SCROLLED, {
+        this.emit(constants/* EVENTS */.qY.MANAGERS.SCROLLED, {
           top: this.scrollTop,
           left: this.scrollLeft
         });
@@ -13646,7 +13653,7 @@ const EASING_EQUATIONS = {
 };
 class Snap {
   constructor(manager, options) {
-    this.settings = extend({
+    this.settings = (0,core.extend)({
       duration: 80,
       minVelocity: 0.2,
       minDistance: 10,
@@ -13727,7 +13734,7 @@ class Snap {
     });
     this.on('touchend', this._onTouchEnd);
     this._afterDisplayed = this.afterDisplayed.bind(this);
-    this.manager.on(EVENTS.MANAGERS.ADDED, this._afterDisplayed);
+    this.manager.on(constants/* EVENTS */.qY.MANAGERS.ADDED, this._afterDisplayed);
   }
   removeListeners() {
     window.removeEventListener('resize', this._onResize);
@@ -13749,7 +13756,7 @@ class Snap {
     });
     this.off('touchend', this._onTouchEnd);
     this._onTouchEnd = undefined;
-    this.manager.off(EVENTS.MANAGERS.ADDED, this._afterDisplayed);
+    this.manager.off(constants/* EVENTS */.qY.MANAGERS.ADDED, this._afterDisplayed);
     this._afterDisplayed = undefined;
   }
   afterDisplayed(view) {
@@ -13851,7 +13858,7 @@ class Snap {
     return this.smoothScrollTo(snapTo);
   }
   smoothScrollTo(destination) {
-    const deferred = new defer();
+    const deferred = new core.defer();
     const start = this.scrollLeft;
     const startTime = this.now();
     const duration = this.settings.duration;
@@ -13913,7 +13920,7 @@ class ContinuousViewManager extends managers_default {
   constructor(options) {
     super(options);
     this.name = 'continuous';
-    this.settings = extend(this.settings || {}, {
+    this.settings = (0,core.extend)(this.settings || {}, {
       infinite: true,
       overflow: undefined,
       axis: undefined,
@@ -13929,7 +13936,7 @@ class ContinuousViewManager extends managers_default {
       allowPopups: false,
       transparency: false
     });
-    extend(this.settings, options.settings || {});
+    (0,core.extend)(this.settings, options.settings || {});
 
     // Gap can be 0, but defaults doesn't handle that
     if (options.settings.gap != 'undefined' && options.settings.gap === 0) {
@@ -13956,7 +13963,7 @@ class ContinuousViewManager extends managers_default {
     }.bind(this));
   }
   fill(_full) {
-    var full = _full || new defer();
+    var full = _full || new core.defer();
     this.q.enqueue(() => {
       return this.check();
     }).then(result => {
@@ -13983,7 +13990,7 @@ class ContinuousViewManager extends managers_default {
     }
   }
   afterResized(view) {
-    this.emit(EVENTS.MANAGERS.RESIZE, view.section);
+    this.emit(constants/* EVENTS */.qY.MANAGERS.RESIZE, view.section);
   }
 
   // Remove Previous Listeners if present
@@ -13995,13 +14002,13 @@ class ContinuousViewManager extends managers_default {
   add(section) {
     var view = this.createView(section);
     this.views.append(view);
-    view.on(EVENTS.VIEWS.RESIZED, () => {
+    view.on(constants/* EVENTS */.qY.VIEWS.RESIZED, () => {
       view.expanded = true;
     });
-    view.on(EVENTS.VIEWS.AXIS, axis => {
+    view.on(constants/* EVENTS */.qY.VIEWS.AXIS, axis => {
       this.updateAxis(axis);
     });
-    view.on(EVENTS.VIEWS.WRITING_MODE, mode => {
+    view.on(constants/* EVENTS */.qY.VIEWS.WRITING_MODE, mode => {
       this.updateWritingMode(mode);
     });
 
@@ -14012,13 +14019,13 @@ class ContinuousViewManager extends managers_default {
   }
   append(section) {
     var view = this.createView(section);
-    view.on(EVENTS.VIEWS.RESIZED, () => {
+    view.on(constants/* EVENTS */.qY.VIEWS.RESIZED, () => {
       view.expanded = true;
     });
-    view.on(EVENTS.VIEWS.AXIS, axis => {
+    view.on(constants/* EVENTS */.qY.VIEWS.AXIS, axis => {
       this.updateAxis(axis);
     });
-    view.on(EVENTS.VIEWS.WRITING_MODE, mode => {
+    view.on(constants/* EVENTS */.qY.VIEWS.WRITING_MODE, mode => {
       this.updateWritingMode(mode);
     });
     this.views.append(view);
@@ -14027,14 +14034,14 @@ class ContinuousViewManager extends managers_default {
   }
   prepend(section) {
     var view = this.createView(section);
-    view.on(EVENTS.VIEWS.RESIZED, bounds => {
+    view.on(constants/* EVENTS */.qY.VIEWS.RESIZED, bounds => {
       this.counter(bounds);
       view.expanded = true;
     });
-    view.on(EVENTS.VIEWS.AXIS, axis => {
+    view.on(constants/* EVENTS */.qY.VIEWS.AXIS, axis => {
       this.updateAxis(axis);
     });
-    view.on(EVENTS.VIEWS.WRITING_MODE, mode => {
+    view.on(constants/* EVENTS */.qY.VIEWS.WRITING_MODE, mode => {
       this.updateWritingMode(mode);
     });
     this.views.prepend(view);
@@ -14056,7 +14063,7 @@ class ContinuousViewManager extends managers_default {
     var offset = typeof _offset != 'undefined' ? _offset : this.settings.offset || 0;
     var isVisible;
     var view;
-    var updating = new defer();
+    var updating = new core.defer();
     var promises = [];
     for (var i = 0; i < viewsLength; i++) {
       view = views[i];
@@ -14095,7 +14102,7 @@ class ContinuousViewManager extends managers_default {
     }
   }
   check(_offsetLeft, _offsetTop) {
-    var checking = new defer();
+    var checking = new core.defer();
     var newViews = [];
     var horizontal = this.settings.axis === 'horizontal';
     var delta = this.settings.offset || 0;
@@ -14171,7 +14178,7 @@ class ContinuousViewManager extends managers_default {
     }
   }
   trim() {
-    var task = new defer();
+    var task = new core.defer();
     var displayed = this.views.displayed();
     var first = displayed[0];
     var last = displayed[displayed.length - 1];
@@ -14235,7 +14242,7 @@ class ContinuousViewManager extends managers_default {
   }
   addScrollListeners() {
     var scroller;
-    this.tick = core_requestAnimationFrame;
+    this.tick = core.requestAnimationFrame;
     let dir = this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default' ? -1 : 1;
     this.scrollDeltaVert = 0;
     this.scrollDeltaHorz = 0;
@@ -14250,7 +14257,7 @@ class ContinuousViewManager extends managers_default {
     }
     this._onScroll = this.onScroll.bind(this);
     scroller.addEventListener('scroll', this._onScroll);
-    this._scrolled = debounce(this.scrolled.bind(this), 30);
+    this._scrolled = (0,helpers/* debounce */.sg)(this.scrolled.bind(this), 30);
     // this.tick.call(window, this.onScroll.bind(this));
 
     this.didScroll = false;
@@ -14299,7 +14306,7 @@ class ContinuousViewManager extends managers_default {
     this.q.enqueue(function () {
       return this.check();
     }.bind(this));
-    this.emit(EVENTS.MANAGERS.SCROLL, {
+    this.emit(constants/* EVENTS */.qY.MANAGERS.SCROLL, {
       top: this.scrollTop,
       left: this.scrollLeft
     });
@@ -14309,7 +14316,7 @@ class ContinuousViewManager extends managers_default {
       if (this.snapper && this.snapper.supportsTouch && this.snapper.needsSnap()) {
         return;
       }
-      this.emit(EVENTS.MANAGERS.SCROLLED, {
+      this.emit(constants/* EVENTS */.qY.MANAGERS.SCROLLED, {
         top: this.scrollTop,
         left: this.scrollLeft
       });
@@ -14401,7 +14408,7 @@ class ContinuousViewManager extends managers_default {
  */
 class Rendition {
   constructor(book, options) {
-    this.settings = extend(this.settings || {}, {
+    this.settings = (0,core.extend)(this.settings || {}, {
       width: null,
       height: null,
       ignoreClass: '',
@@ -14419,7 +14426,7 @@ class Rendition {
       allowScriptedContent: false,
       allowPopups: false
     });
-    extend(this.settings, options);
+    (0,core.extend)(this.settings, options);
     if (typeof this.settings.manager === 'object') {
       this.manager = this.settings.manager;
     }
@@ -14432,13 +14439,13 @@ class Rendition {
      * @memberof Rendition
      */
     this.hooks = {};
-    this.hooks.display = new hook(this);
-    this.hooks.serialize = new hook(this);
-    this.hooks.content = new hook(this);
-    this.hooks.unloaded = new hook(this);
-    this.hooks.layout = new hook(this);
-    this.hooks.render = new hook(this);
-    this.hooks.show = new hook(this);
+    this.hooks.display = new hook/* default */.A(this);
+    this.hooks.serialize = new hook/* default */.A(this);
+    this.hooks.content = new hook/* default */.A(this);
+    this.hooks.unloaded = new hook/* default */.A(this);
+    this.hooks.layout = new hook/* default */.A(this);
+    this.hooks.render = new hook/* default */.A(this);
+    this.hooks.show = new hook/* default */.A(this);
     this.hooks.content.register(this.handleLinks.bind(this));
     this.hooks.content.register(this.passEvents.bind(this));
     this.hooks.content.register(this.adjustImages.bind(this));
@@ -14462,7 +14469,7 @@ class Rendition {
      */
     this.annotations = new annotations(this);
     this.epubcfi = new epubcfi();
-    this.q = new queue(this);
+    this.q = new (queue_default())(this);
 
     /**
      * A Rendered Location Range
@@ -14494,7 +14501,7 @@ class Rendition {
 
     // Hold queue until book is opened
     this.q.enqueue(this.book.opened);
-    this.starting = new defer();
+    this.starting = new core.defer();
     /**
      * @member {promise} started returns after the rendition has started
      * @memberof Rendition
@@ -14585,24 +14592,24 @@ class Rendition {
     this.layout(this.settings.globalLayoutProperties);
 
     // Listen for displayed views
-    this.manager.on(EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
-    this.manager.on(EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
+    this.manager.on(constants/* EVENTS */.qY.MANAGERS.ADDED, this.afterDisplayed.bind(this));
+    this.manager.on(constants/* EVENTS */.qY.MANAGERS.REMOVED, this.afterRemoved.bind(this));
 
     // Listen for resizing
-    this.manager.on(EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
+    this.manager.on(constants/* EVENTS */.qY.MANAGERS.RESIZED, this.onResized.bind(this));
 
     // Listen for rotation
-    this.manager.on(EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
+    this.manager.on(constants/* EVENTS */.qY.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
 
     // Listen for scroll changes
-    this.manager.on(EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
+    this.manager.on(constants/* EVENTS */.qY.MANAGERS.SCROLLED, this.reportLocation.bind(this));
 
     /**
      * Emit that rendering has started
      * @event started
      * @memberof Rendition
      */
-    this.emit(EVENTS.RENDITION.STARTED);
+    this.emit(constants/* EVENTS */.qY.RENDITION.STARTED);
 
     // Start processing queue
     this.starting.resolve();
@@ -14627,7 +14634,7 @@ class Rendition {
        * @event attached
        * @memberof Rendition
        */
-      this.emit(EVENTS.RENDITION.ATTACHED);
+      this.emit(constants/* EVENTS */.qY.RENDITION.ATTACHED);
     }.bind(this));
   }
 
@@ -14656,13 +14663,13 @@ class Rendition {
     if (!this.book) {
       return;
     }
-    var displaying = new defer();
+    var displaying = new core.defer();
     var displayed = displaying.promise;
     var section;
     this.displaying = displaying;
 
     // Check if this is a book percentage
-    if (this.book.locations.length() && isFloat(target)) {
+    if (this.book.locations.length() && (0,core.isFloat)(target)) {
       target = this.book.locations.cfiFromPercentage(parseFloat(target));
     }
     section = this.book.spine.get(target);
@@ -14680,7 +14687,7 @@ class Rendition {
        * @param {Section} section
        * @memberof Rendition
        */
-      this.emit(EVENTS.RENDITION.DISPLAYED, section);
+      this.emit(constants/* EVENTS */.qY.RENDITION.DISPLAYED, section);
       this.reportLocation();
     }, err => {
       /**
@@ -14689,7 +14696,7 @@ class Rendition {
        * @param {Section} section
        * @memberof Rendition
        */
-      this.emit(EVENTS.RENDITION.DISPLAY_ERROR, err);
+      this.emit(constants/* EVENTS */.qY.RENDITION.DISPLAY_ERROR, err);
     });
     return displayed;
   }
@@ -14740,7 +14747,7 @@ class Rendition {
    * @param  {*} view
    */
   afterDisplayed(view) {
-    view.on(EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
+    view.on(constants/* EVENTS */.qY.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
     this.hooks.render.trigger(view, this).then(() => {
       if (view.contents) {
         this.hooks.content.trigger(view.contents, this).then(() => {
@@ -14751,10 +14758,10 @@ class Rendition {
            * @param {View} view
            * @memberof Rendition
            */
-          this.emit(EVENTS.RENDITION.RENDERED, view.section, view);
+          this.emit(constants/* EVENTS */.qY.RENDITION.RENDERED, view.section, view);
         });
       } else {
-        this.emit(EVENTS.RENDITION.RENDERED, view.section, view);
+        this.emit(constants/* EVENTS */.qY.RENDITION.RENDERED, view.section, view);
       }
     });
   }
@@ -14773,7 +14780,7 @@ class Rendition {
        * @param {View} view
        * @memberof Rendition
        */
-      this.emit(EVENTS.RENDITION.REMOVED, view.section, view);
+      this.emit(constants/* EVENTS */.qY.RENDITION.REMOVED, view.section, view);
     });
   }
 
@@ -14790,7 +14797,7 @@ class Rendition {
      * @param {string} epubcfi (optional)
      * @memberof Rendition
      */
-    this.emit(EVENTS.RENDITION.RESIZED, {
+    this.emit(constants/* EVENTS */.qY.RENDITION.RESIZED, {
       width: size.width,
       height: size.height
     }, epubcfi);
@@ -14810,7 +14817,7 @@ class Rendition {
      * @param {string} orientation
      * @memberof Rendition
      */
-    this.emit(EVENTS.RENDITION.ORIENTATION_CHANGE, orientation);
+    this.emit(constants/* EVENTS */.qY.RENDITION.ORIENTATION_CHANGE, orientation);
   }
 
   /**
@@ -14932,8 +14939,8 @@ class Rendition {
 
       // this.mapping = new Mapping(this._layout.props);
 
-      this._layout.on(EVENTS.LAYOUT.UPDATED, (props, changed) => {
-        this.emit(EVENTS.RENDITION.LAYOUT, props, changed);
+      this._layout.on(constants/* EVENTS */.qY.LAYOUT.UPDATED, (props, changed) => {
+        this.emit(constants/* EVENTS */.qY.RENDITION.LAYOUT, props, changed);
       });
     }
     if (this.manager && this._layout) {
@@ -14991,14 +14998,14 @@ class Rendition {
               return;
             }
             this.location = located;
-            this.emit(EVENTS.RENDITION.LOCATION_CHANGED, {
+            this.emit(constants/* EVENTS */.qY.RENDITION.LOCATION_CHANGED, {
               index: this.location.start.index,
               href: this.location.start.href,
               start: this.location.start.cfi,
               end: this.location.end.cfi,
               percentage: this.location.start.percentage
             });
-            this.emit(EVENTS.RENDITION.RELOCATED, this.location);
+            this.emit(constants/* EVENTS */.qY.RENDITION.RELOCATED, this.location);
           }.bind(this));
         } else if (location) {
           let located = this.located(location);
@@ -15018,7 +15025,7 @@ class Rendition {
            * @property {number} percentage
            * @memberof Rendition
            */
-          this.emit(EVENTS.RENDITION.LOCATION_CHANGED, {
+          this.emit(constants/* EVENTS */.qY.RENDITION.LOCATION_CHANGED, {
             index: this.location.start.index,
             href: this.location.start.href,
             start: this.location.start.cfi,
@@ -15031,7 +15038,7 @@ class Rendition {
            * @type {displayedLocation}
            * @memberof Rendition
            */
-          this.emit(EVENTS.RENDITION.RELOCATED, this.location);
+          this.emit(constants/* EVENTS */.qY.RENDITION.RELOCATED, this.location);
         }
       }.bind(this));
     }.bind(this));
@@ -15149,10 +15156,10 @@ class Rendition {
    * @param  {Contents} view contents
    */
   passEvents(contents) {
-    DOM_EVENTS.forEach(e => {
+    constants/* DOM_EVENTS */.py.forEach(e => {
       contents.on(e, ev => this.triggerViewEvent(ev, contents));
     });
-    contents.on(EVENTS.CONTENTS.SELECTED, e => this.triggerSelectedEvent(e, contents));
+    contents.on(constants/* EVENTS */.qY.CONTENTS.SELECTED, e => this.triggerSelectedEvent(e, contents));
   }
 
   /**
@@ -15177,7 +15184,7 @@ class Rendition {
      * @param {Contents} contents
      * @memberof Rendition
      */
-    this.emit(EVENTS.RENDITION.SELECTED, cfirange, contents);
+    this.emit(constants/* EVENTS */.qY.RENDITION.SELECTED, cfirange, contents);
   }
 
   /**
@@ -15194,7 +15201,7 @@ class Rendition {
      * @param {Contents} contents
      * @memberof Rendition
      */
-    this.emit(EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
+    this.emit(constants/* EVENTS */.qY.RENDITION.MARK_CLICKED, cfiRange, data, contents);
   }
 
   /**
@@ -15277,7 +15284,7 @@ class Rendition {
    */
   handleLinks(contents) {
     if (contents) {
-      contents.on(EVENTS.CONTENTS.LINK_CLICKED, href => {
+      contents.on(constants/* EVENTS */.qY.CONTENTS.LINK_CLICKED, href => {
         let relative = this.book.path.relative(href);
         this.display(relative);
       });
@@ -15388,7 +15395,7 @@ class Archive {
    * @return {Promise} zipfile
    */
   openUrl(zipUrl, isBase64) {
-    return utils_request(zipUrl, 'binary').then(function (data) {
+    return request_default()(zipUrl, 'binary').then(function (data) {
       return this.zip.loadAsync(data, {
         base64: isBase64
       });
@@ -15402,9 +15409,9 @@ class Archive {
    * @return {Promise<Blob | string | JSON | Document | XMLDocument>}
    */
   request(url, type) {
-    var deferred = new defer();
+    var deferred = new core.defer();
     var response;
-    var path = new utils_path(url);
+    var path = new (path_default())(url);
 
     // If type isn't set, determine it from the file extension
     if (!type) {
@@ -15440,12 +15447,12 @@ class Archive {
     var r;
     if (type == 'json') {
       r = JSON.parse(response);
-    } else if (isXml(type)) {
-      r = parse(response, 'text/xml');
+    } else if ((0,core.isXml)(type)) {
+      r = (0,core.parse)(response, 'text/xml');
     } else if (type == 'xhtml') {
-      r = parse(response, 'application/xhtml+xml');
+      r = (0,core.parse)(response, 'application/xhtml+xml');
     } else if (type == 'html' || type == 'htm') {
-      r = parse(response, 'text/html');
+      r = (0,core.parse)(response, 'text/html');
     } else {
       r = response;
     }
@@ -15462,7 +15469,7 @@ class Archive {
     var decodededUrl = window.decodeURIComponent(url.substr(1)); // Remove first slash
     var entry = this.zip.file(decodededUrl);
     if (entry) {
-      mimeType = mimeType || mime.lookup(entry.name);
+      mimeType = mimeType || mime/* default */.A.lookup(entry.name);
       return entry.async('uint8array').then(function (uint8array) {
         return new Blob([uint8array], {
           type: mimeType
@@ -15497,7 +15504,7 @@ class Archive {
     var decodededUrl = window.decodeURIComponent(url.substr(1)); // Remove first slash
     var entry = this.zip.file(decodededUrl);
     if (entry) {
-      mimeType = mimeType || mime.lookup(entry.name);
+      mimeType = mimeType || mime/* default */.A.lookup(entry.name);
       return entry.async('base64').then(function (data) {
         return 'data:' + mimeType + ';base64,' + data;
       });
@@ -15511,7 +15518,7 @@ class Archive {
    * @return {Promise} url promise with Url string
    */
   createUrl(url, options) {
-    var deferred = new defer();
+    var deferred = new core.defer();
     var _URL = window.URL || window.webkitURL || window.mozURL;
     var tempUrl;
     var response;
@@ -15589,7 +15596,7 @@ class Store {
     this.urlCache = {};
     this.storage = undefined;
     this.name = name;
-    this.requester = requester || utils_request;
+    this.requester = requester || (request_default());
     this.resolver = resolver;
     this.online = true;
     this.checkRequirements();
@@ -15724,7 +15731,7 @@ class Store {
    */
   retrieve(url, type) {
     var response;
-    var path = new utils_path(url);
+    var path = new (path_default())(url);
 
     // If type isn't set, determine it from the file extension
     if (!type) {
@@ -15736,7 +15743,7 @@ class Store {
       response = this.getText(url);
     }
     return response.then(r => {
-      var deferred = new defer();
+      var deferred = new core.defer();
       var result;
       if (r) {
         result = this.handleResponse(r, type);
@@ -15762,12 +15769,12 @@ class Store {
     var r;
     if (type == 'json') {
       r = JSON.parse(response);
-    } else if (isXml(type)) {
-      r = parse(response, 'text/xml');
+    } else if ((0,core.isXml)(type)) {
+      r = (0,core.parse)(response, 'text/xml');
     } else if (type == 'xhtml') {
-      r = parse(response, 'application/xhtml+xml');
+      r = (0,core.parse)(response, 'application/xhtml+xml');
     } else if (type == 'html' || type == 'htm') {
-      r = parse(response, 'text/html');
+      r = (0,core.parse)(response, 'text/html');
     } else {
       r = response;
     }
@@ -15784,7 +15791,7 @@ class Store {
     let encodedUrl = window.encodeURIComponent(url);
     return this.storage.getItem(encodedUrl).then(function (uint8array) {
       if (!uint8array) return;
-      mimeType = mimeType || mime.lookup(url);
+      mimeType = mimeType || mime/* default */.A.lookup(url);
       return new Blob([uint8array], {
         type: mimeType
       });
@@ -15799,9 +15806,9 @@ class Store {
    */
   getText(url, mimeType) {
     let encodedUrl = window.encodeURIComponent(url);
-    mimeType = mimeType || mime.lookup(url);
+    mimeType = mimeType || mime/* default */.A.lookup(url);
     return this.storage.getItem(encodedUrl).then(function (uint8array) {
-      var deferred = new defer();
+      var deferred = new core.defer();
       var reader = new FileReader();
       var blob;
       if (!uint8array) return;
@@ -15824,9 +15831,9 @@ class Store {
    */
   getBase64(url, mimeType) {
     let encodedUrl = window.encodeURIComponent(url);
-    mimeType = mimeType || mime.lookup(url);
+    mimeType = mimeType || mime/* default */.A.lookup(url);
     return this.storage.getItem(encodedUrl).then(uint8array => {
-      var deferred = new defer();
+      var deferred = new core.defer();
       var reader = new FileReader();
       var blob;
       if (!uint8array) return;
@@ -15848,7 +15855,7 @@ class Store {
    * @return {Promise} url promise with Url string
    */
   createUrl(url, options) {
-    var deferred = new defer();
+    var deferred = new core.defer();
     var _URL = window.URL || window.webkitURL || window.mozURL;
     var tempUrl;
     var response;
@@ -15932,11 +15939,11 @@ class DisplayOptions {
     if (!displayOptionsDocument) {
       return this;
     }
-    const displayOptionsNode = qs(displayOptionsDocument, 'display_options');
+    const displayOptionsNode = (0,core.qs)(displayOptionsDocument, 'display_options');
     if (!displayOptionsNode) {
       return this;
     }
-    const options = qsa(displayOptionsNode, 'option');
+    const options = (0,core.qsa)(displayOptionsNode, 'option');
     options.forEach(el => {
       let value = '';
       if (el.childNodes.length) {
@@ -16022,7 +16029,7 @@ class Book {
       options = url;
       url = undefined;
     }
-    this.settings = extend(this.settings || {}, {
+    this.settings = (0,core.extend)(this.settings || {}, {
       requestMethod: undefined,
       requestCredentials: undefined,
       requestHeaders: undefined,
@@ -16032,10 +16039,10 @@ class Book {
       openAs: undefined,
       store: undefined
     });
-    extend(this.settings, options);
+    (0,core.extend)(this.settings, options);
 
     // Promises
-    this.opening = new defer();
+    this.opening = new core.defer();
     /**
      * @member {promise} opened returns after the book is loaded
      * @memberof Book
@@ -16043,14 +16050,14 @@ class Book {
     this.opened = this.opening.promise;
     this.isOpen = false;
     this.loading = {
-      manifest: new defer(),
-      spine: new defer(),
-      metadata: new defer(),
-      cover: new defer(),
-      navigation: new defer(),
-      pageList: new defer(),
-      resources: new defer(),
-      displayOptions: new defer()
+      manifest: new core.defer(),
+      spine: new core.defer(),
+      metadata: new core.defer(),
+      cover: new core.defer(),
+      navigation: new core.defer(),
+      pageList: new core.defer(),
+      resources: new core.defer(),
+      displayOptions: new core.defer()
     };
     this.loaded = {
       manifest: this.loading.manifest.promise,
@@ -16079,7 +16086,7 @@ class Book {
      * @memberof Book
      * @private
      */
-    this.request = this.settings.requestMethod || utils_request;
+    this.request = this.settings.requestMethod || (request_default());
 
     /**
      * @member {Spine} spine
@@ -16182,7 +16189,7 @@ class Book {
     if (url) {
       this.open(url, this.settings.openAs).catch(() => {
         var err = new Error('Cannot load book at ' + url);
-        this.emit(EVENTS.BOOK.OPEN_FAILED, err);
+        this.emit(constants/* EVENTS */.qY.BOOK.OPEN_FAILED, err);
       });
     }
   }
@@ -16199,24 +16206,24 @@ class Book {
     var type = what || this.determineType(input);
     if (type === INPUT_TYPE.BINARY) {
       this.archived = true;
-      this.url = new utils_url('/', '');
+      this.url = new (url_default())('/', '');
       opening = this.openEpub(input);
     } else if (type === INPUT_TYPE.BASE64) {
       this.archived = true;
-      this.url = new utils_url('/', '');
+      this.url = new (url_default())('/', '');
       opening = this.openEpub(input, type);
     } else if (type === INPUT_TYPE.EPUB) {
       this.archived = true;
-      this.url = new utils_url('/', '');
+      this.url = new (url_default())('/', '');
       opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(this.openEpub.bind(this));
     } else if (type == INPUT_TYPE.OPF) {
-      this.url = new utils_url(input);
+      this.url = new (url_default())(input);
       opening = this.openPackaging(this.url.Path.toString());
     } else if (type == INPUT_TYPE.MANIFEST) {
-      this.url = new utils_url(input);
+      this.url = new (url_default())(input);
       opening = this.openManifest(this.url.Path.toString());
     } else {
-      this.url = new utils_url(input);
+      this.url = new (url_default())(input);
       opening = this.openContainer(CONTAINER_PATH).then(this.openPackaging.bind(this));
     }
     return opening;
@@ -16257,7 +16264,7 @@ class Book {
    * @return {Promise}
    */
   openPackaging(url) {
-    this.path = new utils_path(url);
+    this.path = new (path_default())(url);
     return this.load(url).then(xml => {
       this.packaging = new packaging(xml);
       return this.unpack(this.packaging);
@@ -16271,7 +16278,7 @@ class Book {
    * @return {Promise}
    */
   openManifest(url) {
-    this.path = new utils_path(url);
+    this.path = new (path_default())(url);
     return this.load(url).then(json => {
       this.packaging = new packaging();
       this.packaging.load(json);
@@ -16351,7 +16358,7 @@ class Book {
     if (typeof input != 'string') {
       return INPUT_TYPE.BINARY;
     }
-    url = new utils_url(input);
+    url = new (url_default())(input);
     path = url.path();
     extension = path.extension;
 
@@ -16528,7 +16535,7 @@ class Book {
     // Save original url
     let originalUrl = this.url;
     // Save original request method
-    let requester = this.settings.requestMethod || utils_request.bind(this);
+    let requester = this.settings.requestMethod || request_default().bind(this);
     // Create new Store
     this.storage = new store(name, requester, this.resolve.bind(this));
     // Replace request method to go through store
@@ -16550,7 +16557,7 @@ class Book {
       });
       this.storage.on('offline', () => {
         // Remove url to use relative resolving for hrefs
-        this.url = new utils_url('/', '');
+        this.url = new (url_default())('/', '');
         // Add hook to replace resources in contents
         this.spine.hooks.serialize.register(substituteResources);
       });
@@ -16622,7 +16629,7 @@ class Book {
    */
   key(identifier) {
     var ident = identifier || this.packaging.metadata.identifier || this.url.filename;
-    return `epubjs:${EPUBJS_VERSION}:${ident}`;
+    return `epubjs:${constants/* EPUBJS_VERSION */.JX}:${ident}`;
   }
 
   /**
@@ -16680,15 +16687,15 @@ event_emitter_default()(Book.prototype);
 function ePub(url, options) {
   return new book(url, options);
 }
-ePub.VERSION = EPUBJS_VERSION;
+ePub.VERSION = constants/* EPUBJS_VERSION */.JX;
 if (typeof __webpack_require__.g !== 'undefined') {
-  __webpack_require__.g.EPUBJS_VERSION = EPUBJS_VERSION;
+  __webpack_require__.g.EPUBJS_VERSION = constants/* EPUBJS_VERSION */.JX;
 }
 ePub.Book = book;
 ePub.Rendition = rendition;
 ePub.Contents = contents;
 ePub.CFI = epubcfi;
-ePub.utils = core_namespaceObject;
+ePub.utils = core;
 /* harmony default export */ const epub = (ePub);
 })();
 

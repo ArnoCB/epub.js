@@ -1,31 +1,25 @@
-import {
-  extend,
-  type,
-  findChildren,
-  RangeObject,
-  isNumber,
-} from './utils/core';
+import { extend, type, findChildren, isNumber } from './utils/core';
 
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
 const DOCUMENT_NODE = 9;
 
 /**
-	* Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
+  * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
 
-	* Implements:
-	* - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
-	* - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
+  * Implements:
+  * - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
+  * - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
 
-	* Does Not Implement:
-	* - Temporal Offset (~)
-	* - Spatial Offset (@)
-	* - Temporal-Spatial Offset (~ + @)
-	* - Text Location Assertion ([)
-	* @class
-	@param {string | Range | Node } [cfiFrom]
-	@param {string | object} [base]
-	@param {string} [ignoreClass] class to ignore when parsing DOM
+  * Does Not Implement:
+  * - Temporal Offset (~)
+  * - Spatial Offset (@)
+  * - Temporal-Spatial Offset (~ + @)
+  * - Text Location Assertion ([)
+  * @class
+  @param {string | Range | Node } [cfiFrom]
+  @param {string | object} [base]
+  @param {string} [ignoreClass] class to ignore when parsing DOM
 */
 class EpubCFI {
   constructor(cfiFrom, base, ignoreClass) {
@@ -781,19 +775,19 @@ class EpubCFI {
 
   /*
 
-	To get the last step if needed:
+  To get the last step if needed:
 
-	// Get the terminal step
-	lastStep = steps[steps.length-1];
-	// Get the query string
-	query = this.stepsToQuery(steps);
-	// Find the containing element
-	startContainerParent = doc.querySelector(query);
-	// Find the text node within that element
-	if(startContainerParent && lastStep.type == "text") {
-		container = startContainerParent.childNodes[lastStep.index];
-	}
-	*/
+  // Get the terminal step
+  lastStep = steps[steps.length-1];
+  // Get the query string
+  query = this.stepsToQuery(steps);
+  // Find the containing element
+  startContainerParent = doc.querySelector(query);
+  // Find the text node within that element
+  if(startContainerParent && lastStep.type == "text") {
+    container = startContainerParent.childNodes[lastStep.index];
+  }
+  */
   stepsToQuerySelector(steps) {
     var query = ['html'];
 
@@ -933,11 +927,7 @@ class EpubCFI {
       : false;
     var missed;
 
-    if (typeof doc.createRange !== 'undefined') {
-      range = doc.createRange();
-    } else {
-      range = new RangeObject();
-    }
+    range = doc.createRange();
 
     if (cfi.range) {
       start = cfi.start;

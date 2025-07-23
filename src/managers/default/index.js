@@ -161,13 +161,13 @@ class DefaultViewManager {
 
     /*
 
-			clearTimeout(this.trimTimeout);
-			if(this.settings.hidden) {
-				this.element.removeChild(this.wrapper);
-			} else {
-				this.element.removeChild(this.container);
-			}
-		*/
+      clearTimeout(this.trimTimeout);
+      if(this.settings.hidden) {
+        this.element.removeChild(this.wrapper);
+      } else {
+        this.element.removeChild(this.container);
+      }
+    */
   }
 
   onOrientationChange() {
@@ -376,10 +376,10 @@ class DefaultViewManager {
     }
     if (this.settings.direction === 'rtl') {
       /***
-				the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
-				to distX or use `Math.ceil` function, or multiply offset.left by -1
-				before `Math.floor`
-			*/
+        the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
+        to distX or use `Math.ceil` function, or multiply offset.left by -1
+        before `Math.floor`
+      */
       distX = distX + this.layout.delta;
       distX = distX - width;
     }
