@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EPUB.js Highlights Example</title>
 
-  <script src="../dist/epub.js"></script>
+  <script src="../dist/epub.umd.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
 
@@ -56,9 +56,13 @@
   </div>
 
   <script>
+    // Debug: test fetch to remote OPF
+    fetch("https://s3.amazonaws.com/moby-dick/OPS/package.opf")
+      .then(r => r.text())
+      .then(txt => console.log("Fetch result:", txt.slice(0, 200)))
+      .catch(err => console.error("Fetch error:", err));
     // Load the opf
-    var book = ePub("https://s3.amazonaws.com/moby-dick/OPS/package.opf");
-
+    var book = window.ePub.default("https://s3.amazonaws.com/moby-dick/OPS/package.opf");
     var rendition = book.renderTo("viewer", {
       width: "100%",
       height: 600,
@@ -150,11 +154,8 @@
           li.appendChild(remove);
           highlights.appendChild(li);
         }
-
       })
-
     });
-
   </script>
 
 </body>

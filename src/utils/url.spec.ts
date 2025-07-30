@@ -1,3 +1,48 @@
+describe('Url', () => {
+  it('Url()', () => {
+    const url = new Url('http://example.com/fred/chasen/derf.html');
+    expect(url.href).toBe('http://example.com/fred/chasen/derf.html');
+    expect(url.directory).toBe('/fred/chasen/');
+    expect(url.extension).toBe('html');
+    expect(url.filename).toBe('derf.html');
+    expect(url.origin).toBe('http://example.com');
+    expect(url.protocol).toBe('http:');
+    expect(url.search).toBe('');
+  });
+
+  describe('#resolve()', () => {
+    it('should join subfolders', () => {
+      const a = 'http://example.com/fred/chasen/';
+      const b = 'ops/derf.html';
+      const resolved = new Url(a).resolve(b);
+      expect(resolved).toBe('http://example.com/fred/chasen/ops/derf.html');
+    });
+
+    it('should resolve up a level', () => {
+      const a = 'http://example.com/fred/chasen/index.html';
+      const b = '../derf.html';
+      const resolved = new Url(a).resolve(b);
+      expect(resolved).toBe('http://example.com/fred/derf.html');
+    });
+
+    it('should resolve absolute', () => {
+      const a = 'http://example.com/fred/chasen/index.html';
+      const b = '/derf.html';
+      const resolved = new Url(a).resolve(b);
+      expect(resolved).toBe('http://example.com/derf.html');
+    });
+
+    it('should resolve with search strings', () => {
+      const a = 'http://example.com/fred/chasen/index.html?debug=true';
+      const b = '/derf.html';
+      const resolved = new Url(a).resolve(b);
+      expect(resolved).toBe('http://example.com/derf.html');
+    });
+
+    // Skipped test for directory with a dot
+    // it('should handle directory with a dot', () => { ... });
+  });
+});
 import Url from './url';
 
 describe('Url parsing', () => {
