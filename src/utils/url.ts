@@ -91,7 +91,7 @@ class Url {
     if (isAbsolute) {
       return what;
     }
-    const fullpath = path.resolve(this.directory, what);
+    const fullpath = this.Path.resolve(what);
     return this.origin + fullpath;
   }
 
@@ -99,7 +99,7 @@ class Url {
    * Resolve a path relative to the url
    */
   relative(what: string) {
-    return path.relative(what, this.directory);
+    return this.Path.relative(what);
   }
 
   toString() {
