@@ -48,7 +48,6 @@
     "husky": "^8.0.0",
     "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.0.5",
-    "jsdoc": "^3.6.3",
     "karma": "^6.4.3",
     "karma-chrome-launcher": "^3.2.0",
     "karma-mocha": "^2.0.1",
