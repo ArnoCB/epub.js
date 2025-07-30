@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "NodeNext",
-    "declaration": true,
+    "declaration": false,
     "rootDir": ".",
     "outDir": "lib",
     "strict": true,
