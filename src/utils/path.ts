@@ -14,28 +14,27 @@ class Path {
   private _extension: string;
 
   constructor(pathString: string) {
-    const protocol = pathString.indexOf('://');
-
     let normalized: string;
-    if (protocol > -1) {
-      // Remote URL: preserve as-is
-      normalized = pathString;
+    let parsed;
+    if (pathString.indexOf('://') > -1) {
+      // Always use the pathname for URLs (strips protocol/host)
+      const urlObj = new URL(pathString);
+      normalized = urlObj.pathname.replace(/\\/g, '/').replace(/\/+/g, '/');
+      parsed = this.parse(normalized);
+      this._path = normalized;
+      // Directory: strip filename from pathname, ensure trailing slash
+      let dir = normalized.replace(/[^/]*$/, '');
+      if (!dir.endsWith('/')) dir += '/';
+      this._directory = dir;
     } else {
-      // Local path: normalize backslashes and collapse multiple slashes
       normalized = pathString.replace(/\\/g, '/').replace(/\/+/g, '/');
+      parsed = this.parse(normalized);
+      this._path = normalized;
+      this._directory = this.isDirectory(normalized)
+        ? normalized
+        : parsed.dir + '/';
+      if (!this._directory.endsWith('/')) this._directory += '/';
     }
-
-    const parsed = this.parse(normalized);
-
-    this._path = normalized;
-
-    const dir = this.isDirectory(normalized) ? normalized : parsed.dir + '/';
-    this._directory =
-      protocol > -1
-        ? dir // remote: preserve
-        : dir.replace(/\/+/g, '/'); // local: collapse multiple slashes
-    if (!this._directory.endsWith('/')) this._directory += '/';
-
     this._filename = parsed.base;
     this._extension = parsed.ext.slice(1);
   }

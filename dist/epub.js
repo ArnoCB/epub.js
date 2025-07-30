@@ -1598,18 +1598,25 @@ var path = createCommonjsModule(function (module, exports) {
    */
   var Path = /** @class */function () {
     function Path(pathString) {
-      var protocol = pathString.indexOf('://');
-      if (protocol > -1) {
-        pathString = new URL(pathString).pathname;
+      var normalized;
+      var parsed;
+      if (pathString.indexOf('://') > -1) {
+        // Always use the pathname for URLs (strips protocol/host)
+        var urlObj = new URL(pathString);
+        normalized = urlObj.pathname.replace(/\\/g, '/').replace(/\/+/g, '/');
+        parsed = this.parse(normalized);
+        this._path = normalized;
+        // Directory: strip filename from pathname, ensure trailing slash
+        var dir = normalized.replace(/[^/]*$/, '');
+        if (!dir.endsWith('/')) dir += '/';
+        this._directory = dir;
+      } else {
+        normalized = pathString.replace(/\\/g, '/').replace(/\/+/g, '/');
+        parsed = this.parse(normalized);
+        this._path = normalized;
+        this._directory = this.isDirectory(normalized) ? normalized : parsed.dir + '/';
+        if (!this._directory.endsWith('/')) this._directory += '/';
       }
-      // Normalize all backslashes to slashes
-      var normalized = pathString.replace(/\\/g, '/');
-      var parsed = this.parse(normalized);
-      this._path = normalized.replace(/\/+/g, '/');
-      var dir = this.isDirectory(normalized) ? normalized : parsed.dir + '/';
-      // Collapse multiple slashes in directory
-      this._directory = dir.replace(/\/+/g, '/');
-      if (!this._directory.endsWith('/')) this._directory += '/';
       this._filename = parsed.base;
       this._extension = parsed.ext.slice(1);
     }
