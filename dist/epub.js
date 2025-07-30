@@ -1602,13 +1602,14 @@ var path = createCommonjsModule(function (module, exports) {
       if (protocol > -1) {
         pathString = new URL(pathString).pathname;
       }
-      var parsed = this.parse(pathString);
-      this._path = pathString;
-      if (this.isDirectory(pathString)) {
-        this._directory = pathString;
-      } else {
-        this._directory = parsed.dir + '/';
-      }
+      // Normalize all backslashes to slashes
+      var normalized = pathString.replace(/\\/g, '/');
+      var parsed = this.parse(normalized);
+      this._path = normalized.replace(/\/+/g, '/');
+      var dir = this.isDirectory(normalized) ? normalized : parsed.dir + '/';
+      // Collapse multiple slashes in directory
+      this._directory = dir.replace(/\/+/g, '/');
+      if (!this._directory.endsWith('/')) this._directory += '/';
       this._filename = parsed.base;
       this._extension = parsed.ext.slice(1);
     }

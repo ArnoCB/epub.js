@@ -20,15 +20,17 @@ class Path {
       pathString = new URL(pathString).pathname;
     }
 
-    const parsed = this.parse(pathString);
+    // Normalize all backslashes to slashes
+    const normalized = pathString.replace(/\\/g, '/');
 
-    this._path = pathString;
+    const parsed = this.parse(normalized);
 
-    if (this.isDirectory(pathString)) {
-      this._directory = pathString;
-    } else {
-      this._directory = parsed.dir + '/';
-    }
+    this._path = normalized.replace(/\/+/g, '/');
+
+    const dir = this.isDirectory(normalized) ? normalized : parsed.dir + '/';
+    // Collapse multiple slashes in directory
+    this._directory = dir.replace(/\/+/g, '/');
+    if (!this._directory.endsWith('/')) this._directory += '/';
 
     this._filename = parsed.base;
     this._extension = parsed.ext.slice(1);
