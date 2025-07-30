@@ -1,20 +1,9 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("JSZip"));
-	else if(typeof define === 'function' && define.amd)
-		define(["JSZip"], factory);
-	else if(typeof exports === 'object')
-		exports["ePub"] = factory(require("JSZip"));
-	else
-		root["ePub"] = factory(root["JSZip"]);
-})(self, (__WEBPACK_EXTERNAL_MODULE__838__) => {
-return /******/ (() => { // webpackBootstrap
-/******/ 	var __webpack_modules__ = ({
+import * as __WEBPACK_EXTERNAL_MODULE_JSZip__ from "JSZip";
+/******/ var __webpack_modules__ = ({
 
 /***/ 10:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 var __webpack_unused_export__;
 
 
@@ -197,7 +186,6 @@ exports.A = {
 /***/ 11:
 /***/ ((module) => {
 
-"use strict";
 
 
 // eslint-disable-next-line no-empty-function
@@ -209,7 +197,6 @@ module.exports = function () {};
 /***/ 17:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 var __webpack_unused_export__;
 
 
@@ -260,7 +247,6 @@ function throttle(func, wait) {
 /***/ 68:
 /***/ ((module, exports, __webpack_require__) => {
 
-"use strict";
 
 
 var d        = __webpack_require__(263)
@@ -400,7 +386,6 @@ exports.methods = methods;
 /***/ 80:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isPrototype = __webpack_require__(202);
@@ -427,7 +412,6 @@ module.exports = function (value) {
 /***/ 93:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 module.exports = __webpack_require__(380)() ? Object.keys : __webpack_require__(232);
@@ -438,7 +422,6 @@ module.exports = __webpack_require__(380)() ? Object.keys : __webpack_require__(
 /***/ 134:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isValue = __webpack_require__(762);
@@ -454,7 +437,6 @@ module.exports = function (value) {
 /***/ 148:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isValue = __webpack_require__(762);
@@ -482,7 +464,6 @@ module.exports = function (opts1 /*, …options*/) {
 /***/ 175:
 /***/ ((module) => {
 
-"use strict";
 
 
 // ES3 safe
@@ -496,7 +477,6 @@ module.exports = function (value) { return value !== _undefined && value !== nul
 /***/ 181:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isValue = __webpack_require__(175);
@@ -515,7 +495,6 @@ module.exports = function (value) {
 /***/ 202:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isObject = __webpack_require__(181);
@@ -536,7 +515,6 @@ module.exports = function (value) {
 /***/ 209:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 var __webpack_unused_export__;
 
 
@@ -610,7 +588,6 @@ exports.qY = {
 /***/ 214:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 module.exports = __webpack_require__(525)() ? String.prototype.contains : __webpack_require__(521);
@@ -621,7 +598,6 @@ module.exports = __webpack_require__(525)() ? String.prototype.contains : __webp
 /***/ 232:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isValue = __webpack_require__(762);
@@ -636,7 +612,6 @@ module.exports = function (object) { return keys(isValue(object) ? Object(object
 /***/ 263:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isValue         = __webpack_require__(175)
@@ -706,7 +681,6 @@ d.gs = function (dscr, get, set/*, options*/) {
 /***/ 293:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-"use strict";
 
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -804,7 +778,6 @@ exports["default"] = Url;
 /***/ 339:
 /***/ ((module) => {
 
-"use strict";
 
 
 module.exports = function () {
@@ -821,7 +794,6 @@ module.exports = function () {
 /***/ 375:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-"use strict";
 
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -953,7 +925,6 @@ function substitute(content, urls, replacements) {
 /***/ 380:
 /***/ ((module) => {
 
-"use strict";
 
 
 module.exports = function () {
@@ -971,7 +942,6 @@ module.exports = function () {
 /***/ 381:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
 
 /**
@@ -1584,7 +1554,6 @@ exports.defer = defer;
 /***/ 481:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 var __webpack_unused_export__;
 
 
@@ -1675,7 +1644,6 @@ exports.A = Hook;
 /***/ 499:
 /***/ ((module) => {
 
-"use strict";
 
 
 module.exports = function (fn) {
@@ -1689,7 +1657,6 @@ module.exports = function (fn) {
 /***/ 521:
 /***/ ((module) => {
 
-"use strict";
 
 
 var indexOf = String.prototype.indexOf;
@@ -1704,7 +1671,6 @@ module.exports = function (searchString /*, position*/) {
 /***/ 525:
 /***/ ((module) => {
 
-"use strict";
 
 
 var str = "razdwatrzy";
@@ -1720,7 +1686,6 @@ module.exports = function () {
 /***/ 595:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var keys  = __webpack_require__(93)
@@ -1751,7 +1716,6 @@ module.exports = function (dest, src /*, …srcn*/) {
 /***/ 596:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 module.exports = __webpack_require__(339)() ? Object.assign : __webpack_require__(595);
@@ -1762,7 +1726,6 @@ module.exports = __webpack_require__(339)() ? Object.assign : __webpack_require_
 /***/ 762:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var _undefined = __webpack_require__(11)(); // Support ES3 engines
@@ -1775,7 +1738,6 @@ module.exports = function (val) { return val !== _undefined && val !== null; };
 /***/ 763:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-"use strict";
 
 
 var __awaiter = this && this.__awaiter || function (thisArg, _arguments, P, generator) {
@@ -4899,7 +4861,6 @@ module.exports = localforage_js;
 /***/ 821:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-"use strict";
 
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -5016,18 +4977,9 @@ exports["default"] = Path;
 
 /***/ }),
 
-/***/ 838:
-/***/ ((module) => {
-
-"use strict";
-module.exports = __WEBPACK_EXTERNAL_MODULE__838__;
-
-/***/ }),
-
 /***/ 841:
 /***/ ((module) => {
 
-"use strict";
 
 
 if (!process) {
@@ -5589,7 +5541,6 @@ module.exports = posix;
 /***/ 873:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
 
 
 var isFunction = __webpack_require__(80);
@@ -5608,7 +5559,6 @@ module.exports = function (value) {
 /***/ 889:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-"use strict";
 
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -5739,7 +5689,6 @@ exports["default"] = request;
 /***/ 895:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 var __webpack_unused_export__;
 
 
@@ -5791,84 +5740,76 @@ function createDefiner() {
 
 /***/ })
 
-/******/ 	});
+/******/ });
 /************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
+/******/ // The module cache
+/******/ var __webpack_module_cache__ = {};
+/******/ 
+/******/ // The require function
+/******/ function __webpack_require__(moduleId) {
+/******/ 	// Check if module is in cache
+/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 	if (cachedModule !== undefined) {
+/******/ 		return cachedModule.exports;
 /******/ 	}
-/******/ 	
+/******/ 	// Create a new module (and put it into the cache)
+/******/ 	var module = __webpack_module_cache__[moduleId] = {
+/******/ 		// no module.id needed
+/******/ 		// no module.loaded needed
+/******/ 		exports: {}
+/******/ 	};
+/******/ 
+/******/ 	// Execute the module function
+/******/ 	__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 
+/******/ 	// Return the exports of the module
+/******/ 	return module.exports;
+/******/ }
+/******/ 
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
+/******/ /* webpack/runtime/compat get default export */
+/******/ (() => {
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = (module) => {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			() => (module['default']) :
+/******/ 			() => (module);
+/******/ 		__webpack_require__.d(getter, { a: getter });
+/******/ 		return getter;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/define property getters */
+/******/ (() => {
+/******/ 	// define getter functions for harmony exports
+/******/ 	__webpack_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 			}
-/******/ 		};
+/******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/global */
+/******/ (() => {
+/******/ 	__webpack_require__.g = (function() {
+/******/ 		if (typeof globalThis === 'object') return globalThis;
+/******/ 		try {
+/******/ 			return this || new Function('return this')();
+/******/ 		} catch (e) {
+/******/ 			if (typeof window === 'object') return window;
+/******/ 		}
 /******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/global */
-/******/ 	(() => {
-/******/ 		__webpack_require__.g = (function() {
-/******/ 			if (typeof globalThis === 'object') return globalThis;
-/******/ 			try {
-/******/ 				return this || new Function('return this')();
-/******/ 			} catch (e) {
-/******/ 				if (typeof window === 'object') return window;
-/******/ 			}
-/******/ 		})();
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/hasOwnProperty shorthand */
+/******/ (() => {
+/******/ 	__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ })();
+/******/ 
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
-(() => {
-"use strict";
-
-// EXPORTS
-__webpack_require__.d(__webpack_exports__, {
-  "default": () => (/* binding */ epub)
-});
 
 // EXTERNAL MODULE: ./node_modules/event-emitter/index.js
 var event_emitter = __webpack_require__(68);
@@ -15342,9 +15283,12 @@ class Rendition {
 //-- Enable binding events to Renderer
 event_emitter_default()(Rendition.prototype);
 /* harmony default export */ const rendition = (Rendition);
-// EXTERNAL MODULE: external "JSZip"
-var external_JSZip_ = __webpack_require__(838);
-var external_JSZip_default = /*#__PURE__*/__webpack_require__.n(external_JSZip_);
+;// external "JSZip"
+var x = (y) => {
+	var x = {}; __webpack_require__.d(x, y); return x
+} 
+var y = (x) => (() => (x))
+const external_JSZip_namespaceObject = x({ ["default"]: () => (__WEBPACK_EXTERNAL_MODULE_JSZip__["default"]) });
 ;// ./src/archive.js
 
 
@@ -15370,7 +15314,7 @@ class Archive {
    */
   checkRequirements() {
     try {
-      this.zip = new (external_JSZip_default())();
+      this.zip = new external_JSZip_namespaceObject["default"]();
     } catch (e) {
       throw new Error('JSZip lib not loaded');
     }
@@ -16697,11 +16641,6 @@ ePub.Contents = contents;
 ePub.CFI = epubcfi;
 ePub.utils = core;
 /* harmony default export */ const epub = (ePub);
-})();
+export { epub as default };
 
-__webpack_exports__ = __webpack_exports__["default"];
-/******/ 	return __webpack_exports__;
-/******/ })()
-;
-});
 //# sourceMappingURL=epub.js.map

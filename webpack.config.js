@@ -20,6 +20,9 @@ if (MINIMIZE) {
 }
 
 module.exports = {
+  experiments: {
+    outputModule: true,
+  },
   mode: process.env.NODE_ENV,
   entry: {
     epub: './src/epub.js',
@@ -29,9 +32,9 @@ module.exports = {
     path: path.resolve('./dist'),
     filename: filename,
     sourceMapFilename: sourceMapFilename,
-    library: 'ePub',
-    libraryTarget: 'umd',
-    libraryExport: 'default',
+    library: {
+      type: 'module',
+    },
     publicPath: '/dist/',
   },
   optimization: {
