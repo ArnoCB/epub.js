@@ -3,7 +3,7 @@
   "version": "0.3.93",
   "description": "Parse and Render Epubs",
   "main": "dist/epub.js",
-  "module": "src/index.js",
+  "module": "dist/epub.js",
   "types": "types/index.d.ts",
   "repository": "https://github.com/ArnoCB/epub.js",
   "directories": {
