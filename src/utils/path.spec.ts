@@ -1,6 +1,6 @@
 import Path from './path';
-// const Path = require('./path.legacy.js'); // Use CommonJS syntax for legacy code
-describe('Path (legacy JS)', () => {
+
+describe('Path', () => {
   it('should parse a file path', () => {
     const p = new Path('/foo/bar/baz.txt');
     expect(p.directory).toBe('/foo/bar/');
@@ -57,6 +57,13 @@ describe('Path (legacy JS)', () => {
     expect(p.directory).toBe('/foo/bar/');
     expect(p.filename).toBe('baz.txt');
     expect(p.extension).toBe('txt');
+  });
+
+  it('should not prepend base directory for absolute paths in resolve()', () => {
+    const base = '/fixtures/alice/OPS/';
+    const abs = '/fixtures/alice/OPS/package.opf';
+    const p = new Path(base);
+    expect(p.resolve(abs)).toBe(abs);
   });
 
   it('should handle Windows path', () => {

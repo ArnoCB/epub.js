@@ -52,9 +52,16 @@ class Path {
 
   /**
    * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
+   * Mimics Node.js path.parse for POSIX paths.
    */
   parse(what: string) {
-    return path.parse(what);
+    const re = /^(.*[\\/])?([^\\/]+?)(\.[^.]*)?$/;
+    const match = re.exec(what) || [];
+    const dir = match[1] ? match[1].replace(/[\\/]+$/, '') : '';
+    const base = match[2] ? match[2] + (match[3] || '') : '';
+    const ext = match[3] || '';
+    const name = match[2] || '';
+    return { dir, base, ext, name };
   }
 
   /**
@@ -75,14 +82,39 @@ class Path {
   }
 
   /**
-   * Resolve a path against the directory of the Path
-   *
+   * Resolve a path against the directory of the Path.
+   * Joins this.directory and what, normalizing slashes.
    * https://nodejs.org/api/path.html#path_path_resolve_paths
    * @param	{string} what
    * @returns {string} resolved
+
    */
   resolve(what: string): string {
-    return path.resolve(this.directory, what);
+    let base = this.directory;
+    if (!base.endsWith('/')) base += '/';
+    let result = base + what;
+    result = result.replace(/\/+/g, '/').replace(/\/\.\//g, '/');
+    // Check for absolute path
+    if (
+      typeof what === 'string' &&
+      (what.startsWith('/') || what.indexOf('://') > -1)
+    ) {
+      throw new Error(
+        '[Path.resolve] Cannot resolve an absolute path: ' + what
+      );
+    }
+    // Remove '..' segments
+    const parts = result.split('/');
+    const stack: string[] = [];
+
+    for (const part of parts) {
+      if (part === '..') {
+        stack.pop();
+      } else if (part !== '') {
+        stack.push(part);
+      }
+    }
+    return '/' + stack.join('/');
   }
 
   /**
@@ -94,12 +126,29 @@ class Path {
    */
   relative(what: string): string {
     const isAbsolute = what && what.indexOf('://') > -1;
-
     if (isAbsolute) {
       return what;
     }
+    // Remove leading slashes for both paths
+    const from = this.directory.replace(/^\/+/, '');
+    const to = what.replace(/^\/+/, '');
+    const fromParts = from.split('/').filter(Boolean);
+    const toParts = to.split('/').filter(Boolean);
 
-    return path.relative(this.directory, what);
+    // Find common prefix
+    let i = 0;
+    while (
+      i < fromParts.length &&
+      i < toParts.length &&
+      fromParts[i] === toParts[i]
+    ) {
+      i++;
+    }
+
+    // Go up for the remaining fromParts, then down for the remaining toParts
+    const up = fromParts.length - i;
+    const down = toParts.slice(i);
+    return (up ? '../'.repeat(up) : '') + down.join('/');
   }
 
   toString() {

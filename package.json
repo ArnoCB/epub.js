@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build:utils": "tsc src/utils/*.ts",
-    "test": "karma start karma.conf.cjs",
+    "test": "karma start karma.conf.cjs --single-run",
     "docs": "documentation build src/epub.js -f html -o documentation/html/",
     "docs:html": "documentation build src/epub.js -f html -o documentation/html/",
     "docs:md": "documentation build src/epub.js -f md -o documentation/md/API.md",

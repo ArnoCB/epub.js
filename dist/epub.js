@@ -687,7 +687,6 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 var path_1 = __webpack_require__(821);
-var path_webpack_1 = __webpack_require__(841);
 /**
  * creates a Url object for parsing and manipulation of a url string
  * @param	{string} urlString	a url string (relative or absolute)
@@ -748,18 +747,22 @@ var Url = /** @class */function () {
    * Resolves a relative path to a absolute url
    */
   Url.prototype.resolve = function (what) {
-    var isAbsolute = what.indexOf('://') > -1;
-    if (isAbsolute) {
+    // If what is an absolute path, join directly to origin
+    if (what.startsWith('/')) {
+      return this.origin + what;
+    }
+    // If what is a full URL, return as is
+    if (what.indexOf('://') > -1) {
       return what;
     }
-    var fullpath = path_webpack_1.default.resolve(this.directory, what);
+    var fullpath = this.Path.resolve(what);
     return this.origin + fullpath;
   };
   /**
    * Resolve a path relative to the url
    */
   Url.prototype.relative = function (what) {
-    return path_webpack_1.default.relative(this.directory, what);
+    return this.Path.relative(what);
   };
   Url.prototype.toString = function () {
     return this.href;
@@ -4911,9 +4914,21 @@ var Path = /** @class */function () {
   });
   /**
    * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
+   * Mimics Node.js path.parse for POSIX paths.
    */
   Path.prototype.parse = function (what) {
-    return path_webpack_1.default.parse(what);
+    var re = /^(.*[\\/])?([^\\/]+?)(\.[^.]*)?$/;
+    var match = re.exec(what) || [];
+    var dir = match[1] ? match[1].replace(/[\\/]+$/, '') : '';
+    var base = match[2] ? match[2] + (match[3] || '') : '';
+    var ext = match[3] || '';
+    var name = match[2] || '';
+    return {
+      dir: dir,
+      base: base,
+      ext: ext,
+      name: name
+    };
   };
   /**
    * @param	{string} what
@@ -4931,14 +4946,33 @@ var Path = /** @class */function () {
     return what.charAt(what.length - 1) === '/';
   };
   /**
-   * Resolve a path against the directory of the Path
-   *
+   * Resolve a path against the directory of the Path.
+   * Joins this.directory and what, normalizing slashes.
    * https://nodejs.org/api/path.html#path_path_resolve_paths
    * @param	{string} what
    * @returns {string} resolved
-   */
+      */
   Path.prototype.resolve = function (what) {
-    return path_webpack_1.default.resolve(this.directory, what);
+    var base = this.directory;
+    if (!base.endsWith('/')) base += '/';
+    var result = base + what;
+    result = result.replace(/\/+/g, '/').replace(/\/\.\//g, '/');
+    // Check for absolute path
+    if (typeof what === 'string' && (what.startsWith('/') || what.indexOf('://') > -1)) {
+      throw new Error('[Path.resolve] Cannot resolve an absolute path: ' + what);
+    }
+    // Remove '..' segments
+    var parts = result.split('/');
+    var stack = [];
+    for (var _i = 0, parts_1 = parts; _i < parts_1.length; _i++) {
+      var part = parts_1[_i];
+      if (part === '..') {
+        stack.pop();
+      } else if (part !== '') {
+        stack.push(part);
+      }
+    }
+    return '/' + stack.join('/');
   };
   /**
    * Resolve a path relative to the directory of the Path
@@ -4952,7 +4986,20 @@ var Path = /** @class */function () {
     if (isAbsolute) {
       return what;
     }
-    return path_webpack_1.default.relative(this.directory, what);
+    // Remove leading slashes for both paths
+    var from = this.directory.replace(/^\/+/, '');
+    var to = what.replace(/^\/+/, '');
+    var fromParts = from.split('/').filter(Boolean);
+    var toParts = to.split('/').filter(Boolean);
+    // Find common prefix
+    var i = 0;
+    while (i < fromParts.length && i < toParts.length && fromParts[i] === toParts[i]) {
+      i++;
+    }
+    // Go up for the remaining fromParts, then down for the remaining toParts
+    var up = fromParts.length - i;
+    var down = toParts.slice(i);
+    return (up ? '../'.repeat(up) : '') + down.join('/');
   };
   Path.prototype.toString = function () {
     return this.path;
@@ -16229,8 +16276,8 @@ class Book {
     if (!path) {
       return;
     }
-    var resolved = path;
-    var isAbsolute = path.indexOf('://') > -1;
+    let resolved = path;
+    let isAbsolute = typeof path === 'string' && (path.startsWith('/') || path.indexOf('://') > -1);
     if (isAbsolute) {
       return path;
     }

@@ -1,5 +1,6 @@
 import Url from './url';
-describe.skip('Url (legacy JS)', () => {
+
+describe('Url parsing', () => {
   it('should parse an absolute URL', () => {
     const url = new Url('https://example.com/foo/bar.html');
     expect(url.href).toBe('https://example.com/foo/bar.html');
@@ -51,5 +52,14 @@ describe.skip('Url (legacy JS)', () => {
     expect(() => new Url('')).not.toThrow();
     // Note: legacy code does not support null input in strict TypeScript
     // Future implementations should match legacy behavior for empty string
+  });
+
+  it('should not prepend base directory for absolute paths in resolve()', () => {
+    const base = 'https://example.com/fixtures/alice/OPS/';
+    const abs = '/fixtures/alice/OPS/package.opf';
+    const url = new Url(base);
+    expect(url.resolve(abs)).toBe(
+      'https://example.com/fixtures/alice/OPS/package.opf'
+    );
   });
 });

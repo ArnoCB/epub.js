@@ -348,6 +348,7 @@ class Book {
    */
   load(path) {
     var resolved = this.resolve(path);
+
     if (this.archived) {
       return this.archive.request(resolved);
     } else {
@@ -370,8 +371,10 @@ class Book {
     if (!path) {
       return;
     }
-    var resolved = path;
-    var isAbsolute = path.indexOf('://') > -1;
+    let resolved = path;
+    let isAbsolute =
+      typeof path === 'string' &&
+      (path.startsWith('/') || path.indexOf('://') > -1);
 
     if (isAbsolute) {
       return path;

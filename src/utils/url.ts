@@ -1,5 +1,4 @@
 import Path from './path';
-import path from 'path-webpack';
 
 /**
  * creates a Url object for parsing and manipulation of a url string
@@ -87,8 +86,12 @@ class Url {
    * Resolves a relative path to a absolute url
    */
   resolve(what: string) {
-    const isAbsolute = what.indexOf('://') > -1;
-    if (isAbsolute) {
+    // If what is an absolute path, join directly to origin
+    if (what.startsWith('/')) {
+      return this.origin + what;
+    }
+    // If what is a full URL, return as is
+    if (what.indexOf('://') > -1) {
       return what;
     }
     const fullpath = this.Path.resolve(what);
