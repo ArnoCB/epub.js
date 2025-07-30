@@ -56,11 +56,7 @@
   </div>
 
   <script>
-    // Debug: test fetch to remote OPF
-    fetch("https://s3.amazonaws.com/moby-dick/OPS/package.opf")
-      .then(r => r.text())
-      .then(txt => console.log("Fetch result:", txt.slice(0, 200)))
-      .catch(err => console.error("Fetch error:", err));
+
     // Load the opf
     var book = window.ePub.default("https://s3.amazonaws.com/moby-dick/OPS/package.opf");
     var rendition = book.renderTo("viewer", {

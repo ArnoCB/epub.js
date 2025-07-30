@@ -1608,8 +1608,6 @@
 	      if (protocol > -1) {
 	        pathString = new URL(pathString).pathname;
 	      }
-	      // Normalize Windows backslashes to POSIX style and collapse multiple slashes
-	      pathString = pathString.replace(/\\/g, '/').replace(/\/+/g, '/');
 	      var parsed = this.parse(pathString);
 	      this._path = pathString;
 	      if (this.isDirectory(pathString)) {
