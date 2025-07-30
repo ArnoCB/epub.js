@@ -29,3 +29,4 @@ ePub.CFI = CFI;
 ePub.utils = utils;
 
 export default ePub;
+export { Book, CFI as EpubCFI, Rendition, Contents, utils };

@@ -16641,6 +16641,7 @@ ePub.Contents = contents;
 ePub.CFI = epubcfi;
 ePub.utils = core;
 /* harmony default export */ const epub = (ePub);
-export { epub as default };
+
+export { book as Book, contents as Contents, epubcfi as EpubCFI, rendition as Rendition, epub as default, core as utils };
 
 //# sourceMappingURL=epub.js.map
