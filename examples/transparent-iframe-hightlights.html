@@ -58,7 +58,9 @@
   <script>
 
     // Load the opf
-    var book = window.ePub.default("https://s3.amazonaws.com/moby-dick/OPS/package.opf");
+    var book = window.ePub.default("https://s3.amazonaws.com/moby-dick/OPS/package.opf", {
+      keepAbsoluteUrl: true
+    });
     var rendition = book.renderTo("viewer", {
       width: "100%",
       height: 600,

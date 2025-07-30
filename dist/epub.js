@@ -1773,7 +1773,6 @@ var url = createCommonjsModule(function (module, exports) {
       this.base = baseString;
       if (!absolute && baseString !== undefined && typeof baseString !== 'string' && window && window.location) {
         this.base = window.location.href;
-        console.log('[Url] base set from window.location.href:', this.base);
       }
       // URL Polyfill doesn't throw an error if base is empty
       if (absolute || this.base) {
@@ -27077,6 +27076,7 @@ const INPUT_TYPE = {
  * @param {string} [options.replacements=none] use base64, blobUrl, or none for replacing assets in archived Epubs
  * @param {method} [options.canonical] optional function to determine canonical urls for a path
  * @param {string} [options.openAs] optional string to determine the input type
+ * @param {boolean} [options.keepAbsoluteUrl=false] whether to keep the absolute URL when opening
  * @param {string} [options.store=false] cache the contents in local storage, value should be the name of the reader
  * @returns {Book}
  * @example new Book("/path/to/book.epub", {})
@@ -27103,6 +27103,7 @@ class Book {
 
     // Promises
     this.opening = new core_1();
+
     /**
      * @member {promise} opened returns after the book is loaded
      * @memberof Book
@@ -27278,10 +27279,18 @@ class Book {
       opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(this.openEpub.bind(this));
     } else if (type == INPUT_TYPE.OPF) {
       this.url = new Url(input);
-      opening = this.openPackaging(this.url.Path.toString());
+      if (this.settings.keepAbsoluteUrl) {
+        opening = this.openPackaging(input);
+      } else {
+        opening = this.openPackaging(this.url.Path.toString());
+      }
     } else if (type == INPUT_TYPE.MANIFEST) {
       this.url = new Url(input);
-      opening = this.openManifest(this.url.Path.toString());
+      if (this.settings.keepAbsoluteUrl) {
+        opening = this.openManifest(input);
+      } else {
+        opening = this.openManifest(this.url.Path.toString());
+      }
     } else {
       this.url = new Url(input);
       opening = this.openContainer(CONTAINER_PATH).then(this.openPackaging.bind(this));

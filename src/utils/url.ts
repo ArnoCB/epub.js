@@ -40,7 +40,6 @@ class Url {
       window.location
     ) {
       this.base = window.location.href;
-      console.log('[Url] base set from window.location.href:', this.base);
     }
 
     // URL Polyfill doesn't throw an error if base is empty
