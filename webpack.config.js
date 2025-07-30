@@ -1,16 +1,12 @@
 var path = require('path');
 var webpack = require('webpack');
 
-var LEGACY = process.env.LEGACY;
 var MINIMIZE = process.env.MINIMIZE === 'true';
 var hostname = 'localhost';
 var port = 8080;
 
 var filename = '[name]';
 var sourceMapFilename = '[name]';
-if (LEGACY) {
-  filename += '.legacy';
-}
 if (MINIMIZE) {
   filename += '.min.js';
   sourceMapFilename += '.min.js.map';
@@ -79,9 +75,8 @@ module.exports = {
               [
                 '@babel/preset-env',
                 {
-                  targets: LEGACY
-                    ? 'defaults'
-                    : 'last 2 Chrome versions, last 2 Safari versions, last 2 ChromeAndroid versions, last 2 iOS versions, last 2 Firefox versions, last 2 Edge versions',
+                  targets:
+                    'last 2 Chrome versions, last 2 Safari versions, last 2 ChromeAndroid versions, last 2 iOS versions, last 2 Firefox versions, last 2 Edge versions',
                   corejs: 3,
                   useBuiltIns: 'usage',
                   bugfixes: true,

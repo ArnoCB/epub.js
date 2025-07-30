@@ -10,7 +10,7 @@
     "test": "test"
   },
   "scripts": {
-    "build:utils": "tsc src/utils/*.ts --skipLibCheck --declaration false --esModuleInterop",
+    "build:utils": "tsc src/utils/*.ts",
     "test": "karma start karma.conf.cjs",
     "docs": "documentation build src/epub.js -f html -o documentation/html/",
     "docs:html": "documentation build src/epub.js -f html -o documentation/html/",
@@ -21,11 +21,9 @@
     "start": "webpack-dev-server --inline --d",
     "build": "NODE_ENV=production webpack --progress",
     "minify": "NODE_ENV=production MINIMIZE=true webpack --progress",
-    "legacy": "NODE_ENV=production LEGACY=true webpack --progress",
-    "productionLegacy": "NODE_ENV=production MINIMIZE=true LEGACY=true webpack --progress",
     "compile": "babel -d lib/ src/",
     "watch": "babel --watch -d lib/ src/",
-    "dev:prepare": "npm run compile && npm run build && npm run minify && npm run legacy && npm run productionLegacy",
+    "dev:prepare": "npm run compile && npm run build && npm run minify",
     "prepare": "husky install"
   },
   "author": "fchasen@gmail.com",
