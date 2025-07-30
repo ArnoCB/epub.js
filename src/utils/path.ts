@@ -16,20 +16,24 @@ class Path {
   constructor(pathString: string) {
     const protocol = pathString.indexOf('://');
 
+    let normalized: string;
     if (protocol > -1) {
-      pathString = new URL(pathString).pathname;
+      // Remote URL: preserve as-is
+      normalized = pathString;
+    } else {
+      // Local path: normalize backslashes and collapse multiple slashes
+      normalized = pathString.replace(/\\/g, '/').replace(/\/+/g, '/');
     }
-
-    // Normalize all backslashes to slashes
-    const normalized = pathString.replace(/\\/g, '/');
 
     const parsed = this.parse(normalized);
 
-    this._path = normalized.replace(/\/+/g, '/');
+    this._path = normalized;
 
     const dir = this.isDirectory(normalized) ? normalized : parsed.dir + '/';
-    // Collapse multiple slashes in directory
-    this._directory = dir.replace(/\/+/g, '/');
+    this._directory =
+      protocol > -1
+        ? dir // remote: preserve
+        : dir.replace(/\/+/g, '/'); // local: collapse multiple slashes
     if (!this._directory.endsWith('/')) this._directory += '/';
 
     this._filename = parsed.base;
