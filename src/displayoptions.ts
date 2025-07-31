@@ -1,17 +1,13 @@
-import { qs, qsa } from './utils/core';
-
 /**
  * Open DisplayOptions Format Parser
- * @class
- * @param {document} displayOptionsDocument XML
  */
 class DisplayOptions {
-  constructor(displayOptionsDocument) {
-    this.interactive = '';
-    this.fixedLayout = '';
-    this.openToSpread = '';
-    this.orientationLock = '';
+  interactive: string | undefined = '';
+  fixedLayout: string | undefined = '';
+  openToSpread: string | undefined = '';
+  orientationLock: string | undefined = '';
 
+  constructor(displayOptionsDocument: XMLDocument) {
     if (displayOptionsDocument) {
       this.parse(displayOptionsDocument);
     }
@@ -19,28 +15,26 @@ class DisplayOptions {
 
   /**
    * Parse XML
-   * @param  {document} displayOptionsDocument XML
-   * @return {DisplayOptions} self
    */
-  parse(displayOptionsDocument) {
+  parse(displayOptionsDocument: XMLDocument): DisplayOptions {
     if (!displayOptionsDocument) {
       return this;
     }
 
-    const displayOptionsNode = qs(displayOptionsDocument, 'display_options');
+    const displayOptionsNode =
+      displayOptionsDocument.querySelector('display_options');
     if (!displayOptionsNode) {
       return this;
     }
 
-    const options = qsa(displayOptionsNode, 'option');
+    const options = displayOptionsNode.querySelectorAll('option');
     options.forEach((el) => {
       let value = '';
-
       if (el.childNodes.length) {
-        value = el.childNodes[0].nodeValue;
+        value = el.childNodes[0].nodeValue ?? '';
       }
-
-      switch (el.attributes.name.value) {
+      const name = el.getAttribute('name');
+      switch (name) {
         case 'interactive':
           this.interactive = value;
           break;
