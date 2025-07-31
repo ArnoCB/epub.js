@@ -21,13 +21,13 @@ class Themes {
         [key: string]: Theme;
       }
     | undefined = {
-    default: {
-      rules: {},
-      url: '',
-      serialized: '',
-      injected: false,
-    },
-  };
+      default: {
+        rules: {},
+        url: '',
+        serialized: '',
+        injected: false,
+      },
+    };
 
   private _overrides:
     | { [key: string]: { value: string; priority: boolean } }
