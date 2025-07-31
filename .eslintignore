@@ -1,10 +1,9 @@
-src/utils/*.js
+src/**/utils/*.js
 src/**/*.d.ts
-src/archive.js
+src/**/archive.js
 lib/
 dist/
 node_modules/
 examples/
 test/fixtures/
 types/
-src/utils/*.js

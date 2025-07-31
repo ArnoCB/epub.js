@@ -1,7 +1,9 @@
 'use strict';
-var __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { 'default': mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, '__esModule', { value: true });
 exports.replaceBase = replaceBase;
 exports.replaceCanonical = replaceCanonical;
@@ -18,8 +20,7 @@ function replaceBase(doc, section) {
     return;
   }
   const head = doc.querySelector('head');
-  if (!head)
-    return;
+  if (!head) return;
   base = head.querySelector('base');
   if (!base) {
     base = doc.createElement('base');
@@ -38,13 +39,11 @@ function replaceCanonical(doc, section) {
     return;
   }
   const head = doc.querySelector('head');
-  if (!head)
-    return;
+  if (!head) return;
   link = head.querySelector("link[rel='canonical']");
   if (link) {
     link.setAttribute('href', url !== null && url !== void 0 ? url : '');
-  }
-  else {
+  } else {
     link = doc.createElement('link');
     link.setAttribute('rel', 'canonical');
     link.setAttribute('href', url !== null && url !== void 0 ? url : '');
@@ -58,13 +57,11 @@ function replaceMeta(doc, section) {
     return;
   }
   const head = doc.querySelector('head');
-  if (!head)
-    return;
+  if (!head) return;
   meta = head.querySelector("link[property='dc.identifier']");
   if (meta) {
     meta.setAttribute('content', id !== null && id !== void 0 ? id : '');
-  }
-  else {
+  } else {
     meta = doc.createElement('meta');
     meta.setAttribute('name', 'dc.identifier');
     meta.setAttribute('content', id !== null && id !== void 0 ? id : '');
@@ -79,33 +76,34 @@ function replaceLinks(contents, fn) {
     return;
   }
   const base = contents.ownerDocument.documentElement.querySelector('base');
-  const location = base ? ((_a = base.getAttribute('href')) !== null && _a !== void 0 ? _a : undefined) : undefined;
+  const location = base
+    ? (_a = base.getAttribute('href')) !== null && _a !== void 0
+      ? _a
+      : undefined
+    : undefined;
   const replaceLink = function (link) {
     var _a;
-    const href = (_a = link.getAttribute('href')) !== null && _a !== void 0 ? _a : '';
+    const href =
+      (_a = link.getAttribute('href')) !== null && _a !== void 0 ? _a : '';
     if (href.indexOf('mailto:') === 0) {
       return;
     }
     const absolute = href.indexOf('://') > -1;
     if (absolute) {
       link.setAttribute('target', '_blank');
-    }
-    else {
+    } else {
       let linkUrl;
       try {
         linkUrl = new url_1.default(href, location);
-      }
-      catch (_b) {
+      } catch (_b) {
         // NOOP
       }
       link.onclick = function () {
         if (linkUrl && linkUrl.hash) {
           fn(linkUrl.Path.path + linkUrl.hash);
-        }
-        else if (linkUrl) {
+        } else if (linkUrl) {
           fn(linkUrl.Path.path);
-        }
-        else {
+        } else {
           fn(href);
         }
         return false;

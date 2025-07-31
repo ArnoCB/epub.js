@@ -14,13 +14,14 @@ class DisplayOptions {
     }
   }
   /**
-     * Parse XML
-     */
+   * Parse XML
+   */
   parse(displayOptionsDocument) {
     if (!displayOptionsDocument) {
       return this;
     }
-    const displayOptionsNode = displayOptionsDocument.querySelector('display_options');
+    const displayOptionsNode =
+      displayOptionsDocument.querySelector('display_options');
     if (!displayOptionsNode) {
       return this;
     }
@@ -29,7 +30,8 @@ class DisplayOptions {
       var _a;
       let value = '';
       if (el.childNodes.length) {
-        value = (_a = el.childNodes[0].nodeValue) !== null && _a !== void 0 ? _a : '';
+        value =
+          (_a = el.childNodes[0].nodeValue) !== null && _a !== void 0 ? _a : '';
       }
       const name = el.getAttribute('name');
       switch (name) {

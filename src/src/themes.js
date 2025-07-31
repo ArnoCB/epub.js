@@ -1,7 +1,9 @@
 'use strict';
-var __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { 'default': mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, '__esModule', { value: true });
 const url_1 = __importDefault(require('./utils/url'));
 /**
@@ -31,23 +33,29 @@ class Themes {
       return;
     }
     // themes.register({ light: {...}, dark: {...} })
-    if (args.length === 1 &&
-            typeof args[0] === 'object' &&
-            !Array.isArray(args[0]) &&
-            args[0] !== null &&
-            !(args[0] instanceof String)) {
+    if (
+      args.length === 1 &&
+      typeof args[0] === 'object' &&
+      !Array.isArray(args[0]) &&
+      args[0] !== null &&
+      !(args[0] instanceof String)
+    ) {
       return this.registerThemes(args[0]);
     }
     // themes.register("light", "http://example.com/light.css")
-    if (args.length === 2 &&
-            typeof args[0] === 'string' &&
-            typeof args[1] === 'string') {
+    if (
+      args.length === 2 &&
+      typeof args[0] === 'string' &&
+      typeof args[1] === 'string'
+    ) {
       return this.registerUrl(args[0], args[1]);
     }
     // themes.register("light", { body: { color: "purple" } })
-    if (args.length === 2 &&
-            typeof args[0] === 'string' &&
-            typeof args[1] === 'object') {
+    if (
+      args.length === 2 &&
+      typeof args[0] === 'string' &&
+      typeof args[1] === 'object'
+    ) {
       return this.registerRules(args[0], args[1]);
     }
     // themes.register("http://example.com/default.css")
@@ -60,11 +68,11 @@ class Themes {
     }
   }
   /**
-     * Add a default theme to be used by a rendition
-     * @param {object | string} theme
-     * @example themes.register("http://example.com/default.css")
-     * @example themes.register({ "body": { "color": "purple"}})
-     */
+   * Add a default theme to be used by a rendition
+   * @param {object | string} theme
+   * @example themes.register("http://example.com/default.css")
+   * @example themes.register({ "body": { "color": "purple"}})
+   */
   default(theme) {
     if (!theme) {
       return;
@@ -77,77 +85,90 @@ class Themes {
     }
   }
   /**
-     * Register themes object
-     * @param {object} themes
-     */
+   * Register themes object
+   * @param {object} themes
+   */
   registerThemes(themes) {
     for (const theme in themes) {
       if (Object.prototype.hasOwnProperty.call(themes, theme)) {
         if (typeof themes[theme] === 'string') {
           this.registerUrl(theme, themes[theme]);
-        }
-        else {
+        } else {
           this.registerRules(theme, themes[theme]);
         }
       }
     }
   }
   /**
-     * Register a theme by passing its css as string
-     * @param {string} name
-     * @param {string} css
-     */
+   * Register a theme by passing its css as string
+   * @param {string} name
+   * @param {string} css
+   */
   registerCss(name, css) {
     if (this._themes === undefined) {
-      throw new Error('Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.');
+      throw new Error(
+        'Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.'
+      );
     }
     this._themes[name] = { serialized: css };
-    if ((this._injected && this._injected.includes(name)) ||
-            name == 'default') {
+    if (
+      (this._injected && this._injected.includes(name)) ||
+      name == 'default'
+    ) {
       this.update(name);
     }
   }
   /**
-     * Register a url
-     * @param {string} name
-     * @param {string} input
-     */
+   * Register a url
+   * @param {string} name
+   * @param {string} input
+   */
   registerUrl(name, input) {
     const url = new url_1.default(input);
     if (this._themes === undefined) {
-      throw new Error('Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.');
+      throw new Error(
+        'Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.'
+      );
     }
     this._themes[name] = { url: url.toString() };
-    if ((this._injected && this._injected.includes(name)) ||
-            name == 'default') {
+    if (
+      (this._injected && this._injected.includes(name)) ||
+      name == 'default'
+    ) {
       this.update(name);
     }
   }
   /**
-     * Register rule
-     * @param {string} name
-     * @param {object} rules
-     */
+   * Register rule
+   * @param {string} name
+   * @param {object} rules
+   */
   registerRules(name, rules) {
     if (this._themes === undefined) {
-      throw new Error('Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.');
+      throw new Error(
+        'Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.'
+      );
     }
     this._themes[name] = { rules: rules };
     // TODO: serialize css rules
-    if ((this._injected && this._injected.includes(name)) ||
-            name == 'default') {
+    if (
+      (this._injected && this._injected.includes(name)) ||
+      name == 'default'
+    ) {
       this.update(name);
     }
   }
   /**
-     * Select a theme
-     */
+   * Select a theme
+   */
   select(name) {
     const prev = this._current;
     this._current = name;
     this.update(name);
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
     const contents = this.rendition.getContents();
     if (Array.isArray(contents)) {
@@ -158,12 +179,14 @@ class Themes {
     }
   }
   /**
-     * Update a theme
-     * @param {string} name
-     */
+   * Update a theme
+   * @param {string} name
+   */
   update(name) {
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
     const contents = this.rendition.getContents();
     if (Array.isArray(contents)) {
@@ -173,23 +196,29 @@ class Themes {
     }
   }
   /**
-     * Inject all themes into contents
-     * @param {Contents} contents
-     */
+   * Inject all themes into contents
+   * @param {Contents} contents
+   */
   inject(contents) {
     var _a;
     const links = [];
     const themes = this._themes;
     let theme;
     for (const name in themes) {
-      if (Object.prototype.hasOwnProperty.call(themes, name) &&
-                (name === this._current || name === 'default')) {
+      if (
+        Object.prototype.hasOwnProperty.call(themes, name) &&
+        (name === this._current || name === 'default')
+      ) {
         theme = themes[name];
-        if ((theme.rules && Object.keys(theme.rules).length > 0) ||
-                    (theme.url && links.indexOf(theme.url) === -1)) {
+        if (
+          (theme.rules && Object.keys(theme.rules).length > 0) ||
+          (theme.url && links.indexOf(theme.url) === -1)
+        ) {
           this.add(name, contents);
         }
-        (_a = this._injected) === null || _a === void 0 ? void 0 : _a.push(name);
+        (_a = this._injected) === null || _a === void 0
+          ? void 0
+          : _a.push(name);
       }
     }
     if (this._current !== undefined && this._current != 'default') {
@@ -197,38 +226,36 @@ class Themes {
     }
   }
   /**
-     * Add Theme to contents
-     * @param {string} name
-     * @param {Contents} contents
-     */
+   * Add Theme to contents
+   * @param {string} name
+   * @param {Contents} contents
+   */
   add(name, contents) {
-    const theme = this._themes
-      ? this._themes[name]
-      : undefined;
+    const theme = this._themes ? this._themes[name] : undefined;
     if (!theme || !contents) {
       return;
     }
     if (theme.url) {
       contents.addStylesheet(theme.url);
-    }
-    else if (theme.serialized) {
+    } else if (theme.serialized) {
       contents.addStylesheetCss(theme.serialized, name);
       theme.injected = true;
-    }
-    else if (theme.rules) {
+    } else if (theme.rules) {
       contents.addStylesheetRules(theme.rules, name);
       theme.injected = true;
     }
   }
   /**
-     * Add override
-     * @param {string} name
-     * @param {string} value
-     * @param {boolean} priority
-     */
+   * Add override
+   * @param {string} name
+   * @param {string} value
+   * @param {boolean} priority
+   */
   override(name, value, priority = false) {
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
     const contents = this.rendition.getContents();
     if (this._overrides === undefined) {
@@ -247,7 +274,9 @@ class Themes {
   }
   removeOverride(name) {
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
     const contents = this.rendition.getContents();
     if (this._overrides !== undefined && this._overrides[name] !== undefined) {
@@ -260,8 +289,8 @@ class Themes {
     }
   }
   /**
-     * Add all overrides
-     */
+   * Add all overrides
+   */
   overrides(contents) {
     const overrides = this._overrides;
     for (const rule in overrides) {
@@ -271,14 +300,14 @@ class Themes {
     }
   }
   /**
-     * Adjust the font size of a rendition
-     */
+   * Adjust the font size of a rendition
+   */
   fontSize(size) {
     this.override('font-size', size);
   }
   /**
-     * Adjust the font-family of a rendition
-     */
+   * Adjust the font-family of a rendition
+   */
   font(f) {
     this.override('font-family', f, true);
   }

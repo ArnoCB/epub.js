@@ -1,16 +1,42 @@
 'use strict';
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-  function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-  return new (P || (P = Promise))(function (resolve, reject) {
-    function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-    function rejected(value) { try { step(generator['throw'](value)); } catch (e) { reject(e); } }
-    function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { 'default': mod };
-};
+var __awaiter =
+  (this && this.__awaiter) ||
+  function (thisArg, _arguments, P, generator) {
+    function adopt(value) {
+      return value instanceof P
+        ? value
+        : new P(function (resolve) {
+            resolve(value);
+          });
+    }
+    return new (P || (P = Promise))(function (resolve, reject) {
+      function fulfilled(value) {
+        try {
+          step(generator.next(value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function rejected(value) {
+        try {
+          step(generator['throw'](value));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      function step(result) {
+        result.done
+          ? resolve(result.value)
+          : adopt(result.value).then(fulfilled, rejected);
+      }
+      step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  };
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, '__esModule', { value: true });
 const core_1 = require('./utils/core');
 const request_1 = __importDefault(require('./utils/request'));
@@ -32,14 +58,13 @@ class Archive {
   checkRequirements() {
     try {
       this.zip = new jszip_1.default();
-    }
-    catch (_a) {
+    } catch (_a) {
       throw new Error('JSZip lib not loaded');
     }
   }
   /**
-     * Open an archive
-     */
+   * Open an archive
+   */
   open(input, isBase64) {
     return __awaiter(this, void 0, void 0, function* () {
       return this.getZip()
@@ -54,11 +79,13 @@ class Archive {
     });
   }
   /**
-     * Load and Open an archive
-     */
+   * Load and Open an archive
+   */
   openUrl(zipUrl, isBase64) {
     return __awaiter(this, void 0, void 0, function* () {
-      return (0, request_1.default)(zipUrl, 'binary', false, {}).then((data) => this.getZip().loadAsync(data, { base64: isBase64 }));
+      return (0, request_1.default)(zipUrl, 'binary', false, {}).then((data) =>
+        this.getZip().loadAsync(data, { base64: isBase64 })
+      );
     });
   }
   request(url, type) {
@@ -66,8 +93,7 @@ class Archive {
       let response;
       if (type === 'blob') {
         response = this.getBlob(url, undefined);
-      }
-      else {
+      } else {
         response = this.getText(url);
       }
       if (!response) {
@@ -80,16 +106,15 @@ class Archive {
       try {
         const r = yield response;
         return this.handleResponse(r, type);
-      }
-      catch (err) {
+      } catch (err) {
         console.error('[Archive] request error', err);
         throw err;
       }
     });
   }
   /**
-     * Handle the response from request
-     */
+   * Handle the response from request
+   */
   handleResponse(response, type) {
     switch (type) {
       case 'json':
@@ -108,8 +133,8 @@ class Archive {
     }
   }
   /**
-     * Get a Blob from Archive by Url
-     */
+   * Get a Blob from Archive by Url
+   */
   getBlob(url, mimeType) {
     const decodededUrl = window.decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
@@ -124,8 +149,7 @@ class Archive {
           console.error('[Archive] getBlob error', err);
           throw err;
         });
-    }
-    else {
+    } else {
       console.error('[Archive] getBlob: file not found', url);
       return Promise.reject({
         message: 'File not found in the epub: ' + url,
@@ -146,8 +170,7 @@ class Archive {
           console.error('[Archive] getText error', err);
           throw err;
         });
-    }
-    else {
+    } else {
       console.error('[Archive] getText: file not found', url);
       return Promise.reject({
         message: 'File not found in the epub: ' + url,
@@ -156,8 +179,8 @@ class Archive {
     }
   }
   /**
-     * Get a base64 encoded result from Archive by Url
-     */
+   * Get a base64 encoded result from Archive by Url
+   */
   getBase64(url, mimeType) {
     const decodededUrl = window.decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
@@ -166,8 +189,7 @@ class Archive {
       return entry.async('base64').then(function (data) {
         return 'data:' + mimeType + ';base64,' + data;
       });
-    }
-    else {
+    } else {
       console.error('[Archive] getBase64: file not found', url);
       return Promise.reject({
         message: 'File not found in the epub: ' + url,
@@ -176,8 +198,8 @@ class Archive {
     }
   }
   /**
-     * Create a Url from an unarchived item
-     */
+   * Create a Url from an unarchived item
+   */
   createUrl(url, options) {
     return __awaiter(this, void 0, void 0, function* () {
       const _URL = window.URL || window.webkitURL;
@@ -211,13 +233,12 @@ class Archive {
     });
   }
   /**
-     * Revoke Temp Url for a archive item
-     */
+   * Revoke Temp Url for a archive item
+   */
   revokeUrl(url) {
     const _URL = window.URL || window.webkitURL;
     const fromCache = this.urlCache[url];
-    if (fromCache)
-      _URL.revokeObjectURL(fromCache);
+    if (fromCache) _URL.revokeObjectURL(fromCache);
   }
   destroy() {
     const _URL = window.URL || window.webkitURL;

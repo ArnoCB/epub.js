@@ -10,8 +10,7 @@ function scrollType() {
   document.body.appendChild(definer);
   if (definer.scrollLeft > 0) {
     type = 'default';
-  }
-  else {
+  } else {
     // Modern browsers: always use scrollIntoView logic
     definer.children[0].children[1].scrollIntoView();
     if (definer.scrollLeft < 0) {

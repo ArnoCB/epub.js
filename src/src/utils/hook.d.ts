@@ -10,19 +10,19 @@ declare class Hook {
   hooks: HookTask[];
   constructor(context: unknown);
   /**
-     * Adds a function to be run before a hook completes
-     * @example this.content.register(function(){...});
-     */
+   * Adds a function to be run before a hook completes
+   * @example this.content.register(function(){...});
+   */
   register(...tasks: (HookTask | HookTask[])[]): void;
   /**
-     * Removes a function
-     * @example this.content.deregister(function(){...});
-     */
+   * Removes a function
+   * @example this.content.deregister(function(){...});
+   */
   deregister(func: HookTask): void;
   /**
-     * Triggers a hook to run all functions
-     * @example this.content.trigger(args).then(function(){...});
-     */
+   * Triggers a hook to run all functions
+   * @example this.content.trigger(args).then(function(){...});
+   */
   trigger(...args: unknown[]): Promise<unknown[]>;
   list(): HookTask[];
   clear(): never[];

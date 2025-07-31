@@ -6,8 +6,8 @@ declare class Container {
   directory: string | undefined;
   constructor(containerDocument: XMLDocument);
   /**
-     * Parse the Container XML
-     */
+   * Parse the Container XML
+   */
   parse(containerDocument: XMLDocument): void;
   destroy(): void;
 }

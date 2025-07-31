@@ -1,7 +1,9 @@
 'use strict';
-var __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { 'default': mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, '__esModule', { value: true });
 const path_1 = __importDefault(require('./path'));
 /**
@@ -23,11 +25,13 @@ class Url {
     this.hash = '';
     this.search = '';
     this.base = baseString;
-    if (!absolute &&
-            baseString !== undefined &&
-            typeof baseString !== 'string' &&
-            window &&
-            window.location) {
+    if (
+      !absolute &&
+      baseString !== undefined &&
+      typeof baseString !== 'string' &&
+      window &&
+      window.location
+    ) {
       this.base = window.location.href;
     }
     // URL Polyfill doesn't throw an error if base is empty
@@ -36,8 +40,7 @@ class Url {
         if (this.base) {
           // Safari doesn't like an undefined base
           this.Url = new URL(urlString, this.base);
-        }
-        else {
+        } else {
           this.Url = new URL(urlString);
         }
         this.href = this.Url.href;
@@ -46,8 +49,7 @@ class Url {
         this.hash = this.Url.hash;
         this.search = this.Url.search;
         pathname = this.Url.pathname + (this.Url.search ? this.Url.search : '');
-      }
-      catch (_a) {
+      } catch (_a) {
         // Skip URL parsing
         this.Url = undefined;
         // resolve the pathname from the base
@@ -66,8 +68,8 @@ class Url {
     return this.Path;
   }
   /**
-     * Resolves a relative path to a absolute url
-     */
+   * Resolves a relative path to a absolute url
+   */
   resolve(what) {
     // If what is an absolute path, join directly to origin
     if (what.startsWith('/')) {
@@ -81,8 +83,8 @@ class Url {
     return this.origin + fullpath;
   }
   /**
-     * Resolve a path relative to the url
-     */
+   * Resolve a path relative to the url
+   */
   relative(what) {
     return this.Path.relative(what);
   }

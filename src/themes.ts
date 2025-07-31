@@ -16,18 +16,22 @@ type Theme = {
  */
 class Themes {
   rendition: Rendition | undefined;
-  private _themes: {
-    [key: string]: Theme;
-  } | undefined = {
-      default: {
-        rules: {},
-        url: '',
-        serialized: '',
-        injected: false,
-      },
-    };
+  private _themes:
+    | {
+        [key: string]: Theme;
+      }
+    | undefined = {
+    default: {
+      rules: {},
+      url: '',
+      serialized: '',
+      injected: false,
+    },
+  };
 
-  private _overrides: { [key: string]: { value: string; priority: boolean } } | undefined = {};
+  private _overrides:
+    | { [key: string]: { value: string; priority: boolean } }
+    | undefined = {};
   private _current: string | undefined = 'default';
   private _injected: string[] | undefined = [];
 
@@ -55,15 +59,29 @@ class Themes {
       return;
     }
     // themes.register({ light: {...}, dark: {...} })
-    if (args.length === 1 && typeof args[0] === 'object' && !Array.isArray(args[0]) && args[0] !== null && !(args[0] instanceof String)) {
+    if (
+      args.length === 1 &&
+      typeof args[0] === 'object' &&
+      !Array.isArray(args[0]) &&
+      args[0] !== null &&
+      !(args[0] instanceof String)
+    ) {
       return this.registerThemes(args[0] as { [key: string]: object });
     }
     // themes.register("light", "http://example.com/light.css")
-    if (args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'string') {
+    if (
+      args.length === 2 &&
+      typeof args[0] === 'string' &&
+      typeof args[1] === 'string'
+    ) {
       return this.registerUrl(args[0], args[1]);
     }
     // themes.register("light", { body: { color: "purple" } })
-    if (args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'object') {
+    if (
+      args.length === 2 &&
+      typeof args[0] === 'string' &&
+      typeof args[1] === 'object'
+    ) {
       return this.registerRules(args[0], args[1] as object);
     }
     // themes.register("http://example.com/default.css")
@@ -122,7 +140,7 @@ class Themes {
       );
     }
 
-    this._themes[name] = { serialized: css };  
+    this._themes[name] = { serialized: css };
 
     if (
       (this._injected && this._injected.includes(name)) ||
@@ -147,7 +165,7 @@ class Themes {
     this._themes[name] = { url: url.toString() };
     if (
       (this._injected && this._injected.includes(name)) ||
-       name == 'default'
+      name == 'default'
     ) {
       this.update(name);
     }
@@ -167,7 +185,10 @@ class Themes {
 
     this._themes[name] = { rules: rules };
     // TODO: serialize css rules
-    if ((this._injected && this._injected.includes(name)) || name == 'default') {
+    if (
+      (this._injected && this._injected.includes(name)) ||
+      name == 'default'
+    ) {
       this.update(name);
     }
   }
@@ -182,7 +203,9 @@ class Themes {
     this.update(name);
 
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
 
     const contents = this.rendition.getContents();
@@ -201,7 +224,9 @@ class Themes {
    */
   update(name: string) {
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
 
     const contents = this.rendition.getContents();
@@ -250,7 +275,9 @@ class Themes {
    * @param {Contents} contents
    */
   add(name: string, contents: Contents) {
-    const theme: Theme | undefined = this._themes ? this._themes[name] : undefined;
+    const theme: Theme | undefined = this._themes
+      ? this._themes[name]
+      : undefined;
 
     if (!theme || !contents) {
       return;
@@ -275,7 +302,9 @@ class Themes {
    */
   override(name: string, value: string, priority: boolean = false) {
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
 
     const contents = this.rendition.getContents();
@@ -292,18 +321,16 @@ class Themes {
 
     if (Array.isArray(contents)) {
       contents.forEach((content) => {
-        content.css(
-          name,
-          override.value,
-          override.priority
-        );
+        content.css(name, override.value, override.priority);
       });
     }
   }
 
   removeOverride(name: string) {
     if (!this.rendition || !this.rendition.getContents) {
-      throw new Error('Rendition is not defined or does not have getContents method');
+      throw new Error(
+        'Rendition is not defined or does not have getContents method'
+      );
     }
 
     const contents = this.rendition.getContents();

@@ -16,25 +16,25 @@ declare class Path {
   get filename(): string;
   get extension(): string;
   /**
-     * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
-     * Mimics Node.js path.parse for POSIX paths.
-     */
+   * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
+   * Mimics Node.js path.parse for POSIX paths.
+   */
   parse(what: string): {
-        dir: string;
-        base: string;
-        ext: string;
-        name: string;
-    };
-    /**
-     * @param	{string} what
-     * @returns {boolean}
-     */
+    dir: string;
+    base: string;
+    ext: string;
+    name: string;
+  };
+  /**
+   * @param	{string} what
+   * @returns {boolean}
+   */
   isAbsolute(what: string | undefined): boolean;
   /**
-     * Check if path ends with a directory
-     * @param	{string} what
-     * @returns {boolean}
-     */
+   * Check if path ends with a directory
+   * @param	{string} what
+   * @returns {boolean}
+   */
   isDirectory(what: string): boolean;
   /**
      * Resolve a path against the directory of the Path.
@@ -46,12 +46,12 @@ declare class Path {
      */
   resolve(what: string): string;
   /**
-     * Resolve a path relative to the directory of the Path
-     *
-     * https://nodejs.org/api/path.html#path_path_relative_from_to
-     * @param	{string} what
-     * @returns {string} relative
-     */
+   * Resolve a path relative to the directory of the Path
+   *
+   * https://nodejs.org/api/path.html#path_path_relative_from_to
+   * @param	{string} what
+   * @returns {string} relative
+   */
   relative(what: string): string;
   toString(): string;
 }

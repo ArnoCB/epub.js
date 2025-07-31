@@ -20,12 +20,12 @@ declare class Url {
   constructor(urlString: string, baseString?: string | undefined);
   path(): Path;
   /**
-     * Resolves a relative path to a absolute url
-     */
+   * Resolves a relative path to a absolute url
+   */
   resolve(what: string): string;
   /**
-     * Resolve a path relative to the url
-     */
+   * Resolve a path relative to the url
+   */
   relative(what: string): string;
   toString(): string;
 }

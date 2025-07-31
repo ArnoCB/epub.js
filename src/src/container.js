@@ -1,7 +1,9 @@
 'use strict';
-var __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { 'default': mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, '__esModule', { value: true });
 const path_1 = __importDefault(require('./utils/path'));
 /**
@@ -16,8 +18,8 @@ class Container {
     }
   }
   /**
-     * Parse the Container XML
-     */
+   * Parse the Container XML
+   */
   parse(containerDocument) {
     //-- <rootfile full-path="OPS/package.opf" media-type="application/oebps-package+xml"/>
     let rootfile = null;

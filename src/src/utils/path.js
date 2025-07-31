@@ -1,7 +1,9 @@
 'use strict';
-var __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { 'default': mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, '__esModule', { value: true });
 const path_webpack_1 = __importDefault(require('path-webpack'));
 /**
@@ -23,19 +25,16 @@ class Path {
       this._path = normalized;
       // Directory: strip filename from pathname, ensure trailing slash
       let dir = normalized.replace(/[^/]*$/, '');
-      if (!dir.endsWith('/'))
-        dir += '/';
+      if (!dir.endsWith('/')) dir += '/';
       this._directory = dir;
-    }
-    else {
+    } else {
       normalized = pathString.replace(/\\/g, '/').replace(/\/+/g, '/');
       parsed = this.parse(normalized);
       this._path = normalized;
       this._directory = this.isDirectory(normalized)
         ? normalized
         : parsed.dir + '/';
-      if (!this._directory.endsWith('/'))
-        this._directory += '/';
+      if (!this._directory.endsWith('/')) this._directory += '/';
     }
     this._filename = parsed.base;
     this._extension = parsed.ext.slice(1);
@@ -53,9 +52,9 @@ class Path {
     return this._extension;
   }
   /**
-     * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
-     * Mimics Node.js path.parse for POSIX paths.
-     */
+   * Parse the path: https://nodejs.org/api/path.html#path_path_parse_path
+   * Mimics Node.js path.parse for POSIX paths.
+   */
   parse(what) {
     const re = /^(.*[\\/])?([^\\/]+?)(\.[^.]*)?$/;
     const match = re.exec(what) || [];
@@ -66,17 +65,17 @@ class Path {
     return { dir, base, ext, name };
   }
   /**
-     * @param	{string} what
-     * @returns {boolean}
-     */
+   * @param	{string} what
+   * @returns {boolean}
+   */
   isAbsolute(what) {
     return path_webpack_1.default.isAbsolute(what || this.path);
   }
   /**
-     * Check if path ends with a directory
-     * @param	{string} what
-     * @returns {boolean}
-     */
+   * Check if path ends with a directory
+   * @param	{string} what
+   * @returns {boolean}
+   */
   isDirectory(what) {
     return what.charAt(what.length - 1) === '/';
   }
@@ -90,14 +89,17 @@ class Path {
      */
   resolve(what) {
     let base = this.directory;
-    if (!base.endsWith('/'))
-      base += '/';
+    if (!base.endsWith('/')) base += '/';
     let result = base + what;
     result = result.replace(/\/+/g, '/').replace(/\/\.\//g, '/');
     // Check for absolute path
-    if (typeof what === 'string' &&
-            (what.startsWith('/') || what.indexOf('://') > -1)) {
-      throw new Error('[Path.resolve] Cannot resolve an absolute path: ' + what);
+    if (
+      typeof what === 'string' &&
+      (what.startsWith('/') || what.indexOf('://') > -1)
+    ) {
+      throw new Error(
+        '[Path.resolve] Cannot resolve an absolute path: ' + what
+      );
     }
     // Remove '..' segments
     const parts = result.split('/');
@@ -105,20 +107,19 @@ class Path {
     for (const part of parts) {
       if (part === '..') {
         stack.pop();
-      }
-      else if (part !== '') {
+      } else if (part !== '') {
         stack.push(part);
       }
     }
     return '/' + stack.join('/');
   }
   /**
-     * Resolve a path relative to the directory of the Path
-     *
-     * https://nodejs.org/api/path.html#path_path_relative_from_to
-     * @param	{string} what
-     * @returns {string} relative
-     */
+   * Resolve a path relative to the directory of the Path
+   *
+   * https://nodejs.org/api/path.html#path_path_relative_from_to
+   * @param	{string} what
+   * @returns {string} relative
+   */
   relative(what) {
     const isAbsolute = what && what.indexOf('://') > -1;
     if (isAbsolute) {
@@ -131,9 +132,11 @@ class Path {
     const toParts = to.split('/').filter(Boolean);
     // Find common prefix
     let i = 0;
-    while (i < fromParts.length &&
-            i < toParts.length &&
-            fromParts[i] === toParts[i]) {
+    while (
+      i < fromParts.length &&
+      i < toParts.length &&
+      fromParts[i] === toParts[i]
+    ) {
       i++;
     }
     // Go up for the remaining fromParts, then down for the remaining toParts

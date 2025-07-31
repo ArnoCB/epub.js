@@ -149,8 +149,7 @@ const mimeTypes = (function () {
           val = table[type][subtype];
           if (typeof val == 'string') {
             mimeTypes[val] = type + '/' + subtype;
-          }
-          else {
+          } else {
             for (index = 0; index < val.length; index++) {
               mimeTypes[val[index]] = type + '/' + subtype;
             }
@@ -163,11 +162,9 @@ const mimeTypes = (function () {
 })();
 const defaultValue = 'text/plain';
 function lookup(filename) {
-  if (!filename)
-    return defaultValue;
+  if (!filename) return defaultValue;
   const ext = filename.split('.').pop();
-  if (!ext)
-    return defaultValue;
+  if (!ext) return defaultValue;
   return mimeTypes[ext.toLowerCase()] || defaultValue;
 }
 exports.default = { lookup };

@@ -5,6 +5,7 @@
     "declaration": true,
     "rootDir": ".",
     "outDir": "lib",
+    "declarationDir": "new-types",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

@@ -44,15 +44,14 @@ exports.getParentByTagName = getParentByTagName;
  * @returns {function} requestAnimationFrame
  * @memberof Core
  */
-exports.requestAnimationFrame = typeof window !== 'undefined' ? window.requestAnimationFrame : undefined;
+exports.requestAnimationFrame =
+  typeof window !== 'undefined' ? window.requestAnimationFrame : undefined;
 let _URL;
 if (typeof URL !== 'undefined') {
   _URL = URL;
-}
-else if (typeof window !== 'undefined' && typeof window.URL !== 'undefined') {
+} else if (typeof window !== 'undefined' && typeof window.URL !== 'undefined') {
   _URL = window.URL;
-}
-else {
+} else {
   _URL = undefined;
 }
 /**
@@ -62,11 +61,14 @@ else {
  */
 function uuid() {
   let d = new Date().getTime();
-  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (d + Math.random() * 16) % 16 | 0;
-    d = Math.floor(d / 16);
-    return (c == 'x' ? r : (r & 0x7) | 0x8).toString(16);
-  });
+  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+    /[xy]/g,
+    function (c) {
+      const r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      return (c == 'x' ? r : (r & 0x7) | 0x8).toString(16);
+    }
+  );
   return uuid;
 }
 /**
@@ -75,7 +77,13 @@ function uuid() {
  * @memberof Core
  */
 function documentHeight() {
-  return Math.max(document.documentElement.clientHeight, document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight, document.documentElement.offsetHeight);
+  return Math.max(
+    document.documentElement.clientHeight,
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.offsetHeight
+  );
 }
 /**
  * Checks if a node is an element
@@ -134,8 +142,7 @@ function defaults(obj, ...sources) {
   for (const source of sources) {
     for (const prop in source) {
       const key = prop;
-      if (obj[key] === void 0)
-        obj[key] = source[key];
+      if (obj[key] === void 0) obj[key] = source[key];
     }
   }
   return obj;
@@ -148,10 +155,13 @@ function defaults(obj, ...sources) {
  */
 function extend(target, ...sources) {
   sources.forEach(function (source) {
-    if (!source)
-      return;
+    if (!source) return;
     Object.getOwnPropertyNames(source).forEach(function (propName) {
-      Object.defineProperty(target, propName, Object.getOwnPropertyDescriptor(source, propName));
+      Object.defineProperty(
+        target,
+        propName,
+        Object.getOwnPropertyDescriptor(source, propName)
+      );
     });
   });
   return target;
@@ -176,10 +186,8 @@ function locationOf(item, array, compareFunction, _start, _end) {
   const pivot = Math.floor(start + (end - start) / 2);
   if (!compareFunction) {
     compareFunction = function (a, b) {
-      if (a > b)
-        return 1;
-      if (a < b)
-        return -1;
+      if (a > b) return 1;
+      if (a < b) return -1;
       return 0;
     };
   }
@@ -209,10 +217,8 @@ function indexOfSorted(item, array, compareFunction, _start, _end) {
   const pivot = Math.floor(start + (end - start) / 2);
   if (!compareFunction) {
     compareFunction = function (a, b) {
-      if (a > b)
-        return 1;
-      if (a < b)
-        return -1;
+      if (a > b) return 1;
+      if (a < b) return -1;
       return 0;
     };
   }
@@ -261,12 +267,10 @@ function bounds(el) {
   let width = 0;
   let height = 0;
   widthProps.forEach(function (prop) {
-    width +=
-            parseFloat(style[prop]) || 0;
+    width += parseFloat(style[prop]) || 0;
   });
   heightProps.forEach(function (prop) {
-    height +=
-            parseFloat(style[prop]) || 0;
+    height += parseFloat(style[prop]) || 0;
   });
   return {
     height: height,
@@ -299,12 +303,10 @@ function borders(el) {
   let width = 0;
   let height = 0;
   widthProps.forEach(function (prop) {
-    width +=
-            parseFloat(style[prop]) || 0;
+    width += parseFloat(style[prop]) || 0;
   });
   heightProps.forEach(function (prop) {
-    height +=
-            parseFloat(style[prop]) || 0;
+    height += parseFloat(style[prop]) || 0;
   });
   return {
     height: height,
@@ -322,8 +324,7 @@ function borders(el) {
 function nodeBounds(node) {
   if (node.nodeType === Node.TEXT_NODE) {
     const doc = node.ownerDocument;
-    if (!doc)
-      throw new Error('Text node does not have an ownerDocument');
+    if (!doc) throw new Error('Text node does not have an ownerDocument');
     const range = doc.createRange();
     range.selectNodeContents(node);
     return range.getBoundingClientRect();
@@ -371,8 +372,7 @@ function createBlob(content, mime) {
  * @memberof Core
  */
 function createBlobUrl(content, mime) {
-  if (!_URL)
-    return undefined;
+  if (!_URL) return undefined;
   const blob = createBlob(content, mime);
   return _URL.createObjectURL(blob);
 }
@@ -382,8 +382,7 @@ function createBlobUrl(content, mime) {
  * @memberof Core
  */
 function revokeBlobUrl(url) {
-  if (!_URL)
-    return;
+  if (!_URL) return;
   return _URL.revokeObjectURL(url);
 }
 /**
@@ -429,8 +428,7 @@ function qs(el, sel) {
   }
   if (typeof el.querySelector != 'undefined') {
     return el.querySelector(sel);
-  }
-  else {
+  } else {
     elements = el.getElementsByTagName(sel);
     if (elements.length) {
       return elements[0];
@@ -464,8 +462,7 @@ function qsp(el, sel, props) {
     }
     sel += ']';
     return el.querySelector(sel);
-  }
-  else {
+  } else {
     q = el.getElementsByTagName(sel);
     filtered = Array.prototype.slice.call(q, 0).filter(function (el) {
       for (const prop in props) {
@@ -487,12 +484,13 @@ function qsp(el, sel, props) {
  */
 function sprint(root, func) {
   const doc = root.ownerDocument || root;
-  if (doc &&
-        'createTreeWalker' in doc &&
-        typeof doc.createTreeWalker !== 'undefined') {
+  if (
+    doc &&
+    'createTreeWalker' in doc &&
+    typeof doc.createTreeWalker !== 'undefined'
+  ) {
     treeWalker(root, func, NodeFilter.SHOW_TEXT);
-  }
-  else {
+  } else {
     walk(root, function (node) {
       if (node && node.nodeType === Node.TEXT_NODE) {
         func(node);
@@ -611,8 +609,7 @@ function filterChildren(el, nodeName, single) {
  */
 function getParentByTagName(node, tagname) {
   const result = [];
-  if (node === null || tagname === '')
-    return result;
+  if (node === null || tagname === '') return result;
   let parent = node.parentNode;
   while (parent && parent.nodeType === Node.ELEMENT_NODE) {
     const el = parent;

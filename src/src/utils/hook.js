@@ -12,15 +12,14 @@ class Hook {
     this.hooks = [];
   }
   /**
-     * Adds a function to be run before a hook completes
-     * @example this.content.register(function(){...});
-     */
+   * Adds a function to be run before a hook completes
+   * @example this.content.register(function(){...});
+   */
   register(...tasks) {
     for (const task of tasks) {
       if (typeof task === 'function') {
         this.hooks.push(task);
-      }
-      else if (Array.isArray(task)) {
+      } else if (Array.isArray(task)) {
         for (const fn of task) {
           if (typeof fn === 'function') {
             this.hooks.push(fn);
@@ -30,9 +29,9 @@ class Hook {
     }
   }
   /**
-     * Removes a function
-     * @example this.content.deregister(function(){...});
-     */
+   * Removes a function
+   * @example this.content.deregister(function(){...});
+   */
   deregister(func) {
     const idx = this.hooks.indexOf(func);
     if (idx !== -1) {
@@ -40,22 +39,23 @@ class Hook {
     }
   }
   /**
-     * Triggers a hook to run all functions
-     * @example this.content.trigger(args).then(function(){...});
-     */
+   * Triggers a hook to run all functions
+   * @example this.content.trigger(args).then(function(){...});
+   */
   trigger(...args) {
     const context = this.context;
     const promises = [];
     this.hooks.forEach((task) => {
       try {
         const executing = task.apply(context, args);
-        if (executing &&
-                    typeof executing === 'object' &&
-                    typeof executing.then === 'function') {
+        if (
+          executing &&
+          typeof executing === 'object' &&
+          typeof executing.then === 'function'
+        ) {
           promises.push(executing);
         }
-      }
-      catch (err) {
+      } catch (err) {
         console.log(err);
       }
       // Otherwise Task resolves immediately, continue

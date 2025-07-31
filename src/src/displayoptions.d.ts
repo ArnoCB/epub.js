@@ -8,8 +8,8 @@ declare class DisplayOptions {
   orientationLock: string | undefined;
   constructor(displayOptionsDocument: XMLDocument);
   /**
-     * Parse XML
-     */
+   * Parse XML
+   */
   parse(displayOptionsDocument: XMLDocument): DisplayOptions;
   destroy(): void;
 }

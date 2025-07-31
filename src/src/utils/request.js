@@ -1,7 +1,9 @@
 'use strict';
-var __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { 'default': mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, '__esModule', { value: true });
 const core_1 = require('./core');
 const path_1 = __importDefault(require('./path'));
@@ -17,7 +19,7 @@ function request(url, type, withCredentials, headers) {
     if (!('overrideMimeType' in xhrPrototype)) {
       // IE10 might have response, but not overrideMimeType
       Object.defineProperty(xhrPrototype, 'overrideMimeType', {
-        value: function xmlHttpRequestOverrideMimeType() { },
+        value: function xmlHttpRequestOverrideMimeType() {},
       });
     }
     if (withCredentials) {
@@ -84,36 +86,28 @@ function request(url, type, withCredentials, headers) {
           }
           if (responseXML) {
             r = this.responseXML;
-          }
-          else if ((0, core_1.isXml)(type)) {
+          } else if ((0, core_1.isXml)(type)) {
             // xhr.overrideMimeType("text/xml"); // for OPF parsing
             // If this.responseXML wasn't set, try to parse using a DOMParser from text
             r = (0, core_1.parse)(this.response, 'text/xml');
-          }
-          else if (type == 'xhtml') {
+          } else if (type == 'xhtml') {
             r = (0, core_1.parse)(this.response, 'application/xhtml+xml');
-          }
-          else if (type == 'html' || type == 'htm') {
+          } else if (type == 'html' || type == 'htm') {
             r = (0, core_1.parse)(this.response, 'text/html');
-          }
-          else if (type == 'json') {
+          } else if (type == 'json') {
             r = JSON.parse(this.response);
-          }
-          else if (type == 'blob') {
+          } else if (type == 'blob') {
             if (supportsURL) {
               r = this.response;
-            }
-            else {
+            } else {
               //-- Safari doesn't support responseType blob, so create a blob from arraybuffer
               r = new Blob([this.response]);
             }
-          }
-          else {
+          } else {
             r = this.response;
           }
           resolve(r);
-        }
-        else {
+        } else {
           reject({
             status: this.status,
             message: this.response,
