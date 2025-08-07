@@ -147,7 +147,7 @@ class Archive {
    * Get a Blob from Archive by Url
    */
   getBlob(url: string, mimeType?: string) {
-    const decodededUrl = window.decodeURIComponent(url.slice(1)); // Remove first slash
+    const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
     if (entry) {
       mimeType = mimeType || mime.lookup(entry.name);
@@ -170,7 +170,7 @@ class Archive {
   }
 
   getText(url: string) {
-    const decodededUrl = window.decodeURIComponent(url.slice(1)); // Remove first slash
+    const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
     if (entry) {
       return entry
@@ -195,7 +195,7 @@ class Archive {
    * Get a base64 encoded result from Archive by Url
    */
   getBase64(url: string, mimeType?: string) {
-    const decodededUrl = window.decodeURIComponent(url.slice(1)); // Remove first slash
+    const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
 
     if (entry) {

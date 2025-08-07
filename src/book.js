@@ -251,15 +251,25 @@ class Book {
     var opening;
     var type = what || this.determineType(input);
 
+    console.log(
+      'DEBUG: open() called with input:',
+      input,
+      'detected type:',
+      type
+    );
+
     if (type === INPUT_TYPE.BINARY) {
+      console.log('DEBUG: Opening as BINARY, setting archived = true');
       this.archived = true;
       this.url = new Url('/', '');
       opening = this.openEpub(input);
     } else if (type === INPUT_TYPE.BASE64) {
+      console.log('DEBUG: Opening as BASE64, setting archived = true');
       this.archived = true;
       this.url = new Url('/', '');
       opening = this.openEpub(input, type);
     } else if (type === INPUT_TYPE.EPUB) {
+      console.log('DEBUG: Opening as EPUB, setting archived = true');
       this.archived = true;
       this.url = new Url('/', '');
       opening = this.request(
@@ -300,11 +310,22 @@ class Book {
    * @return {Promise}
    */
   openEpub(data, encoding) {
+    console.log(
+      'DEBUG: openEpub() called with data type:',
+      typeof data,
+      'encoding:',
+      encoding
+    );
     return this.unarchive(data, encoding || this.settings.encoding)
       .then(() => {
+        console.log('DEBUG: unarchive completed, opening container');
         return this.openContainer(CONTAINER_PATH);
       })
       .then((packagePath) => {
+        console.log(
+          'DEBUG: container opened, opening packaging at:',
+          packagePath
+        );
         return this.openPackaging(packagePath);
       });
   }
@@ -316,10 +337,21 @@ class Book {
    * @return {string} packagePath
    */
   openContainer(url) {
-    return this.load(url).then((xml) => {
-      this.container = new Container(xml);
-      return this.resolve(this.container.packagePath);
-    });
+    console.log('DEBUG: openContainer() called with url:', url);
+    return this.load(url)
+      .then((xml) => {
+        console.log('DEBUG: container XML loaded successfully');
+        this.container = new Container(xml);
+        console.log(
+          'DEBUG: Container instance created, packagePath:',
+          this.container.packagePath
+        );
+        return this.resolve(this.container.packagePath);
+      })
+      .catch((err) => {
+        console.error('DEBUG: Error in openContainer:', err);
+        throw err;
+      });
   }
 
   /**
@@ -360,8 +392,30 @@ class Book {
     var resolved = this.resolve(path);
 
     if (this.archived) {
-      return this.archive.request(resolved);
+      // Determine type based on file extension
+      const extension = path.split('.').pop()?.toLowerCase();
+      let type = 'string'; // default
+
+      if (
+        extension === 'xml' ||
+        path.includes('container.xml') ||
+        path.includes('.opf')
+      ) {
+        type = 'xml';
+      } else if (extension === 'xhtml') {
+        type = 'xhtml';
+      } else if (extension === 'html' || extension === 'htm') {
+        type = 'html';
+      } else if (extension === 'json') {
+        type = 'json';
+      } else if (extension === 'ncx') {
+        type = 'ncx';
+      }
+
+      console.log('DEBUG: Determined file type:', type, 'for path:', path);
+      return this.archive.request(resolved, type);
     } else {
+      console.log('DEBUG: Using regular request()');
       return this.request(
         resolved,
         null,
@@ -473,20 +527,27 @@ class Book {
    * @param {Packaging} packaging object
    */
   unpack(packaging) {
+    console.log('DEBUG: unpack() called for packaging');
     this.package = packaging; //TODO: deprecated this
 
     if (this.packaging.metadata.layout === '') {
       // rendition:layout not set - check display options if book is pre-paginated
+      console.log('DEBUG: Loading display options for pre-paginated book');
       this.load(this.url.resolve(IBOOKS_DISPLAY_OPTIONS_PATH))
         .then((xml) => {
+          console.log('DEBUG: Display options XML loaded successfully');
           this.displayOptions = new DisplayOptions(xml);
           this.loading.displayOptions.resolve(this.displayOptions);
         })
         .catch(() => {
+          console.log(
+            'DEBUG: Display options XML failed to load, using defaults'
+          );
           this.displayOptions = new DisplayOptions();
           this.loading.displayOptions.resolve(this.displayOptions);
         });
     } else {
+      console.log('DEBUG: Using default display options for regular layout');
       this.displayOptions = new DisplayOptions();
       this.loading.displayOptions.resolve(this.displayOptions);
     }
@@ -523,22 +584,37 @@ class Book {
 
     this.isOpen = true;
 
+    console.log(
+      'DEBUG: Book opened, archived:',
+      this.archived,
+      'replacements setting:',
+      this.settings.replacements
+    );
+
     if (
       this.archived ||
       (this.settings.replacements && this.settings.replacements != 'none')
     ) {
+      console.log('DEBUG: Starting replacements for archived book');
       this.replacements()
         .then(() => {
-          this.loaded.displayOptions.then(() => {
+          console.log(
+            'DEBUG: Replacements completed, waiting for displayOptions'
+          );
+          return this.loaded.displayOptions.then(() => {
+            console.log('DEBUG: displayOptions resolved, resolving opening');
             this.opening.resolve(this);
           });
         })
         .catch((err) => {
-          console.error(err);
+          console.error('DEBUG: Error in archived book opening:', err);
+          this.opening.reject(err);
         });
     } else {
+      console.log('DEBUG: Non-archived book, waiting for displayOptions');
       // Resolve book opened promise
       this.loaded.displayOptions.then(() => {
+        console.log('DEBUG: displayOptions resolved for non-archived book');
         this.opening.resolve(this);
       });
     }
@@ -629,8 +705,24 @@ class Book {
    * @return {Archive}
    */
   unarchive(input, encoding) {
+    console.log(
+      'DEBUG: unarchive() called with input type:',
+      typeof input,
+      'encoding:',
+      encoding
+    );
     this.archive = new Archive();
-    return this.archive.open(input, encoding);
+    console.log('DEBUG: Created new Archive instance, calling archive.open()');
+    return this.archive
+      .open(input, encoding)
+      .then((result) => {
+        console.log('DEBUG: archive.open() completed successfully');
+        return result;
+      })
+      .catch((err) => {
+        console.error('DEBUG: archive.open() failed with error:', err);
+        throw err;
+      });
   }
 
   /**

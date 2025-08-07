@@ -99,7 +99,7 @@ export default class Contents {
 
   scrollWidth(): number;
 
-  size(width: number, height: number): void;
+  size(width: number | null, height: number | null): void;
 
   textHeight(): number;
 

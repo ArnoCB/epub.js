@@ -21,13 +21,13 @@ class Themes {
         [key: string]: Theme;
       }
     | undefined = {
-      default: {
-        rules: {},
-        url: '',
-        serialized: '',
-        injected: false,
-      },
-    };
+    default: {
+      rules: {},
+      url: '',
+      serialized: '',
+      injected: false,
+    },
+  };
 
   private _overrides:
     | { [key: string]: { value: string; priority: boolean } }
@@ -152,8 +152,6 @@ class Themes {
 
   /**
    * Register a url
-   * @param {string} name
-   * @param {string} input
    */
   registerUrl(name: string, input: string) {
     const url = new Url(input);

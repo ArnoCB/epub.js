@@ -17,5 +17,5 @@
     }
   },
   "include": ["src/**/*", "types/**/*"],
-  "exclude": ["node_modules", "lib", "pkg", "test"]
+  "exclude": ["node_modules", "lib", "pkg", "test", "**/*.spec.ts"]
 }

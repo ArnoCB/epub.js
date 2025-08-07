@@ -5,13 +5,20 @@
     "node": true,
     "jest": true
   },
-  "extends": ["eslint:recommended"],
-  "plugins": ["@typescript-eslint"],
+  "extends": ["eslint:recommended", "prettier"],
+  "plugins": ["@typescript-eslint", "prettier"],
   "overrides": [
     {
       "files": ["**/*.ts", "**/*.mts", "**/*.cts"],
       "parser": "@typescript-eslint/parser",
-      "extends": ["plugin:@typescript-eslint/recommended"]
+      "extends": ["plugin:@typescript-eslint/recommended", "prettier"]
+    },
+    {
+      "files": ["**/*.mjs"],
+      "parserOptions": {
+        "sourceType": "module",
+        "ecmaVersion": 2022
+      }
     },
     {
       "files": ["test/**/*.js"],
@@ -30,7 +37,7 @@
     }
   ],
   "rules": {
-    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "prettier/prettier": "error",
     "quotes": ["error", "single", { "avoidEscape": true }],
     "no-unused-vars": [
       "error",

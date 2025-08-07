@@ -1,9 +1,21 @@
+src/epub.js
 src/**/utils/*.js
 src/**/*.d.ts
 src/**/archive.js
+
+# Exclude all JavaScript files compiled from TypeScript in src directory
+src/**/*.js
+
 lib/
 dist/
 node_modules/
 examples/
 test/fixtures/
 types/
+
+# Exclude all TypeScript spec and declaration files from linting
+*.spec.ts
+*.d.ts
+src/**/*.spec.ts
+src/**/*.d.ts
+types/**/*.d.ts

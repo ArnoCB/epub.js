@@ -678,20 +678,20 @@ export function filterChildren(
   el: Element,
   nodeName: string,
   single: boolean
-): ChildNode[] {
+): ChildNode[] | ChildNode | null {
   const result: ChildNode[] = [];
   const childNodes = el.childNodes;
   for (let i = 0; i < childNodes.length; i++) {
     const node = childNodes[i];
     if (node.nodeType === 1 && node.nodeName.toLowerCase() === nodeName) {
-      result.push(node);
       if (single) {
-        break;
+        return node;
       }
+      result.push(node);
     }
   }
 
-  return result;
+  return single ? null : result;
 }
 
 /**

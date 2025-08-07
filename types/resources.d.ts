@@ -1,7 +1,16 @@
-import { PackagingManifestObject } from './packaging';
+import { PackagingManifestObject, PackagingManifestItem } from './packaging';
 import Archive from './archive';
 
 export default class Resources {
+  resources: Array<PackagingManifestItem>;
+  manifest: PackagingManifestObject;
+  replacementUrls: Array<string>;
+  html: Array<PackagingManifestItem>;
+  assets: Array<PackagingManifestItem>;
+  css: Array<PackagingManifestItem>;
+  urls: Array<string>;
+  cssUrls: Array<string>;
+
   constructor(
     manifest: PackagingManifestObject,
     options: {

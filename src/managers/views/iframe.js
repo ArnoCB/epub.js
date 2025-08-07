@@ -266,7 +266,7 @@ class IframeView {
     var width = _width || this.settings.width;
     var height = _height || this.settings.height;
 
-    if (this.layout.name === 'pre-paginated') {
+    if (this.layout && this.layout.name === 'pre-paginated') {
       this.lock('both', width, height);
     } else if (this.settings.axis === 'horizontal') {
       this.lock('height', width, height);

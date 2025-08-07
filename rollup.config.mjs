@@ -1,6 +1,7 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import babel from 'rollup-plugin-babel';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import babel from '@rollup/plugin-babel';
+import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 export default [
   // ESM build
@@ -11,7 +12,21 @@ export default [
       format: 'esm',
       sourcemap: true,
     },
-    plugins: [resolve(), commonjs(), babel({ exclude: 'node_modules/**' })],
+    plugins: [
+      nodePolyfills(),
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
+      commonjs({
+        include: ['node_modules/**', 'src/**'],
+        transformMixedEsModules: true,
+      }),
+      babel({
+        exclude: 'node_modules/**',
+        babelHelpers: 'bundled',
+      }),
+    ],
   },
   // UMD build
   {
@@ -22,6 +37,20 @@ export default [
       name: 'ePub',
       sourcemap: true,
     },
-    plugins: [resolve(), commonjs(), babel({ exclude: 'node_modules/**' })],
+    plugins: [
+      nodePolyfills(),
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
+      commonjs({
+        include: ['node_modules/**', 'src/**'],
+        transformMixedEsModules: true,
+      }),
+      babel({
+        exclude: 'node_modules/**',
+        babelHelpers: 'bundled',
+      }),
+    ],
   },
 ];

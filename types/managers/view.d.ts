@@ -15,6 +15,7 @@ export interface ViewSettings {
 }
 
 export default class View {
+  index: number;
   constructor(section: Section, options: ViewSettings);
 
   create(): any;
