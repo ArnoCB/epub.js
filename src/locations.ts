@@ -591,3 +591,5 @@ export class Locations {
 }
 
 EventEmitter(Locations.prototype);
+
+export default Locations;

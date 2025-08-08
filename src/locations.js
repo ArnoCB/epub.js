@@ -456,3 +456,4 @@ class Locations {
 }
 exports.Locations = Locations;
 (0, event_emitter_1.default)(Locations.prototype);
+exports.default = Locations;

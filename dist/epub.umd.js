@@ -3773,6 +3773,8 @@
 	  }
 	}
 
+	var locations = {};
+
 	var queue$1 = {};
 
 	var hasRequiredQueue;
@@ -3881,6 +3883,7 @@
 	          }
 	        });
 	      }
+	      return this._deferredPromise;
 	    }
 	    /**
 	     * Run one item
@@ -3938,9 +3941,6 @@
 	  queue$1.default = Queue;
 	  return queue$1;
 	}
-
-	var queueExports = requireQueue();
-	var Queue = /*@__PURE__*/getDefaultExportFromCjs(queueExports);
 
 	var constants = {};
 
@@ -4015,437 +4015,465 @@
 	  return constants;
 	}
 
-	var constantsExports = requireConstants();
-
-	/**
-	 * Find Locations for a Book
-	 * @param {Spine} spine
-	 * @param {request} request
-	 * @param {number} [pause=100]
-	 */
-	class Locations {
-	  constructor(spine, request, pause) {
-	    this.spine = spine;
-	    this.request = request;
-	    this.pause = pause || 100;
-	    this.q = new Queue(this);
-	    this.epubcfi = new CFI();
-	    this._locations = [];
-	    this._locationsWords = [];
-	    this.total = 0;
-	    this.break = 150;
-	    this._current = 0;
-	    this._wordCounter = 0;
-	    this.currentLocation = '';
-	    this._currentCfi = '';
-	    this.processingTimeout = undefined;
-	  }
-
-	  /**
-	   * Load all of sections in the book to generate locations
-	   * @param  {int} chars how many chars to split on
-	   * @return {Promise<Array<string>>} locations
-	   */
-	  generate(chars) {
-	    if (chars) {
-	      this.break = chars;
-	    }
-	    this.q.pause();
-	    this.spine.each(function (section) {
-	      if (section.linear) {
-	        this.q.enqueue(this.process.bind(this), section);
-	      }
-	    }.bind(this));
-	    return this.q.run().then(function () {
-	      this.total = this._locations.length - 1;
-	      if (this._currentCfi) {
-	        this.currentLocation = this._currentCfi;
-	      }
-	      return this._locations;
-	      // console.log(this.percentage(this.book.rendition.location.start), this.percentage(this.book.rendition.location.end));
-	    }.bind(this));
-	  }
-	  createRange() {
-	    return {
-	      startContainer: undefined,
-	      startOffset: undefined,
-	      endContainer: undefined,
-	      endOffset: undefined
+	var hasRequiredLocations;
+	function requireLocations() {
+	  if (hasRequiredLocations) return locations;
+	  hasRequiredLocations = 1;
+	  var __importDefault = locations && locations.__importDefault || function (mod) {
+	    return mod && mod.__esModule ? mod : {
+	      "default": mod
 	    };
-	  }
-	  process(section) {
-	    return section.load(this.request).then(function (contents) {
-	      var completed = new coreExports.defer();
-	      var locations = this.parse(contents, section.cfiBase);
-	      this._locations = this._locations.concat(locations);
-	      section.unload();
-	      this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
-	      return completed.promise;
-	    }.bind(this));
-	  }
-	  parse(contents, cfiBase, chars) {
-	    var locations = [];
-	    var range;
-	    var doc = contents.ownerDocument;
-	    var body = coreExports.qs(doc, 'body');
-	    var counter = 0;
-	    var prev;
-	    var _break = chars || this.break;
-	    var parser = function (node) {
-	      var len = node.length;
-	      var dist;
-	      var pos = 0;
-	      if (node.textContent.trim().length === 0) {
-	        return false; // continue
+	  };
+	  Object.defineProperty(locations, "__esModule", {
+	    value: true
+	  });
+	  locations.Locations = void 0;
+	  const core_1 = requireCore();
+	  const queue_1 = __importDefault(requireQueue());
+	  const epubcfi_1 = __importDefault(requireEpubcfi());
+	  const constants_1 = requireConstants();
+	  const event_emitter_1 = __importDefault(requireEventEmitter());
+	  /**
+	   * Find Locations for a Book
+	   * @param {Spine} spine
+	   * @param {request} request
+	   * @param {number} [pause=100]
+	   */
+	  class Locations {
+	    constructor(spine, request, pause) {
+	      this.epubcfi = new epubcfi_1.default();
+	      this._locationsWords = [];
+	      this._locations = [];
+	      this.total = 0;
+	      this.break = 150;
+	      this._current = 0;
+	      this._currentCfi = '';
+	      this._wordCounter = 0;
+	      this.processingTimeout = undefined;
+	      this.spine = spine;
+	      this.request = request;
+	      this.pause = pause || 100;
+	      this.q = new queue_1.default(this);
+	      this.currentLocation = 0;
+	    }
+	    /**
+	     * Load all of sections in the book to generate locations
+	     * @param  {int} chars how many chars to split on
+	     * @return {Promise<Array<string>>} locations
+	     */
+	    generate(chars) {
+	      if (chars) {
+	        this.break = chars;
 	      }
-
-	      // Start range
-	      if (counter == 0) {
-	        range = this.createRange();
-	        range.startContainer = node;
-	        range.startOffset = 0;
+	      if (this.q === undefined) {
+	        throw new Error('Queue is not defined');
 	      }
-	      dist = _break - counter;
-
-	      // Node is smaller than a break,
-	      // skip over it
-	      if (dist > len) {
-	        counter += len;
-	        pos = len;
+	      if (this.spine === undefined) {
+	        throw new Error('Spine is not defined');
 	      }
-	      while (pos < len) {
-	        dist = _break - counter;
-	        if (counter === 0) {
-	          // Start new range
-	          pos += 1;
+	      this.q.pause();
+	      this.spine.each(section => {
+	        if (section.linear) {
+	          this.q.enqueue(this.process.bind(this), section);
+	        }
+	      });
+	      return this.q.run().then(() => {
+	        this.total = this._locations.length - 1;
+	        if (this._currentCfi) {
+	          this.currentLocation = this._currentCfi;
+	        }
+	        return this._locations;
+	        // console.log(this.percentage(this.book.rendition.location.start), this.percentage(this.book.rendition.location.end));
+	      });
+	    }
+	    createRange() {
+	      return {
+	        startContainer: undefined,
+	        startOffset: undefined,
+	        endContainer: undefined,
+	        endOffset: undefined
+	      };
+	    }
+	    process(section) {
+	      return section.load(this.request).then(contents => {
+	        const completed = new core_1.defer();
+	        const locations = this.parse(contents, section.cfiBase);
+	        this._locations = this._locations.concat(locations);
+	        section.unload();
+	        this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
+	        return completed.promise;
+	      });
+	    }
+	    parse(contents, cfiBase, chars) {
+	      const locations = [];
+	      let range;
+	      const doc = contents.ownerDocument;
+	      const body = doc.querySelector('body');
+	      if (!body) {
+	        throw new Error('No body element found in document');
+	      }
+	      let counter = 0;
+	      let prev;
+	      const _break = chars || this.break || 150;
+	      const parser = node => {
+	        const textNode = node;
+	        const len = textNode.length;
+	        let dist;
+	        let pos = 0;
+	        if (!textNode.textContent || textNode.textContent.trim().length === 0) {
+	          return false; // continue
+	        }
+	        // Start range
+	        if (counter == 0) {
 	          range = this.createRange();
-	          range.startContainer = node;
-	          range.startOffset = pos;
+	          range.startContainer = textNode;
+	          range.startOffset = 0;
 	        }
-
-	        // pos += dist;
-
-	        // Gone over
-	        if (pos + dist >= len) {
-	          // Continue counter for next node
-	          counter += len - pos;
-	          // break
+	        dist = _break - counter;
+	        // Node is smaller than a break,
+	        // skip over it
+	        if (dist > len) {
+	          counter += len;
 	          pos = len;
-	          // At End
-	        } else {
-	          // Advance pos
-	          pos += dist;
-
-	          // End the previous range
-	          range.endContainer = node;
-	          range.endOffset = pos;
-	          // cfi = section.cfiFromRange(range);
-	          let cfi = new CFI(range, cfiBase).toString();
-	          locations.push(cfi);
-	          counter = 0;
 	        }
+	        while (pos < len) {
+	          dist = _break - counter;
+	          if (counter === 0) {
+	            // Start new range
+	            pos += 1;
+	            range = this.createRange();
+	            range.startContainer = textNode;
+	            range.startOffset = pos;
+	          }
+	          // pos += dist;
+	          // Gone over
+	          if (pos + dist >= len) {
+	            // Continue counter for next node
+	            counter += len - pos;
+	            // break
+	            pos = len;
+	            // At End
+	          } else {
+	            // Advance pos
+	            pos += dist;
+	            // End the previous range
+	            if (range) {
+	              range.endContainer = textNode;
+	              range.endOffset = pos;
+	              // cfi = section.cfiFromRange(range);
+	              const cfi = new epubcfi_1.default(range, cfiBase).toString();
+	              locations.push(cfi);
+	            }
+	            counter = 0;
+	          }
+	        }
+	        prev = textNode;
+	      };
+	      (0, core_1.sprint)(body, parser);
+	      // Close remaining
+	      if (range && range.startContainer && prev) {
+	        range.endContainer = prev;
+	        range.endOffset = prev.length;
+	        const cfi = new epubcfi_1.default(range, cfiBase).toString();
+	        locations.push(cfi);
+	        counter = 0;
 	      }
-	      prev = node;
-	    };
-	    coreExports.sprint(body, parser.bind(this));
-
-	    // Close remaining
-	    if (range && range.startContainer && prev) {
-	      range.endContainer = prev;
-	      range.endOffset = prev.length;
-	      let cfi = new CFI(range, cfiBase).toString();
-	      locations.push(cfi);
-	      counter = 0;
+	      return locations;
 	    }
-	    return locations;
-	  }
-
-	  /**
-	   * Load all of sections in the book to generate locations
-	   * @param  {string} startCfi start position
-	   * @param  {int} wordCount how many words to split on
-	   * @param  {int} count result count
-	   * @return {object} locations
-	   */
-	  generateFromWords(startCfi, wordCount, count) {
-	    var start = startCfi ? new CFI(startCfi) : undefined;
-	    this.q.pause();
-	    this._locationsWords = [];
-	    this._wordCounter = 0;
-	    this.spine.each(function (section) {
-	      if (section.linear) {
-	        if (start) {
-	          if (section.index >= start.spinePos) {
+	    /**
+	     * Load all of sections in the book to generate locations
+	     * @param  {string} startCfi start position
+	     * @param  {int} wordCount how many words to split on
+	     * @param  {int} count result count
+	     * @return {object} locations
+	     */
+	    generateFromWords(startCfi, wordCount, count) {
+	      const start = startCfi ? new epubcfi_1.default(startCfi) : undefined;
+	      if (this.q === undefined) {
+	        throw new Error('Queue is not defined');
+	      }
+	      if (this.spine === undefined) {
+	        throw new Error('Spine is not defined');
+	      }
+	      this.q.pause();
+	      this._locationsWords = [];
+	      this._wordCounter = 0;
+	      this.spine.each(section => {
+	        if (section.linear) {
+	          if (start) {
+	            if (section.index >= start.spinePos) {
+	              this.q.enqueue(this.processWords.bind(this), section, wordCount, start, count);
+	            }
+	          } else {
 	            this.q.enqueue(this.processWords.bind(this), section, wordCount, start, count);
 	          }
-	        } else {
-	          this.q.enqueue(this.processWords.bind(this), section, wordCount, start, count);
 	        }
-	      }
-	    }.bind(this));
-	    return this.q.run().then(function () {
-	      if (this._currentCfi) {
-	        this.currentLocation = this._currentCfi;
-	      }
-	      return this._locationsWords;
-	    }.bind(this));
-	  }
-	  processWords(section, wordCount, startCfi, count) {
-	    if (count && this._locationsWords.length >= count) {
-	      return Promise.resolve();
+	      });
+	      return this.q.run().then(() => {
+	        if (this._currentCfi) {
+	          this.currentLocation = this._currentCfi;
+	        }
+	        return this._locationsWords;
+	      });
 	    }
-	    return section.load(this.request).then(function (contents) {
-	      var completed = new coreExports.defer();
-	      var locations = this.parseWords(contents, section, wordCount, startCfi);
-	      var remainingCount = count - this._locationsWords.length;
-	      this._locationsWords = this._locationsWords.concat(locations.length >= count ? locations.slice(0, remainingCount) : locations);
-	      section.unload();
-	      this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
-	      return completed.promise;
-	    }.bind(this));
-	  }
-
-	  //http://stackoverflow.com/questions/18679576/counting-words-in-string
-	  countWords(s) {
-	    s = s.replace(/(^\s*)|(\s*$)/gi, ''); //exclude  start and end white-space
-	    s = s.replace(/[ ]{2,}/gi, ' '); //2 or more space to 1
-	    s = s.replace(/\n /, '\n'); // exclude newline with a start spacing
-	    return s.split(' ').length;
-	  }
-	  parseWords(contents, section, wordCount, startCfi) {
-	    var cfiBase = section.cfiBase;
-	    var locations = [];
-	    var doc = contents.ownerDocument;
-	    var body = coreExports.qs(doc, 'body');
-	    var _break = wordCount;
-	    var foundStartNode = startCfi ? startCfi.spinePos !== section.index : true;
-	    var startNode;
-	    if (startCfi && section.index === startCfi.spinePos) {
-	      startNode = startCfi.findNode(startCfi.range ? startCfi.path.steps.concat(startCfi.start.steps) : startCfi.path.steps, contents.ownerDocument);
+	    async processWords(section, wordCount, startCfi, count) {
+	      if (count && this._locationsWords.length >= count) {
+	        return Promise.resolve();
+	      }
+	      return section.load(this.request).then(contents => {
+	        const completed = new core_1.defer();
+	        const locations = this.parseWords(contents, section, wordCount, startCfi);
+	        const remainingCount = count - this._locationsWords.length;
+	        this._locationsWords = this._locationsWords.concat(locations.length >= count ? locations.slice(0, remainingCount) : locations);
+	        section.unload();
+	        this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
+	        return completed.promise;
+	      });
 	    }
-	    var parser = function (node) {
-	      if (!foundStartNode) {
-	        if (node === startNode) {
-	          foundStartNode = true;
-	        } else {
-	          return false;
+	    //http://stackoverflow.com/questions/18679576/counting-words-in-string
+	    countWords(s) {
+	      s = s.replace(/(^\s*)|(\s*$)/gi, ''); //exclude  start and end white-space
+	      s = s.replace(/[ ]{2,}/gi, ' '); //2 or more space to 1
+	      s = s.replace(/\n /, '\n'); // exclude newline with a start spacing
+	      return s.split(' ').length;
+	    }
+	    parseWords(contents, section, wordCount, startCfi) {
+	      const cfiBase = section.cfiBase;
+	      const locations = [];
+	      const doc = contents.ownerDocument;
+	      if (!doc) {
+	        throw new Error('Document is not defined');
+	      }
+	      const body = doc.querySelector('body');
+	      if (!body) {
+	        throw new Error('No body element found in document');
+	      }
+	      const _break = wordCount;
+	      let foundStartNode = startCfi ? startCfi.spinePos !== section.index : true;
+	      let startNode;
+	      if (startCfi && section.index === startCfi.spinePos) {
+	        startNode = startCfi.findNode(startCfi.range ? startCfi.path.steps.concat(startCfi.start?.steps || []) : startCfi.path.steps, contents.ownerDocument);
+	      }
+	      const parser = node => {
+	        if (!foundStartNode) {
+	          if (node === startNode) {
+	            foundStartNode = true;
+	          } else {
+	            return false;
+	          }
 	        }
-	      }
-	      if (node.textContent.length < 10) {
-	        if (node.textContent.trim().length === 0) {
-	          return false;
+	        if (node.nodeType !== 3 || !node.textContent || node.textContent.length < 10) {
+	          if (!node.textContent || node.textContent.trim().length === 0) {
+	            return false;
+	          }
 	        }
-	      }
-	      var len = this.countWords(node.textContent);
-	      var dist;
-	      var pos = 0;
-	      if (len === 0) {
-	        return false; // continue
-	      }
-	      dist = _break - this._wordCounter;
-
-	      // Node is smaller than a break,
-	      // skip over it
-	      if (dist > len) {
-	        this._wordCounter += len;
-	        pos = len;
-	      }
-	      while (pos < len) {
+	        const len = this.countWords(node.textContent);
+	        let dist;
+	        let pos = 0;
+	        if (len === 0) {
+	          return false; // continue
+	        }
 	        dist = _break - this._wordCounter;
-
-	        // Gone over
-	        if (pos + dist >= len) {
-	          // Continue counter for next node
-	          this._wordCounter += len - pos;
-	          // break
+	        // Node is smaller than a break,
+	        // skip over it
+	        if (dist > len) {
+	          this._wordCounter += len;
 	          pos = len;
-	          // At End
-	        } else {
-	          // Advance pos
-	          pos += dist;
-	          let cfi = new CFI(node, cfiBase);
-	          locations.push({
-	            cfi: cfi.toString(),
-	            wordCount: this._wordCounter
-	          });
-	          this._wordCounter = 0;
 	        }
+	        while (pos < len) {
+	          dist = _break - this._wordCounter;
+	          // Gone over
+	          if (pos + dist >= len) {
+	            // Continue counter for next node
+	            this._wordCounter += len - pos;
+	            // break
+	            pos = len;
+	            // At End
+	          } else {
+	            // Advance pos
+	            pos += dist;
+	            const cfi = new epubcfi_1.default(node, cfiBase);
+	            locations.push({
+	              cfi: cfi.toString(),
+	              wordCount: this._wordCounter
+	            });
+	            this._wordCounter = 0;
+	          }
+	        }
+	      };
+	      (0, core_1.sprint)(body, parser);
+	      return locations;
+	    }
+	    /**
+	     * Get a location from an EpubCFI
+	     * @param {EpubCFI} cfi
+	     * @return {number}
+	     */
+	    locationFromCfi(cfiInput) {
+	      let cfi;
+	      if (epubcfi_1.default.prototype.isCfiString(cfiInput)) {
+	        cfi = new epubcfi_1.default(cfiInput);
+	      } else {
+	        cfi = cfiInput;
 	      }
-	    };
-	    coreExports.sprint(body, parser.bind(this));
-	    return locations;
-	  }
-
-	  /**
-	   * Get a location from an EpubCFI
-	   * @param {EpubCFI} cfi
-	   * @return {number}
-	   */
-	  locationFromCfi(cfi) {
-	    let loc;
-	    if (CFI.prototype.isCfiString(cfi)) {
-	      cfi = new CFI(cfi);
+	      // Check if the location has not been set yet
+	      if (this._locations === undefined || this._locations.length === 0) {
+	        return -1;
+	      }
+	      if (this.epubcfi === undefined) {
+	        throw new Error('EpubCFI is not defined');
+	      }
+	      const loc = (0, core_1.locationOf)(cfi, this._locations, this.epubcfi.compare);
+	      if (this.total === undefined) {
+	        return -1;
+	      }
+	      if (loc > this.total) {
+	        return this.total;
+	      }
+	      return loc;
 	    }
-	    // Check if the location has not been set yet
-	    if (this._locations.length === 0) {
-	      return -1;
+	    /**
+	     * Get a percentage position in locations from an EpubCFI
+	     */
+	    percentageFromCfi(cfi) {
+	      if (this._locations === undefined || this._locations.length === 0) {
+	        return null;
+	      }
+	      // Find closest cfi
+	      const loc = this.locationFromCfi(cfi);
+	      // Get percentage in total
+	      return this.percentageFromLocation(loc);
 	    }
-	    loc = coreExports.locationOf(cfi, this._locations, this.epubcfi.compare);
-	    if (loc > this.total) {
-	      return this.total;
+	    /**
+	     * Get a percentage position from a location index
+	     */
+	    percentageFromLocation(loc) {
+	      if (!loc || !this.total) {
+	        return 0;
+	      }
+	      return loc / this.total;
 	    }
-	    return loc;
-	  }
-
-	  /**
-	   * Get a percentage position in locations from an EpubCFI
-	   * @param {EpubCFI} cfi
-	   * @return {number}
-	   */
-	  percentageFromCfi(cfi) {
-	    if (this._locations.length === 0) {
-	      return null;
+	    /**
+	     * Get an EpubCFI from location index
+	     * @param {number} loc
+	     */
+	    cfiFromLocation(loc) {
+	      if (this._locations === undefined) {
+	        return '';
+	      }
+	      if (loc >= 0 && loc < this._locations.length) {
+	        return this._locations[loc];
+	      }
+	      return '';
 	    }
-	    // Find closest cfi
-	    var loc = this.locationFromCfi(cfi);
-	    // Get percentage in total
-	    return this.percentageFromLocation(loc);
-	  }
-
-	  /**
-	   * Get a percentage position from a location index
-	   * @param {number} location
-	   * @return {number}
-	   */
-	  percentageFromLocation(loc) {
-	    if (!loc || !this.total) {
-	      return 0;
+	    /**
+	     * Get an EpubCFI from location percentage
+	     */
+	    cfiFromPercentage(percentage) {
+	      if (percentage > 1) {
+	        console.warn('Normalize cfiFromPercentage value to between 0 - 1');
+	      }
+	      if (this._locations === undefined || this.total === undefined) {
+	        return '';
+	      }
+	      // Make sure 1 goes to very end
+	      if (percentage >= 1) {
+	        const cfi = new epubcfi_1.default(this._locations[this.total]);
+	        cfi.collapse();
+	        return cfi.toString();
+	      }
+	      const loc = Math.ceil(this.total * percentage);
+	      return this.cfiFromLocation(loc);
 	    }
-	    return loc / this.total;
-	  }
-
-	  /**
-	   * Get an EpubCFI from location index
-	   * @param {number} loc
-	   * @return {EpubCFI} cfi
-	   */
-	  cfiFromLocation(loc) {
-	    var cfi = -1;
-	    // check that pg is an int
-	    if (typeof loc != 'number') {
-	      loc = parseInt(loc);
+	    /**
+	     * Load locations from JSON
+	     * @param {json} locations
+	     */
+	    load(locations) {
+	      if (typeof locations === 'string') {
+	        this._locations = JSON.parse(locations);
+	      } else {
+	        this._locations = locations;
+	      }
+	      this.total = this._locations.length - 1;
+	      return this._locations;
 	    }
-	    if (loc >= 0 && loc < this._locations.length) {
-	      cfi = this._locations[loc];
+	    /**
+	     * Save locations to JSON
+	     */
+	    save() {
+	      return JSON.stringify(this._locations);
 	    }
-	    return cfi;
-	  }
-
-	  /**
-	   * Get an EpubCFI from location percentage
-	   * @param {number} percentage
-	   * @return {EpubCFI} cfi
-	   */
-	  cfiFromPercentage(percentage) {
-	    let loc;
-	    if (percentage > 1) {
-	      console.warn('Normalize cfiFromPercentage value to between 0 - 1');
+	    getCurrent() {
+	      return this._current;
 	    }
-
-	    // Make sure 1 goes to very end
-	    if (percentage >= 1) {
-	      let cfi = new CFI(this._locations[this.total]);
-	      cfi.collapse();
-	      return cfi.toString();
+	    setCurrent(curr) {
+	      let loc;
+	      if (curr === undefined) {
+	        return;
+	      }
+	      if (typeof curr == 'string') {
+	        this._currentCfi = curr;
+	      } else if (typeof curr == 'number') {
+	        this._current = curr;
+	      } else {
+	        return;
+	      }
+	      if (this._locations === undefined || this._locations.length === 0) {
+	        return;
+	      }
+	      if (typeof curr == 'string') {
+	        loc = this.locationFromCfi(curr);
+	        this._current = loc;
+	      } else {
+	        loc = curr;
+	      }
+	      this.emit(constants_1.EVENTS.LOCATIONS.CHANGED, {
+	        percentage: this.percentageFromLocation(loc)
+	      });
 	    }
-	    loc = Math.ceil(this.total * percentage);
-	    return this.cfiFromLocation(loc);
-	  }
-
-	  /**
-	   * Load locations from JSON
-	   * @param {json} locations
-	   */
-	  load(locations) {
-	    if (typeof locations === 'string') {
-	      this._locations = JSON.parse(locations);
-	    } else {
-	      this._locations = locations;
+	    /**
+	     * Get the current location
+	     */
+	    get currentLocation() {
+	      return this._current;
 	    }
-	    this.total = this._locations.length - 1;
-	    return this._locations;
-	  }
-
-	  /**
-	   * Save locations to JSON
-	   * @return {json}
-	   */
-	  save() {
-	    return JSON.stringify(this._locations);
-	  }
-	  getCurrent() {
-	    return this._current;
-	  }
-	  setCurrent(curr) {
-	    var loc;
-	    if (typeof curr == 'string') {
-	      this._currentCfi = curr;
-	    } else if (typeof curr == 'number') {
-	      this._current = curr;
-	    } else {
-	      return;
+	    /**
+	     * Set the current location
+	     */
+	    set currentLocation(curr) {
+	      this.setCurrent(curr);
 	    }
-	    if (this._locations.length === 0) {
-	      return;
+	    /**
+	     * Locations length
+	     */
+	    length() {
+	      return this._locations?.length ?? 0;
 	    }
-	    if (typeof curr == 'string') {
-	      loc = this.locationFromCfi(curr);
-	      this._current = loc;
-	    } else {
-	      loc = curr;
+	    destroy() {
+	      this.spine = undefined;
+	      this.request = undefined;
+	      this.pause = undefined;
+	      this.q?.stop();
+	      this.q = undefined;
+	      this.epubcfi = undefined;
+	      this._locations = undefined;
+	      this.total = undefined;
+	      this.break = undefined;
+	      this._current = undefined;
+	      this.currentLocation = undefined;
+	      this._currentCfi = undefined;
+	      clearTimeout(this.processingTimeout);
 	    }
-	    this.emit(constantsExports.EVENTS.LOCATIONS.CHANGED, {
-	      percentage: this.percentageFromLocation(loc)
-	    });
 	  }
-
-	  /**
-	   * Get the current location
-	   */
-	  get currentLocation() {
-	    return this._current;
-	  }
-
-	  /**
-	   * Set the current location
-	   */
-	  set currentLocation(curr) {
-	    this.setCurrent(curr);
-	  }
-
-	  /**
-	   * Locations length
-	   */
-	  length() {
-	    return this._locations.length;
-	  }
-	  destroy() {
-	    this.spine = undefined;
-	    this.request = undefined;
-	    this.pause = undefined;
-	    this.q.stop();
-	    this.q = undefined;
-	    this.epubcfi = undefined;
-	    this._locations = undefined;
-	    this.total = undefined;
-	    this.break = undefined;
-	    this._current = undefined;
-	    this.currentLocation = undefined;
-	    this._currentCfi = undefined;
-	    clearTimeout(this.processingTimeout);
-	  }
+	  locations.Locations = Locations;
+	  (0, event_emitter_1.default)(Locations.prototype);
+	  locations.default = Locations;
+	  return locations;
 	}
-	EventEmitter(Locations.prototype);
+
+	var locationsExports = requireLocations();
+	var Locations = /*@__PURE__*/getDefaultExportFromCjs(locationsExports);
 
 	var container = {};
 
@@ -5855,6 +5883,9 @@
 	var pagelistExports = requirePagelist();
 	var PageList = /*@__PURE__*/getDefaultExportFromCjs(pagelistExports);
 
+	var queueExports = requireQueue();
+	var Queue = /*@__PURE__*/getDefaultExportFromCjs(queueExports);
+
 	var layout = {};
 
 	var hasRequiredLayout;
@@ -6629,414 +6660,398 @@
 	var annotationsExports = requireAnnotations();
 	var Annotations = /*@__PURE__*/getDefaultExportFromCjs(annotationsExports);
 
-	/**
-	 * Map text locations to CFI ranges
-	 * @class
-	 * @param {Layout} layout Layout to apply
-	 * @param {string} [direction="ltr"] Text direction
-	 * @param {string} [axis="horizontal"] vertical or horizontal axis
-	 * @param {boolean} [dev] toggle developer highlighting
-	 */
-	class Mapping {
-	  constructor(layout, direction, axis, dev = false) {
-	    this.layout = layout;
-	    this.horizontal = axis === 'horizontal' ? true : false;
-	    this.direction = direction || 'ltr';
-	    this._dev = dev;
-	  }
+	var constantsExports = requireConstants();
 
-	  /**
-	   * Find CFI pairs for entire section at once
-	   */
-	  section(view) {
-	    var ranges = this.findRanges(view);
-	    var map = this.rangeListToCfiList(view.section.cfiBase, ranges);
-	    return map;
-	  }
+	var mapping = {};
 
-	  /**
-	   * Find CFI pairs for a page
-	   * @param {Contents} contents Contents from view
-	   * @param {string} cfiBase string of the base for a cfi
-	   * @param {number} start position to start at
-	   * @param {number} end position to end at
-	   */
-	  page(contents, cfiBase, start, end) {
-	    var root = contents && contents.document ? contents.document.body : false;
-	    var result;
-	    if (!root) {
-	      return;
-	    }
-	    result = this.rangePairToCfiPair(cfiBase, {
-	      start: this.findStart(root, start, end),
-	      end: this.findEnd(root, start, end)
-	    });
-	    if (this._dev === true) {
-	      let doc = contents.document;
-	      let startRange = new CFI(result.start).toRange(doc);
-	      let endRange = new CFI(result.end).toRange(doc);
-	      let selection = doc.defaultView.getSelection();
-	      let r = doc.createRange();
-	      selection.removeAllRanges();
-	      r.setStart(startRange.startContainer, startRange.startOffset);
-	      r.setEnd(endRange.endContainer, endRange.endOffset);
-	      selection.addRange(r);
-	    }
-	    return result;
-	  }
-
-	  /**
-	   * Walk a node, preforming a function on each node it finds
-	   * @private
-	   * @param {Node} root Node to walkToNode
-	   * @param {function} func walk function
-	   * @return {*} returns the result of the walk function
-	   */
-	  walk(root, func) {
-	    // IE11 has strange issue, if root is text node IE throws exception on
-	    // calling treeWalker.nextNode(), saying
-	    // Unexpected call to method or property access instead of returning null value
-	    if (root && root.nodeType === Node.TEXT_NODE) {
-	      return;
-	    }
-	    // safeFilter is required so that it can work in IE as filter is a function for IE
-	    // and for other browser filter is an object.
-	    var filter = {
-	      acceptNode: function (node) {
-	        if (node.data.trim().length > 0) {
-	          return NodeFilter.FILTER_ACCEPT;
-	        } else {
-	          return NodeFilter.FILTER_REJECT;
-	        }
-	      }
+	var hasRequiredMapping;
+	function requireMapping() {
+	  if (hasRequiredMapping) return mapping;
+	  hasRequiredMapping = 1;
+	  var __importDefault = mapping && mapping.__importDefault || function (mod) {
+	    return mod && mod.__esModule ? mod : {
+	      "default": mod
 	    };
-	    var safeFilter = filter.acceptNode;
-	    safeFilter.acceptNode = filter.acceptNode;
-	    var treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, safeFilter, false);
-	    var node;
-	    var result;
-	    while (node = treeWalker.nextNode()) {
-	      result = func(node);
-	      if (result) break;
-	    }
-	    return result;
-	  }
-	  findRanges(view) {
-	    var columns = [];
-	    var scrollWidth = view.contents.scrollWidth();
-	    var spreads = Math.ceil(scrollWidth / this.layout.spreadWidth);
-	    var count = spreads * this.layout.divisor;
-	    var columnWidth = this.layout.columnWidth;
-	    var gap = this.layout.gap;
-	    var start, end;
-	    for (var i = 0; i < count.pages; i++) {
-	      start = (columnWidth + gap) * i;
-	      end = columnWidth * (i + 1) + gap * i;
-	      columns.push({
-	        start: this.findStart(view.document.body, start, end),
-	        end: this.findEnd(view.document.body, start, end)
-	      });
-	    }
-	    return columns;
-	  }
-
+	  };
+	  Object.defineProperty(mapping, "__esModule", {
+	    value: true
+	  });
+	  mapping.Mapping = void 0;
+	  const epubcfi_1 = __importDefault(requireEpubcfi());
+	  const core_1 = requireCore();
 	  /**
-	   * Find Start Range
-	   * @private
-	   * @param {Node} root root node
-	   * @param {number} start position to start at
-	   * @param {number} end position to end at
-	   * @return {Range}
+	   * Map text locations to CFI ranges
+	   * @param {Layout} layout Layout to apply
+	   * @param {string} [direction="ltr"] Text direction
+	   * @param {string} [axis="horizontal"] vertical or horizontal axis
+	   * @param {boolean} [dev] toggle developer highlighting
 	   */
-	  findStart(root, start, end) {
-	    var stack = [root];
-	    var $el;
-	    var found;
-	    var $prev = root;
-	    while (stack.length) {
-	      $el = stack.shift();
-	      found = this.walk($el, node => {
-	        var left, right, top, bottom;
-	        var elPos;
-	        elPos = coreExports.nodeBounds(node);
-	        if (this.horizontal && this.direction === 'ltr') {
-	          left = this.horizontal ? elPos.left : elPos.top;
-	          right = this.horizontal ? elPos.right : elPos.bottom;
-	          if (left >= start && left <= end) {
-	            return node;
-	          } else if (right > start) {
-	            return node;
-	          } else {
-	            $prev = node;
-	            stack.push(node);
-	          }
-	        } else if (this.horizontal && this.direction === 'rtl') {
-	          left = elPos.left;
-	          right = elPos.right;
-	          if (right <= end && right >= start) {
-	            return node;
-	          } else if (left < end) {
-	            return node;
-	          } else {
-	            $prev = node;
-	            stack.push(node);
-	          }
-	        } else {
-	          top = elPos.top;
-	          bottom = elPos.bottom;
-	          if (top >= start && top <= end) {
-	            return node;
-	          } else if (bottom > start) {
-	            return node;
-	          } else {
-	            $prev = node;
-	            stack.push(node);
-	          }
-	        }
-	      });
-	      if (found) {
-	        return this.findTextStartRange(found, start, end);
-	      }
-	    }
-
-	    // Return last element
-	    return this.findTextStartRange($prev, start, end);
-	  }
-
-	  /**
-	   * Find End Range
-	   * @private
-	   * @param {Node} root root node
-	   * @param {number} start position to start at
-	   * @param {number} end position to end at
-	   * @return {Range}
-	   */
-	  findEnd(root, start, end) {
-	    var stack = [root];
-	    var $el;
-	    var $prev = root;
-	    var found;
-	    while (stack.length) {
-	      $el = stack.shift();
-	      found = this.walk($el, node => {
-	        var left, right, top, bottom;
-	        var elPos;
-	        elPos = coreExports.nodeBounds(node);
-	        if (this.horizontal && this.direction === 'ltr') {
-	          left = Math.round(elPos.left);
-	          right = Math.round(elPos.right);
-	          if (left > end && $prev) {
-	            return $prev;
-	          } else if (right > end) {
-	            return node;
-	          } else {
-	            $prev = node;
-	            stack.push(node);
-	          }
-	        } else if (this.horizontal && this.direction === 'rtl') {
-	          left = Math.round(this.horizontal ? elPos.left : elPos.top);
-	          right = Math.round(this.horizontal ? elPos.right : elPos.bottom);
-	          if (right < start && $prev) {
-	            return $prev;
-	          } else if (left < start) {
-	            return node;
-	          } else {
-	            $prev = node;
-	            stack.push(node);
-	          }
-	        } else {
-	          top = Math.round(elPos.top);
-	          bottom = Math.round(elPos.bottom);
-	          if (top > end && $prev) {
-	            return $prev;
-	          } else if (bottom > end) {
-	            return node;
-	          } else {
-	            $prev = node;
-	            stack.push(node);
-	          }
-	        }
-	      });
-	      if (found) {
-	        return this.findTextEndRange(found, start, end);
-	      }
-	    }
-
-	    // end of chapter
-	    return this.findTextEndRange($prev, start, end);
-	  }
-
-	  /**
-	   * Find Text Start Range
-	   * @private
-	   * @param {Node} root root node
-	   * @param {number} start position to start at
-	   * @param {number} end position to end at
-	   * @return {Range}
-	   */
-	  findTextStartRange(node, start, end) {
-	    var ranges = this.splitTextNodeIntoRanges(node);
-	    var range;
-	    var pos;
-	    var left, top, right;
-	    for (var i = 0; i < ranges.length; i++) {
-	      range = ranges[i];
-	      pos = range.getBoundingClientRect();
-	      if (this.horizontal && this.direction === 'ltr') {
-	        left = pos.left;
-	        if (left >= start) {
-	          return range;
-	        }
-	      } else if (this.horizontal && this.direction === 'rtl') {
-	        right = pos.right;
-	        if (right <= end) {
-	          return range;
-	        }
-	      } else {
-	        top = pos.top;
-	        if (top >= start) {
-	          return range;
-	        }
-	      }
-
-	      // prev = range;
-	    }
-	    return ranges[0];
-	  }
-
-	  /**
-	   * Find Text End Range
-	   * @private
-	   * @param {Node} root root node
-	   * @param {number} start position to start at
-	   * @param {number} end position to end at
-	   * @return {Range}
-	   */
-	  findTextEndRange(node, start, end) {
-	    var ranges = this.splitTextNodeIntoRanges(node);
-	    var prev;
-	    var range;
-	    var pos;
-	    var left, right, top, bottom;
-	    for (var i = 0; i < ranges.length; i++) {
-	      range = ranges[i];
-	      pos = range.getBoundingClientRect();
-	      if (this.horizontal && this.direction === 'ltr') {
-	        left = pos.left;
-	        right = pos.right;
-	        if (left > end && prev) {
-	          return prev;
-	        } else if (right > end) {
-	          return range;
-	        }
-	      } else if (this.horizontal && this.direction === 'rtl') {
-	        left = pos.left;
-	        right = pos.right;
-	        if (right < start && prev) {
-	          return prev;
-	        } else if (left < start) {
-	          return range;
-	        }
-	      } else {
-	        top = pos.top;
-	        bottom = pos.bottom;
-	        if (top > end && prev) {
-	          return prev;
-	        } else if (bottom > end) {
-	          return range;
-	        }
-	      }
-	      prev = range;
-	    }
-
-	    // Ends before limit
-	    return ranges[ranges.length - 1];
-	  }
-
-	  /**
-	   * Split up a text node into ranges for each word
-	   * @private
-	   * @param {Node} root root node
-	   * @param {string} [_splitter] what to split on
-	   * @return {Range[]}
-	   */
-	  splitTextNodeIntoRanges(node, _splitter) {
-	    var ranges = [];
-	    var textContent = node.textContent || '';
-	    var text = textContent.trim();
-	    var range;
-	    var doc = node.ownerDocument;
-	    var splitter = _splitter || ' ';
-	    var pos = text.indexOf(splitter);
-	    if (pos === -1 || node.nodeType != Node.TEXT_NODE) {
-	      range = doc.createRange();
-	      range.selectNodeContents(node);
-	      return [range];
-	    }
-	    range = doc.createRange();
-	    range.setStart(node, 0);
-	    range.setEnd(node, pos);
-	    ranges.push(range);
-	    range = false;
-	    while (pos != -1) {
-	      pos = text.indexOf(splitter, pos + 1);
-	      if (pos > 0) {
-	        if (range) {
-	          range.setEnd(node, pos);
-	          ranges.push(range);
-	        }
-	        range = doc.createRange();
-	        range.setStart(node, pos + 1);
-	      }
-	    }
-	    if (range) {
-	      range.setEnd(node, text.length);
-	      ranges.push(range);
-	    }
-	    return ranges;
-	  }
-
-	  /**
-	   * Turn a pair of ranges into a pair of CFIs
-	   * @private
-	   * @param {string} cfiBase base string for an EpubCFI
-	   * @param {object} rangePair { start: Range, end: Range }
-	   * @return {object} { start: "epubcfi(...)", end: "epubcfi(...)" }
-	   */
-	  rangePairToCfiPair(cfiBase, rangePair) {
-	    var startRange = rangePair.start;
-	    var endRange = rangePair.end;
-	    startRange.collapse(true);
-	    endRange.collapse(false);
-	    let startCfi = new CFI(startRange, cfiBase).toString();
-	    let endCfi = new CFI(endRange, cfiBase).toString();
-	    return {
-	      start: startCfi,
-	      end: endCfi
-	    };
-	  }
-	  rangeListToCfiList(cfiBase, columns) {
-	    var map = [];
-	    var cifPair;
-	    for (var i = 0; i < columns.length; i++) {
-	      cifPair = this.rangePairToCfiPair(cfiBase, columns[i]);
-	      map.push(cifPair);
-	    }
-	    return map;
-	  }
-
-	  /**
-	   * Set the axis for mapping
-	   * @param {string} axis horizontal | vertical
-	   * @return {boolean} is it horizontal?
-	   */
-	  axis(axis) {
-	    if (axis) {
+	  class Mapping {
+	    constructor(layout, direction, axis, dev = false) {
+	      this.layout = layout;
 	      this.horizontal = axis === 'horizontal' ? true : false;
+	      this.direction = direction || 'ltr';
+	      this._dev = dev;
 	    }
-	    return this.horizontal;
+	    /**
+	     * Find CFI pairs for entire section at once
+	     */
+	    section(view) {
+	      const ranges = this.findRanges(view);
+	      const map = this.rangeListToCfiList(view.section.cfiBase, ranges);
+	      return map;
+	    }
+	    /**
+	     * Find CFI pairs for a page
+	     */
+	    page(contents, cfiBase, start, end) {
+	      const root = contents && contents.document ? contents.document.body : false;
+	      if (!root) {
+	        return;
+	      }
+	      const result = this.rangePairToCfiPair(cfiBase, {
+	        start: this.findStart(root, start, end),
+	        end: this.findEnd(root, start, end)
+	      });
+	      if (this._dev === true) {
+	        const doc = contents.document;
+	        const startRange = new epubcfi_1.default(result.start).toRange(doc);
+	        const endRange = new epubcfi_1.default(result.end).toRange(doc);
+	        if (!startRange || !endRange) {
+	          throw new Error('Invalid range');
+	        }
+	        if (!doc) {
+	          throw new Error('Document is not available');
+	        }
+	        if (!doc.defaultView) {
+	          throw new Error('Document defaultView is not available');
+	        }
+	        const selection = doc.defaultView.getSelection();
+	        if (!selection) {
+	          throw new Error('Selection is not available');
+	        }
+	        const r = doc.createRange();
+	        selection?.removeAllRanges();
+	        r.setStart(startRange.startContainer, startRange.startOffset);
+	        r.setEnd(endRange.endContainer, endRange.endOffset);
+	        selection.addRange(r);
+	      }
+	      return result;
+	    }
+	    /**
+	     * Walk a node, preforming a function on each node it finds
+	     */
+	    walk(root, func) {
+	      const filter = {
+	        acceptNode: function (node) {
+	          if (node.data?.trim().length > 0) {
+	            return NodeFilter.FILTER_ACCEPT;
+	          } else {
+	            return NodeFilter.FILTER_REJECT;
+	          }
+	        }
+	      };
+	      const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, filter);
+	      let node;
+	      let result;
+	      while (node = treeWalker.nextNode()) {
+	        result = func(node);
+	        if (result) break;
+	      }
+	      return result;
+	    }
+	    findRanges(view) {
+	      const columns = [];
+	      const scrollWidth = view.contents.scrollWidth();
+	      const spreads = Math.ceil(scrollWidth / this.layout.spreadWidth);
+	      const count = spreads * this.layout.divisor;
+	      const columnWidth = this.layout.columnWidth;
+	      const gap = this.layout.gap;
+	      let start, end;
+	      for (let i = 0; i < count; i++) {
+	        start = (columnWidth + gap) * i;
+	        end = columnWidth * (i + 1) + gap * i;
+	        columns.push({
+	          start: this.findStart(view.document.body, start, end),
+	          end: this.findEnd(view.document.body, start, end)
+	        });
+	      }
+	      return columns;
+	    }
+	    /**
+	     * Find Start Range
+	     * @private
+	     * @param {Node} root root node
+	     * @param {number} start position to start at
+	     * @param {number} end position to end at
+	     * @return {Range}
+	     */
+	    findStart(root, start, end) {
+	      const stack = [root];
+	      let $el;
+	      let found;
+	      let $prev = root;
+	      while (stack.length) {
+	        $el = stack.shift();
+	        // This shouldn't happen since we check stack.length, but TypeScript doesn't know that
+	        if (!$el) break;
+	        found = this.walk($el, node => {
+	          let left, right, top, bottom;
+	          const elPos = (0, core_1.nodeBounds)(node);
+	          if (this.horizontal && this.direction === 'ltr') {
+	            left = this.horizontal ? elPos.left : elPos.top;
+	            right = this.horizontal ? elPos.right : elPos.bottom;
+	            if (left >= start && left <= end) {
+	              return node;
+	            } else if (right > start) {
+	              return node;
+	            } else {
+	              $prev = node;
+	              stack.push(node);
+	            }
+	          } else if (this.horizontal && this.direction === 'rtl') {
+	            left = elPos.left;
+	            right = elPos.right;
+	            if (right <= end && right >= start) {
+	              return node;
+	            } else if (left < end) {
+	              return node;
+	            } else {
+	              $prev = node;
+	              stack.push(node);
+	            }
+	          } else {
+	            top = elPos.top;
+	            bottom = elPos.bottom;
+	            if (top >= start && top <= end) {
+	              return node;
+	            } else if (bottom > start) {
+	              return node;
+	            } else {
+	              $prev = node;
+	              stack.push(node);
+	            }
+	          }
+	        });
+	        if (found) {
+	          return this.findTextStartRange(found, start, end);
+	        }
+	      }
+	      // Return last element
+	      return this.findTextStartRange($prev, start, end);
+	    }
+	    /**
+	     * Find End Range
+	     */
+	    findEnd(root, start, end) {
+	      const stack = [root];
+	      let $el;
+	      let $prev = root;
+	      let found;
+	      while (stack.length) {
+	        $el = stack.shift();
+	        // This shouldn't happen since we check stack.length, but TypeScript doesn't know that
+	        if (!$el) break;
+	        found = this.walk($el, node => {
+	          let left, right, top, bottom;
+	          const elPos = (0, core_1.nodeBounds)(node);
+	          if (this.horizontal && this.direction === 'ltr') {
+	            left = Math.round(elPos.left);
+	            right = Math.round(elPos.right);
+	            if (left > end && $prev) {
+	              return $prev;
+	            } else if (right > end) {
+	              return node;
+	            } else {
+	              $prev = node;
+	              stack.push(node);
+	            }
+	          } else if (this.horizontal && this.direction === 'rtl') {
+	            left = Math.round(this.horizontal ? elPos.left : elPos.top);
+	            right = Math.round(this.horizontal ? elPos.right : elPos.bottom);
+	            if (right < start && $prev) {
+	              return $prev;
+	            } else if (left < start) {
+	              return node;
+	            } else {
+	              $prev = node;
+	              stack.push(node);
+	            }
+	          } else {
+	            top = Math.round(elPos.top);
+	            bottom = Math.round(elPos.bottom);
+	            if (top > end && $prev) {
+	              return $prev;
+	            } else if (bottom > end) {
+	              return node;
+	            } else {
+	              $prev = node;
+	              stack.push(node);
+	            }
+	          }
+	        });
+	        if (found) {
+	          return this.findTextEndRange(found, start, end);
+	        }
+	      }
+	      // end of chapter
+	      return this.findTextEndRange($prev, start, end);
+	    }
+	    /**
+	     * Find Text Start Range
+	     */
+	    findTextStartRange(node, start, end) {
+	      const ranges = this.splitTextNodeIntoRanges(node);
+	      let range;
+	      let pos;
+	      let left, top, right;
+	      for (let i = 0; i < ranges.length; i++) {
+	        range = ranges[i];
+	        pos = range.getBoundingClientRect();
+	        if (this.horizontal && this.direction === 'ltr') {
+	          left = pos.left;
+	          if (left >= start) {
+	            return range;
+	          }
+	        } else if (this.horizontal && this.direction === 'rtl') {
+	          right = pos.right;
+	          if (right <= end) {
+	            return range;
+	          }
+	        } else {
+	          top = pos.top;
+	          if (top >= start) {
+	            return range;
+	          }
+	        }
+	        // prev = range;
+	      }
+	      return ranges[0];
+	    }
+	    /**
+	     * Find Text End Range
+	     */
+	    findTextEndRange(node, start, end) {
+	      const ranges = this.splitTextNodeIntoRanges(node);
+	      let prev;
+	      let range;
+	      let pos;
+	      let left, right, top, bottom;
+	      for (let i = 0; i < ranges.length; i++) {
+	        range = ranges[i];
+	        pos = range.getBoundingClientRect();
+	        if (this.horizontal && this.direction === 'ltr') {
+	          left = pos.left;
+	          right = pos.right;
+	          if (left > end && prev) {
+	            return prev;
+	          } else if (right > end) {
+	            return range;
+	          }
+	        } else if (this.horizontal && this.direction === 'rtl') {
+	          left = pos.left;
+	          right = pos.right;
+	          if (right < start && prev) {
+	            return prev;
+	          } else if (left < start) {
+	            return range;
+	          }
+	        } else {
+	          top = pos.top;
+	          bottom = pos.bottom;
+	          if (top > end && prev) {
+	            return prev;
+	          } else if (bottom > end) {
+	            return range;
+	          }
+	        }
+	        prev = range;
+	      }
+	      // Ends before limit
+	      return ranges[ranges.length - 1];
+	    }
+	    /**
+	     * Split up a text node into ranges for each word
+	     */
+	    splitTextNodeIntoRanges(node, _splitter) {
+	      const ranges = [];
+	      const textContent = node.textContent || '';
+	      const text = textContent.trim();
+	      let range = null;
+	      const doc = node.ownerDocument;
+	      if (!doc) {
+	        throw new Error('Document is not available');
+	      }
+	      const splitter = _splitter || ' ';
+	      let pos = text.indexOf(splitter);
+	      if (pos === -1 || node.nodeType != Node.TEXT_NODE) {
+	        range = doc.createRange();
+	        range.selectNodeContents(node);
+	        return [range];
+	      }
+	      range = doc.createRange();
+	      range.setStart(node, 0);
+	      range.setEnd(node, pos);
+	      ranges.push(range);
+	      range = null;
+	      while (pos != -1) {
+	        pos = text.indexOf(splitter, pos + 1);
+	        if (pos > 0) {
+	          if (range) {
+	            range.setEnd(node, pos);
+	            ranges.push(range);
+	          }
+	          range = doc.createRange();
+	          range.setStart(node, pos + 1);
+	        }
+	      }
+	      if (range) {
+	        range.setEnd(node, text.length);
+	        ranges.push(range);
+	      }
+	      return ranges;
+	    }
+	    /**
+	     * Turn a pair of ranges into a pair of CFIs
+	     */
+	    rangePairToCfiPair(cfiBase, rangePair) {
+	      const startRange = rangePair.start;
+	      const endRange = rangePair.end;
+	      startRange.collapse(true);
+	      endRange.collapse(false);
+	      const startCfi = new epubcfi_1.default(startRange, cfiBase).toString();
+	      const endCfi = new epubcfi_1.default(endRange, cfiBase).toString();
+	      return {
+	        start: startCfi,
+	        end: endCfi
+	      };
+	    }
+	    rangeListToCfiList(cfiBase, columns) {
+	      const map = [];
+	      let cifPair;
+	      for (let i = 0; i < columns.length; i++) {
+	        cifPair = this.rangePairToCfiPair(cfiBase, columns[i]);
+	        map.push(cifPair);
+	      }
+	      return map;
+	    }
+	    /**
+	     * Set the axis for mapping
+	     */
+	    axis(axis) {
+	      if (axis) {
+	        this.horizontal = axis === 'horizontal' ? true : false;
+	      }
+	      return this.horizontal;
+	    }
 	  }
+	  mapping.Mapping = Mapping;
+	  mapping.default = Mapping;
+	  return mapping;
 	}
+
+	var mappingExports = requireMapping();
+	var Mapping = /*@__PURE__*/getDefaultExportFromCjs(mappingExports);
 
 	const hasNavigator = typeof navigator !== 'undefined';
 	const isChrome = hasNavigator && /Chrome/.test(navigator.userAgent);
