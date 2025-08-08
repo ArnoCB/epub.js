@@ -41,8 +41,14 @@ class Store {
                 name: this.name,
             });
         }
-        catch {
-            throw new Error('localForage lib not loaded');
+        catch (error) {
+            // Re-throw the original error if it's not about localforage being undefined
+            if (error instanceof Error &&
+                error.message === 'localForage lib not loaded') {
+                throw error;
+            }
+            // For other errors, preserve the original error message
+            throw new Error(`Failed to initialize localForage storage: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
     /**
