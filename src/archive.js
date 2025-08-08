@@ -21,19 +21,16 @@ class Archive {
      */
     checkRequirements() {
         try {
-            // Check if JSZip is available and can be instantiated
-            if (!jszip_1.default) {
-                throw new Error('check 1: JSZip lib not loaded');
+            // Access JSZip from global scope since that's where it's available
+            const JSZipConstructor = window.JSZip || jszip_1.default;
+            if (!JSZipConstructor) {
+                throw new Error('JSZip not found in global scope or as module');
             }
-            this.zip = new jszip_1.default();
+            // Try to instantiate JSZip to verify it works
+            this.zip = new JSZipConstructor();
         }
         catch (error) {
-            // Re-throw JSZip-specific errors
-            if (error instanceof Error &&
-                error.message.includes('check 2: JSZip lib not loaded')) {
-                throw error;
-            }
-            // For other errors, provide more detailed information
+            console.error('[Archive] JSZip initialization failed:', error);
             throw new Error(`Failed to initialize JSZip: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
@@ -220,8 +217,10 @@ class Archive {
         this.urlCache = {};
     }
     getZip() {
-        if (!this.zip)
-            throw new Error('Archive has been destroyed or not initialized');
+        if (!this.zip) {
+            const JSZipConstructor = window.JSZip || jszip_1.default;
+            this.zip = new JSZipConstructor();
+        }
         return this.zip;
     }
 }
