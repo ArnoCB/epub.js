@@ -52,7 +52,7 @@ export default class Section {
 
   hooks: HooksObject;
 
-  load(_request?: Function): Document;
+  load(_request?: Function): Promise<Element>;
 
   render(_request?: Function): string;
 

@@ -107,7 +107,7 @@ class Queue<T = unknown> {
   /**
    * Run all tasks sequentially, at convince
    */
-  run() {
+  run(): Promise<T | undefined> {
     if (!this.running) {
       this.running = true;
       this._deferredPromise = new Promise<T | undefined>((resolve) => {
@@ -127,6 +127,8 @@ class Queue<T = unknown> {
         }
       });
     }
+
+    return this._deferredPromise!;
   }
 
   /**
