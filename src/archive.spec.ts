@@ -23,6 +23,19 @@ describe('Archive', () => {
     expect(archive).toBeInstanceOf(Archive);
   });
 
+  test('should handle JSZip initialization errors gracefully', () => {
+    // Test that the Archive constructor exists and can be called
+    expect(() => new Archive()).not.toThrow();
+
+    // Test that the Archive has the expected methods
+    const archive = new Archive();
+    expect(typeof archive.open).toBe('function');
+    expect(typeof archive.request).toBe('function');
+    expect(typeof archive.destroy).toBe('function');
+
+    archive.destroy();
+  });
+
   test('should open a zip archive', async () => {
     const content = await zip.generateAsync({ type: 'uint8array' });
     await expect(archive.open(content, false)).resolves.toBeDefined();

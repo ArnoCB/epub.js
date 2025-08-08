@@ -14470,14 +14470,23 @@ function requireArchive() {
       this.checkRequirements();
     }
     /**
-     * Checks to see if JSZip exists in global namspace,
+     * Checks to see if JSZip exists and can be instantiated,
      * Requires JSZip if it isn't there
-         */
+     */
     checkRequirements() {
       try {
+        // Check if JSZip is available and can be instantiated
+        if (!jszip_1.default) {
+          throw new Error('check 1: JSZip lib not loaded');
+        }
         this.zip = new jszip_1.default();
-      } catch {
-        throw new Error('JSZip lib not loaded');
+      } catch (error) {
+        // Re-throw JSZip-specific errors
+        if (error instanceof Error && error.message.includes('check 2: JSZip lib not loaded')) {
+          throw error;
+        }
+        // For other errors, provide more detailed information
+        throw new Error(`Failed to initialize JSZip: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
     /**
@@ -14552,7 +14561,7 @@ function requireArchive() {
       if (entry) {
         mimeType = mimeType || mime_1.default.lookup(entry.name);
         return entry.async('uint8array').then(function (uint8array) {
-          return new Blob([uint8array], {
+          return new Blob([new Uint8Array(uint8array)], {
             type: mimeType
           });
         }).catch(err => {

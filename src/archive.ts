@@ -46,15 +46,31 @@ class Archive {
   }
 
   /**
-   * Checks to see if JSZip exists in global namspace,
+   * Checks to see if JSZip exists and can be instantiated,
    * Requires JSZip if it isn't there
-
    */
   private checkRequirements() {
     try {
+      // Check if JSZip is available and can be instantiated
+      if (!JSZip) {
+        throw new Error('check 1: JSZip lib not loaded');
+      }
+
       this.zip = new JSZip();
-    } catch {
-      throw new Error('JSZip lib not loaded');
+    } catch (error) {
+      // Re-throw JSZip-specific errors
+      if (
+        error instanceof Error &&
+        error.message.includes('check 2: JSZip lib not loaded')
+      ) {
+        throw error;
+      }
+      // For other errors, provide more detailed information
+      throw new Error(
+        `Failed to initialize JSZip: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -154,7 +170,7 @@ class Archive {
       return entry
         .async('uint8array')
         .then(function (uint8array) {
-          return new Blob([uint8array], { type: mimeType });
+          return new Blob([new Uint8Array(uint8array)], { type: mimeType });
         })
         .catch((err) => {
           console.error('[Archive] getBlob error', err);
