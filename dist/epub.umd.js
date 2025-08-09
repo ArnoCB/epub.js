@@ -1210,13 +1210,13 @@
 
 	var url = {};
 
-	var path$2 = {};
+	var path$1 = {};
 
-	var path$1;
+	var path;
 	var hasRequiredPath$1;
 
 	function requirePath$1 () {
-		if (hasRequiredPath$1) return path$1;
+		if (hasRequiredPath$1) return path;
 		hasRequiredPath$1 = 1;
 
 		if (!process) {
@@ -1768,20 +1768,20 @@
 		};
 
 
-		path$1 = posix;
-		return path$1;
+		path = posix;
+		return path;
 	}
 
 	var hasRequiredPath;
 	function requirePath() {
-	  if (hasRequiredPath) return path$2;
+	  if (hasRequiredPath) return path$1;
 	  hasRequiredPath = 1;
-	  var __importDefault = path$2 && path$2.__importDefault || function (mod) {
+	  var __importDefault = path$1 && path$1.__importDefault || function (mod) {
 	    return mod && mod.__esModule ? mod : {
 	      "default": mod
 	    };
 	  };
-	  Object.defineProperty(path$2, "__esModule", {
+	  Object.defineProperty(path$1, "__esModule", {
 	    value: true
 	  });
 	  const path_webpack_1 = __importDefault(requirePath$1());
@@ -1920,8 +1920,8 @@
 	      return this.path;
 	    }
 	  }
-	  path$2.default = Path;
-	  return path$2;
+	  path$1.default = Path;
+	  return path$1;
 	}
 
 	var hasRequiredUrl;
@@ -2024,8 +2024,8 @@
 	var urlExports = requireUrl();
 	var Url = /*@__PURE__*/getDefaultExportFromCjs(urlExports);
 
-	var pathExports$1 = requirePath();
-	var Path = /*@__PURE__*/getDefaultExportFromCjs(pathExports$1);
+	var pathExports = requirePath();
+	var Path = /*@__PURE__*/getDefaultExportFromCjs(pathExports);
 
 	var epubcfi = {};
 
@@ -2984,6 +2984,414 @@
 	var hookExports = requireHook();
 	var Hook = /*@__PURE__*/getDefaultExportFromCjs(hookExports);
 
+	var section$1 = {exports: {}};
+
+	var request$1 = {};
+
+	var hasRequiredRequest;
+	function requireRequest() {
+	  if (hasRequiredRequest) return request$1;
+	  hasRequiredRequest = 1;
+	  var __importDefault = request$1 && request$1.__importDefault || function (mod) {
+	    return mod && mod.__esModule ? mod : {
+	      "default": mod
+	    };
+	  };
+	  Object.defineProperty(request$1, "__esModule", {
+	    value: true
+	  });
+	  const core_1 = requireCore();
+	  const path_1 = __importDefault(requirePath());
+	  function request(url, type, withCredentials, headers) {
+	    const supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
+	    const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
+	    return new Promise((resolve, reject) => {
+	      const xhr = new XMLHttpRequest();
+	      //-- Check from PDF.js:
+	      //   https://github.com/mozilla/pdf.js/blob/master/web/compatibility.js
+	      const xhrPrototype = XMLHttpRequest.prototype;
+	      let header;
+	      if (!('overrideMimeType' in xhrPrototype)) {
+	        // IE10 might have response, but not overrideMimeType
+	        Object.defineProperty(xhrPrototype, 'overrideMimeType', {
+	          value: function xmlHttpRequestOverrideMimeType() {}
+	        });
+	      }
+	      if (withCredentials) {
+	        xhr.withCredentials = true;
+	      }
+	      xhr.onreadystatechange = handler;
+	      xhr.onerror = err;
+	      xhr.open('GET', url, true);
+	      for (header in headers) {
+	        xhr.setRequestHeader(header, headers[header]);
+	      }
+	      if (type == 'json') {
+	        xhr.setRequestHeader('Accept', 'application/json');
+	      }
+	      // If type isn"t set, determine it from the file extension
+	      if (!type) {
+	        type = new path_1.default(url).extension;
+	      }
+	      if (type == 'blob') {
+	        xhr.responseType = BLOB_RESPONSE;
+	      }
+	      if ((0, core_1.isXml)(type)) {
+	        // xhr.responseType = "document";
+	        xhr.overrideMimeType('text/xml'); // for OPF parsing
+	      }
+	      if (type == 'binary') {
+	        xhr.responseType = 'arraybuffer';
+	      }
+	      xhr.send();
+	      function err(e) {
+	        reject(e);
+	      }
+	      function handler() {
+	        if (this.readyState === XMLHttpRequest.DONE) {
+	          let responseXML = null;
+	          if (this.responseType === '' || this.responseType === 'document') {
+	            responseXML = this.responseXML;
+	          }
+	          if (this.status === 200 || this.status === 0 || responseXML) {
+	            //-- Firefox is reporting 0 for blob urls
+	            let r;
+	            if (!this.response && !responseXML) {
+	              reject({
+	                status: this.status,
+	                message: 'Empty Response',
+	                stack: new Error().stack
+	              });
+	              return;
+	            }
+	            if (this.status === 403) {
+	              reject({
+	                status: this.status,
+	                response: this.response,
+	                message: 'Forbidden',
+	                stack: new Error().stack
+	              });
+	              return;
+	            }
+	            if (responseXML) {
+	              r = this.responseXML;
+	            } else if ((0, core_1.isXml)(type)) {
+	              // xhr.overrideMimeType("text/xml"); // for OPF parsing
+	              // If this.responseXML wasn't set, try to parse using a DOMParser from text
+	              r = (0, core_1.parse)(this.response, 'text/xml');
+	            } else if (type == 'xhtml') {
+	              r = (0, core_1.parse)(this.response, 'application/xhtml+xml');
+	            } else if (type == 'html' || type == 'htm') {
+	              r = (0, core_1.parse)(this.response, 'text/html');
+	            } else if (type == 'json') {
+	              r = JSON.parse(this.response);
+	            } else if (type == 'blob') {
+	              if (supportsURL) {
+	                r = this.response;
+	              } else {
+	                //-- Safari doesn't support responseType blob, so create a blob from arraybuffer
+	                r = new Blob([this.response]);
+	              }
+	            } else {
+	              r = this.response;
+	            }
+	            resolve(r);
+	          } else {
+	            reject({
+	              status: this.status,
+	              message: this.response,
+	              stack: new Error().stack
+	            });
+	          }
+	        }
+	      }
+	    });
+	  }
+	  request$1.default = request;
+	  return request$1;
+	}
+
+	var section = section$1.exports;
+	var hasRequiredSection;
+	function requireSection() {
+	  if (hasRequiredSection) return section$1.exports;
+	  hasRequiredSection = 1;
+	  (function (module, exports) {
+
+	    var __importDefault = section && section.__importDefault || function (mod) {
+	      return mod && mod.__esModule ? mod : {
+	        "default": mod
+	      };
+	    };
+	    Object.defineProperty(exports, "__esModule", {
+	      value: true
+	    });
+	    exports.Section = void 0;
+	    const core_1 = requireCore();
+	    const epubcfi_1 = __importDefault(requireEpubcfi());
+	    const hook_1 = __importDefault(requireHook());
+	    const core_2 = requireCore();
+	    const request_1 = __importDefault(requireRequest());
+	    /**
+	     * Represents a Section of the Book
+	     *
+	     * In most books this is equivalent to a Chapter
+	     * @param item  The spine item representing the section
+	     * @param hooks hooks for serialize and content
+	     */
+	    class Section {
+	      constructor(item, hooks) {
+	        this.idref = item.idref;
+	        this.linear = item.linear === 'yes';
+	        this.properties = item.properties;
+	        this.index = item.index;
+	        this.href = item.href;
+	        this.url = item.url;
+	        this.canonical = item.canonical;
+	        this.next = item.next;
+	        this.prev = item.prev;
+	        this.cfiBase = item.cfiBase;
+	        if (hooks) {
+	          this.hooks = hooks;
+	        } else {
+	          this.hooks = {
+	            serialize: new hook_1.default(this),
+	            content: new hook_1.default(this)
+	          };
+	        }
+	      }
+	      /**
+	       * Load the section from its url
+	       */
+	      load(_request) {
+	        const request = _request || this.request || request_1.default;
+	        const loading = new core_1.defer();
+	        const loaded = loading.promise;
+	        if (this.contents) {
+	          loading.resolve(this.contents);
+	        } else {
+	          request(this.url, 'xml', false, {}).then(xml => {
+	            // var directory = new Url(this.url).directory;
+	            this.document = xml;
+	            this.contents = xml.documentElement;
+	            return this.hooks.content.trigger(this.document, this);
+	          }).then(() => {
+	            loading.resolve(this.contents);
+	          }).catch(error => {
+	            loading.reject(error);
+	          });
+	        }
+	        return loaded;
+	      }
+	      /**
+	       * Render the contents of a section
+	       */
+	      render(_request) {
+	        const rendering = new core_1.defer();
+	        const rendered = rendering.promise;
+	        this.load(_request).then(contents => {
+	          const serializer = new XMLSerializer();
+	          this.output = serializer.serializeToString(contents);
+	          return this.output;
+	        }).then(() => {
+	          return this.hooks.serialize.trigger(this.output, this);
+	        }).then(() => {
+	          rendering.resolve(this.output);
+	        }).catch(error => {
+	          rendering.reject(error);
+	        });
+	        return rendered;
+	      }
+	      /**
+	       * Find a string in a section using node-by-node searching.
+	       * This method searches within individual text nodes, making it suitable
+	       * for simple text searches. For more advanced cross-element searching,
+	       * consider using the search() method instead.
+	       * @param  {string} _query The query string to find
+	       * @return {Match[]} A list of matches, with form {cfi, excerpt}
+	       */
+	      find(_query) {
+	        const matches = [];
+	        const query = _query.toLowerCase();
+	        const find = node => {
+	          const text = node.textContent?.toLowerCase() || '';
+	          let range = this.document?.createRange();
+	          let cfi;
+	          let pos = 0;
+	          let last = -1;
+	          let excerpt;
+	          const limit = 150;
+	          while (pos != -1) {
+	            // Search for the query
+	            pos = text.indexOf(query, last + 1);
+	            if (pos != -1) {
+	              // We found it! Generate a CFI
+	              range = this.document.createRange();
+	              range.setStart(node, pos);
+	              range.setEnd(node, pos + query.length);
+	              cfi = this.cfiFromRange(range);
+	              // Generate the excerpt
+	              if (node.textContent.length < limit) {
+	                excerpt = node.textContent;
+	              } else {
+	                excerpt = node.textContent.substring(pos - limit / 2, pos + limit / 2);
+	                excerpt = '...' + excerpt + '...';
+	              }
+	              // Add the CFI to the matches list
+	              matches.push({
+	                cfi: cfi,
+	                excerpt: excerpt
+	              });
+	            }
+	            last = pos;
+	          }
+	        };
+	        if (this.document) {
+	          (0, core_2.sprint)(this.document.documentElement, function (node) {
+	            find(node);
+	          });
+	        }
+	        return matches;
+	      }
+	      /**
+	       * Search a string in multiple sequential elements of the section.
+	       * This method can find text that spans across multiple DOM elements,
+	       * making it more powerful than find() for complex text searches.
+	       * Uses document.createTreeWalker for efficient DOM traversal.
+	       * @param  maxSeqEle The maximum number of elements that are combined for search, default value is 5
+	       */
+	      search(_query, maxSeqEle = 5) {
+	        const matches = [];
+	        const excerptLimit = 150;
+	        const query = _query.toLowerCase();
+	        const searchInNodes = nodeList => {
+	          const textWithCase = nodeList.reduce((acc, current) => {
+	            return acc + (current.textContent || '');
+	          }, '');
+	          const text = textWithCase.toLowerCase();
+	          const pos = text.indexOf(query);
+	          if (pos != -1) {
+	            const startNodeIndex = 0,
+	              endPos = pos + query.length;
+	            let endNodeIndex = 0,
+	              l = 0;
+	            if (pos < (nodeList[startNodeIndex].textContent?.length || 0)) {
+	              while (endNodeIndex < nodeList.length - 1) {
+	                l += nodeList[endNodeIndex].textContent?.length || 0;
+	                if (endPos <= l) {
+	                  break;
+	                }
+	                endNodeIndex += 1;
+	              }
+	              const startNode = nodeList[startNodeIndex],
+	                endNode = nodeList[endNodeIndex];
+	              const range = this.document.createRange();
+	              range.setStart(startNode, pos);
+	              const beforeEndLengthCount = nodeList.slice(0, endNodeIndex).reduce((acc, current) => {
+	                return acc + (current.textContent?.length || 0);
+	              }, 0);
+	              range.setEnd(endNode, beforeEndLengthCount > endPos ? endPos : endPos - beforeEndLengthCount);
+	              const cfi = this.cfiFromRange(range);
+	              let excerpt = nodeList.slice(0, endNodeIndex + 1).reduce((acc, current) => {
+	                return acc + (current.textContent || '');
+	              }, '');
+	              if (excerpt.length > excerptLimit) {
+	                excerpt = excerpt.substring(pos - excerptLimit / 2, pos + excerptLimit / 2);
+	                excerpt = '...' + excerpt + '...';
+	              }
+	              matches.push({
+	                cfi: cfi,
+	                excerpt: excerpt
+	              });
+	            }
+	          }
+	        };
+	        const treeWalker = document.createTreeWalker(this.document, NodeFilter.SHOW_TEXT);
+	        let node,
+	          nodeList = [];
+	        while (node = treeWalker.nextNode()) {
+	          nodeList.push(node);
+	          if (nodeList.length == maxSeqEle) {
+	            searchInNodes(nodeList.slice(0, maxSeqEle));
+	            nodeList = nodeList.slice(1, maxSeqEle);
+	          }
+	        }
+	        if (nodeList.length > 0) {
+	          searchInNodes(nodeList);
+	        }
+	        return matches;
+	      }
+	      /**
+	       * Reconciles the current chapters layout properties with
+	       * the global layout properties.
+	       * @return {object} layoutProperties Object with layout properties
+	       */
+	      reconcileLayoutSettings(globalLayout) {
+	        //-- Get the global defaults
+	        const settings = {
+	          layout: globalLayout.layout,
+	          spread: globalLayout.spread,
+	          orientation: globalLayout.orientation
+	        };
+	        //-- Get the chapter's display type
+	        this.properties?.forEach(function (prop) {
+	          const rendition = prop.replace('rendition:', '');
+	          const split = rendition.indexOf('-');
+	          let property, value;
+	          if (split !== -1) {
+	            property = rendition.slice(0, split);
+	            value = rendition.slice(split + 1);
+	            settings[property] = value;
+	          }
+	        });
+	        return settings;
+	      }
+	      /**
+	       * Get a CFI from a Range in the Section
+	       */
+	      cfiFromRange(_range) {
+	        return new epubcfi_1.default(_range, this.cfiBase).toString();
+	      }
+	      /**
+	       * Get a CFI from an Element in the Section
+	       */
+	      cfiFromElement(el) {
+	        return new epubcfi_1.default(el, this.cfiBase).toString();
+	      }
+	      /**
+	       * Unload the section document
+	       */
+	      unload() {
+	        this.document = undefined;
+	        this.contents = undefined;
+	        this.output = undefined;
+	      }
+	      destroy() {
+	        this.unload();
+	        this.hooks?.serialize.clear();
+	        this.hooks?.content.clear();
+	        this.hooks = undefined;
+	        this.idref = undefined;
+	        this.linear = undefined;
+	        this.properties = undefined;
+	        this.index = undefined;
+	        this.href = undefined;
+	        this.url = undefined;
+	        this.next = undefined;
+	        this.prev = undefined;
+	        this.cfiBase = undefined;
+	      }
+	    }
+	    exports.Section = Section;
+	    exports.default = Section;
+	    module.exports = Section;
+	  })(section$1, section$1.exports);
+	  return section$1.exports;
+	}
+
+	var sectionExports = requireSection();
+	var Section = /*@__PURE__*/getDefaultExportFromCjs(sectionExports);
+
 	var replacements = {};
 
 	var hasRequiredReplacements;
@@ -3114,427 +3522,6 @@
 	}
 
 	var replacementsExports = requireReplacements();
-
-	var request$1 = {};
-
-	var hasRequiredRequest;
-	function requireRequest() {
-	  if (hasRequiredRequest) return request$1;
-	  hasRequiredRequest = 1;
-	  var __importDefault = request$1 && request$1.__importDefault || function (mod) {
-	    return mod && mod.__esModule ? mod : {
-	      "default": mod
-	    };
-	  };
-	  Object.defineProperty(request$1, "__esModule", {
-	    value: true
-	  });
-	  const core_1 = requireCore();
-	  const path_1 = __importDefault(requirePath());
-	  function request(url, type, withCredentials, headers) {
-	    const supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
-	    const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
-	    return new Promise((resolve, reject) => {
-	      const xhr = new XMLHttpRequest();
-	      //-- Check from PDF.js:
-	      //   https://github.com/mozilla/pdf.js/blob/master/web/compatibility.js
-	      const xhrPrototype = XMLHttpRequest.prototype;
-	      let header;
-	      if (!('overrideMimeType' in xhrPrototype)) {
-	        // IE10 might have response, but not overrideMimeType
-	        Object.defineProperty(xhrPrototype, 'overrideMimeType', {
-	          value: function xmlHttpRequestOverrideMimeType() {}
-	        });
-	      }
-	      if (withCredentials) {
-	        xhr.withCredentials = true;
-	      }
-	      xhr.onreadystatechange = handler;
-	      xhr.onerror = err;
-	      xhr.open('GET', url, true);
-	      for (header in headers) {
-	        xhr.setRequestHeader(header, headers[header]);
-	      }
-	      if (type == 'json') {
-	        xhr.setRequestHeader('Accept', 'application/json');
-	      }
-	      // If type isn"t set, determine it from the file extension
-	      if (!type) {
-	        type = new path_1.default(url).extension;
-	      }
-	      if (type == 'blob') {
-	        xhr.responseType = BLOB_RESPONSE;
-	      }
-	      if ((0, core_1.isXml)(type)) {
-	        // xhr.responseType = "document";
-	        xhr.overrideMimeType('text/xml'); // for OPF parsing
-	      }
-	      if (type == 'binary') {
-	        xhr.responseType = 'arraybuffer';
-	      }
-	      xhr.send();
-	      function err(e) {
-	        reject(e);
-	      }
-	      function handler() {
-	        if (this.readyState === XMLHttpRequest.DONE) {
-	          let responseXML = null;
-	          if (this.responseType === '' || this.responseType === 'document') {
-	            responseXML = this.responseXML;
-	          }
-	          if (this.status === 200 || this.status === 0 || responseXML) {
-	            //-- Firefox is reporting 0 for blob urls
-	            let r;
-	            if (!this.response && !responseXML) {
-	              reject({
-	                status: this.status,
-	                message: 'Empty Response',
-	                stack: new Error().stack
-	              });
-	              return;
-	            }
-	            if (this.status === 403) {
-	              reject({
-	                status: this.status,
-	                response: this.response,
-	                message: 'Forbidden',
-	                stack: new Error().stack
-	              });
-	              return;
-	            }
-	            if (responseXML) {
-	              r = this.responseXML;
-	            } else if ((0, core_1.isXml)(type)) {
-	              // xhr.overrideMimeType("text/xml"); // for OPF parsing
-	              // If this.responseXML wasn't set, try to parse using a DOMParser from text
-	              r = (0, core_1.parse)(this.response, 'text/xml');
-	            } else if (type == 'xhtml') {
-	              r = (0, core_1.parse)(this.response, 'application/xhtml+xml');
-	            } else if (type == 'html' || type == 'htm') {
-	              r = (0, core_1.parse)(this.response, 'text/html');
-	            } else if (type == 'json') {
-	              r = JSON.parse(this.response);
-	            } else if (type == 'blob') {
-	              if (supportsURL) {
-	                r = this.response;
-	              } else {
-	                //-- Safari doesn't support responseType blob, so create a blob from arraybuffer
-	                r = new Blob([this.response]);
-	              }
-	            } else {
-	              r = this.response;
-	            }
-	            resolve(r);
-	          } else {
-	            reject({
-	              status: this.status,
-	              message: this.response,
-	              stack: new Error().stack
-	            });
-	          }
-	        }
-	      }
-	    });
-	  }
-	  request$1.default = request;
-	  return request$1;
-	}
-
-	var requestExports = requireRequest();
-	var request = /*@__PURE__*/getDefaultExportFromCjs(requestExports);
-
-	/**
-	 * Represents a Section of the Book
-	 *
-	 * In most books this is equivalent to a Chapter
-	 * @param {object} item  The spine item representing the section
-	 * @param {object} hooks hooks for serialize and content
-	 */
-	class Section {
-	  constructor(item, hooks) {
-	    this.idref = item.idref;
-	    this.linear = item.linear === 'yes';
-	    this.properties = item.properties;
-	    this.index = item.index;
-	    this.href = item.href;
-	    this.url = item.url;
-	    this.canonical = item.canonical;
-	    this.next = item.next;
-	    this.prev = item.prev;
-	    this.cfiBase = item.cfiBase;
-	    if (hooks) {
-	      this.hooks = hooks;
-	    } else {
-	      this.hooks = {};
-	      this.hooks.serialize = new Hook(this);
-	      this.hooks.content = new Hook(this);
-	    }
-	    this.document = undefined;
-	    this.contents = undefined;
-	    this.output = undefined;
-	  }
-
-	  /**
-	   * Load the section from its url
-	   * @param  {method} [_request] a request method to use for loading
-	   * @return {document} a promise with the xml document
-	   */
-	  load(_request) {
-	    var request$1 = _request || this.request || request;
-	    var loading = new coreExports.defer();
-	    var loaded = loading.promise;
-	    if (this.contents) {
-	      loading.resolve(this.contents);
-	    } else {
-	      request$1(this.url).then(function (xml) {
-	        // var directory = new Url(this.url).directory;
-
-	        this.document = xml;
-	        this.contents = xml.documentElement;
-	        return this.hooks.content.trigger(this.document, this);
-	      }.bind(this)).then(function () {
-	        loading.resolve(this.contents);
-	      }.bind(this)).catch(function (error) {
-	        loading.reject(error);
-	      });
-	    }
-	    return loaded;
-	  }
-
-	  /**
-	   * Adds a base tag for resolving urls in the section
-	   * @private
-	   */
-	  base() {
-	    return replacementsExports.replaceBase(this.document, this);
-	  }
-
-	  /**
-	   * Render the contents of a section
-	   * @param  {method} [_request] a request method to use for loading
-	   * @return {string} output a serialized XML Document
-	   */
-	  render(_request) {
-	    var rendering = new coreExports.defer();
-	    var rendered = rendering.promise;
-	    this.output; // TODO: better way to return this from hooks?
-
-	    this.load(_request).then(contents => {
-	      const serializer = new XMLSerializer();
-	      this.output = serializer.serializeToString(contents);
-	      return this.output;
-	    }).then(function () {
-	      return this.hooks.serialize.trigger(this.output, this);
-	    }.bind(this)).then(function () {
-	      rendering.resolve(this.output);
-	    }.bind(this)).catch(function (error) {
-	      rendering.reject(error);
-	    });
-	    return rendered;
-	  }
-
-	  /**
-	   * Find a string in a section
-	   * @param  {string} _query The query string to find
-	   * @return {object[]} A list of matches, with form {cfi, excerpt}
-	   */
-	  find(_query) {
-	    var section = this;
-	    /**
-	     * @typedef {Object} Match
-	     * @property {string} cfi - The CFI string.
-	     * @property {string} excerpt - The excerpt text.
-	     */
-
-	    /**
-	     * @type {Match[]}
-	     */
-	    var matches = [];
-	    var query = _query.toLowerCase();
-	    var find = function (node) {
-	      var text = node.textContent.toLowerCase();
-	      var range = section.document.createRange();
-	      var cfi;
-	      var pos;
-	      var last = -1;
-	      var excerpt;
-	      var limit = 150;
-	      while (pos != -1) {
-	        // Search for the query
-	        pos = text.indexOf(query, last + 1);
-	        if (pos != -1) {
-	          // We found it! Generate a CFI
-	          range = section.document.createRange();
-	          range.setStart(node, pos);
-	          range.setEnd(node, pos + query.length);
-	          cfi = section.cfiFromRange(range);
-
-	          // Generate the excerpt
-	          if (node.textContent.length < limit) {
-	            excerpt = node.textContent;
-	          } else {
-	            excerpt = node.textContent.substring(pos - limit / 2, pos + limit / 2);
-	            excerpt = '...' + excerpt + '...';
-	          }
-
-	          // Add the CFI to the matches list
-	          matches.push({
-	            cfi: cfi,
-	            excerpt: excerpt
-	          });
-	        }
-	        last = pos;
-	      }
-	    };
-	    coreExports.sprint(section.document, function (node) {
-	      find(node);
-	    });
-	    return matches;
-	  }
-
-	  /**
-	   * Search a string in multiple sequential Element of the section. If the document.createTreeWalker api is missed(eg: IE8), use `find` as a fallback.
-	   * @param  {string} _query The query string to search
-	   * @param  {int} maxSeqEle The maximum number of Element that are combined for search, default value is 5.
-	   * @return {object[]} A list of matches, with form {cfi, excerpt}
-	   */
-	  search(_query, maxSeqEle = 5) {
-	    if (typeof document.createTreeWalker == 'undefined') {
-	      return this.find(_query);
-	    }
-	    let matches = [];
-	    const excerptLimit = 150;
-	    const section = this;
-	    const query = _query.toLowerCase();
-	    const search = function (nodeList) {
-	      const textWithCase = nodeList.reduce((acc, current) => {
-	        return acc + current.textContent;
-	      }, '');
-	      const text = textWithCase.toLowerCase();
-	      const pos = text.indexOf(query);
-	      if (pos != -1) {
-	        const startNodeIndex = 0,
-	          endPos = pos + query.length;
-	        let endNodeIndex = 0,
-	          l = 0;
-	        if (pos < nodeList[startNodeIndex].length) {
-	          let cfi;
-	          while (endNodeIndex < nodeList.length - 1) {
-	            l += nodeList[endNodeIndex].length;
-	            if (endPos <= l) {
-	              break;
-	            }
-	            endNodeIndex += 1;
-	          }
-	          let startNode = nodeList[startNodeIndex],
-	            endNode = nodeList[endNodeIndex];
-	          let range = section.document.createRange();
-	          range.setStart(startNode, pos);
-	          let beforeEndLengthCount = nodeList.slice(0, endNodeIndex).reduce((acc, current) => {
-	            return acc + current.textContent.length;
-	          }, 0);
-	          range.setEnd(endNode, beforeEndLengthCount > endPos ? endPos : endPos - beforeEndLengthCount);
-	          cfi = section.cfiFromRange(range);
-	          let excerpt = nodeList.slice(0, endNodeIndex + 1).reduce((acc, current) => {
-	            return acc + current.textContent;
-	          }, '');
-	          if (excerpt.length > excerptLimit) {
-	            excerpt = excerpt.substring(pos - excerptLimit / 2, pos + excerptLimit / 2);
-	            excerpt = '...' + excerpt + '...';
-	          }
-	          matches.push({
-	            cfi: cfi,
-	            excerpt: excerpt
-	          });
-	        }
-	      }
-	    };
-	    const treeWalker = document.createTreeWalker(section.document, NodeFilter.SHOW_TEXT, null, false);
-	    let node,
-	      nodeList = [];
-	    while (node = treeWalker.nextNode()) {
-	      nodeList.push(node);
-	      if (nodeList.length == maxSeqEle) {
-	        search(nodeList.slice(0, maxSeqEle));
-	        nodeList = nodeList.slice(1, maxSeqEle);
-	      }
-	    }
-	    if (nodeList.length > 0) {
-	      search(nodeList);
-	    }
-	    return matches;
-	  }
-
-	  /**
-	   * Reconciles the current chapters layout properties with
-	   * the global layout properties.
-	   * @param {object} globalLayout  The global layout settings object, chapter properties string
-	   * @return {object} layoutProperties Object with layout properties
-	   */
-	  reconcileLayoutSettings(globalLayout) {
-	    //-- Get the global defaults
-	    var settings = {
-	      layout: globalLayout.layout,
-	      spread: globalLayout.spread,
-	      orientation: globalLayout.orientation
-	    };
-
-	    //-- Get the chapter's display type
-	    this.properties.forEach(function (prop) {
-	      var rendition = prop.replace('rendition:', '');
-	      var split = rendition.indexOf('-');
-	      var property, value;
-	      if (split != -1) {
-	        property = rendition.slice(0, split);
-	        value = rendition.slice(split + 1);
-	        settings[property] = value;
-	      }
-	    });
-	    return settings;
-	  }
-
-	  /**
-	   * Get a CFI from a Range in the Section
-	   * @param  {range} _range
-	   * @return {string} cfi an EpubCFI string
-	   */
-	  cfiFromRange(_range) {
-	    return new CFI(_range, this.cfiBase).toString();
-	  }
-
-	  /**
-	   * Get a CFI from an Element in the Section
-	   * @param  {element} el
-	   * @return {string} cfi an EpubCFI string
-	   */
-	  cfiFromElement(el) {
-	    return new CFI(el, this.cfiBase).toString();
-	  }
-
-	  /**
-	   * Unload the section document
-	   */
-	  unload() {
-	    this.document = undefined;
-	    this.contents = undefined;
-	    this.output = undefined;
-	  }
-	  destroy() {
-	    this.unload();
-	    this.hooks.serialize.clear();
-	    this.hooks.content.clear();
-	    this.hooks = undefined;
-	    this.idref = undefined;
-	    this.linear = undefined;
-	    this.properties = undefined;
-	    this.index = undefined;
-	    this.href = undefined;
-	    this.url = undefined;
-	    this.next = undefined;
-	    this.prev = undefined;
-	    this.cfiBase = undefined;
-	  }
-	}
 
 	/**
 	 * A collection of Spine Items
@@ -5203,17 +5190,19 @@
 	  }
 	}
 
-	var mime$1 = {};
+	var resources$1 = {exports: {}};
+
+	var mime = {};
 
 	var hasRequiredMime;
 	function requireMime() {
-	  if (hasRequiredMime) return mime$1;
+	  if (hasRequiredMime) return mime;
 	  hasRequiredMime = 1;
 	  /*
 	   From Zip.js, by Gildas Lormeau
 	  edited down
 	   */
-	  Object.defineProperty(mime$1, "__esModule", {
+	  Object.defineProperty(mime, "__esModule", {
 	    value: true
 	  });
 	  const table = {
@@ -5379,294 +5368,326 @@
 	    if (!ext) return defaultValue;
 	    return mimeTypes[ext.toLowerCase()] || defaultValue;
 	  }
-	  mime$1.default = {
+	  mime.default = {
 	    lookup
 	  };
-	  return mime$1;
+	  return mime;
 	}
 
-	var mimeExports = requireMime();
-	var mime = /*@__PURE__*/getDefaultExportFromCjs(mimeExports);
+	var resources = resources$1.exports;
+	var hasRequiredResources;
+	function requireResources() {
+	  if (hasRequiredResources) return resources$1.exports;
+	  hasRequiredResources = 1;
+	  (function (module, exports) {
 
-	var pathExports = requirePath$1();
-	var path = /*@__PURE__*/getDefaultExportFromCjs(pathExports);
-
-	/**
-	 * Handle Package Resources
-	 * @class
-	 * @param {Manifest} manifest
-	 * @param {object} [options]
-	 * @param {string} [options.replacements="base64"]
-	 * @param {Archive} [options.archive]
-	 * @param {method} [options.resolver]
-	 */
-	class Resources {
-	  constructor(manifest, options) {
-	    this.settings = {
-	      replacements: options && options.replacements || 'base64',
-	      archive: options && options.archive,
-	      resolver: options && options.resolver,
-	      request: options && options.request
+	    var __importDefault = resources && resources.__importDefault || function (mod) {
+	      return mod && mod.__esModule ? mod : {
+	        "default": mod
+	      };
 	    };
-	    this.process(manifest);
-	  }
-
-	  /**
-	   * Process resources
-	   * @param {Manifest} manifest
-	   */
-	  process(manifest) {
-	    this.manifest = manifest;
-	    this.resources = Object.keys(manifest).map(function (key) {
-	      return manifest[key];
+	    Object.defineProperty(exports, "__esModule", {
+	      value: true
 	    });
-	    this.replacementUrls = [];
-	    this.html = [];
-	    this.assets = [];
-	    this.css = [];
-	    this.urls = [];
-	    this.cssUrls = [];
-	    this.split();
-	    this.splitUrls();
-	  }
-
-	  /**
-	   * Split resources by type
-	   * @private
-	   */
-	  split() {
-	    // HTML
-	    this.html = this.resources.filter(function (item) {
-	      if (item.type === 'application/xhtml+xml' || item.type === 'text/html') {
-	        return true;
+	    const replacements_1 = requireReplacements();
+	    const core_1 = requireCore();
+	    const url_1 = __importDefault(requireUrl());
+	    const mime_1 = __importDefault(requireMime());
+	    const path_1 = __importDefault(requirePath());
+	    /**
+	     * Handle Package Resources
+	     * @class
+	     * @param {Manifest} manifest
+	     * @param {object} [options]
+	     * @param {string} [options.replacements="base64"]
+	     * @param {Archive} [options.archive]
+	     * @param {method} [options.resolver]
+	     */
+	    class Resources {
+	      constructor(manifest, options) {
+	        this.settings = {
+	          replacements: options.replacements || 'base64',
+	          archive: options.archive,
+	          resolver: options.resolver,
+	          request: options.request
+	        };
+	        this.process(manifest);
 	      }
-	    });
-
-	    // Exclude HTML
-	    this.assets = this.resources.filter(function (item) {
-	      if (item.type !== 'application/xhtml+xml' && item.type !== 'text/html') {
-	        return true;
-	      }
-	    });
-
-	    // Only CSS
-	    this.css = this.resources.filter(function (item) {
-	      if (item.type === 'text/css') {
-	        return true;
-	      }
-	    });
-	  }
-
-	  /**
-	   * Convert split resources into Urls
-	   * @private
-	   */
-	  splitUrls() {
-	    // All Assets Urls
-	    this.urls = this.assets.map(function (item) {
-	      return item.href;
-	    }.bind(this));
-
-	    // Css Urls
-	    this.cssUrls = this.css.map(function (item) {
-	      return item.href;
-	    });
-	  }
-
-	  /**
-	   * Create a url to a resource
-	   * @param {string} url
-	   * @return {Promise<string>} Promise resolves with url string
-	   */
-	  createUrl(url) {
-	    var parsedUrl = new Url(url);
-	    var mimeType = mime.lookup(parsedUrl.filename);
-	    if (this.settings.archive) {
-	      return this.settings.archive.createUrl(url, {
-	        base64: this.settings.replacements === 'base64'
-	      });
-	    } else {
-	      if (this.settings.replacements === 'base64') {
-	        return this.settings.request(url, 'blob').then(blob => {
-	          return coreExports.blob2base64(blob);
-	        }).then(blob => {
-	          return coreExports.createBase64Url(blob, mimeType);
+	      /**
+	       * Process resources
+	       */
+	      process(manifest) {
+	        this.manifest = manifest;
+	        this.resources = Object.keys(manifest).map(function (key) {
+	          return manifest[key];
 	        });
-	      } else {
-	        return this.settings.request(url, 'blob').then(blob => {
-	          return coreExports.createBlobUrl(blob, mimeType);
-	        });
+	        this.replacementUrls = [];
+	        this.html = [];
+	        this.assets = [];
+	        this.css = [];
+	        this.urls = [];
+	        this.cssUrls = [];
+	        this.split();
+	        this.splitUrls();
 	      }
-	    }
-	  }
-
-	  /**
-	   * Create blob urls for all the assets
-	   * @return {Promise}         returns replacement urls
-	   */
-	  replacements() {
-	    if (this.settings.replacements === 'none') {
-	      return new Promise(function (resolve) {
-	        resolve(this.urls);
-	      }.bind(this));
-	    }
-	    var replacements = this.urls.map(url => {
-	      var absolute = this.settings.resolver(url);
-	      return this.createUrl(absolute).catch(err => {
-	        console.error(err);
-	        return null;
-	      });
-	    });
-	    return Promise.all(replacements).then(replacementUrls => {
-	      this.replacementUrls = replacementUrls.filter(url => {
-	        return typeof url === 'string';
-	      });
-	      return replacementUrls;
-	    });
-	  }
-
-	  /**
-	   * Replace URLs in CSS resources
-	   * @private
-	   * @param  {Archive} [archive]
-	   * @param  {method} [resolver]
-	   * @return {Promise}
-	   */
-	  replaceCss(archive, resolver) {
-	    var replaced = [];
-	    archive = archive || this.settings.archive;
-	    resolver = resolver || this.settings.resolver;
-	    this.cssUrls.forEach(function (href) {
-	      var replacement = this.createCssFile(href, archive, resolver).then(function (replacementUrl) {
-	        // switch the url in the replacementUrls
-	        var indexInUrls = this.urls.indexOf(href);
-	        if (indexInUrls > -1) {
-	          this.replacementUrls[indexInUrls] = replacementUrl;
+	      /**
+	       * Split resources by type
+	       */
+	      split() {
+	        // Initialize arrays in case resources is undefined
+	        this.html = [];
+	        this.assets = [];
+	        this.css = [];
+	        // Return early if resources is undefined
+	        if (!this.resources) {
+	          return;
 	        }
-	      }.bind(this));
-	      replaced.push(replacement);
-	    }.bind(this));
-	    return Promise.all(replaced);
-	  }
-
-	  /**
-	   * Create a new CSS file with the replaced URLs
-	   * @private
-	   * @param  {string} href the original css file
-	   * @return {Promise}  returns a BlobUrl to the new CSS file or a data url
-	   */
-	  createCssFile(href) {
-	    var newUrl;
-	    if (path.isAbsolute(href)) {
-	      return new Promise(function (resolve) {
-	        resolve();
-	      });
-	    }
-	    var absolute = this.settings.resolver(href);
-
-	    // Get the text of the css file from the archive
-	    var textResponse;
-	    if (this.settings.archive) {
-	      textResponse = this.settings.archive.getText(absolute);
-	    } else {
-	      textResponse = this.settings.request(absolute, 'text');
-	    }
-
-	    // Get asset links relative to css file
-	    var relUrls = this.urls.map(assetHref => {
-	      var resolved = this.settings.resolver(assetHref);
-	      var relative = new Path(absolute).relative(resolved);
-	      return relative;
-	    });
-	    if (!textResponse) {
-	      // file not found, don't replace
-	      return new Promise(function (resolve) {
-	        resolve();
-	      });
-	    }
-	    return textResponse.then(text => {
-	      // Replacements in the css text
-	      text = replacementsExports.substitute(text, relUrls, this.replacementUrls);
-
-	      // Get the new url
-	      if (this.settings.replacements === 'base64') {
-	        newUrl = coreExports.createBase64Url(text, 'text/css');
-	      } else {
-	        newUrl = coreExports.createBlobUrl(text, 'text/css');
+	        // HTML
+	        this.html = this.resources.filter(function (item) {
+	          if (item.type === 'application/xhtml+xml' || item.type === 'text/html') {
+	            return true;
+	          }
+	        });
+	        // Exclude HTML
+	        this.assets = this.resources.filter(function (item) {
+	          if (item.type !== 'application/xhtml+xml' && item.type !== 'text/html') {
+	            return true;
+	          }
+	        });
+	        // Only CSS
+	        this.css = this.resources.filter(function (item) {
+	          if (item.type === 'text/css') {
+	            return true;
+	          }
+	        });
 	      }
-	      return newUrl;
-	    }, () => {
-	      // handle response errors
-	      return new Promise(function (resolve) {
-	        resolve();
-	      });
-	    });
-	  }
-
-	  /**
-	   * Resolve all resources URLs relative to an absolute URL
-	   * @param  {string} absolute to be resolved to
-	   * @param  {resolver} [resolver]
-	   * @return {string[]} array with relative Urls
-	   */
-	  relativeTo(absolute, resolver) {
-	    resolver = resolver || this.settings.resolver;
-
-	    // Get Urls relative to current sections
-	    return this.urls.map(function (href) {
-	      var resolved = resolver(href);
-	      var relative = new Path(absolute).relative(resolved);
-	      return relative;
-	    }.bind(this));
-	  }
-
-	  /**
-	   * Get a URL for a resource
-	   * @param  {string} path
-	   * @return {string} url
-	   */
-	  get(path) {
-	    var indexInUrls = this.urls.indexOf(path);
-	    if (indexInUrls === -1) {
-	      return;
+	      /**
+	       * Convert split resources into Urls
+	       */
+	      splitUrls() {
+	        // Initialize arrays in case assets/css is undefined
+	        this.urls = [];
+	        this.cssUrls = [];
+	        // Return early if assets or css is undefined
+	        if (!this.assets || !this.css) {
+	          return;
+	        }
+	        // All Assets Urls
+	        this.urls = this.assets.map(item => item.href);
+	        // Css Urls
+	        this.cssUrls = this.css.map(function (item) {
+	          return item.href;
+	        });
+	      }
+	      /**
+	       * Create a url to a resource
+	       */
+	      async createUrl(url) {
+	        const parsedUrl = new url_1.default(url);
+	        // mime.lookup always returns a string (defaultValue if no match)
+	        const mimeType = mime_1.default.lookup(parsedUrl.filename);
+	        if (this.settings === undefined) {
+	          throw new Error(`Resources settings are not defined`);
+	        }
+	        if (this.settings.archive) {
+	          return this.settings.archive.createUrl(url, {
+	            base64: this.settings.replacements === 'base64'
+	          });
+	        } else {
+	          if (!this.settings.request) {
+	            throw new Error(`Request method is not defined`);
+	          }
+	          if (this.settings.replacements === 'base64') {
+	            return this.settings.request(url, 'blob').then(response => {
+	              if (!(response instanceof Blob)) {
+	                throw new Error('Expected Blob response for base64 conversion');
+	              }
+	              return (0, core_1.blob2base64)(response);
+	            }).then(base64String => {
+	              const dataUrl = (0, core_1.createBase64Url)(base64String, mimeType);
+	              if (!dataUrl) {
+	                throw new Error('Failed to create base64 URL');
+	              }
+	              return dataUrl;
+	            });
+	          } else {
+	            return this.settings.request(url, 'blob').then(response => {
+	              if (!(response instanceof Blob)) {
+	                throw new Error('Expected Blob response for blob URL creation');
+	              }
+	              const blobUrl = (0, core_1.createBlobUrl)(response, mimeType);
+	              if (!blobUrl) {
+	                throw new Error('Failed to create blob URL');
+	              }
+	              return blobUrl;
+	            });
+	          }
+	        }
+	      }
+	      /**
+	       * Create blob urls for all the assets
+	       * @return returns replacement urls
+	       */
+	      async replacements() {
+	        if (!this.settings || this.settings.replacements === 'none') {
+	          return Promise.resolve(this.urls ?? []);
+	        }
+	        if (this.urls === undefined) {
+	          return Promise.resolve([]);
+	        }
+	        const replacements = this.urls.map(url => {
+	          if (!this.settings.resolver) {
+	            return Promise.resolve(null);
+	          }
+	          const absolute = this.settings.resolver(url);
+	          return this.createUrl(absolute).catch(err => {
+	            console.error(err);
+	            return null;
+	          });
+	        });
+	        return Promise.all(replacements).then(replacementUrls => {
+	          this.replacementUrls = replacementUrls.filter(url => {
+	            return typeof url === 'string';
+	          });
+	          return replacementUrls;
+	        });
+	      }
+	      /**
+	       * Replace URLs in CSS resources
+	       */
+	      replaceCss() {
+	        const replaced = [];
+	        this.cssUrls?.forEach(href => {
+	          const replacement = this.createCssFile(href).then(replacementUrl => {
+	            // switch the url in the replacementUrls
+	            const indexInUrls = this.urls?.indexOf(href);
+	            if (indexInUrls && indexInUrls > -1) {
+	              this.replacementUrls[indexInUrls] = replacementUrl;
+	            }
+	          });
+	          replaced.push(replacement);
+	        });
+	        return Promise.all(replaced);
+	      }
+	      /**
+	       * Create a new CSS file with the replaced URLs
+	       * @param  href the original css file
+	       * @return returns a BlobUrl to the new CSS file or a data url
+	       */
+	      createCssFile(href) {
+	        let newUrl;
+	        // Check if href is an absolute path or URL
+	        if (href.startsWith('/') || href.includes('://')) {
+	          return Promise.resolve();
+	        }
+	        if (!this.settings.resolver) {
+	          return Promise.resolve();
+	        }
+	        const absolute = this.settings.resolver(href);
+	        // Get the text of the css file from the archive
+	        let textResponse;
+	        if (this.settings.archive) {
+	          textResponse = this.settings.archive.getText(absolute);
+	        } else if (this.settings.request) {
+	          textResponse = this.settings.request(absolute, 'text');
+	        } else {
+	          return Promise.resolve();
+	        }
+	        // Get asset links relative to css file
+	        const relUrls = this.urls?.map(assetHref => {
+	          const resolved = this.settings.resolver(assetHref);
+	          const relative = new path_1.default(absolute).relative(resolved);
+	          return relative;
+	        }) || [];
+	        if (!textResponse) {
+	          // file not found, don't replace
+	          return Promise.resolve();
+	        }
+	        return textResponse.then(text => {
+	          // Ensure text is a string (it should be when request type is 'text')
+	          const textContent = typeof text === 'string' ? text : String(text);
+	          // Replacements in the css text
+	          const processedText = (0, replacements_1.substitute)(textContent, relUrls, this.replacementUrls || []);
+	          // Get the new url
+	          if (this.settings.replacements === 'base64') {
+	            newUrl = (0, core_1.createBase64Url)(processedText, 'text/css');
+	          } else {
+	            newUrl = (0, core_1.createBlobUrl)(processedText, 'text/css');
+	          }
+	          return newUrl;
+	        }, () => {
+	          // handle response errors
+	          return Promise.resolve();
+	        });
+	      }
+	      /**
+	       * Resolve all resources URLs relative to an absolute URL
+	       * @param  {string} absolute to be resolved to
+	       * @param  {resolver} [resolver]
+	       * @return {string[]} array with relative Urls
+	       */
+	      relativeTo(absolute, resolver) {
+	        resolver = resolver || this.settings.resolver;
+	        if (!this.urls) {
+	          return [];
+	        }
+	        // Get Urls relative to current sections
+	        return this.urls.map(href => {
+	          const resolved = resolver(href);
+	          const relative = new path_1.default(absolute).relative(resolved);
+	          return relative;
+	        });
+	      }
+	      /**
+	       * Get a URL for a resource
+	       */
+	      get(path) {
+	        if (!this.urls) {
+	          return;
+	        }
+	        const indexInUrls = this.urls.indexOf(path);
+	        if (indexInUrls === -1) {
+	          return;
+	        }
+	        if (this.replacementUrls && this.replacementUrls.length) {
+	          return Promise.resolve(this.replacementUrls[indexInUrls]);
+	        } else {
+	          return this.createUrl(path);
+	        }
+	      }
+	      /**
+	       * Substitute urls in content, with replacements,
+	       * relative to a url if provided
+	       */
+	      substitute(content, url) {
+	        let relUrls;
+	        if (url) {
+	          relUrls = this.relativeTo(url);
+	        } else {
+	          relUrls = this.urls || [];
+	        }
+	        return (0, replacements_1.substitute)(content, relUrls, this.replacementUrls || []);
+	      }
+	      destroy() {
+	        // Clear all properties for cleanup
+	        this.manifest = undefined;
+	        this.resources = undefined;
+	        this.replacementUrls = undefined;
+	        this.html = undefined;
+	        this.assets = undefined;
+	        this.css = undefined;
+	        this.urls = undefined;
+	        this.cssUrls = undefined;
+	      }
 	    }
-	    if (this.replacementUrls.length) {
-	      return new Promise(function (resolve) {
-	        resolve(this.replacementUrls[indexInUrls]);
-	      }.bind(this));
-	    } else {
-	      return this.createUrl(path);
-	    }
-	  }
-
-	  /**
-	   * Substitute urls in content, with replacements,
-	   * relative to a url if provided
-	   * @param  {string} content
-	   * @param  {string} [url]   url to resolve to
-	   * @return {string}         content with urls substituted
-	   */
-	  substitute(content, url) {
-	    var relUrls;
-	    if (url) {
-	      relUrls = this.relativeTo(url);
-	    } else {
-	      relUrls = this.urls;
-	    }
-	    return replacementsExports.substitute(content, relUrls, this.replacementUrls);
-	  }
-	  destroy() {
-	    this.settings = undefined;
-	    this.manifest = undefined;
-	    this.resources = undefined;
-	    this.replacementUrls = undefined;
-	    this.html = undefined;
-	    this.assets = undefined;
-	    this.css = undefined;
-	    this.urls = undefined;
-	    this.cssUrls = undefined;
-	  }
+	    module.exports = Resources;
+	    exports.default = Resources;
+	  })(resources$1, resources$1.exports);
+	  return resources$1.exports;
 	}
+
+	var resourcesExports = requireResources();
+	var Resources = /*@__PURE__*/getDefaultExportFromCjs(resourcesExports);
 
 	var pagelist = {};
 
@@ -14695,6 +14716,9 @@
 
 	var archiveExports = requireArchive();
 	var Archive = /*@__PURE__*/getDefaultExportFromCjs(archiveExports);
+
+	var requestExports = requireRequest();
+	var request = /*@__PURE__*/getDefaultExportFromCjs(requestExports);
 
 	var store = {};
 

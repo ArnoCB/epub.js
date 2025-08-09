@@ -13,6 +13,7 @@ export interface LayoutSettings {
 }
 
 export interface SpineItem {
+  idref: string;
   index: number;
   cfiBase: string;
   href?: string;
@@ -20,8 +21,8 @@ export interface SpineItem {
   canonical?: string;
   properties?: Array<string>;
   linear?: string;
-  next: () => SpineItem;
-  prev: () => SpineItem;
+  next: () => Section | undefined;
+  prev: () => Section | undefined;
 }
 
 /**
@@ -46,17 +47,19 @@ export default class Section {
   prev: () => SpineItem;
   cfiBase: string;
 
-  document: Document;
-  contents: Element;
-  output: string;
+  document: Document | undefined;
+  contents: Element | undefined;
+  output: string | undefined;
 
   hooks: HooksObject;
 
   load(_request?: Function): Promise<Element>;
 
-  render(_request?: Function): string;
+  render(_request?: Function): Promise<string>;
 
   find(_query: string): Array<Match>;
+
+  search(_query: string, maxSeqEle?: number): Array<Match>;
 
   reconcileLayoutSettings(globalLayout: GlobalLayout): LayoutSettings;
 
@@ -67,6 +70,4 @@ export default class Section {
   unload(): void;
 
   destroy(): void;
-
-  private base(): void;
 }
