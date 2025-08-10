@@ -274,16 +274,23 @@ class Spine {
     this.hooks.serialize.clear();
     this.hooks.content.clear();
 
-    // Clear properties that are legitimately optional
+    // Clear all properties for garbage collection
+    // @ts-expect-error intentionally setting to undefined for garbage collection
+    this.spineItems = undefined;
+    // @ts-expect-error intentionally setting to undefined for garbage collection
+    this.spineByHref = undefined;
+    // @ts-expect-error intentionally setting to undefined for garbage collection
+    this.spineById = undefined;
+    // @ts-expect-error intentionally setting to undefined for garbage collection
+    this.hooks = undefined;
+    // @ts-expect-error intentionally setting to undefined for garbage collection
+    this.epubcfi = undefined;
     this.loaded = false;
     this.items = undefined;
     this.manifest = undefined;
     this.spineNodeIndex = undefined;
     this.baseUrl = undefined;
     this.length = undefined;
-
-    // Note: Required properties (spineItems, hooks, etc.) don't need to be cleared
-    // The entire object will be garbage collected when all references are removed
   }
 }
 

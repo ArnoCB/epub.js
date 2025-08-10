@@ -9,6 +9,6 @@ describe('Container', () => {
 
     const container = new Container(mockDoc);
     expect(container.packagePath).toBe('OPS/package.opf');
-    expect(container.directory).toBe('OPS');
+    expect(container.directory).toBe('OPS/'); // directories end with trailing slash
   });
 });

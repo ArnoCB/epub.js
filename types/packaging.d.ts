@@ -2,7 +2,7 @@ import { SpineItem } from './section';
 
 export interface PackagingObject {
   metadata: PackagingMetadataObject;
-  spine: Array<SpineItem>;
+  spine: Array<PackagingSpineItem>;
   manifest: PackagingManifestObject;
   navPath: string;
   ncxPath: string;
@@ -29,7 +29,9 @@ export interface PackagingMetadataObject {
 }
 
 export interface PackagingSpineItem {
+  id?: string;
   idref: string;
+  linear: string;
   properties: Array<string>;
   index: number;
 }
@@ -38,6 +40,7 @@ export interface PackagingManifestItem {
   href: string;
   type: string;
   properties: Array<string>;
+  overlay?: string;
 }
 
 export interface PackagingManifestObject {

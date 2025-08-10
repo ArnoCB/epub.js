@@ -21,7 +21,7 @@ describe('Path', () => {
     const p = new Path('folder/subfolder/');
     expect(p.isDirectory(p.path)).toBe(true);
     expect(p.directory).toBe('folder/subfolder/');
-    expect(p.filename).toBe('subfolder'); // updated to match current behavior
+    expect(p.filename).toBe(''); // directories have no filename
     expect(p.extension).toBe('');
   });
 

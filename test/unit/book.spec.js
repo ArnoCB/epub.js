@@ -22,7 +22,7 @@ describe('Path (unit, path-webpack)', () => {
     const p = new Path('folder/subfolder/');
     expect(p.isDirectory(p.path)).toBe(true);
     expect(p.directory).toBe('folder/subfolder/');
-    expect(p.filename).toBe('subfolder');
+    expect(p.filename).toBe(''); // directories have no filename
     expect(p.extension).toBe('');
   });
 
@@ -99,7 +99,10 @@ describe('Path (edge cases)', () => {
 
   test('resolve and relative with root and unrelated dirs', () => {
     const p = new Path('/folder/file.txt');
-    expect(p.resolve('/other/another.txt')).toMatch(/\/other\/another\.txt$/);
+    // POSIX/EPUB compliance: absolute paths should throw an error
+    expect(() => p.resolve('/other/another.txt')).toThrow(
+      '[Path.resolve] Cannot resolve an absolute path: /other/another.txt'
+    );
     expect(typeof p.relative('/unrelated/other.txt')).toBe('string');
   });
 
