@@ -54,6 +54,8 @@ export default class Packaging {
   spineNodeIndex: number;
   spine: Array<PackagingSpineItem>;
   metadata: PackagingMetadataObject;
+  baseUrl?: string;
+  basePath?: string;
 
   parse(packageDocument: XMLDocument): PackagingObject;
 

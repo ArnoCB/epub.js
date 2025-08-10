@@ -3,7 +3,7 @@ interface HooksObject {
 }
 
 export default class Hook {
-  constructor(context: any);
+  constructor(context?: any);
 
   register(func: Function): void;
   register(arr: Array<Function>): void;

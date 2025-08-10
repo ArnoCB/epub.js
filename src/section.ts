@@ -5,11 +5,11 @@ import { sprint } from './utils/core';
 import Request from './utils/request';
 
 // Define the actual item structure that gets passed to Section constructor
-interface SectionItem {
+export interface SectionItem {
   idref: string;
   index: number;
   cfiBase: string;
-  href?: string;
+  href: string;
   url?: string;
   canonical?: string;
   properties?: Array<string>;
@@ -32,12 +32,12 @@ interface Match {
  * @param hooks hooks for serialize and content
  */
 export class Section {
-  hooks: undefined | { serialize: Hook; content: Hook };
-  idref: undefined | string;
+  hooks: { serialize: Hook; content: Hook };
+  idref: string;
   linear: undefined | boolean;
-  properties: undefined | string[];
-  index: undefined | number;
-  href: undefined | string;
+  properties: string[];
+  index: number;
+  href: string;
   url: undefined | string;
   next: (() => Section | undefined) | undefined;
   prev: (() => Section | undefined) | undefined;
@@ -52,7 +52,7 @@ export class Section {
   constructor(item: SectionItem, hooks?: { serialize: Hook; content: Hook }) {
     this.idref = item.idref;
     this.linear = item.linear === 'yes';
-    this.properties = item.properties;
+    this.properties = item.properties || [];
     this.index = item.index;
     this.href = item.href;
     this.url = item.url;
@@ -194,7 +194,7 @@ export class Section {
    * This method can find text that spans across multiple DOM elements,
    * making it more powerful than find() for complex text searches.
    * Uses document.createTreeWalker for efficient DOM traversal.
-   * @param  maxSeqEle The maximum number of elements that are combined for search, default value is 5
+   * @param maxSeqEle The maximum number of elements that are combined for search, default value is 5
    */
   search(_query: string, maxSeqEle = 5): Match[] {
     const matches: Match[] = [];
@@ -279,7 +279,7 @@ export class Section {
   /**
    * Reconciles the current chapters layout properties with
    * the global layout properties.
-   * @return {object} layoutProperties Object with layout properties
+   * @return layoutProperties Object with layout properties
    */
   reconcileLayoutSettings(globalLayout: {
     layout: string;
@@ -334,20 +334,16 @@ export class Section {
 
   destroy() {
     this.unload();
-    this.hooks?.serialize.clear();
-    this.hooks?.content.clear();
+    this.hooks.serialize.clear();
+    this.hooks.content.clear();
 
-    this.hooks = undefined;
-    this.idref = undefined;
-    this.linear = undefined;
-    this.properties = undefined;
-    this.index = undefined;
-    this.href = undefined;
-    this.url = undefined;
+    // Clear object references to help GC - but don't set to undefined
+    // since these properties are typed as required
     this.next = undefined;
     this.prev = undefined;
 
-    this.cfiBase = undefined;
+    // Note: The object itself will be garbage collected when all references are removed
+    // No need to clear primitive properties or create type conflicts
   }
 }
 

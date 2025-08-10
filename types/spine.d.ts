@@ -20,13 +20,13 @@ export default class Spine {
 
   last(): Section;
 
+  append(section: Section): number;
+
+  prepend(section: Section): number;
+
+  remove(section: Section): number | undefined;
+
   destroy(): void;
 
   spineItems: Section[];
-
-  private append(section: Section): number;
-
-  private prepend(section: Section): number;
-
-  private remove(section: Section): number;
 }

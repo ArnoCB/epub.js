@@ -21,7 +21,7 @@ export interface ResourcesOptions {
   ) => Promise<Blob | string | JSON | Document | XMLDocument>;
 }
 
-type ResolverFunction = (path: string, absolute?: boolean) => string;
+export type ResolverFunction = (path: string, absolute?: boolean) => string;
 
 /**
  * Handle Package Resources

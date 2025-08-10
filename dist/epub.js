@@ -2021,6 +2021,8 @@ var Url = /*@__PURE__*/getDefaultExportFromCjs(urlExports);
 var pathExports = requirePath();
 var Path = /*@__PURE__*/getDefaultExportFromCjs(pathExports);
 
+var spine$1 = {exports: {}};
+
 var epubcfi = {};
 
 var hasRequiredEpubcfi;
@@ -2893,9 +2895,6 @@ function requireEpubcfi() {
   return epubcfi;
 }
 
-var epubcfiExports = requireEpubcfi();
-var CFI = /*@__PURE__*/getDefaultExportFromCjs(epubcfiExports);
-
 var hook = {};
 
 var hasRequiredHook;
@@ -2947,13 +2946,17 @@ function requireHook() {
      * Triggers a hook to run all functions
      * @example this.content.trigger(args).then(function(){...});
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     trigger(...args) {
       const context = this.context;
       const promises = [];
       this.hooks.forEach(task => {
         try {
           const executing = task.apply(context, args);
-          if (executing && typeof executing === 'object' && typeof executing.then === 'function') {
+          if (executing && typeof executing === 'object' &&
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          typeof executing.then === 'function') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             promises.push(executing);
           }
         } catch (err) {
@@ -2974,9 +2977,6 @@ function requireHook() {
   hook.default = Hook;
   return hook;
 }
-
-var hookExports = requireHook();
-var Hook = /*@__PURE__*/getDefaultExportFromCjs(hookExports);
 
 var section$1 = {exports: {}};
 
@@ -3137,7 +3137,7 @@ function requireSection() {
       constructor(item, hooks) {
         this.idref = item.idref;
         this.linear = item.linear === 'yes';
-        this.properties = item.properties;
+        this.properties = item.properties || [];
         this.index = item.index;
         this.href = item.href;
         this.url = item.url;
@@ -3252,7 +3252,7 @@ function requireSection() {
        * This method can find text that spans across multiple DOM elements,
        * making it more powerful than find() for complex text searches.
        * Uses document.createTreeWalker for efficient DOM traversal.
-       * @param  maxSeqEle The maximum number of elements that are combined for search, default value is 5
+       * @param maxSeqEle The maximum number of elements that are combined for search, default value is 5
        */
       search(_query, maxSeqEle = 5) {
         const matches = [];
@@ -3318,7 +3318,7 @@ function requireSection() {
       /**
        * Reconciles the current chapters layout properties with
        * the global layout properties.
-       * @return {object} layoutProperties Object with layout properties
+       * @return layoutProperties Object with layout properties
        */
       reconcileLayoutSettings(globalLayout) {
         //-- Get the global defaults
@@ -3362,18 +3362,14 @@ function requireSection() {
       }
       destroy() {
         this.unload();
-        this.hooks?.serialize.clear();
-        this.hooks?.content.clear();
-        this.hooks = undefined;
-        this.idref = undefined;
-        this.linear = undefined;
-        this.properties = undefined;
-        this.index = undefined;
-        this.href = undefined;
-        this.url = undefined;
+        this.hooks.serialize.clear();
+        this.hooks.content.clear();
+        // Clear object references to help GC - but don't set to undefined
+        // since these properties are typed as required
         this.next = undefined;
         this.prev = undefined;
-        this.cfiBase = undefined;
+        // Note: The object itself will be garbage collected when all references are removed
+        // No need to clear primitive properties or create type conflicts
       }
     }
     exports.Section = Section;
@@ -3382,9 +3378,6 @@ function requireSection() {
   })(section$1, section$1.exports);
   return section$1.exports;
 }
-
-var sectionExports = requireSection();
-var Section = /*@__PURE__*/getDefaultExportFromCjs(sectionExports);
 
 var replacements = {};
 
@@ -3515,244 +3508,244 @@ function requireReplacements() {
   return replacements;
 }
 
-var replacementsExports = requireReplacements();
+var spine = spine$1.exports;
+var hasRequiredSpine;
+function requireSpine() {
+  if (hasRequiredSpine) return spine$1.exports;
+  hasRequiredSpine = 1;
+  (function (module, exports) {
 
-/**
- * A collection of Spine Items
- */
-class Spine {
-  constructor() {
+    var __importDefault = spine && spine.__importDefault || function (mod) {
+      return mod && mod.__esModule ? mod : {
+        "default": mod
+      };
+    };
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    const epubcfi_1 = __importDefault(requireEpubcfi());
+    const hook_1 = __importDefault(requireHook());
+    const section_1 = __importDefault(requireSection());
+    const replacements_1 = requireReplacements();
     /**
-     * @type {Section[]}
+     * A collection of Spine Items
      */
-    this.spineItems = [];
-    this.spineByHref = {};
-    this.spineById = {};
-    this.hooks = {};
-    this.hooks.serialize = new Hook();
-    this.hooks.content = new Hook();
-
-    // Register replacements
-    this.hooks.content.register(replacementsExports.replaceBase);
-    this.hooks.content.register(replacementsExports.replaceCanonical);
-    this.hooks.content.register(replacementsExports.replaceMeta);
-    this.epubcfi = new CFI();
-    this.loaded = false;
-    this.items = undefined;
-    this.manifest = undefined;
-    this.spineNodeIndex = undefined;
-    this.baseUrl = undefined;
-    this.length = undefined;
-  }
-
-  /**
-   * Unpack items from a opf into spine items
-   * @param  {Packaging} _package
-   * @param  {method} resolver URL resolver
-   * @param  {method} canonical Resolve canonical url
-   */
-  unpack(_package, resolver, canonical) {
-    this.items = _package.spine;
-    this.manifest = _package.manifest;
-    this.spineNodeIndex = _package.spineNodeIndex;
-    this.baseUrl = _package.baseUrl || _package.basePath || '';
-    this.length = this.items.length;
-    this.items.forEach((item, index) => {
-      var manifestItem = this.manifest[item.idref];
-      var spineItem;
-      item.index = index;
-      item.cfiBase = this.epubcfi.generateChapterComponent(this.spineNodeIndex, item.index, item.id);
-      if (item.href) {
-        item.url = resolver(item.href, true);
-        item.canonical = canonical(item.href);
+    class Spine {
+      constructor() {
+        this.spineItems = [];
+        this.spineByHref = {};
+        this.spineById = {};
+        this.hooks = {
+          serialize: new hook_1.default(),
+          content: new hook_1.default()
+        };
+        this.epubcfi = new epubcfi_1.default();
+        this.loaded = false;
+        this.items = undefined;
+        this.manifest = undefined;
+        this.spineNodeIndex = undefined;
+        this.baseUrl = undefined;
+        this.length = undefined;
+        // Register replacements
+        this.hooks.content.register(replacements_1.replaceBase);
+        this.hooks.content.register(replacements_1.replaceCanonical);
+        this.hooks.content.register(replacements_1.replaceMeta);
       }
-      if (manifestItem) {
-        item.href = manifestItem.href;
-        item.url = resolver(item.href, true);
-        item.canonical = canonical(item.href);
-        if (manifestItem.properties.length) {
-          item.properties.push.apply(item.properties, manifestItem.properties);
+      /**
+       * Unpack items from a opf into spine items
+       * @param  {Packaging} _package
+       * @param  {method} resolver URL resolver
+       * @param  {method} canonical Resolve canonical url
+       */
+      unpack(_package, resolver, canonical) {
+        this.items = _package.spine;
+        this.manifest = _package.manifest;
+        this.spineNodeIndex = _package.spineNodeIndex;
+        this.baseUrl = _package.baseUrl || _package.basePath || '';
+        this.length = this.items.length;
+        if (!this.manifest) {
+          throw new Error('Manifest is missing');
         }
-      }
-      if (item.linear === 'yes') {
-        item.prev = function () {
-          let prevIndex = item.index;
-          while (prevIndex > 0) {
-            let prev = this.get(prevIndex - 1);
-            if (prev && prev.linear) {
-              return prev;
-            }
-            prevIndex -= 1;
+        this.items.forEach((item, index) => {
+          const manifestItem = this.manifest[item.idref];
+          item.index = index;
+          item.cfiBase = this.epubcfi.generateChapterComponent(this.spineNodeIndex, item.index, item.id);
+          if (item.href) {
+            item.url = resolver(item.href, true);
+            item.canonical = canonical(item.href);
           }
-          return;
-        }.bind(this);
-        item.next = function () {
-          let nextIndex = item.index;
-          while (nextIndex < this.spineItems.length - 1) {
-            let next = this.get(nextIndex + 1);
+          if (manifestItem) {
+            item.href = manifestItem.href;
+            item.url = resolver(item.href, true);
+            item.canonical = canonical(item.href);
+            if (manifestItem.properties.length) {
+              item.properties.push(...manifestItem.properties);
+            }
+          }
+          if (item.linear === 'yes') {
+            item.prev = () => {
+              let prevIndex = item.index;
+              while (prevIndex > 0) {
+                const prev = this.get(prevIndex - 1);
+                if (prev && prev.linear) {
+                  return prev;
+                }
+                prevIndex -= 1;
+              }
+              return;
+            };
+            item.next = () => {
+              let nextIndex = item.index;
+              while (nextIndex < this.spineItems.length - 1) {
+                const next = this.get(nextIndex + 1);
+                if (next && next.linear) {
+                  return next;
+                }
+                nextIndex += 1;
+              }
+              return;
+            };
+          } else {
+            item.prev = () => {
+              return undefined;
+            };
+            item.next = () => {
+              return undefined;
+            };
+          }
+          const spineItem = new section_1.default(item, this.hooks);
+          this.append(spineItem);
+        });
+        this.loaded = true;
+      }
+      /**
+       * Get an item from the spine
+       * @example spine.get();
+       * @example spine.get(1);
+       * @example spine.get("chap1.html");
+       * @example spine.get("#id1234");
+       */
+      get(target) {
+        let index = 0;
+        if (typeof target === 'undefined') {
+          while (index < this.spineItems.length) {
+            const next = this.spineItems[index];
             if (next && next.linear) {
-              return next;
+              break;
             }
-            nextIndex += 1;
+            index += 1;
           }
-          return;
-        }.bind(this);
-      } else {
-        item.prev = function () {
-          return;
-        };
-        item.next = function () {
-          return;
-        };
-      }
-      spineItem = new Section(item, this.hooks);
-      this.append(spineItem);
-    });
-    this.loaded = true;
-  }
-
-  /**
-   * Get an item from the spine
-   * @param  {string|number} [target]
-   * @return {Section} section
-   * @example spine.get();
-   * @example spine.get(1);
-   * @example spine.get("chap1.html");
-   * @example spine.get("#id1234");
-   */
-  get(target) {
-    var index = 0;
-    if (typeof target === 'undefined') {
-      while (index < this.spineItems.length) {
-        let next = this.spineItems[index];
-        if (next && next.linear) {
-          break;
+        } else if (this.epubcfi.isCfiString(target)) {
+          const cfi = new epubcfi_1.default(target);
+          index = cfi.spinePos;
+        } else if (typeof target === 'number' || typeof target === 'string' && !isNaN(Number(target))) {
+          index = typeof target === 'number' ? target : Number(target);
+        } else if (typeof target === 'string' && target.indexOf('#') === 0) {
+          index = this.spineById[target.substring(1)];
+        } else if (typeof target === 'string') {
+          // Remove fragments
+          target = target.split('#')[0];
+          index = this.spineByHref[target] || this.spineByHref[encodeURI(target)];
         }
-        index += 1;
+        return this.spineItems[index] || null;
       }
-    } else if (this.epubcfi.isCfiString(target)) {
-      let cfi = new CFI(target);
-      index = cfi.spinePos;
-    } else if (typeof target === 'number' || isNaN(target) === false) {
-      index = target;
-    } else if (typeof target === 'string' && target.indexOf('#') === 0) {
-      index = this.spineById[target.substring(1)];
-    } else if (typeof target === 'string') {
-      // Remove fragments
-      target = target.split('#')[0];
-      index = this.spineByHref[target] || this.spineByHref[encodeURI(target)];
+      /**
+       * Append a Section to the Spine
+       */
+      append(section) {
+        const index = this.spineItems.length;
+        section.index = index;
+        this.spineItems.push(section);
+        // Encode and Decode href lookups
+        // see pr for details: https://github.com/futurepress/epub.js/pull/358
+        this.spineByHref[decodeURI(section.href)] = index;
+        this.spineByHref[encodeURI(section.href)] = index;
+        this.spineByHref[section.href] = index;
+        this.spineById[section.idref] = index;
+        return index;
+      }
+      /**
+       * Prepend a Section to the Spine
+       */
+      prepend(section) {
+        // var index = this.spineItems.unshift(section);
+        this.spineByHref[section.href] = 0;
+        this.spineById[section.idref] = 0;
+        // Re-index
+        this.spineItems.forEach(function (item, index) {
+          item.index = index;
+        });
+        return 0;
+      }
+      // insert(section, index) {
+      //
+      // };
+      /**
+       * Remove a Section from the Spine
+       */
+      remove(section) {
+        const index = this.spineItems.indexOf(section);
+        if (index > -1) {
+          delete this.spineByHref[section.href];
+          delete this.spineById[section.idref];
+          return this.spineItems.splice(index, 1);
+        }
+      }
+      /**
+       * Loop over the Sections in the Spine
+       */
+      each(...args) {
+        return this.spineItems.forEach(...args);
+      }
+      /**
+       * Find the first Section in the Spine
+       */
+      first() {
+        let index = 0;
+        do {
+          const next = this.get(index);
+          if (next && next.linear) {
+            return next;
+          }
+          index += 1;
+        } while (index < this.spineItems.length);
+      }
+      /**
+       * Find the last Section in the Spine
+       */
+      last() {
+        let index = this.spineItems.length - 1;
+        do {
+          const prev = this.get(index);
+          if (prev && prev.linear) {
+            return prev;
+          }
+          index -= 1;
+        } while (index >= 0);
+      }
+      destroy() {
+        this.spineItems.forEach(section => section.destroy());
+        this.hooks.serialize.clear();
+        this.hooks.content.clear();
+        // Clear properties that are legitimately optional
+        this.loaded = false;
+        this.items = undefined;
+        this.manifest = undefined;
+        this.spineNodeIndex = undefined;
+        this.baseUrl = undefined;
+        this.length = undefined;
+        // Note: Required properties (spineItems, hooks, etc.) don't need to be cleared
+        // The entire object will be garbage collected when all references are removed
+      }
     }
-    return this.spineItems[index] || null;
-  }
-
-  /**
-   * Append a Section to the Spine
-   * @private
-   * @param  {Section} section
-   */
-  append(section) {
-    var index = this.spineItems.length;
-    section.index = index;
-    this.spineItems.push(section);
-
-    // Encode and Decode href lookups
-    // see pr for details: https://github.com/futurepress/epub.js/pull/358
-    this.spineByHref[decodeURI(section.href)] = index;
-    this.spineByHref[encodeURI(section.href)] = index;
-    this.spineByHref[section.href] = index;
-    this.spineById[section.idref] = index;
-    return index;
-  }
-
-  /**
-   * Prepend a Section to the Spine
-   * @private
-   * @param  {Section} section
-   */
-  prepend(section) {
-    // var index = this.spineItems.unshift(section);
-    this.spineByHref[section.href] = 0;
-    this.spineById[section.idref] = 0;
-
-    // Re-index
-    this.spineItems.forEach(function (item, index) {
-      item.index = index;
-    });
-    return 0;
-  }
-
-  // insert(section, index) {
-  //
-  // };
-
-  /**
-   * Remove a Section from the Spine
-   * @private
-   * @param  {Section} section
-   */
-  remove(section) {
-    var index = this.spineItems.indexOf(section);
-    if (index > -1) {
-      delete this.spineByHref[section.href];
-      delete this.spineById[section.idref];
-      return this.spineItems.splice(index, 1);
-    }
-  }
-
-  /**
-   * Loop over the Sections in the Spine
-   * @return {method} forEach
-   */
-  each() {
-    return this.spineItems.forEach.apply(this.spineItems, arguments);
-  }
-
-  /**
-   * Find the first Section in the Spine
-   * @return {Section} first section
-   */
-  first() {
-    let index = 0;
-    do {
-      let next = this.get(index);
-      if (next && next.linear) {
-        return next;
-      }
-      index += 1;
-    } while (index < this.spineItems.length);
-  }
-
-  /**
-   * Find the last Section in the Spine
-   * @return {Section} last section
-   */
-  last() {
-    let index = this.spineItems.length - 1;
-    do {
-      let prev = this.get(index);
-      if (prev && prev.linear) {
-        return prev;
-      }
-      index -= 1;
-    } while (index >= 0);
-  }
-  destroy() {
-    this.each(section => section.destroy());
-    this.spineItems = undefined;
-    this.spineByHref = undefined;
-    this.spineById = undefined;
-    this.hooks.serialize.clear();
-    this.hooks.content.clear();
-    this.hooks = undefined;
-    this.epubcfi = undefined;
-    this.loaded = false;
-    this.items = undefined;
-    this.manifest = undefined;
-    this.spineNodeIndex = undefined;
-    this.baseUrl = undefined;
-    this.length = undefined;
-  }
+    exports.default = Spine;
+    module.exports = Spine;
+  })(spine$1, spine$1.exports);
+  return spine$1.exports;
 }
+
+var spineExports = requireSpine();
+var Spine = /*@__PURE__*/getDefaultExportFromCjs(spineExports);
 
 var locations = {};
 
@@ -5898,6 +5891,12 @@ function requirePagelist() {
 var pagelistExports = requirePagelist();
 var PageList = /*@__PURE__*/getDefaultExportFromCjs(pagelistExports);
 
+var hookExports = requireHook();
+var Hook = /*@__PURE__*/getDefaultExportFromCjs(hookExports);
+
+var epubcfiExports = requireEpubcfi();
+var CFI = /*@__PURE__*/getDefaultExportFromCjs(epubcfiExports);
+
 var queueExports = requireQueue();
 var Queue = /*@__PURE__*/getDefaultExportFromCjs(queueExports);
 
@@ -7067,6 +7066,8 @@ function requireMapping() {
 
 var mappingExports = requireMapping();
 var Mapping = /*@__PURE__*/getDefaultExportFromCjs(mappingExports);
+
+var replacementsExports = requireReplacements();
 
 const hasNavigator = typeof navigator !== 'undefined';
 const isChrome = hasNavigator && /Chrome/.test(navigator.userAgent);

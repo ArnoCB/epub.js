@@ -5,13 +5,14 @@
  * @example this.content = new EPUBJS.Hook(this);
  */
 
-type HookTask = (...args: unknown[]) => unknown;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type HookTask = (...args: any[]) => any;
 
 class Hook {
   context: unknown;
   hooks: HookTask[];
 
-  constructor(context: unknown) {
+  constructor(context?: unknown) {
     this.context = context || this;
     this.hooks = [];
   }
@@ -49,7 +50,8 @@ class Hook {
    * Triggers a hook to run all functions
    * @example this.content.trigger(args).then(function(){...});
    */
-  trigger(...args: unknown[]): Promise<unknown[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  trigger(...args: any[]): Promise<any[]> {
     const context = this.context;
     const promises: Promise<unknown>[] = [];
 
@@ -59,9 +61,11 @@ class Hook {
         if (
           executing &&
           typeof executing === 'object' &&
-          typeof (executing as Promise<unknown>).then === 'function'
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          typeof (executing as Promise<any>).then === 'function'
         ) {
-          promises.push(executing as Promise<unknown>);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          promises.push(executing as Promise<any>);
         }
       } catch (err) {
         console.log(err);
