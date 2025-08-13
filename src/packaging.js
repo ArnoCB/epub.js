@@ -337,9 +337,3 @@ class Packaging {
     }
 }
 exports.default = Packaging;
-// CommonJS exports for testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Packaging;
-    module.exports.default = Packaging;
-    module.exports.indexOfNode = indexOfNode;
-}

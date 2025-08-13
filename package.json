@@ -12,7 +12,7 @@
   "scripts": {
     "build:utils": "tsc --project tsconfig.build.json",
     "build:rollup": "rollup -c",
-    "test": "jest src/**/*.spec.ts --runInBand && karma start karma.conf.cjs --single-run",
+    "test": "jest --runInBand && karma start karma.conf.cjs --single-run",
     "docs": "documentation build src/epub.js -f html -o documentation/html/",
     "docs:html": "documentation build src/epub.js -f html -o documentation/html/",
     "docs:md": "documentation build src/epub.js -f md -o documentation/md/API.md",

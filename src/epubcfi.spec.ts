@@ -191,7 +191,6 @@ describe('EpubCFI', () => {
         const range = document.createRange();
         range.setStart(p!.firstChild as Node, 0); // "hello "
         range.setEnd(span!.firstChild as Node, 3); // "wor"
-        console.log('Legacy test: Real Range passed to EpubCFI:', range);
         const cfi = new EpubCFI(range);
         expect(cfi).toBeInstanceOf(EpubCFI);
         expect(cfi.range).toBe(true);

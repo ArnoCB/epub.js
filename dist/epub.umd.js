@@ -4517,458 +4517,448 @@
 	var containerExports = requireContainer();
 	var Container = /*@__PURE__*/getDefaultExportFromCjs(containerExports);
 
-	var packaging = {exports: {}};
+	var packaging = {};
 
-	packaging.exports;
 	var hasRequiredPackaging;
 	function requirePackaging() {
-	  if (hasRequiredPackaging) return packaging.exports;
+	  if (hasRequiredPackaging) return packaging;
 	  hasRequiredPackaging = 1;
-	  (function (module, exports) {
-
-	    Object.defineProperty(exports, "__esModule", {
-	      value: true
-	    });
-	    exports.indexOfNode = indexOfNode;
-	    const ELEMENT_NODE = 1;
+	  Object.defineProperty(packaging, "__esModule", {
+	    value: true
+	  });
+	  packaging.indexOfNode = indexOfNode;
+	  const ELEMENT_NODE = 1;
+	  /**
+	   * Gets the index of a node in its parent
+	   * @memberof Core
+	   */
+	  function indexOfNode(node, typeId) {
+	    const parent = node.parentNode;
+	    if (!parent) {
+	      return -1;
+	    }
+	    const children = parent.childNodes;
+	    let sib;
+	    let index = -1;
+	    for (let i = 0; i < children.length; i++) {
+	      sib = children[i];
+	      if (sib.nodeType === typeId) {
+	        index++;
+	      }
+	      if (sib == node) break;
+	    }
+	    return index;
+	  }
+	  function indexOfElementNode(elementNode) {
+	    return indexOfNode(elementNode, ELEMENT_NODE);
+	  }
+	  /**
+	   * Open Packaging Format Parser
+	   * @class
+	   * @param {document} packageDocument OPF XML
+	   */
+	  class Packaging {
+	    constructor(packageDocument) {
+	      this.manifest = {};
+	      this.navPath = '';
+	      this.ncxPath = '';
+	      this.coverPath = '';
+	      this.spineNodeIndex = 0;
+	      this.spine = [];
+	      this.metadata = {};
+	      this.uniqueIdentifier = '';
+	      if (packageDocument) {
+	        this.parse(packageDocument);
+	      }
+	    }
 	    /**
-	     * Gets the index of a node in its parent
-	     * @memberof Core
+	     * Parse OPF XML
 	     */
-	    function indexOfNode(node, typeId) {
-	      const parent = node.parentNode;
-	      if (!parent) {
-	        return -1;
+	    parse(packageDocument) {
+	      if (!packageDocument) {
+	        throw new Error('Package File Not Found');
 	      }
-	      const children = parent.childNodes;
-	      let sib;
-	      let index = -1;
-	      for (let i = 0; i < children.length; i++) {
-	        sib = children[i];
-	        if (sib.nodeType === typeId) {
-	          index++;
-	        }
-	        if (sib == node) break;
+	      const metadataNode = packageDocument.querySelector('metadata');
+	      if (!metadataNode) {
+	        throw new Error('No Metadata Found');
 	      }
-	      return index;
-	    }
-	    function indexOfElementNode(elementNode) {
-	      return indexOfNode(elementNode, ELEMENT_NODE);
+	      const manifestNode = packageDocument.querySelector('manifest');
+	      if (!manifestNode) {
+	        throw new Error('No Manifest Found');
+	      }
+	      const spineNode = packageDocument.querySelector('spine');
+	      if (!spineNode) {
+	        throw new Error('No Spine Found');
+	      }
+	      this.manifest = this.parseManifest(manifestNode);
+	      this.navPath = this.findNavPath(manifestNode);
+	      this.ncxPath = this.findNcxPath(manifestNode, spineNode);
+	      this.coverPath = this.findCoverPath(packageDocument);
+	      this.spineNodeIndex = indexOfElementNode(spineNode);
+	      this.spine = this.parseSpine(spineNode);
+	      this.uniqueIdentifier = this.findUniqueIdentifier(packageDocument);
+	      this.metadata = this.parseMetadata(metadataNode);
+	      this.metadata.direction = spineNode.getAttribute('page-progression-direction') || 'ltr';
+	      return {
+	        metadata: this.metadata,
+	        spine: this.spine,
+	        manifest: this.manifest,
+	        navPath: this.navPath,
+	        ncxPath: this.ncxPath,
+	        coverPath: this.coverPath,
+	        spineNodeIndex: this.spineNodeIndex
+	      };
 	    }
 	    /**
-	     * Open Packaging Format Parser
-	     * @class
-	     * @param {document} packageDocument OPF XML
+	     * Parse Metadata
+	     * @param  {Element} xml
+	     * @return {PackagingMetadataObject} metadata
 	     */
-	    class Packaging {
-	      constructor(packageDocument) {
-	        this.manifest = {};
-	        this.navPath = '';
-	        this.ncxPath = '';
-	        this.coverPath = '';
-	        this.spineNodeIndex = 0;
-	        this.spine = [];
-	        this.metadata = {};
-	        this.uniqueIdentifier = '';
-	        if (packageDocument) {
-	          this.parse(packageDocument);
-	        }
-	      }
-	      /**
-	       * Parse OPF XML
-	       */
-	      parse(packageDocument) {
-	        if (!packageDocument) {
-	          throw new Error('Package File Not Found');
-	        }
-	        const metadataNode = packageDocument.querySelector('metadata');
-	        if (!metadataNode) {
-	          throw new Error('No Metadata Found');
-	        }
-	        const manifestNode = packageDocument.querySelector('manifest');
-	        if (!manifestNode) {
-	          throw new Error('No Manifest Found');
-	        }
-	        const spineNode = packageDocument.querySelector('spine');
-	        if (!spineNode) {
-	          throw new Error('No Spine Found');
-	        }
-	        this.manifest = this.parseManifest(manifestNode);
-	        this.navPath = this.findNavPath(manifestNode);
-	        this.ncxPath = this.findNcxPath(manifestNode, spineNode);
-	        this.coverPath = this.findCoverPath(packageDocument);
-	        this.spineNodeIndex = indexOfElementNode(spineNode);
-	        this.spine = this.parseSpine(spineNode);
-	        this.uniqueIdentifier = this.findUniqueIdentifier(packageDocument);
-	        this.metadata = this.parseMetadata(metadataNode);
-	        this.metadata.direction = spineNode.getAttribute('page-progression-direction') || 'ltr';
-	        return {
-	          metadata: this.metadata,
-	          spine: this.spine,
-	          manifest: this.manifest,
-	          navPath: this.navPath,
-	          ncxPath: this.ncxPath,
-	          coverPath: this.coverPath,
-	          spineNodeIndex: this.spineNodeIndex
-	        };
-	      }
-	      /**
-	       * Parse Metadata
-	       * @param  {Element} xml
-	       * @return {PackagingMetadataObject} metadata
-	       */
-	      parseMetadata(xml) {
-	        return {
-	          title: this.getElementText(xml, 'title'),
-	          creator: this.getElementText(xml, 'creator'),
-	          description: this.getElementText(xml, 'description'),
-	          pubdate: this.getElementText(xml, 'date'),
-	          publisher: this.getElementText(xml, 'publisher'),
-	          identifier: this.getElementText(xml, 'identifier'),
-	          language: this.getElementText(xml, 'language'),
-	          rights: this.getElementText(xml, 'rights'),
-	          modified_date: this.getPropertyText(xml, 'dcterms:modified'),
-	          layout: this.getPropertyText(xml, 'rendition:layout'),
-	          orientation: this.getPropertyText(xml, 'rendition:orientation'),
-	          flow: this.getPropertyText(xml, 'rendition:flow'),
-	          viewport: this.getPropertyText(xml, 'rendition:viewport'),
-	          spread: this.getPropertyText(xml, 'rendition:spread'),
-	          direction: '' // Will be set later from spine element
-	        };
-	      }
-	      /**
-	       * Parse Manifest
-	       * @param  {Element} manifestXml
-	       * @return {PackagingManifestObject} manifest
-	       */
-	      parseManifest(manifestXml) {
-	        const manifest = {};
-	        //-- Turn items into an array
-	        const selected = manifestXml.querySelectorAll('item');
-	        const items = Array.prototype.slice.call(selected);
-	        //-- Create an object with the id as key
-	        items.forEach(function (item) {
-	          const id = item.getAttribute('id'),
-	            href = item.getAttribute('href') || '',
-	            type = item.getAttribute('media-type') || '',
-	            overlay = item.getAttribute('media-overlay') || '',
-	            properties = item.getAttribute('properties') || '';
-	          manifest[id] = {
-	            href: href,
-	            // "url" : href,
-	            type: type,
-	            overlay: overlay,
-	            properties: properties.length ? properties.split(' ') : []
-	          };
-	        });
-	        return manifest;
-	      }
-	      /**
-	       * Parse Spine
-	       * @param  {Element} spineXml
-	       * @return {object} spine
-	       */
-	      parseSpine(spineXml) {
-	        const spine = [];
-	        const selected = spineXml.querySelectorAll('itemref');
-	        const items = Array.prototype.slice.call(selected);
-	        // var epubcfi = new EpubCFI();
-	        //-- Add to array to maintain ordering and cross reference with manifest
-	        items.forEach(function (item, index) {
-	          const idref = item.getAttribute('idref');
-	          // var cfiBase = epubcfi.generateChapterComponent(spineNodeIndex, index, Id);
-	          const props = item.getAttribute('properties') || '';
-	          const propArray = props.length ? props.split(' ') : [];
-	          // var manifestProps = manifest[Id].properties;
-	          // var manifestPropArray = manifestProps.length ? manifestProps.split(" ") : [];
-	          const itemref = {
-	            id: item.getAttribute('id'),
-	            idref: idref,
-	            linear: item.getAttribute('linear') || 'yes',
-	            properties: propArray,
-	            // "href" : manifest[Id].href,
-	            // "url" :  manifest[Id].url,
-	            index: index
-	            // "cfiBase" : cfiBase
-	          };
-	          spine.push(itemref);
-	        });
-	        return spine;
-	      }
-	      /**
-	       * Find Unique Identifier
-	       * @param  {node} packageXml
-	       * @return {string} Unique Identifier text
-	       */
-	      findUniqueIdentifier(packageXml) {
-	        const uniqueIdentifierId = packageXml.documentElement.getAttribute('unique-identifier');
-	        if (!uniqueIdentifierId) {
-	          return '';
-	        }
-	        const identifier = packageXml.getElementById(uniqueIdentifierId);
-	        if (!identifier) {
-	          return '';
-	        }
-	        if (identifier.localName === 'identifier' && identifier.namespaceURI === 'http://purl.org/dc/elements/1.1/') {
-	          if (identifier.childNodes.length > 0 && identifier.childNodes[0].nodeValue) {
-	            return identifier.childNodes[0].nodeValue.trim();
-	          }
-	        }
-	        return '';
-	      }
-	      /**
-	       * Find TOC NAV
-	       * @param {element} manifestNode
-	       * @return {string}
-	       */
-	      findNavPath(manifestNode) {
-	        // Find item with property "nav"
-	        // Should catch nav regardless of order
-	        const node = manifestNode.querySelector("item[properties~='nav']");
-	        return node ? node.getAttribute('href') || '' : '';
-	      }
-	      /**
-	       * Find TOC NCX
-	       * media-type="application/x-dtbncx+xml" href="toc.ncx"
-	       * @private
-	       * @param {element} manifestNode
-	       * @param {element} spineNode
-	       * @return {string}
-	       */
-	      findNcxPath(manifestNode, spineNode) {
-	        // var node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
-	        let node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
-	        let tocId;
-	        // If we can't find the toc by media-type then try to look for id of the item in the spine attributes as
-	        // according to http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.4.1.2,
-	        // "The item that describes the NCX must be referenced by the spine toc attribute."
-	        if (!node) {
-	          tocId = spineNode.getAttribute('toc');
-	          if (tocId) {
-	            // node = manifestNode.querySelector("item[id='" + tocId + "']");
-	            node = manifestNode.querySelector(`#${tocId}`);
-	          }
-	        }
-	        return node ? node.getAttribute('href') || '' : '';
-	      }
-	      /**
-	       * Find the Cover Path
-	       * <item properties="cover-image" id="ci" href="cover.svg" media-type="image/svg+xml" />
-	       * Fallback for Epub 2.0
-	       * @private
-	       * @param  {XMLDocument} packageXml
-	       * @return {string} href
-	       */
-	      findCoverPath(packageXml) {
-	        const pkg = packageXml.querySelector('package');
-	        pkg?.getAttribute('version');
-	        // Try parsing cover with epub 3.
-	        // var node = packageXml.querySelector("item[properties='cover-image']");
-	        const node = packageXml.querySelector("item[properties~='cover-image']");
-	        if (node) return node.getAttribute('href') || '';
-	        // Fallback to epub 2.
-	        const metaCover = packageXml.querySelector("meta[name='cover']");
-	        if (metaCover) {
-	          const coverId = metaCover.getAttribute('content');
-	          if (coverId) {
-	            // var cover = packageXml.querySelector("item[id='" + coverId + "']");
-	            const cover = packageXml.getElementById(coverId);
-	            return cover ? cover.getAttribute('href') || '' : '';
-	          }
-	        }
-	        return '';
-	      }
-	      /**
-	       * Get text of a namespaced element
-	       * @param  {node} xml
-	       * @param  {string} tag
-	       * @return {string} text
-	       */
-	      getElementText(xml, tag) {
-	        const found = xml.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', tag);
-	        if (!found || found.length === 0) return '';
-	        const el = found[0];
-	        if (el.childNodes.length && el.childNodes[0].nodeValue) {
-	          return el.childNodes[0].nodeValue;
-	        }
-	        return '';
-	      }
-	      /**
-	       * Get text by property
-	       * @param  {Element} xml
-	       * @param  {string} property
-	       * @return {string} text
-	       */
-	      getPropertyText(xml, property) {
-	        const el = xml.querySelector(`meta[property='${property}']`);
-	        if (el && el.childNodes.length) {
-	          return el.childNodes[0].nodeValue || '';
-	        }
-	        return '';
-	      }
-	      /**
-	       * Load JSON Manifest
-	       * @param  {document} packageDocument OPF XML
-	       * @return {object} parsed package parts
-	       */
-	      load(json) {
-	        this.metadata = json.metadata;
-	        const spine = json.readingOrder || json.spine;
-	        this.spine = spine ? spine.map((item, index) => {
-	          const spineItem = {
-	            idref: item.idref,
-	            linear: item.linear || 'yes',
-	            properties: item.properties || [],
-	            index: index
-	          };
-	          return spineItem;
-	        }) : [];
-	        json.resources.forEach((item, index) => {
-	          this.manifest[index] = item;
-	          if (item.rel && item.rel[0] === 'cover') {
-	            this.coverPath = item.href;
-	          }
-	        });
-	        this.spineNodeIndex = 0;
-	        this.toc = json.toc ? json.toc.map(item => {
-	          const navItem = {
-	            id: item.id || '',
-	            href: item.href,
-	            label: item.label || item.title || '',
-	            title: item.title
-	          };
-	          return navItem;
-	        }) : [];
-	        return {
-	          metadata: this.metadata,
-	          spine: this.spine,
-	          manifest: this.manifest,
-	          navPath: this.navPath,
-	          ncxPath: this.ncxPath,
-	          coverPath: this.coverPath,
-	          spineNodeIndex: this.spineNodeIndex
-	        };
-	      }
-	      destroy() {
-	        // @ts-expect-error intentionally setting to undefined for garbage collection
-	        this.manifest = undefined;
-	        // @ts-expect-error intentionally setting to undefined for garbage collection
-	        this.spine = undefined;
-	        // @ts-expect-error intentionally setting to undefined for garbage collection
-	        this.metadata = undefined;
-	        this.toc = undefined;
-	      }
+	    parseMetadata(xml) {
+	      return {
+	        title: this.getElementText(xml, 'title'),
+	        creator: this.getElementText(xml, 'creator'),
+	        description: this.getElementText(xml, 'description'),
+	        pubdate: this.getElementText(xml, 'date'),
+	        publisher: this.getElementText(xml, 'publisher'),
+	        identifier: this.getElementText(xml, 'identifier'),
+	        language: this.getElementText(xml, 'language'),
+	        rights: this.getElementText(xml, 'rights'),
+	        modified_date: this.getPropertyText(xml, 'dcterms:modified'),
+	        layout: this.getPropertyText(xml, 'rendition:layout'),
+	        orientation: this.getPropertyText(xml, 'rendition:orientation'),
+	        flow: this.getPropertyText(xml, 'rendition:flow'),
+	        viewport: this.getPropertyText(xml, 'rendition:viewport'),
+	        spread: this.getPropertyText(xml, 'rendition:spread'),
+	        direction: '' // Will be set later from spine element
+	      };
 	    }
-	    exports.default = Packaging;
-	    // CommonJS exports for testing
-	    if (module.exports) {
-	      module.exports = Packaging;
-	      module.exports.default = Packaging;
-	      module.exports.indexOfNode = indexOfNode;
+	    /**
+	     * Parse Manifest
+	     * @param  {Element} manifestXml
+	     * @return {PackagingManifestObject} manifest
+	     */
+	    parseManifest(manifestXml) {
+	      const manifest = {};
+	      //-- Turn items into an array
+	      const selected = manifestXml.querySelectorAll('item');
+	      const items = Array.prototype.slice.call(selected);
+	      //-- Create an object with the id as key
+	      items.forEach(function (item) {
+	        const id = item.getAttribute('id'),
+	          href = item.getAttribute('href') || '',
+	          type = item.getAttribute('media-type') || '',
+	          overlay = item.getAttribute('media-overlay') || '',
+	          properties = item.getAttribute('properties') || '';
+	        manifest[id] = {
+	          href: href,
+	          // "url" : href,
+	          type: type,
+	          overlay: overlay,
+	          properties: properties.length ? properties.split(' ') : []
+	        };
+	      });
+	      return manifest;
 	    }
-	  })(packaging, packaging.exports);
-	  return packaging.exports;
+	    /**
+	     * Parse Spine
+	     * @param  {Element} spineXml
+	     * @return {object} spine
+	     */
+	    parseSpine(spineXml) {
+	      const spine = [];
+	      const selected = spineXml.querySelectorAll('itemref');
+	      const items = Array.prototype.slice.call(selected);
+	      // var epubcfi = new EpubCFI();
+	      //-- Add to array to maintain ordering and cross reference with manifest
+	      items.forEach(function (item, index) {
+	        const idref = item.getAttribute('idref');
+	        // var cfiBase = epubcfi.generateChapterComponent(spineNodeIndex, index, Id);
+	        const props = item.getAttribute('properties') || '';
+	        const propArray = props.length ? props.split(' ') : [];
+	        // var manifestProps = manifest[Id].properties;
+	        // var manifestPropArray = manifestProps.length ? manifestProps.split(" ") : [];
+	        const itemref = {
+	          id: item.getAttribute('id'),
+	          idref: idref,
+	          linear: item.getAttribute('linear') || 'yes',
+	          properties: propArray,
+	          // "href" : manifest[Id].href,
+	          // "url" :  manifest[Id].url,
+	          index: index
+	          // "cfiBase" : cfiBase
+	        };
+	        spine.push(itemref);
+	      });
+	      return spine;
+	    }
+	    /**
+	     * Find Unique Identifier
+	     * @param  {node} packageXml
+	     * @return {string} Unique Identifier text
+	     */
+	    findUniqueIdentifier(packageXml) {
+	      const uniqueIdentifierId = packageXml.documentElement.getAttribute('unique-identifier');
+	      if (!uniqueIdentifierId) {
+	        return '';
+	      }
+	      const identifier = packageXml.getElementById(uniqueIdentifierId);
+	      if (!identifier) {
+	        return '';
+	      }
+	      if (identifier.localName === 'identifier' && identifier.namespaceURI === 'http://purl.org/dc/elements/1.1/') {
+	        if (identifier.childNodes.length > 0 && identifier.childNodes[0].nodeValue) {
+	          return identifier.childNodes[0].nodeValue.trim();
+	        }
+	      }
+	      return '';
+	    }
+	    /**
+	     * Find TOC NAV
+	     * @param {element} manifestNode
+	     * @return {string}
+	     */
+	    findNavPath(manifestNode) {
+	      // Find item with property "nav"
+	      // Should catch nav regardless of order
+	      const node = manifestNode.querySelector("item[properties~='nav']");
+	      return node ? node.getAttribute('href') || '' : '';
+	    }
+	    /**
+	     * Find TOC NCX
+	     * media-type="application/x-dtbncx+xml" href="toc.ncx"
+	     * @private
+	     * @param {element} manifestNode
+	     * @param {element} spineNode
+	     * @return {string}
+	     */
+	    findNcxPath(manifestNode, spineNode) {
+	      // var node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
+	      let node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
+	      let tocId;
+	      // If we can't find the toc by media-type then try to look for id of the item in the spine attributes as
+	      // according to http://www.idpf.org/epub/20/spec/OPF_2.0.1_draft.htm#Section2.4.1.2,
+	      // "The item that describes the NCX must be referenced by the spine toc attribute."
+	      if (!node) {
+	        tocId = spineNode.getAttribute('toc');
+	        if (tocId) {
+	          // node = manifestNode.querySelector("item[id='" + tocId + "']");
+	          node = manifestNode.querySelector(`#${tocId}`);
+	        }
+	      }
+	      return node ? node.getAttribute('href') || '' : '';
+	    }
+	    /**
+	     * Find the Cover Path
+	     * <item properties="cover-image" id="ci" href="cover.svg" media-type="image/svg+xml" />
+	     * Fallback for Epub 2.0
+	     * @private
+	     * @param  {XMLDocument} packageXml
+	     * @return {string} href
+	     */
+	    findCoverPath(packageXml) {
+	      const pkg = packageXml.querySelector('package');
+	      pkg?.getAttribute('version');
+	      // Try parsing cover with epub 3.
+	      // var node = packageXml.querySelector("item[properties='cover-image']");
+	      const node = packageXml.querySelector("item[properties~='cover-image']");
+	      if (node) return node.getAttribute('href') || '';
+	      // Fallback to epub 2.
+	      const metaCover = packageXml.querySelector("meta[name='cover']");
+	      if (metaCover) {
+	        const coverId = metaCover.getAttribute('content');
+	        if (coverId) {
+	          // var cover = packageXml.querySelector("item[id='" + coverId + "']");
+	          const cover = packageXml.getElementById(coverId);
+	          return cover ? cover.getAttribute('href') || '' : '';
+	        }
+	      }
+	      return '';
+	    }
+	    /**
+	     * Get text of a namespaced element
+	     * @param  {node} xml
+	     * @param  {string} tag
+	     * @return {string} text
+	     */
+	    getElementText(xml, tag) {
+	      const found = xml.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', tag);
+	      if (!found || found.length === 0) return '';
+	      const el = found[0];
+	      if (el.childNodes.length && el.childNodes[0].nodeValue) {
+	        return el.childNodes[0].nodeValue;
+	      }
+	      return '';
+	    }
+	    /**
+	     * Get text by property
+	     * @param  {Element} xml
+	     * @param  {string} property
+	     * @return {string} text
+	     */
+	    getPropertyText(xml, property) {
+	      const el = xml.querySelector(`meta[property='${property}']`);
+	      if (el && el.childNodes.length) {
+	        return el.childNodes[0].nodeValue || '';
+	      }
+	      return '';
+	    }
+	    /**
+	     * Load JSON Manifest
+	     * @param  {document} packageDocument OPF XML
+	     * @return {object} parsed package parts
+	     */
+	    load(json) {
+	      this.metadata = json.metadata;
+	      const spine = json.readingOrder || json.spine;
+	      this.spine = spine ? spine.map((item, index) => {
+	        const spineItem = {
+	          idref: item.idref,
+	          linear: item.linear || 'yes',
+	          properties: item.properties || [],
+	          index: index
+	        };
+	        return spineItem;
+	      }) : [];
+	      json.resources.forEach((item, index) => {
+	        this.manifest[index] = item;
+	        if (item.rel && item.rel[0] === 'cover') {
+	          this.coverPath = item.href;
+	        }
+	      });
+	      this.spineNodeIndex = 0;
+	      this.toc = json.toc ? json.toc.map(item => {
+	        const navItem = {
+	          id: item.id || '',
+	          href: item.href,
+	          label: item.label || item.title || '',
+	          title: item.title
+	        };
+	        return navItem;
+	      }) : [];
+	      return {
+	        metadata: this.metadata,
+	        spine: this.spine,
+	        manifest: this.manifest,
+	        navPath: this.navPath,
+	        ncxPath: this.ncxPath,
+	        coverPath: this.coverPath,
+	        spineNodeIndex: this.spineNodeIndex
+	      };
+	    }
+	    destroy() {
+	      // @ts-expect-error intentionally setting to undefined for garbage collection
+	      this.manifest = undefined;
+	      // @ts-expect-error intentionally setting to undefined for garbage collection
+	      this.spine = undefined;
+	      // @ts-expect-error intentionally setting to undefined for garbage collection
+	      this.metadata = undefined;
+	      this.toc = undefined;
+	    }
+	  }
+	  packaging.default = Packaging;
+	  return packaging;
 	}
 
 	var packagingExports = requirePackaging();
 	var Packaging = /*@__PURE__*/getDefaultExportFromCjs(packagingExports);
 
-	/**
-	 * Navigation Parser
-	 * @param {document} xml navigation html / xhtml / ncx
-	 */
-	class Navigation {
-	  constructor(xml) {
-	    this.toc = [];
-	    this.tocByHref = {};
-	    this.tocById = {};
-	    this.landmarks = [];
-	    this.landmarksByType = {};
-	    this.length = 0;
-	    if (xml) {
-	      this.parse(xml);
-	    }
-	  }
+	var navigation = {};
 
+	var hasRequiredNavigation;
+	function requireNavigation() {
+	  if (hasRequiredNavigation) return navigation;
+	  hasRequiredNavigation = 1;
+	  Object.defineProperty(navigation, "__esModule", {
+	    value: true
+	  });
 	  /**
-	   * Parse out the navigation items
+	   * Navigation Parser
 	   * @param {document} xml navigation html / xhtml / ncx
 	   */
-	  parse(xml) {
-	    let isXml = xml.nodeType;
-	    let html;
-	    let ncx;
-	    if (isXml) {
-	      html = coreExports.qs(xml, 'html');
-	      ncx = coreExports.qs(xml, 'ncx');
-	    }
-	    if (!isXml) {
-	      this.toc = this.load(xml);
-	    } else if (html) {
-	      this.toc = this.parseNav(xml);
-	      this.landmarks = this.parseLandmarks(xml);
-	    } else if (ncx) {
-	      this.toc = this.parseNcx(xml);
-	    }
-	    this.length = 0;
-	    this.unpack(this.toc);
-	  }
-
-	  /**
-	   * Unpack navigation items
-	   * @private
-	   * @param  {array} toc
-	   */
-	  unpack(toc) {
-	    var item;
-	    for (var i = 0; i < toc.length; i++) {
-	      item = toc[i];
-	      if (item.href) {
-	        this.tocByHref[item.href] = i;
-	      }
-	      if (item.id) {
-	        this.tocById[item.id] = i;
-	      }
-	      this.length++;
-	      if (item.subitems.length) {
-	        this.unpack(item.subitems);
+	  class Navigation {
+	    constructor(xml) {
+	      this.toc = [];
+	      this.tocByHref = {};
+	      this.tocById = {};
+	      this.landmarks = [];
+	      this.landmarksByType = {};
+	      this.length = 0;
+	      if (xml) {
+	        this.parse(xml);
 	      }
 	    }
-	  }
-
-	  /**
-	   * Get an item from the navigation
-	   * @param  {string} target
-	   * @return {object} navItem
-	   */
-	  get(target) {
-	    var index;
-	    if (!target) {
-	      return this.toc;
+	    /**
+	     * Parse out the navigation items
+	     */
+	    parse(xml) {
+	      const isXml = xml.nodeType;
+	      if (!isXml) {
+	        this.toc = this.load(xml);
+	      } else {
+	        const doc = xml;
+	        const html = doc.querySelector('html');
+	        const ncx = doc.querySelector('ncx');
+	        if (html) {
+	          this.toc = this.parseNav(doc);
+	          this.landmarks = this.parseLandmarks(doc);
+	        } else if (ncx) {
+	          this.toc = this.parseNcx(doc);
+	        }
+	      }
+	      this.length = 0;
+	      this.unpack(this.toc);
 	    }
-	    if (target.indexOf('#') === 0) {
-	      index = this.tocById[target.substring(1)];
-	    } else if (target in this.tocByHref) {
-	      index = this.tocByHref[target];
+	    /**
+	     * Unpack navigation items
+	     * @private
+	     * @param  {array} toc
+	     */
+	    unpack(toc) {
+	      let item;
+	      for (let i = 0; i < toc.length; i++) {
+	        item = toc[i];
+	        if (item.href) {
+	          this.tocByHref[item.href] = i;
+	        }
+	        if (item.id) {
+	          this.tocById[item.id] = i;
+	        }
+	        this.length++;
+	        if (item.subitems.length) {
+	          this.unpack(item.subitems);
+	        }
+	      }
 	    }
-	    return this.getByIndex(target, index, this.toc);
-	  }
-
-	  /**
-	   * Get an item from navigation subitems recursively by index
-	   * @param  {string} target
-	   * @param  {number} index
-	   * @param  {array} navItems
-	   * @return {object} navItem
-	   */
-	  getByIndex(target, index, navItems) {
-	    if (navItems.length === 0) {
-	      return;
+	    /**
+	     * Get an item from the navigation
+	     */
+	    get(target) {
+	      let index;
+	      if (!target) {
+	        return this.toc;
+	      }
+	      if (target.indexOf('#') === 0) {
+	        index = this.tocById[target.substring(1)];
+	      } else if (target in this.tocByHref) {
+	        index = this.tocByHref[target];
+	      }
+	      if (index === undefined) {
+	        return;
+	      }
+	      return this.getByIndex(target, index, this.toc);
 	    }
-	    const item = navItems[index];
-	    if (item && (target === item.id || target === item.href)) {
-	      return item;
-	    } else {
+	    /**
+	     * Get an item from navigation subitems recursively by index
+	     */
+	    getByIndex(target, index, navItems) {
+	      if (navItems.length === 0) {
+	        return;
+	      }
+	      const item = navItems[index];
+	      if (item && (target === item.id || target === item.href)) {
+	        return item;
+	      }
 	      let result;
 	      for (let i = 0; i < navItems.length; ++i) {
 	        result = this.getByIndex(target, index, navItems[i].subitems);
@@ -4978,210 +4968,192 @@
 	      }
 	      return result;
 	    }
-	  }
-
-	  /**
-	   * Get a landmark by type
-	   * List of types: https://idpf.github.io/epub-vocabs/structure/
-	   * @param  {string} type
-	   * @return {object} landmarkItem
-	   */
-	  landmark(type) {
-	    var index;
-	    if (!type) {
-	      return this.landmarks;
-	    }
-	    index = this.landmarksByType[type];
-	    return this.landmarks[index];
-	  }
-
-	  /**
-	   * Parse toc from a Epub > 3.0 Nav
-	   * @private
-	   * @param  {document} navHtml
-	   * @return {array} navigation list
-	   */
-	  parseNav(navHtml) {
-	    var navElement = coreExports.querySelectorByType(navHtml, 'nav', 'toc');
-	    var list = [];
-	    if (!navElement) return list;
-	    let navList = coreExports.filterChildren(navElement, 'ol', true);
-	    if (!navList) return list;
-	    list = this.parseNavList(navList);
-	    return list;
-	  }
-
-	  /**
-	   * Parses lists in the toc
-	   * @param  {document} navListHtml
-	   * @param  {string} parent id
-	   * @return {array} navigation list
-	   */
-	  parseNavList(navListHtml, parent) {
-	    const result = [];
-	    if (!navListHtml) return result;
-	    if (!navListHtml.children) return result;
-	    for (let i = 0; i < navListHtml.children.length; i++) {
-	      const item = this.navItem(navListHtml.children[i], parent);
-	      if (item) {
-	        result.push(item);
+	    /**
+	     * Get a landmark by type
+	     * List of types: https://idpf.github.io/epub-vocabs/structure/
+	     */
+	    landmark(type) {
+	      if (!type) {
+	        return this.landmarks;
 	      }
+	      const index = this.landmarksByType[type];
+	      return this.landmarks[index];
 	    }
-	    return result;
-	  }
-
-	  /**
-	   * Create a navItem
-	   * @private
-	   * @param  {element} item
-	   * @return {object} navItem
-	   */
-	  navItem(item, parent) {
-	    let id = item.getAttribute('id') || undefined;
-	    let content = coreExports.filterChildren(item, 'a', true) || coreExports.filterChildren(item, 'span', true);
-	    if (!content) {
-	      return;
+	    /**
+	     * Parse toc from a Epub > 3.0 Nav
+	     * @private
+	     * @param  {document} navHtml
+	     * @return {array} navigation list
+	     */
+	    parseNav(navHtml) {
+	      const navElement = navHtml.querySelector('nav[*|type="toc"]');
+	      let list = [];
+	      if (!navElement) return list;
+	      const navList = navElement.querySelector('ol');
+	      if (!navList) return list;
+	      list = this.parseNavList(navList);
+	      return list;
 	    }
-	    let src = content.getAttribute('href') || '';
-	    if (!id) {
-	      id = src;
-	    }
-	    let text = content.textContent || '';
-	    let subitems = [];
-	    let nested = coreExports.filterChildren(item, 'ol', true);
-	    if (nested) {
-	      subitems = this.parseNavList(nested, id);
-	    }
-	    return {
-	      id: id,
-	      href: src,
-	      label: text,
-	      subitems: subitems,
-	      parent: parent
-	    };
-	  }
-
-	  /**
-	   * Parse landmarks from a Epub > 3.0 Nav
-	   * @private
-	   * @param  {document} navHtml
-	   * @return {array} landmarks list
-	   */
-	  parseLandmarks(navHtml) {
-	    var navElement = coreExports.querySelectorByType(navHtml, 'nav', 'landmarks');
-	    var navItems = navElement ? coreExports.qsa(navElement, 'li') : [];
-	    var length = navItems.length;
-	    var i;
-	    var list = [];
-	    var item;
-	    if (!navItems || length === 0) return list;
-	    for (i = 0; i < length; ++i) {
-	      item = this.landmarkItem(navItems[i]);
-	      if (item) {
-	        list.push(item);
-	        this.landmarksByType[item.type] = i;
+	    /**
+	     * Parses lists in the toc
+	     * @param  {document} navListHtml
+	     * @param  {string} parent id
+	     * @return {array} navigation list
+	     */
+	    parseNavList(navListHtml, parent) {
+	      const result = [];
+	      if (!navListHtml) return result;
+	      if (!navListHtml.children) return result;
+	      for (let i = 0; i < navListHtml.children.length; i++) {
+	        const item = this.navItem(navListHtml.children[i], parent);
+	        if (item) {
+	          result.push(item);
+	        }
 	      }
+	      return result;
 	    }
-	    return list;
-	  }
-
-	  /**
-	   * Create a landmarkItem
-	   * @private
-	   * @param  {element} item
-	   * @return {object} landmarkItem
-	   */
-	  landmarkItem(item) {
-	    let content = coreExports.filterChildren(item, 'a', true);
-	    if (!content) {
-	      return;
-	    }
-	    let type = content.getAttributeNS('http://www.idpf.org/2007/ops', 'type') || undefined;
-	    let href = content.getAttribute('href') || '';
-	    let text = content.textContent || '';
-	    return {
-	      href: href,
-	      label: text,
-	      type: type
-	    };
-	  }
-
-	  /**
-	   * Parse from a Epub > 3.0 NC
-	   * @private
-	   * @param  {document} navHtml
-	   * @return {array} navigation list
-	   */
-	  parseNcx(tocXml) {
-	    var navPoints = coreExports.qsa(tocXml, 'navPoint');
-	    var length = navPoints.length;
-	    var i;
-	    var toc = {};
-	    var list = [];
-	    var item, parent;
-	    if (!navPoints || length === 0) return list;
-	    for (i = 0; i < length; ++i) {
-	      item = this.ncxItem(navPoints[i]);
-	      toc[item.id] = item;
-	      if (!item.parent) {
-	        list.push(item);
-	      } else {
-	        parent = toc[item.parent];
-	        parent.subitems.push(item);
+	    /**
+	     * Create a navItem
+	     */
+	    navItem(item, parent) {
+	      let id = item.getAttribute('id') || undefined;
+	      const content = item.querySelector(':scope > a') || item.querySelector(':scope > span');
+	      if (!content) {
+	        return;
 	      }
+	      const src = content.getAttribute('href') || '';
+	      if (!id) {
+	        id = src;
+	      }
+	      const text = content.textContent || '';
+	      let subitems = [];
+	      const nested = item.querySelector(':scope > ol');
+	      if (nested) {
+	        subitems = this.parseNavList(nested, id);
+	      }
+	      return {
+	        id: id,
+	        href: src,
+	        label: text,
+	        subitems: subitems,
+	        parent: parent
+	      };
 	    }
-	    return list;
-	  }
-
-	  /**
-	   * Create a ncxItem
-	   * @private
-	   * @param  {element} item
-	   * @return {object} ncxItem
-	   */
-	  ncxItem(item) {
-	    var id = item.getAttribute('id') || false,
-	      content = coreExports.qs(item, 'content'),
-	      src = content.getAttribute('src'),
-	      navLabel = coreExports.qs(item, 'navLabel'),
-	      text = navLabel.textContent ? navLabel.textContent : '',
-	      subitems = [],
-	      parentNode = item.parentNode,
-	      parent;
-	    if (parentNode && (parentNode.nodeName === 'navPoint' || parentNode.nodeName.split(':').slice(-1)[0] === 'navPoint')) {
-	      parent = parentNode.getAttribute('id');
+	    /**
+	     * Parse landmarks from a Epub > 3.0 Nav
+	     */
+	    parseLandmarks(navHtml) {
+	      const navElement = navHtml.querySelector('nav[*|type="landmarks"]');
+	      const navItems = navElement ? Array.from(navElement.querySelectorAll('li')) : [];
+	      const length = navItems.length;
+	      let i;
+	      const list = [];
+	      let item;
+	      if (!navItems || length === 0) return list;
+	      for (i = 0; i < length; ++i) {
+	        item = this.landmarkItem(navItems[i]);
+	        if (item && item.type) {
+	          list.push(item);
+	          this.landmarksByType[item.type] = i;
+	        }
+	      }
+	      return list;
 	    }
-	    return {
-	      id: id,
-	      href: src,
-	      label: text,
-	      subitems: subitems,
-	      parent: parent
-	    };
+	    /**
+	     * Create a landmarkItem
+	     * @param  {element} item
+	     * @return {object} landmarkItem
+	     */
+	    landmarkItem(item) {
+	      const content = item.querySelector('a');
+	      if (!content) {
+	        return;
+	      }
+	      const type = content.getAttributeNS('http://www.idpf.org/2007/ops', 'type') || undefined;
+	      const href = content.getAttribute('href') || '';
+	      const text = content.textContent || '';
+	      return {
+	        href: href,
+	        label: text,
+	        type: type
+	      };
+	    }
+	    /**
+	     * Parse from a Epub > 3.0 NC
+	     */
+	    parseNcx(tocXml) {
+	      const navPoints = Array.from(tocXml.querySelectorAll('navPoint'));
+	      const length = navPoints.length;
+	      let i;
+	      const toc = {};
+	      const list = [];
+	      let item, parent;
+	      if (!navPoints || length === 0) return list;
+	      for (i = 0; i < length; ++i) {
+	        item = this.ncxItem(navPoints[i]);
+	        toc[item.id] = item;
+	        if (!item.parent) {
+	          list.push(item);
+	        } else {
+	          parent = toc[item.parent];
+	          parent.subitems.push(item);
+	        }
+	      }
+	      return list;
+	    }
+	    /**
+	     * Create a ncxItem
+	     * @private
+	     * @param  {element} item
+	     * @return {object} ncxItem
+	     */
+	    ncxItem(item) {
+	      const id = item.getAttribute('id') || '';
+	      const content = item.querySelector('content');
+	      const src = content?.getAttribute('src') || '';
+	      const navLabel = item.querySelector('navLabel');
+	      const text = navLabel?.textContent || '';
+	      const subitems = [];
+	      const parentNode = item.parentNode;
+	      let parent;
+	      if (parentNode && parentNode instanceof Element && (parentNode.nodeName === 'navPoint' || parentNode.nodeName.split(':').slice(-1)[0] === 'navPoint')) {
+	        parent = parentNode.getAttribute('id') || undefined;
+	      }
+	      return {
+	        id,
+	        href: src,
+	        label: text,
+	        subitems,
+	        parent
+	      };
+	    }
+	    /**
+	     * Load Spine Items
+	     */
+	    load(json) {
+	      return json.map(item => {
+	        return {
+	          id: item.id || item.href || '',
+	          href: item.href || '',
+	          label: item.title,
+	          subitems: item.children ? this.load(item.children) : [],
+	          parent: item.parent
+	        };
+	      });
+	    }
+	    /**
+	     * forEach pass through
+	     */
+	    forEach(fn) {
+	      return this.toc.forEach(fn);
+	    }
 	  }
-
-	  /**
-	   * Load Spine Items
-	   * @param  {object} json the items to be loaded
-	   * @return {Array} navItems
-	   */
-	  load(json) {
-	    return json.map(item => {
-	      item.label = item.title;
-	      item.subitems = item.children ? this.load(item.children) : [];
-	      return item;
-	    });
-	  }
-
-	  /**
-	   * forEach pass through
-	   * @param  {Function} fn function to run on each item
-	   * @return {method} forEach loop
-	   */
-	  forEach(fn) {
-	    return this.toc.forEach(fn);
-	  }
+	  navigation.default = Navigation;
+	  return navigation;
 	}
+
+	var navigationExports = requireNavigation();
+	var Navigation = /*@__PURE__*/getDefaultExportFromCjs(navigationExports);
 
 	var resources$1 = {exports: {}};
 
