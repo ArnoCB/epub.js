@@ -6,7 +6,6 @@ import {
   isNumber,
   bounds,
   defer,
-  qs,
   parse,
 } from '../../utils/core';
 import EpubCFI from '../../epubcfi';
@@ -288,7 +287,7 @@ class InlineView {
     var loading = new defer();
     var loaded = loading.promise;
     var doc = parse(contents, 'text/html');
-    var body = qs(doc, 'body');
+    var body = doc.querySelector('body');
 
     /*
 		var srcs = doc.querySelectorAll("[src]");

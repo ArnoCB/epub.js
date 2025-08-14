@@ -7,7 +7,7 @@ const EpubCFI = jest.fn();
 jest.mock('./utils/queue', () => jest.fn());
 jest.mock('./epubcfi', () => jest.fn());
 jest.mock('./utils/core', () => ({
-  qs: jest.fn(),
+  // ...existing code...
   sprint: jest.fn(),
   locationOf: jest.fn(),
   defer: jest.fn(() => ({

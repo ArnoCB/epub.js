@@ -467,81 +467,9 @@ export function parse(markup: string, mime: DOMParserSupportedType): Document {
 
 /**
  * @deprecated Use `Element.querySelector` directly instead.
- * querySelector polyfill
- * @memberof Core
- */
-export function qs(el: Element, sel: string): Element | null {
-  let elements;
+// ...existing code...
 
-  if (!el) {
-    throw new Error('No Element Provided');
-  }
-
-  if (typeof el.querySelector != 'undefined') {
-    return el.querySelector(sel);
-  } else {
-    elements = el.getElementsByTagName(sel);
-    if (elements.length) {
-      return elements[0];
-    }
-  }
-
-  return null;
-}
-
-/**
- * querySelectorAll polyfill
- * @memberof Core
- * @deprecated Use `Element.querySelectorAll` directly instead.
- */
-export function qsa(
-  el: Element,
-  sel: string
-): NodeListOf<Element> | HTMLCollectionOf<Element> {
-  if (typeof el.querySelector != 'undefined') {
-    return el.querySelectorAll(sel);
-  }
-
-  return el.getElementsByTagName(sel);
-}
-
-/**
- * querySelector by property
- * @memberof Core
- * @deprecated Use `Element.querySelector` with attribute selectors directly instead.
- * querySelector by property
- */
-export function qsp(
-  el: Element,
-  sel: string,
-  props: Record<string, string>
-): Element | null {
-  let q, filtered;
-  if (typeof el.querySelector != 'undefined') {
-    sel += '[';
-    for (const prop in props) {
-      sel += prop + "~='" + props[prop] + "'";
-    }
-    sel += ']';
-    return el.querySelector(sel);
-  } else {
-    q = el.getElementsByTagName(sel);
-    filtered = Array.prototype.slice.call(q, 0).filter(function (el) {
-      for (const prop in props) {
-        if (el.getAttribute(prop) === props[prop]) {
-          return true;
-        }
-      }
-      return false;
-    });
-
-    if (filtered) {
-      return filtered[0];
-    }
-  }
-
-  return null;
-}
+// ...existing code...
 
 /**
  * Sprint through all text nodes in a document

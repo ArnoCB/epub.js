@@ -635,9 +635,6 @@
 	  core$1.createBase64Url = createBase64Url;
 	  core$1.type = type;
 	  core$1.parse = parse;
-	  core$1.qs = qs;
-	  core$1.qsa = qsa;
-	  core$1.qsp = qsp;
 	  core$1.sprint = sprint;
 	  core$1.treeWalker = treeWalker;
 	  core$1.walk = walk;
@@ -984,67 +981,9 @@
 	  }
 	  /**
 	   * @deprecated Use `Element.querySelector` directly instead.
-	   * querySelector polyfill
-	   * @memberof Core
-	   */
-	  function qs(el, sel) {
-	    let elements;
-	    if (!el) {
-	      throw new Error('No Element Provided');
-	    }
-	    if (typeof el.querySelector != 'undefined') {
-	      return el.querySelector(sel);
-	    } else {
-	      elements = el.getElementsByTagName(sel);
-	      if (elements.length) {
-	        return elements[0];
-	      }
-	    }
-	    return null;
-	  }
-	  /**
-	   * querySelectorAll polyfill
-	   * @memberof Core
-	   * @deprecated Use `Element.querySelectorAll` directly instead.
-	   */
-	  function qsa(el, sel) {
-	    if (typeof el.querySelector != 'undefined') {
-	      return el.querySelectorAll(sel);
-	    }
-	    return el.getElementsByTagName(sel);
-	  }
-	  /**
-	   * querySelector by property
-	   * @memberof Core
-	   * @deprecated Use `Element.querySelector` with attribute selectors directly instead.
-	   * querySelector by property
-	   */
-	  function qsp(el, sel, props) {
-	    let q, filtered;
-	    if (typeof el.querySelector != 'undefined') {
-	      sel += '[';
-	      for (const prop in props) {
-	        sel += prop + "~='" + props[prop] + "'";
-	      }
-	      sel += ']';
-	      return el.querySelector(sel);
-	    } else {
-	      q = el.getElementsByTagName(sel);
-	      filtered = Array.prototype.slice.call(q, 0).filter(function (el) {
-	        for (const prop in props) {
-	          if (el.getAttribute(prop) === props[prop]) {
-	            return true;
-	          }
-	        }
-	        return false;
-	      });
-	      if (filtered) {
-	        return filtered[0];
-	      }
-	    }
-	    return null;
-	  }
-	  /**
+	  // ...existing code...
+	  	// ...existing code...
+	  	/**
 	   * Sprint through all text nodes in a document
 	   * @memberof Core
 	   */

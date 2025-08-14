@@ -14,35 +14,7 @@ import type {
 
 // Mock the core utils
 jest.mock('./utils/core', () => ({
-  qs: jest.fn((doc, selector) => {
-    // Mock querySelector functionality
-    if (selector === 'metadata') {
-      return doc.querySelector('metadata');
-    }
-    if (selector === 'manifest') {
-      return doc.querySelector('manifest');
-    }
-    if (selector === 'spine') {
-      return doc.querySelector('spine');
-    }
-    return doc.querySelector(selector);
-  }),
-  qsa: jest.fn((doc, selector) => {
-    // Mock querySelectorAll functionality
-    return Array.from(doc.querySelectorAll(selector));
-  }),
-  qsp: jest.fn((doc, selector, props) => {
-    // Mock property-based querySelector
-    if (props) {
-      let sel = selector + '[';
-      for (const prop in props) {
-        sel += prop + "~='" + props[prop] + "'";
-      }
-      sel += ']';
-      return doc.querySelector(sel);
-    }
-    return doc.querySelector(selector);
-  }),
+  // ...existing code...
   qsap: jest.fn((doc, selector, ns) => {
     // Mock namespaced querySelectorAll
     return Array.from(doc.querySelectorAll(selector));

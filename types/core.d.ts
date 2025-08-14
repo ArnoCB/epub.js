@@ -72,15 +72,7 @@ export namespace Core {
 
   export function parse(markup: string, mime: string): Document;
 
-  export function qs(el: Element, sel: string): Element;
-
-  export function qsa(el: Element, sel: string): ArrayLike<Element>;
-
-  export function qsp(
-    el: Element,
-    sel: string,
-    props: Array<object>
-  ): ArrayLike<Element>;
+  // ...existing code...
 
   export function sprint(root: Node, func: Function): void;
 
