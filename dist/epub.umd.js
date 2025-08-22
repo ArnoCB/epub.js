@@ -4493,7 +4493,6 @@
 	      this.spine = [];
 	      this.metadata = {};
 	      this.uniqueIdentifier = '';
-	      console.log('[Packaging] initializing with document:', packageDocument);
 	      if (packageDocument) {
 	        this.parse(packageDocument);
 	      }
@@ -4502,7 +4501,6 @@
 	     * Parse OPF XML
 	     */
 	    parse(packageDocument) {
-	      console.log('[Packaging] parsing document:', packageDocument);
 	      if (!packageDocument) {
 	        throw new Error('Package File Not Found');
 	      }
@@ -8774,7 +8772,6 @@
 	      this.marks = {};
 	      this._needsReframe = false;
 	      this.rendering = false;
-	      console.log('[IframeView] constructor called with section:', section);
 	      this.settings = (0, core_1.extend)({
 	        ignoreClass: '',
 	        axis: undefined,
@@ -8790,7 +8787,6 @@
 	        allowPopups: false,
 	        transparency: false // New option for transparent background
 	      }, options || {});
-	      console.log('[IframeView] constructor called with settings:', this.settings);
 	      this.id = 'epubjs-view-' + (0, core_1.uuid)();
 	      this.section = section;
 	      this.index = section.index;
@@ -8830,7 +8826,6 @@
 	      return element;
 	    }
 	    create() {
-	      console.log('[IframeView] create called');
 	      if (this.iframe) {
 	        return this.iframe;
 	      }
@@ -9563,7 +9558,6 @@
 	      this.rendered = false;
 	    }
 	    render(element, size) {
-	      console.log('[DefaultViewManager] render called, with element:', element);
 	      const tag = element.tagName;
 	      if (typeof this.settings.fullsize === 'undefined' && tag && (tag.toLowerCase() == 'body' || tag.toLowerCase() == 'html')) {
 	        this.settings.fullsize = true;
@@ -9601,11 +9595,9 @@
 	      this.stage.onOrientationChange(this.onOrientationChange.bind(this));
 	      // Add Event Listeners
 	      this.addEventListeners();
-	      console.log('[DefaultViewManager] has layout:', this.layout);
 	      // Add Layout method
 	      // this.applyLayoutMethod();
 	      if (this.layout) {
-	        console.log('[DefaultViewManager] calling updateLayout');
 	        this.updateLayout();
 	      }
 	      this.rendered = true;
@@ -9694,8 +9686,6 @@
 	      }, epubcfi);
 	    }
 	    createView(section, forceRight = false) {
-	      console.log('[DefaultViewManager] createView called with section:', section);
-	      console.log('[DefaultViewManager] createView view:', this.View);
 	      return new iframe_1.default(section, (0, core_1.extend)(this.viewSettings, {
 	        forceRight
 	      }));
@@ -9714,8 +9704,6 @@
 	      }
 	    }
 	    display(section, target) {
-	      console.log('[DefaultViewManager] display called with section:', section);
-	      console.log('[DefaultViewManager] display called with target:', target);
 	      const displaying = new core_1.defer();
 	      const displayed = displaying.promise;
 	      // Check if moving to target is needed
@@ -9724,8 +9712,6 @@
 	      }
 	      // Check to make sure the section we want isn't already shown
 	      const visible = this.views.find(section);
-	      console.log('[DefaultViewManager] visible:', visible);
-	      console.log('[DefaultViewManager] layout name:', this.layout.name);
 	      // View is already shown, just move to correct location in view
 	      if (visible && section && this.layout.name !== 'pre-paginated') {
 	        const offset = visible.offset();
@@ -9767,7 +9753,6 @@
 	      return displayed;
 	    }
 	    afterDisplayed(view) {
-	      console.log('[DefaultViewManager] afterDisplayed called with view:', view);
 	      this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
 	    }
 	    afterResized(view) {
@@ -9775,7 +9760,6 @@
 	    }
 	    async add(section, forceRight = false) {
 	      const view = this.createView(section, forceRight);
-	      console.log('[DefaultViewManager] add called and created view:', view);
 	      this.views.append(view);
 	      // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
 	      view.onDisplayed = this.afterDisplayed.bind(this);
@@ -9816,7 +9800,6 @@
 	    }
 	    async append(section, forceRight = false) {
 	      const view = this.createView(section, forceRight);
-	      console.log('[DefaultViewManager] append called and created view:', view);
 	      this.views.append(view);
 	      view.onDisplayed = this.afterDisplayed.bind(this);
 	      view.onResize = this.afterResized.bind(this);
@@ -10277,7 +10260,6 @@
 	      // this.manager.layout(this.layout.format);
 	    }
 	    updateLayout() {
-	      console.log('[DefaultViewManager] updateLayout called');
 	      if (!this.stage) {
 	        return;
 	      }
@@ -10296,7 +10278,6 @@
 	      this.setLayout(this.layout);
 	    }
 	    setLayout(layout) {
-	      console.log('[DefaultViewManager] setLayout called with layout:', layout);
 	      this.viewSettings.layout = layout;
 	      this.mapping = new mapping_1.default(
 	      // @ts-expect-error this should be fixed at some point
@@ -10449,11 +10430,8 @@
 	        ...options
 	      };
 	      if (typeof this.settings.manager === 'object') {
-	        console.log('[Rendition] using existing manager:', this.settings.manager);
 	        this.manager = this.settings.manager;
 	      } else {
-	        console.log('[Rendition] creating new manager');
-	        console.log('[Rendition] creating new layout, settings:', this.settings);
 	        const layoutInstance = new layout_1.default({
 	          layout: this.settings.layout || 'reflowable',
 	          spread: this.settings.spread || 'auto',
@@ -10479,8 +10457,6 @@
 	      }
 	      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, (...args) => {
 	        const view = args[0];
-	        console.log('[Rendition] manager on added called with args:', args);
-	        console.log('[Rendition] manager on afterDisplayed called with view:', view);
 	        this.afterDisplayed(view);
 	      });
 	      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, (...args) => {
@@ -10658,7 +10634,6 @@
 	     * @return {Promise}
 	     */
 	    display(target) {
-	      console.log('[Rendition] display called with target:', target);
 	      if (this.displaying) {
 	        this.displaying.resolve(true);
 	      }
@@ -10671,7 +10646,6 @@
 	     * @return {Promise}
 	     */
 	    _display(target) {
-	      console.log('[Rendition] _display called with target:', target);
 	      if (!this.book) {
 	        console.error('[Rendition] display called without a book');
 	        return Promise.resolve(false);
@@ -10688,7 +10662,6 @@
 	        return Promise.resolve(false);
 	      }
 	      const section = this.book.spine.get(target);
-	      console.log('[Rendition] display called with section from book spine:', section);
 	      if (!section) {
 	        displaying.reject(new Error('No Section Found'));
 	        return displayed;
@@ -10722,7 +10695,6 @@
 	     * Report what section has been displayed
 	     */
 	    afterDisplayed(view) {
-	      console.log('[Rendition] afterDisplayed called with view:', view);
 	      view.on(constants_1.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
 	      this.hooks.render.trigger(view, this).then(() => {
 	        if (view.contents) {
@@ -10894,7 +10866,6 @@
 	     * @param  {int} [min] min width to use spreads at
 	     */
 	    spread(spread, min) {
-	      console.log('[Rendition] spread called with:', spread, min);
 	      this.settings.spread = spread;
 	      if (min) {
 	        this.settings.minSpreadWidth = min;
@@ -17133,12 +17104,9 @@
 	     * Open the Open Packaging Format Xml
 	     */
 	    async openPackaging(url) {
-	      console.log('[Book] opening packaging:', url);
 	      this.path = new path_1.default(url);
-	      console.log('[Book] packaging path:', this.path);
 	      return this.load(url).then(xml => {
 	        this.packaging = new packaging_1.default(xml);
-	        console.log('[Book] packaging:', this.packaging);
 	        return this.unpack(this.packaging);
 	      });
 	    }
@@ -17272,9 +17240,7 @@
 	     * @param {Packaging} packaging object
 	     */
 	    unpack(packaging) {
-	      console.log('unpacking packaging:', packaging);
 	      this.packaging = packaging;
-	      console.log('[Book] unpacking packaging:', this.packaging);
 	      this.loading.packaging.resolve(this.packaging);
 	      if (this.packaging.metadata.layout === '') {
 	        // rendition:layout not set - check display options if book is pre-paginated

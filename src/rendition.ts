@@ -146,11 +146,8 @@ export class Rendition implements EventEmitterMethods {
     };
 
     if (typeof this.settings.manager === 'object') {
-      console.log('[Rendition] using existing manager:', this.settings.manager);
       this.manager = this.settings.manager;
     } else {
-      console.log('[Rendition] creating new manager');
-      console.log('[Rendition] creating new layout, settings:', this.settings);
       const layoutInstance = new Layout({
         layout: this.settings.layout || 'reflowable',
         spread: this.settings.spread || 'auto',
@@ -186,11 +183,6 @@ export class Rendition implements EventEmitterMethods {
 
     this.manager.on(EVENTS.MANAGERS.ADDED, (...args: unknown[]) => {
       const view = args[0] as View;
-      console.log('[Rendition] manager on added called with args:', args);
-      console.log(
-        '[Rendition] manager on afterDisplayed called with view:',
-        view
-      );
       this.afterDisplayed(view);
     });
 
@@ -433,7 +425,6 @@ export class Rendition implements EventEmitterMethods {
    * @return {Promise}
    */
   display(target: string): Promise<unknown> {
-    console.log('[Rendition] display called with target:', target);
     if (this.displaying) {
       this.displaying.resolve(true);
     }
@@ -448,7 +439,6 @@ export class Rendition implements EventEmitterMethods {
    * @return {Promise}
    */
   private _display(target: string) {
-    console.log('[Rendition] _display called with target:', target);
     if (!this.book) {
       console.error('[Rendition] display called without a book');
       return Promise.resolve(false);
@@ -474,10 +464,6 @@ export class Rendition implements EventEmitterMethods {
     }
 
     const section = this.book.spine!.get(target);
-    console.log(
-      '[Rendition] display called with section from book spine:',
-      section
-    );
 
     if (!section) {
       displaying.reject(new Error('No Section Found'));
@@ -520,7 +506,6 @@ export class Rendition implements EventEmitterMethods {
    * Report what section has been displayed
    */
   private afterDisplayed(view: View) {
-    console.log('[Rendition] afterDisplayed called with view:', view);
     view.on(
       EVENTS.VIEWS.MARK_CLICKED,
       (cfiRange: string, data: Record<string, unknown>) =>
@@ -750,7 +735,6 @@ export class Rendition implements EventEmitterMethods {
    * @param  {int} [min] min width to use spreads at
    */
   spread(spread: Spread, min: number) {
-    console.log('[Rendition] spread called with:', spread, min);
     this.settings.spread = spread;
 
     if (min) {

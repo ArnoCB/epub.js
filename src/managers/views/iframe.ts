@@ -144,7 +144,6 @@ class IframeView implements View, EventEmitterMethods {
     | undefined;
 
   constructor(section: Section, options: Partial<IframeViewSettings> = {}) {
-    console.log('[IframeView] constructor called with section:', section);
     this.settings = extend(
       {
         ignoreClass: '',
@@ -161,11 +160,6 @@ class IframeView implements View, EventEmitterMethods {
         transparency: false, // New option for transparent background
       },
       options || {}
-    );
-
-    console.log(
-      '[IframeView] constructor called with settings:',
-      this.settings
     );
 
     this.id = 'epubjs-view-' + uuid();
@@ -220,7 +214,6 @@ class IframeView implements View, EventEmitterMethods {
   }
 
   create() {
-    console.log('[IframeView] create called');
     if (this.iframe) {
       return this.iframe;
     }

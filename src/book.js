@@ -309,12 +309,9 @@ class Book {
      * Open the Open Packaging Format Xml
      */
     async openPackaging(url) {
-        console.log('[Book] opening packaging:', url);
         this.path = new path_1.default(url);
-        console.log('[Book] packaging path:', this.path);
         return this.load(url).then((xml) => {
             this.packaging = new packaging_1.default(xml);
-            console.log('[Book] packaging:', this.packaging);
             return this.unpack(this.packaging);
         });
     }
@@ -456,9 +453,7 @@ class Book {
      * @param {Packaging} packaging object
      */
     unpack(packaging) {
-        console.log('unpacking packaging:', packaging);
         this.packaging = packaging;
-        console.log('[Book] unpacking packaging:', this.packaging);
         this.loading.packaging.resolve(this.packaging);
         if (this.packaging.metadata.layout === '') {
             // rendition:layout not set - check display options if book is pre-paginated

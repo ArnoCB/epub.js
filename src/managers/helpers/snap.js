@@ -144,7 +144,6 @@ class Snap {
         this._afterDisplayed = undefined;
     }
     afterDisplayed(view) {
-        console.log('[Snap] afterDisplayed called with view:', view);
         const contents = view.contents;
         ['touchstart', 'touchmove', 'touchend'].forEach((e) => {
             contents.on(e, (ev) => this.triggerViewEvent(ev, contents));

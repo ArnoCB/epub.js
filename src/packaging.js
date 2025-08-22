@@ -42,7 +42,6 @@ class Packaging {
         this.spine = [];
         this.metadata = {};
         this.uniqueIdentifier = '';
-        console.log('[Packaging] initializing with document:', packageDocument);
         if (packageDocument) {
             this.parse(packageDocument);
         }
@@ -51,7 +50,6 @@ class Packaging {
      * Parse OPF XML
      */
     parse(packageDocument) {
-        console.log('[Packaging] parsing document:', packageDocument);
         if (!packageDocument) {
             throw new Error('Package File Not Found');
         }

@@ -143,7 +143,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   render(element: HTMLElement, size?: { width: number; height: number }): void {
-    console.log('[DefaultViewManager] render called, with element:', element);
     const tag = element.tagName;
 
     if (
@@ -199,11 +198,9 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     // Add Event Listeners
     this.addEventListeners();
 
-    console.log('[DefaultViewManager] has layout:', this.layout);
     // Add Layout method
     // this.applyLayoutMethod();
     if (this.layout) {
-      console.log('[DefaultViewManager] calling updateLayout');
       this.updateLayout();
     }
 
@@ -330,12 +327,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   createView(section: Section, forceRight: boolean = false) {
-    console.log(
-      '[DefaultViewManager] createView called with section:',
-      section
-    );
-
-    console.log('[DefaultViewManager] createView view:', this.View);
     return new IframeView(section, extend(this.viewSettings, { forceRight }));
   }
 
@@ -359,8 +350,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   display(section: Section, target?: HTMLElement | string) {
-    console.log('[DefaultViewManager] display called with section:', section);
-    console.log('[DefaultViewManager] display called with target:', target);
     const displaying = new defer();
     const displayed = displaying.promise;
 
@@ -371,8 +360,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     // Check to make sure the section we want isn't already shown
     const visible = this.views.find(section);
-    console.log('[DefaultViewManager] visible:', visible);
-    console.log('[DefaultViewManager] layout name:', this.layout.name);
+
     // View is already shown, just move to correct location in view
     if (visible && section && this.layout.name !== 'pre-paginated') {
       const offset = visible.offset();
@@ -433,7 +421,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   afterDisplayed(view: View) {
-    console.log('[DefaultViewManager] afterDisplayed called with view:', view);
     this.emit(EVENTS.MANAGERS.ADDED, view);
   }
 
@@ -443,7 +430,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
   async add(section: Section, forceRight: boolean = false): Promise<View> {
     const view = this.createView(section, forceRight);
-    console.log('[DefaultViewManager] add called and created view:', view);
 
     this.views.append(view);
 
@@ -495,7 +481,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
   async append(section: Section, forceRight: boolean = false): Promise<View> {
     const view = this.createView(section, forceRight);
-    console.log('[DefaultViewManager] append called and created view:', view);
 
     this.views.append(view);
 
@@ -1107,7 +1092,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   updateLayout() {
-    console.log('[DefaultViewManager] updateLayout called');
     if (!this.stage) {
       return;
     }
@@ -1137,7 +1121,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   setLayout(layout: Layout) {
-    console.log('[DefaultViewManager] setLayout called with layout:', layout);
     this.viewSettings.layout = layout;
 
     this.mapping = new Mapping(

@@ -61,12 +61,9 @@ class Rendition {
             ...options,
         };
         if (typeof this.settings.manager === 'object') {
-            console.log('[Rendition] using existing manager:', this.settings.manager);
             this.manager = this.settings.manager;
         }
         else {
-            console.log('[Rendition] creating new manager');
-            console.log('[Rendition] creating new layout, settings:', this.settings);
             const layoutInstance = new layout_1.default({
                 layout: this.settings.layout || 'reflowable',
                 spread: this.settings.spread || 'auto',
@@ -98,8 +95,6 @@ class Rendition {
         }
         this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, (...args) => {
             const view = args[0];
-            console.log('[Rendition] manager on added called with args:', args);
-            console.log('[Rendition] manager on afterDisplayed called with view:', view);
             this.afterDisplayed(view);
         });
         this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, (...args) => {
@@ -280,7 +275,6 @@ class Rendition {
      * @return {Promise}
      */
     display(target) {
-        console.log('[Rendition] display called with target:', target);
         if (this.displaying) {
             this.displaying.resolve(true);
         }
@@ -293,7 +287,6 @@ class Rendition {
      * @return {Promise}
      */
     _display(target) {
-        console.log('[Rendition] _display called with target:', target);
         if (!this.book) {
             console.error('[Rendition] display called without a book');
             return Promise.resolve(false);
@@ -312,7 +305,6 @@ class Rendition {
             return Promise.resolve(false);
         }
         const section = this.book.spine.get(target);
-        console.log('[Rendition] display called with section from book spine:', section);
         if (!section) {
             displaying.reject(new Error('No Section Found'));
             return displayed;
@@ -346,7 +338,6 @@ class Rendition {
      * Report what section has been displayed
      */
     afterDisplayed(view) {
-        console.log('[Rendition] afterDisplayed called with view:', view);
         view.on(constants_1.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
         this.hooks.render.trigger(view, this).then(() => {
             if (view.contents) {
@@ -525,7 +516,6 @@ class Rendition {
      * @param  {int} [min] min width to use spreads at
      */
     spread(spread, min) {
-        console.log('[Rendition] spread called with:', spread, min);
         this.settings.spread = spread;
         if (min) {
             this.settings.minSpreadWidth = min;

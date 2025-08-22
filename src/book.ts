@@ -413,12 +413,9 @@ class Book implements EventEmitterMethods {
    * Open the Open Packaging Format Xml
    */
   private async openPackaging(url: string) {
-    console.log('[Book] opening packaging:', url);
     this.path = new Path(url);
-    console.log('[Book] packaging path:', this.path);
     return this.load<Document>(url).then((xml) => {
       this.packaging = new Packaging(xml as XMLDocument);
-      console.log('[Book] packaging:', this.packaging);
       return this.unpack(this.packaging);
     });
   }
@@ -583,9 +580,7 @@ class Book implements EventEmitterMethods {
    * @param {Packaging} packaging object
    */
   private unpack(packaging: Packaging) {
-    console.log('unpacking packaging:', packaging);
     this.packaging = packaging;
-    console.log('[Book] unpacking packaging:', this.packaging);
     this.loading!.packaging.resolve(this.packaging);
 
     if (this.packaging.metadata.layout === '') {

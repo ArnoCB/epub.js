@@ -275,7 +275,6 @@ class Snap implements EventEmitterMethods {
   }
 
   afterDisplayed(view: View) {
-    console.log('[Snap] afterDisplayed called with view:', view);
     const contents = view.contents;
     ['touchstart', 'touchmove', 'touchend'].forEach((e) => {
       contents!.on(e, (ev: TouchEvent) => this.triggerViewEvent(ev, contents!));

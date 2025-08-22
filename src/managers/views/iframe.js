@@ -45,7 +45,6 @@ class IframeView {
         this.marks = {};
         this._needsReframe = false;
         this.rendering = false;
-        console.log('[IframeView] constructor called with section:', section);
         this.settings = (0, core_1.extend)({
             ignoreClass: '',
             axis: undefined, //options.layout && options.layout.props.flow === "scrolled" ? "vertical" : "horizontal",
@@ -60,7 +59,6 @@ class IframeView {
             allowPopups: false,
             transparency: false, // New option for transparent background
         }, options || {});
-        console.log('[IframeView] constructor called with settings:', this.settings);
         this.id = 'epubjs-view-' + (0, core_1.uuid)();
         this.section = section;
         this.index = section.index;
@@ -101,7 +99,6 @@ class IframeView {
         return element;
     }
     create() {
-        console.log('[IframeView] create called');
         if (this.iframe) {
             return this.iframe;
         }

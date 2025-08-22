@@ -51,7 +51,6 @@ class DefaultViewManager {
         this.rendered = false;
     }
     render(element, size) {
-        console.log('[DefaultViewManager] render called, with element:', element);
         const tag = element.tagName;
         if (typeof this.settings.fullsize === 'undefined' &&
             tag &&
@@ -91,11 +90,9 @@ class DefaultViewManager {
         this.stage.onOrientationChange(this.onOrientationChange.bind(this));
         // Add Event Listeners
         this.addEventListeners();
-        console.log('[DefaultViewManager] has layout:', this.layout);
         // Add Layout method
         // this.applyLayoutMethod();
         if (this.layout) {
-            console.log('[DefaultViewManager] calling updateLayout');
             this.updateLayout();
         }
         this.rendered = true;
@@ -187,8 +184,6 @@ class DefaultViewManager {
         }, epubcfi);
     }
     createView(section, forceRight = false) {
-        console.log('[DefaultViewManager] createView called with section:', section);
-        console.log('[DefaultViewManager] createView view:', this.View);
         return new iframe_1.default(section, (0, core_1.extend)(this.viewSettings, { forceRight }));
     }
     handleNextPrePaginated(forceRight, section, action) {
@@ -205,8 +200,6 @@ class DefaultViewManager {
         }
     }
     display(section, target) {
-        console.log('[DefaultViewManager] display called with section:', section);
-        console.log('[DefaultViewManager] display called with target:', target);
         const displaying = new core_1.defer();
         const displayed = displaying.promise;
         // Check if moving to target is needed
@@ -215,8 +208,6 @@ class DefaultViewManager {
         }
         // Check to make sure the section we want isn't already shown
         const visible = this.views.find(section);
-        console.log('[DefaultViewManager] visible:', visible);
-        console.log('[DefaultViewManager] layout name:', this.layout.name);
         // View is already shown, just move to correct location in view
         if (visible && section && this.layout.name !== 'pre-paginated') {
             const offset = visible.offset();
@@ -264,7 +255,6 @@ class DefaultViewManager {
         return displayed;
     }
     afterDisplayed(view) {
-        console.log('[DefaultViewManager] afterDisplayed called with view:', view);
         this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
     }
     afterResized(view) {
@@ -272,7 +262,6 @@ class DefaultViewManager {
     }
     async add(section, forceRight = false) {
         const view = this.createView(section, forceRight);
-        console.log('[DefaultViewManager] add called and created view:', view);
         this.views.append(view);
         // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
         view.onDisplayed = this.afterDisplayed.bind(this);
@@ -313,7 +302,6 @@ class DefaultViewManager {
     }
     async append(section, forceRight = false) {
         const view = this.createView(section, forceRight);
-        console.log('[DefaultViewManager] append called and created view:', view);
         this.views.append(view);
         view.onDisplayed = this.afterDisplayed.bind(this);
         view.onResize = this.afterResized.bind(this);
@@ -829,7 +817,6 @@ class DefaultViewManager {
         // this.manager.layout(this.layout.format);
     }
     updateLayout() {
-        console.log('[DefaultViewManager] updateLayout called');
         if (!this.stage) {
             return;
         }
@@ -849,7 +836,6 @@ class DefaultViewManager {
         this.setLayout(this.layout);
     }
     setLayout(layout) {
-        console.log('[DefaultViewManager] setLayout called with layout:', layout);
         this.viewSettings.layout = layout;
         this.mapping = new mapping_1.default(
         // @ts-expect-error this should be fixed at some point
