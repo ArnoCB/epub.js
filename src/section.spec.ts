@@ -1,4 +1,3 @@
-// Import the actual TypeScript module
 import Section from './section';
 
 // Mock dependencies

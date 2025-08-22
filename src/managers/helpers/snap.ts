@@ -1,5 +1,3 @@
-// constructor
-
 export interface ViewManagerConstructor extends ViewManager {
   new (options: { [key: string]: unknown }): ViewManager;
 }

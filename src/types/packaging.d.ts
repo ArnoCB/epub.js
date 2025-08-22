@@ -1,3 +1,5 @@
+import type { RawNavItem } from '../navigation';
+
 import type {
   PackagingMetadataObject,
   PackagingSpineItem,
@@ -7,7 +9,6 @@ import type {
 export type PackagingManifestObject = {
   [key: string]: unknown;
 };
-import type { RawNavItem } from '../navigation';
 
 export type ExtendedManifestItem = PackagingManifestItem & {
   rel?: string[];

@@ -52,6 +52,7 @@ describe('replacements', () => {
       called = href;
     });
     expect(a.getAttribute('target')).toBeNull();
+    // @ts-expect-error The right event doesn't work here
     a.onclick!(new MouseEvent('click'));
     expect(called).toContain('/foo/bar');
   });

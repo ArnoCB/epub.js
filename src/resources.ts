@@ -3,10 +3,7 @@ import { createBase64Url, createBlobUrl, blob2base64 } from './utils/core';
 import Url from './utils/url';
 import mime from './utils/mime';
 import Path from './utils/path';
-import {
-  PackagingManifestItem,
-  PackagingManifestObject,
-} from 'types/packaging';
+import { PackagingManifestItem, PackagingManifestObject } from './packaging';
 import Archive from './archive';
 
 export interface ResourcesOptions {

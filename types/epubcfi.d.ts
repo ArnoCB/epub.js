@@ -1,129 +1,118 @@
-interface EpubCFISegment {
-  steps: Array<object>;
-  terminal: {
-    offset: number;
-    assertion: string;
-  };
+interface CustomRange {
+    startContainer: Node;
+    startOffset: number;
+    endContainer: Node;
+    endOffset: number;
 }
-
-interface EpubCFIStep {
-  id: string;
-  tagName: string;
-  type: number;
-  index: number;
+interface CFIStep {
+    type: 'element' | 'text';
+    index: number;
+    id?: string | null;
+    tagName?: string | null;
 }
-
-interface EpubCFIComponent {
-  steps: Array<EpubCFIStep>;
-  terminal: {
-    offset: number;
-    assertion: string;
-  };
+interface CFITerminal {
+    offset: number | null;
+    assertion: string | null;
 }
-
-export default class EpubCFI {
-  constructor(
-    cfiFrom?: string | Range | Node,
-    base?: string | object,
-    ignoreClass?: string
-  );
-
-  base: EpubCFIComponent;
-  spinePos: number;
-  range: boolean;
-
-  isCfiString(str: string): boolean;
-
-  fromNode(anchor: Node, base: string | object, ignoreClass?: string): EpubCFI;
-
-  fromRange(range: Range, base: string | object, ignoreClass?: string): EpubCFI;
-
-  parse(cfiStr: string): EpubCFI;
-
-  collapse(toStart?: boolean): void;
-
-  compare(cfiOne: string | EpubCFI, cfiTwo: string | EpubCFI): number;
-
-  equalStep(stepA: object, stepB: object): boolean;
-
-  filter(anchor: Element, ignoreClass?: string): Element | false;
-
-  toRange(_doc?: Document, ignoreClass?: string): Range;
-
-  toString(): string;
-
-  private filteredStep(node: Node, ignoreClass?: string): any;
-
-  private findNode(
-    steps: Array<EpubCFIStep>,
-    _doc?: Document,
-    ignoreClass?: string
-  ): Node;
-
-  private fixMiss(
-    steps: Array<EpubCFIStep>,
-    offset: number,
-    _doc?: Document,
-    ignoreClass?: string
-  ): any;
-
-  private checkType(cfi: string | Range | Node): string | false;
-
-  private generateChapterComponent(
-    _spineNodeIndex: number,
-    _pos: number,
-    id: string
-  ): string;
-
-  private getChapterComponent(cfiStr: string): string;
-
-  private getCharecterOffsetComponent(cfiStr: string): string;
-
-  private getPathComponent(cfiStr: string): string;
-
-  private getRange(cfiStr: string): string;
-
-  private joinSteps(steps: Array<EpubCFIStep>): Array<EpubCFIStep>;
-
-  private normalizedMap(
-    children: Array<Node>,
-    nodeType: number,
-    ignoreClass?: string
-  ): object;
-
-  private parseComponent(componentStr: string): object;
-
-  private parseStep(stepStr: string): object;
-
-  private parseTerminal(termialStr: string): object;
-
-  private patchOffset(
-    anchor: Node,
-    offset: number,
-    ignoreClass?: string
-  ): number;
-
-  private pathTo(
-    node: Node,
-    offset: number,
-    ignoreClass?: string
-  ): EpubCFISegment;
-
-  private position(anchor: Node): number;
-
-  private segmentString(segment: EpubCFISegment): string;
-
-  private step(node: Node): EpubCFIStep;
-
-  private stepsToQuerySelector(steps: Array<EpubCFIStep>): string;
-
-  private stepsToXpath(steps: Array<EpubCFIStep>): string;
-
-  private textNodes(container: Node, ignoreClass?: string): Array<Node>;
-
-  private walkToNode(
-    steps: Array<EpubCFIStep>,
-    _doc?: Document,
-    ignoreClass?: string
-  ): Node;
+interface CFIComponent {
+    steps: CFIStep[];
+    terminal: CFITerminal;
 }
+interface CFIRange {
+    path: CFIComponent;
+    start: CFIComponent;
+    end: CFIComponent;
+}
+/**
+  * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
+
+  * Implements:
+  * - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
+  * - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
+
+  * Does Not Implement:
+  * - Temporal Offset (~)
+  * - Spatial Offset (@)
+  * - Temporal-Spatial Offset (~ + @)
+  * - Text Location Assertion ([)
+*/
+declare class EpubCFI {
+    /**
+     * Convert custom range objects to DOM Range
+     */
+    static resolveToDomRange(input: string | Range | CustomRange, doc: Document): Range | null;
+    /**
+     * Helper to get offset from a CFIComponent, falling back to another if needed
+     */
+    private getOffset;
+    str: string;
+    base: CFIComponent;
+    spinePos: number;
+    range: boolean;
+    start: CFIComponent | null;
+    end: CFIComponent | null;
+    path: CFIComponent;
+    constructor(cfiFrom?: string | Range | Node, base?: string | CFIComponent, ignoreClass?: string);
+    /**
+     * Check the type of constructor input
+     */
+    private checkType;
+    /**
+     * Parse a cfi string to a CFI object representation
+     */
+    private parse;
+    parseComponent(componentStr: string): CFIComponent;
+    parseStep(stepStr: string): CFIStep | undefined;
+    parseTerminal(terminalStr: string): CFITerminal;
+    getChapterComponent(cfiStr: string): string;
+    getPathComponent(cfiStr: string): string | undefined;
+    getRange(cfiStr: string): string[] | false;
+    getCharacterOffsetComponent(cfiStr: string): string;
+    joinSteps(steps: CFIStep[]): string;
+    segmentString(segment: CFIComponent): string;
+    /**
+     * Convert CFI to a epubcfi(...) string
+     */
+    toString(): string;
+    /**
+     * Compare which of two CFIs is earlier in the text
+     * @returns First is earlier = -1, Second is earlier = 1, They are equal = 0
+     */
+    compare(cfiOne: string | EpubCFI, cfiTwo: string | EpubCFI): number;
+    step(node: Node): object | undefined;
+    filteredStep(node: Node, ignoreClass: string): object | undefined;
+    pathTo(node: Node, offset: number | null, ignoreClass?: string): CFIComponent;
+    equalStep(stepA: CFIStep | undefined, stepB: CFIStep | undefined): boolean;
+    /**
+     * Create a CFI range object from a DOM Range or CustomRange
+     */
+    fromRange(range: Range | CustomRange, base: string | object, ignoreClass?: string): CFIRange;
+    /**
+     * Create a CFI object from a Node
+     */
+    fromNode(anchor: Node, base: string | CFIComponent, ignoreClass?: string): CFIRange;
+    filter(anchor: Node, ignoreClass: string): Node | false;
+    patchOffset(anchor: Node, offset: number, ignoreClass: string): number;
+    normalizedMap(children: NodeList, nodeType: 1 | 3 | number, ignoreClass?: string): {
+        [key: string]: number;
+    };
+    position(anchor: Node): number;
+    filteredPosition(anchor: Node, ignoreClass: string): number;
+    stepsToXpath(steps: CFIStep[]): string;
+    stepsToQuerySelector(steps: CFIStep[]): string;
+    textNodes(container: Node, ignoreClass?: string): Node[];
+    walkToNode(steps: CFIStep[], _doc: Document, ignoreClass?: string): Node | null;
+    findNode(steps: CFIStep[], _doc: Document, ignoreClass?: string): Node | null;
+    private fixMiss;
+    toRange(_doc: Document, ignoreClass?: string): Range | null;
+    /**
+     * Check if a string is wrapped with "epubcfi()"
+     */
+    isCfiString(str: unknown): boolean;
+    generateChapterComponent(spineNodeIndex: number, pos: number, id?: string): string;
+    /**
+     * Collapse a CFI Range to a single CFI Position
+     */
+    collapse(toStart?: boolean): void;
+}
+export default EpubCFI;

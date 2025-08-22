@@ -21,7 +21,7 @@ import Views, { View, ViewConstructor } from '../helpers/views';
 import { EVENTS } from '../../utils/constants';
 import { ViewManager } from '../helpers/snap';
 import Layout, { Axis, Flow } from 'src/layout';
-import { Section } from '../../section';
+import { Section } from 'src/section';
 import { Contents } from 'src/epub';
 import IframeView from '../views/iframe';
 

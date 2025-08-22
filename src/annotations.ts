@@ -1,4 +1,5 @@
 import EventEmitter from 'event-emitter';
+import { Mark } from 'marks-pane';
 import EpubCFI from './epubcfi';
 import { EVENTS } from './utils/constants';
 import Rendition from './rendition';
@@ -8,11 +9,11 @@ type MarkType = 'highlight' | 'underline' | 'mark';
 type AnnotationData = {
   type: MarkType;
   cfiRange: string;
-  data: object;
+  data: Record<string, string>;
   sectionIndex: number;
   cb: undefined | ((annotation: Annotation) => void);
   className: string | undefined;
-  styles: object | undefined;
+  styles: Record<string, string> | undefined;
 };
 
 /**
@@ -20,7 +21,6 @@ type AnnotationData = {
  */
 class Annotations {
   public rendition: Rendition;
-
   public highlights: Array<Annotation> = [];
   public underlines: Array<Annotation> = [];
   public marks: Array<Annotation> = [];
@@ -39,10 +39,10 @@ class Annotations {
   add(
     type: MarkType,
     cfiRange: string,
-    data: object,
+    data: Record<string, string>,
     cb?: (annotation: Annotation) => void,
     className?: string,
-    styles?: object
+    styles?: Record<string, string>
   ): Annotation {
     const hash = encodeURI(cfiRange + type);
     const cfi = new EpubCFI(cfiRange);
@@ -126,10 +126,10 @@ class Annotations {
    */
   highlight(
     cfiRange: string,
-    data: object,
+    data: Record<string, string>,
     cb?: (annotation: Annotation) => void,
     className?: string,
-    styles?: object
+    styles?: Record<string, string>
   ) {
     return this.add('highlight', cfiRange, data, cb, className, styles);
   }
@@ -139,10 +139,10 @@ class Annotations {
    */
   underline(
     cfiRange: string,
-    data: object,
+    data: Record<string, string>,
     cb?: (annotation: Annotation) => void,
     className?: string,
-    styles?: object
+    styles?: Record<string, string>
   ) {
     return this.add('underline', cfiRange, data, cb, className, styles);
   }
@@ -151,7 +151,11 @@ class Annotations {
    * Add a mark to the store
 
    */
-  mark(cfiRange: string, data: object, cb?: (annotation: Annotation) => void) {
+  mark(
+    cfiRange: string,
+    data: Record<string, string>,
+    cb?: (annotation: Annotation) => void
+  ) {
     return this.add('mark', cfiRange, data, cb);
   }
 
@@ -226,12 +230,21 @@ class Annotations {
 class Annotation {
   public type: MarkType;
   public cfiRange: string;
-  public data: object;
+  public data: Record<string, string>;
   public sectionIndex: number;
   public mark: HTMLElement | undefined;
+  // Views may return different types for marks (HTMLElement, Node, Mark, etc.).
+  // Allow a union for the most common return shapes.
+  public _markInternal:
+    | HTMLElement
+    | Node
+    | { element: HTMLElement }
+    | Mark
+    | null
+    | undefined;
   public cb: undefined | ((annotation: Annotation) => void);
   public className: string | undefined;
-  public styles: object | undefined;
+  public styles: Record<string, string> | undefined;
   public emit!: (event: string, ...args: unknown[]) => void;
 
   constructor({
@@ -256,7 +269,7 @@ class Annotation {
   /**
    * Update stored data
    */
-  update(data: object) {
+  update(data: Record<string, string>) {
     this.data = data;
   }
 
@@ -267,19 +280,37 @@ class Annotation {
     const { cfiRange, data, type, cb, className, styles } = this;
     let result;
 
+    // The view API expects DOM event handlers like (e: Event) => void.
+    // User-provided callbacks on Annotation are typed as (annotation: Annotation) => void,
+    // so wrap them into an Event handler that forwards the Annotation instance.
+    const cbWrapper: ((e: Event) => void) | undefined = cb
+      ? () => {
+          cb(this);
+        }
+      : undefined;
+
     if (type === 'highlight') {
-      result = view.highlight(cfiRange, data, cb, className, styles);
+      result = view.highlight(cfiRange, data, cbWrapper, className, styles);
     } else if (type === 'underline') {
-      result = view.underline(cfiRange, data, cb, className, styles);
+      result = view.underline(cfiRange, data, cbWrapper, className, styles);
     } else if (type === 'mark') {
-      result = view.mark(cfiRange, data, cb);
+      result = view.mark(cfiRange, data, cbWrapper);
     }
 
     if (typeof result === 'undefined') {
       throw new Error(`Failed to attach annotation of type ${type} to view`);
     }
 
-    this.mark = result;
+    this._markInternal = result;
+    // Try to set a HTMLElement mark if possible
+    if (result && typeof result === 'object' && 'element' in result) {
+      // Mark object with element property
+      this.mark = (result as { element: HTMLElement }).element as HTMLElement;
+    } else if (result instanceof HTMLElement) {
+      this.mark = result as HTMLElement;
+    } else {
+      this.mark = undefined;
+    }
     this.emit(EVENTS.ANNOTATION.ATTACH, result);
     return result;
   }

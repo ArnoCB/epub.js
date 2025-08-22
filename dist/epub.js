@@ -4810,7 +4810,8 @@ function requirePackaging() {
           id: item.id || '',
           href: item.href,
           label: item.label || item.title || '',
-          title: (_a = item.title) !== null && _a !== void 0 ? _a : ''
+          title: (_a = item.title) !== null && _a !== void 0 ? _a : '',
+          subitems: []
         };
         return navItem;
       }) : [];
@@ -6599,17 +6600,32 @@ function requireAnnotations() {
         styles
       } = this;
       let result;
+      // The view API expects DOM event handlers like (e: Event) => void.
+      // User-provided callbacks on Annotation are typed as (annotation: Annotation) => void,
+      // so wrap them into an Event handler that forwards the Annotation instance.
+      const cbWrapper = cb ? () => {
+        cb(this);
+      } : undefined;
       if (type === 'highlight') {
-        result = view.highlight(cfiRange, data, cb, className, styles);
+        result = view.highlight(cfiRange, data, cbWrapper, className, styles);
       } else if (type === 'underline') {
-        result = view.underline(cfiRange, data, cb, className, styles);
+        result = view.underline(cfiRange, data, cbWrapper, className, styles);
       } else if (type === 'mark') {
-        result = view.mark(cfiRange, data, cb);
+        result = view.mark(cfiRange, data, cbWrapper);
       }
       if (typeof result === 'undefined') {
         throw new Error(`Failed to attach annotation of type ${type} to view`);
       }
-      this.mark = result;
+      this._markInternal = result;
+      // Try to set a HTMLElement mark if possible
+      if (result && typeof result === 'object' && 'element' in result) {
+        // Mark object with element property
+        this.mark = result.element;
+      } else if (result instanceof HTMLElement) {
+        this.mark = result;
+      } else {
+        this.mark = undefined;
+      }
       this.emit(constants_1.EVENTS.ANNOTATION.ATTACH, result);
       return result;
     }

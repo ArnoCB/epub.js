@@ -1,6 +1,5 @@
 import Stage from './stage';
 
-// Mock getComputedStyle to always return zero padding for containers
 beforeAll(() => {
   Object.defineProperty(window, 'getComputedStyle', {
     value: () => ({

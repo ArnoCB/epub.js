@@ -1,3 +1,2 @@
 export default function scrollType(): string;
-
-export function createDefiner(): Node;
+export declare function createDefiner(): HTMLDivElement;

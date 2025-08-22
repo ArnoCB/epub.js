@@ -4,7 +4,26 @@ import type {
   PackagingMetadataObject,
 } from './packaging';
 import EventEmitter from 'event-emitter';
-import type { BookOptions as EpubOptions } from '../types/book';
+
+// Options for creating/opening a Book
+export type BookOptions = {
+  requestMethod?: (
+    url: string,
+    type?: string,
+    withCredentials?: boolean,
+    headers?: Record<string, string>
+  ) => Promise<string | Blob | JSON | Document | XMLDocument>;
+  requestCredentials?: boolean;
+  requestHeaders?: Record<string, string>;
+  encoding?: 'binary' | 'base64';
+  replacements?: 'base64' | 'blobUrl' | 'none';
+  canonical?: (path: string) => string;
+  openAs?: string;
+  keepAbsoluteUrl?: boolean;
+  store?: string | false;
+  [key: string]: unknown;
+};
+
 import { extend, defer } from './utils/core';
 import Url from './utils/url';
 import Path from './utils/path';
@@ -61,7 +80,7 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
  */
 class Book implements EventEmitterMethods {
   emit!: EventEmitter['emit'];
-  settings: EpubOptions = {};
+  settings: BookOptions = {};
   opening: defer<this>;
   opened: Promise<this> | undefined;
   isOpen: boolean = false;
@@ -126,7 +145,7 @@ class Book implements EventEmitterMethods {
 
   constructor(
     url?: string | Blob | ArrayBuffer | undefined,
-    options?: EpubOptions
+    options?: BookOptions
   ) {
     // Allow passing just options to the Book
     if (

@@ -1,4 +1,3 @@
-// Mock scrollIntoView for jsdom environment
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
 import DefaultViewManager from '.';
 
@@ -9,7 +8,6 @@ const MOCK_EVENTS = {
   },
 };
 
-// Mock View class
 class MockView2 {
   section: any;
   expanded: boolean;

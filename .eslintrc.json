@@ -26,6 +26,24 @@
       "parserOptions": {
         "sourceType": "module"
       }
+    },
+
+    {
+      "files": ["src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "types",
+                "message": "Do not import from top-level `types`. Use `src/types` or local types instead."
+              }
+            ],
+            "patterns": ["types/*"]
+          }
+        ]
+      }
     }
   ],
   "rules": {

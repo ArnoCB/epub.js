@@ -1,7 +1,8 @@
 import type { ManifestNavItem, PackagingManifestJson } from './types/packaging';
 import type { RawNavItem } from './navigation';
-import type { NavItem } from '../types/navigation';
+import type { NavItem } from './navigation';
 import { Flow } from './layout';
+
 export interface PackagingMetadataObject {
   title: string;
   creator: string;
@@ -439,6 +440,7 @@ class Packaging {
             href: item.href,
             label: item.label || item.title || '',
             title: item.title ?? '',
+            subitems: [],
           };
           return navItem;
         })
