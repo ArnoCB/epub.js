@@ -7,7 +7,7 @@ class DisplayOptions {
   openToSpread: string | undefined = '';
   orientationLock: string | undefined = '';
 
-  constructor(displayOptionsDocument: XMLDocument) {
+  constructor(displayOptionsDocument?: XMLDocument) {
     if (displayOptionsDocument) {
       this.parse(displayOptionsDocument);
     }

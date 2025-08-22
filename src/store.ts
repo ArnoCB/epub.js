@@ -6,6 +6,8 @@ import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
 import Resources from 'types/resources';
 
+type EventEmitterMethods = Pick<EventEmitter, 'on'>;
+
 /**
  * Handles saving and requesting files from local storage
  * @class
@@ -13,7 +15,8 @@ import Resources from 'types/resources';
  * @param {function} [requester]
  * @param {function} [resolver]
  */
-class Store {
+class Store implements EventEmitterMethods {
+  on!: EventEmitter['on'];
   storage: typeof localforage | undefined;
   urlCache: Record<string, string> = {};
   name: string;
@@ -149,11 +152,14 @@ class Store {
 
     return this.storage!.getItem(encodedUrl).then((result: unknown) => {
       if (!result) {
-        return this.requester(url, 'binary', withCredentials, headers).then(
-          (data) => {
-            return this.storage!.setItem(encodedUrl, data);
-          }
-        );
+        return this.requester(
+          url,
+          'binary',
+          withCredentials ?? false,
+          headers ?? {}
+        ).then((data) => {
+          return this.storage!.setItem(encodedUrl, data);
+        });
       }
       return result;
     });
@@ -170,15 +176,15 @@ class Store {
   async request(
     url: string,
     type: string,
-    withCredentials: boolean,
-    headers: Record<string, string>
+    withCredentials: boolean = false,
+    headers: Record<string, string> = {}
   ): Promise<Blob | string | JSON | Document | XMLDocument> {
     if (this.online) {
       // From network
       return this.requester(url, type, withCredentials, headers).then(
         (data) => {
           // save to store if not present
-          this.put(url);
+          this.put(url, withCredentials, headers);
           return data;
         }
       );

@@ -87,7 +87,7 @@ class Layout {
             // this.props.spread = this._spread;
             this.update({ spread: this._spread });
         }
-        if (min >= 0) {
+        if (min && min >= 0) {
             this._minSpreadWidth = min;
         }
         return this._spread;
@@ -116,7 +116,7 @@ class Layout {
         }
         if (this.name === 'reflowable' &&
             this._flow === 'paginated' &&
-            !(_gap >= 0)) {
+            !(_gap && _gap >= 0)) {
             gap = section % 2 === 0 ? section : section - 1;
         }
         if (this.name === 'pre-paginated') {
@@ -170,10 +170,10 @@ class Layout {
             formating = contents.columns(this.width, this.height, this.columnWidth, this.gap, this.settings.direction ?? 'ltr');
         }
         else if (axis && axis === 'horizontal') {
-            formating = contents.size(null, this.height);
+            formating = contents.size(-1, this.height);
         }
         else {
-            formating = contents.size(this.width, null);
+            formating = contents.size(this.width, -1);
         }
         return formating;
     }

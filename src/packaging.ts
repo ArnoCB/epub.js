@@ -1,10 +1,43 @@
-import type {
-  PackagingMetadataObject,
-  PackagingManifestObject,
-  PackagingSpineItem,
-  PackagingManifestItem,
-} from '../types/packaging';
+import type { ManifestNavItem, PackagingManifestJson } from './types/packaging';
+import type { RawNavItem } from './navigation';
 import type { NavItem } from '../types/navigation';
+import { Flow } from './layout';
+export interface PackagingMetadataObject {
+  title: string;
+  creator: string;
+  description: string;
+  pubdate: string;
+  publisher: string;
+  identifier: string;
+  language: string;
+  rights: string;
+  modified_date: string;
+  layout: string;
+  orientation: string;
+  flow: Flow;
+  viewport: string;
+  spread: string;
+  direction: string;
+}
+
+export interface PackagingSpineItem {
+  id?: string;
+  idref: string;
+  linear: string;
+  properties: Array<string>;
+  index: number;
+}
+
+export interface PackagingManifestItem {
+  href: string;
+  type: string;
+  properties: Array<string>;
+  overlay?: string;
+}
+
+export interface PackagingManifestObject {
+  [key: string]: PackagingManifestItem;
+}
 
 const ELEMENT_NODE = 1;
 
@@ -15,7 +48,7 @@ type ExtendedManifestItem = PackagingManifestItem & {
 };
 
 type ExtendedNavItem = NavItem & {
-  title?: string;
+  title: string;
   [key: string]: unknown;
 };
 
@@ -56,15 +89,19 @@ function indexOfElementNode(elementNode: Node) {
 class Packaging {
   manifest: PackagingManifestObject = {};
   navPath: string = '';
+  baseUrl?: string;
+  basePath?: string;
   ncxPath: string = '';
   coverPath: string = '';
   spineNodeIndex: number = 0;
   spine: PackagingSpineItem[] = [];
   metadata: PackagingMetadataObject = {} as PackagingMetadataObject;
-  toc?: unknown[];
+  toc?: RawNavItem[] | Document;
   uniqueIdentifier: string = '';
+  pageList?: Document | null;
 
   constructor(packageDocument?: XMLDocument) {
+    console.log('[Packaging] initializing with document:', packageDocument);
     if (packageDocument) {
       this.parse(packageDocument);
     }
@@ -74,11 +111,13 @@ class Packaging {
    * Parse OPF XML
    */
   parse(packageDocument?: XMLDocument) {
+    console.log('[Packaging] parsing document:', packageDocument);
     if (!packageDocument) {
       throw new Error('Package File Not Found');
     }
 
     const metadataNode = packageDocument.querySelector('metadata');
+
     if (!metadataNode) {
       throw new Error('No Metadata Found');
     }
@@ -137,7 +176,7 @@ class Packaging {
       modified_date: this.getPropertyText(xml, 'dcterms:modified'),
       layout: this.getPropertyText(xml, 'rendition:layout'),
       orientation: this.getPropertyText(xml, 'rendition:orientation'),
-      flow: this.getPropertyText(xml, 'rendition:flow'),
+      flow: this.getPropertyText(xml, 'rendition:flow') as Flow,
       viewport: this.getPropertyText(xml, 'rendition:viewport'),
       spread: this.getPropertyText(xml, 'rendition:spread'),
       direction: '', // Will be set later from spine element
@@ -364,26 +403,7 @@ class Packaging {
    * @param  {document} packageDocument OPF XML
    * @return {object} parsed package parts
    */
-  load(json: {
-    metadata: PackagingMetadataObject;
-    readingOrder?: Array<{
-      idref: string;
-      properties?: string[];
-      linear?: string;
-    }>;
-    spine?: Array<{
-      idref: string;
-      properties?: string[];
-      linear?: string;
-    }>;
-    resources: ExtendedManifestItem[];
-    toc?: Array<{
-      id?: string;
-      title?: string;
-      href: string;
-      label?: string;
-    }>;
-  }): {
+  load(json: PackagingManifestJson): {
     metadata: PackagingMetadataObject;
     spine: PackagingSpineItem[];
     manifest: PackagingManifestObject;
@@ -396,15 +416,12 @@ class Packaging {
 
     const spine = json.readingOrder || json.spine;
     this.spine = spine
-      ? spine.map((item, index: number) => {
-          const spineItem: PackagingSpineItem = {
-            idref: item.idref,
-            linear: item.linear || 'yes',
-            properties: item.properties || [],
-            index: index,
-          };
-          return spineItem;
-        })
+      ? spine.map((item: PackagingSpineItem, index: number) => ({
+          idref: item.idref,
+          linear: item.linear || 'yes',
+          properties: item.properties || [],
+          index,
+        }))
       : [];
 
     json.resources.forEach((item: ExtendedManifestItem, index: number) => {
@@ -418,12 +435,12 @@ class Packaging {
     this.spineNodeIndex = 0;
 
     this.toc = json.toc
-      ? json.toc.map((item) => {
+      ? json.toc.map((item: ManifestNavItem) => {
           const navItem: ExtendedNavItem = {
             id: item.id || '',
             href: item.href,
             label: item.label || item.title || '',
-            title: item.title,
+            title: item.title ?? '',
           };
           return navItem;
         })

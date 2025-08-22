@@ -39,8 +39,8 @@ export class Section {
   index: number;
   href: string;
   url: undefined | string;
-  next: (() => Section | undefined) | undefined;
-  prev: (() => Section | undefined) | undefined;
+  next: () => Section | undefined;
+  prev: () => Section | undefined;
   cfiBase: undefined | string;
   canonical: undefined | string;
   request?: (url: string) => Promise<Document>;
@@ -72,7 +72,7 @@ export class Section {
   /**
    * Load the section from its url
    */
-  load(_request?: (url: string) => Promise<Document>) {
+  load<T>(_request?: (url: string) => Promise<T>) {
     const request = _request || this.request || Request;
     const loading = new defer();
     const loaded = loading.promise;
@@ -82,8 +82,6 @@ export class Section {
     } else {
       request(this.url!, 'xml', false, {})
         .then((xml) => {
-          // var directory = new Url(this.url).directory;
-
           this.document = xml as Document;
           this.contents = (xml as Document).documentElement;
 
@@ -336,11 +334,6 @@ export class Section {
     this.unload();
     this.hooks.serialize.clear();
     this.hooks.content.clear();
-
-    // Clear object references to help GC - but don't set to undefined
-    // since these properties are typed as required
-    this.next = undefined;
-    this.prev = undefined;
 
     // Note: The object itself will be garbage collected when all references are removed
     // No need to clear primitive properties or create type conflicts

@@ -48,7 +48,6 @@ class Section {
         else {
             request(this.url, 'xml', false, {})
                 .then((xml) => {
-                // var directory = new Url(this.url).directory;
                 this.document = xml;
                 this.contents = xml.documentElement;
                 return this.hooks.content.trigger(this.document, this);
@@ -256,10 +255,6 @@ class Section {
         this.unload();
         this.hooks.serialize.clear();
         this.hooks.content.clear();
-        // Clear object references to help GC - but don't set to undefined
-        // since these properties are typed as required
-        this.next = undefined;
-        this.prev = undefined;
         // Note: The object itself will be garbage collected when all references are removed
         // No need to clear primitive properties or create type conflicts
     }

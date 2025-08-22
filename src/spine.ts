@@ -17,7 +17,7 @@ type UnpackingSpineItem = PackagingSpineItem &
     next?: () => Section | undefined;
     prev?: () => Section | undefined;
   };
-import Packaging from 'types/packaging';
+import Packaging from './packaging';
 import { ResolverFunction } from './resources';
 
 /**

@@ -114,7 +114,7 @@ class Store {
         const encodedUrl = window.encodeURIComponent(url);
         return this.storage.getItem(encodedUrl).then((result) => {
             if (!result) {
-                return this.requester(url, 'binary', withCredentials, headers).then((data) => {
+                return this.requester(url, 'binary', withCredentials ?? false, headers ?? {}).then((data) => {
                     return this.storage.setItem(encodedUrl, data);
                 });
             }
@@ -129,12 +129,12 @@ class Store {
      * @param  {object} [headers]
      * @return {Promise<Blob | string | JSON | Document | XMLDocument>}
      */
-    async request(url, type, withCredentials, headers) {
+    async request(url, type, withCredentials = false, headers = {}) {
         if (this.online) {
             // From network
             return this.requester(url, type, withCredentials, headers).then((data) => {
                 // save to store if not present
-                this.put(url);
+                this.put(url, withCredentials, headers);
                 return data;
             });
         }

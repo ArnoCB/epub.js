@@ -4,8 +4,8 @@ import Path from './path';
 function request<T = unknown>(
   url: string,
   type: string,
-  withCredentials: boolean,
-  headers: Record<string, string>
+  withCredentials: boolean = false,
+  headers: Record<string, string> = {}
 ): Promise<T> {
   const supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
   const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';

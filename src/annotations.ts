@@ -1,8 +1,8 @@
 import EventEmitter from 'event-emitter';
 import EpubCFI from './epubcfi';
 import { EVENTS } from './utils/constants';
-import Rendition from 'types/rendition';
-import View from 'types/managers/view';
+import Rendition from './rendition';
+import { View } from './managers/helpers/views';
 
 type MarkType = 'highlight' | 'underline' | 'mark';
 type AnnotationData = {

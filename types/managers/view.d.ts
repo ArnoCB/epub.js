@@ -26,9 +26,9 @@ export default class View {
 
   size(_width: number, _height: number): void;
 
-  load(content: Contents): Promise<any>;
+  load(content: string | Contents): Promise<any>;
 
-  setLayout(layout: Layout): void;
+  setLayout(layout: any): void;
 
   setAxis(axis: string): void;
 
@@ -44,15 +44,25 @@ export default class View {
 
   height(): number;
 
-  position(): object;
+  position(): any;
 
-  locationOf(target: string): { top: number; left: number };
+  locationOf(target: string | HTMLElement): { top: number; left: number };
 
-  onDisplayed(view: View): void;
+  onDisplayed(view?: View): void;
 
-  onResize(view: View): void;
+  onResize(
+    view: any,
+    size?: {
+      width: number;
+      height: number;
+      widthDelta?: number;
+      heightDelta?: number;
+    }
+  ): void;
 
-  bounds(force?: boolean): object;
+  onLoad(event: Event, promise: any): void;
+
+  bounds(force?: boolean): DOMRect | { width: number; height: number };
 
   highlight(
     cfiRange: string,
@@ -79,9 +89,6 @@ export default class View {
   unmark(cfiRange: string): void;
 
   destroy(): void;
-
-  private onLoad(event: Event, promise: Promise<any>): void;
-
   // Event emitters
   emit(type: any, ...args: any[]): void;
 

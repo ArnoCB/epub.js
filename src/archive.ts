@@ -19,7 +19,7 @@ type InputFileFormat =
   | InputByType[keyof InputByType]
   | Promise<InputByType[keyof InputByType]>;
 
-type ArchiveRequestTypeMap = {
+export type ArchiveRequestTypeMap = {
   blob: Blob;
   string: string;
   json: object;

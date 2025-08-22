@@ -46,6 +46,8 @@ function getAugmentedNamespace(n) {
 	return a;
 }
 
+var book = {};
+
 var eventEmitter = {exports: {}};
 
 var d = {exports: {}};
@@ -590,9 +592,6 @@ function requireEventEmitter () {
 	return eventEmitter.exports;
 }
 
-var eventEmitterExports = requireEventEmitter();
-var EventEmitter = /*@__PURE__*/getDefaultExportFromCjs(eventEmitterExports);
-
 var core$1 = {};
 
 var hasRequiredCore;
@@ -1132,14 +1131,6 @@ function requireCore() {
   core$1.defer = defer;
   return core$1;
 }
-
-var coreExports = requireCore();
-var core = /*@__PURE__*/getDefaultExportFromCjs(coreExports);
-
-var utils = /*#__PURE__*/_mergeNamespaces({
-	__proto__: null,
-	'default': core
-}, [coreExports]);
 
 var url = {};
 
@@ -1953,12 +1944,6 @@ function requireUrl() {
   url.default = Url;
   return url;
 }
-
-var urlExports = requireUrl();
-var Url = /*@__PURE__*/getDefaultExportFromCjs(urlExports);
-
-var pathExports = requirePath();
-var Path = /*@__PURE__*/getDefaultExportFromCjs(pathExports);
 
 var spine$1 = {exports: {}};
 
@@ -2919,23 +2904,23 @@ function requireHook() {
 
 var section$1 = {exports: {}};
 
-var request$1 = {};
+var request = {};
 
 var hasRequiredRequest;
 function requireRequest() {
-  if (hasRequiredRequest) return request$1;
+  if (hasRequiredRequest) return request;
   hasRequiredRequest = 1;
-  var __importDefault = request$1 && request$1.__importDefault || function (mod) {
+  var __importDefault = request && request.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
     };
   };
-  Object.defineProperty(request$1, "__esModule", {
+  Object.defineProperty(request, "__esModule", {
     value: true
   });
   const core_1 = requireCore();
   const path_1 = __importDefault(requirePath());
-  function request(url, type, withCredentials, headers) {
+  function request$1(url, type, withCredentials = false, headers = {}) {
     const supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
     const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
     return new Promise((resolve, reject) => {
@@ -3040,8 +3025,8 @@ function requireRequest() {
       }
     });
   }
-  request$1.default = request;
-  return request$1;
+  request.default = request$1;
+  return request;
 }
 
 var section = section$1.exports;
@@ -3104,7 +3089,6 @@ function requireSection() {
           loading.resolve(this.contents);
         } else {
           request(this.url, 'xml', false, {}).then(xml => {
-            // var directory = new Url(this.url).directory;
             this.document = xml;
             this.contents = xml.documentElement;
             return this.hooks.content.trigger(this.document, this);
@@ -3303,10 +3287,6 @@ function requireSection() {
         this.unload();
         this.hooks.serialize.clear();
         this.hooks.content.clear();
-        // Clear object references to help GC - but don't set to undefined
-        // since these properties are typed as required
-        this.next = undefined;
-        this.prev = undefined;
         // Note: The object itself will be garbage collected when all references are removed
         // No need to clear primitive properties or create type conflicts
       }
@@ -3691,9 +3671,6 @@ function requireSpine() {
   return spine$1.exports;
 }
 
-var spineExports = requireSpine();
-var Spine = /*@__PURE__*/getDefaultExportFromCjs(spineExports);
-
 var locations = {};
 
 var queue$1 = {};
@@ -4004,7 +3981,6 @@ function requireLocations() {
           this.currentLocation = this._currentCfi;
         }
         return this._locations;
-        // console.log(this.percentage(this.book.rendition.location.start), this.percentage(this.book.rendition.location.end));
       });
     }
     createRange() {
@@ -4016,9 +3992,17 @@ function requireLocations() {
       };
     }
     process(section) {
+      // Section.load resolves with the section contents (an Element), not the full Document
       return section.load(this.request).then(contents => {
         const completed = new core_1.defer();
-        const locations = this.parse(contents, section.cfiBase);
+        if (!contents) {
+          // Nothing loaded for this section
+          completed.resolve([]);
+          return completed.promise;
+        }
+        // contents is expected to be the document element for the section
+        const el = contents;
+        const locations = this.parse(el, section.cfiBase);
         this._locations = this._locations.concat(locations);
         section.unload();
         this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
@@ -4141,9 +4125,17 @@ function requireLocations() {
       if (count && this._locationsWords.length >= count) {
         return Promise.resolve();
       }
+      // Section.load resolves with the section contents (an Element), not the full Document
       return section.load(this.request).then(contents => {
         const completed = new core_1.defer();
-        const locations = this.parseWords(contents, section, wordCount, startCfi);
+        // Use documentElement for parseWords
+        if (!contents) {
+          completed.resolve([]);
+          return completed.promise;
+        }
+        const el = contents;
+        // contents is already the documentElement for the section
+        const locations = this.parseWords(el, section, wordCount, startCfi);
         const remainingCount = count - this._locationsWords.length;
         this._locationsWords = this._locationsWords.concat(locations.length >= count ? locations.slice(0, remainingCount) : locations);
         section.unload();
@@ -4373,6 +4365,7 @@ function requireLocations() {
     }
     destroy() {
       this.spine = undefined;
+      // @ts-expect-error this is only at destroy time
       this.request = undefined;
       this.pause = undefined;
       this.q?.stop();
@@ -4392,9 +4385,6 @@ function requireLocations() {
   locations.default = Locations;
   return locations;
 }
-
-var locationsExports = requireLocations();
-var Locations = /*@__PURE__*/getDefaultExportFromCjs(locationsExports);
 
 var container = {};
 
@@ -4447,9 +4437,6 @@ function requireContainer() {
   return container;
 }
 
-var containerExports = requireContainer();
-var Container = /*@__PURE__*/getDefaultExportFromCjs(containerExports);
-
 var packaging = {};
 
 var hasRequiredPackaging;
@@ -4500,6 +4487,7 @@ function requirePackaging() {
       this.spine = [];
       this.metadata = {};
       this.uniqueIdentifier = '';
+      console.log('[Packaging] initializing with document:', packageDocument);
       if (packageDocument) {
         this.parse(packageDocument);
       }
@@ -4508,6 +4496,7 @@ function requirePackaging() {
      * Parse OPF XML
      */
     parse(packageDocument) {
+      console.log('[Packaging] parsing document:', packageDocument);
       if (!packageDocument) {
         throw new Error('Package File Not Found');
       }
@@ -4744,15 +4733,12 @@ function requirePackaging() {
     load(json) {
       this.metadata = json.metadata;
       const spine = json.readingOrder || json.spine;
-      this.spine = spine ? spine.map((item, index) => {
-        const spineItem = {
-          idref: item.idref,
-          linear: item.linear || 'yes',
-          properties: item.properties || [],
-          index: index
-        };
-        return spineItem;
-      }) : [];
+      this.spine = spine ? spine.map((item, index) => ({
+        idref: item.idref,
+        linear: item.linear || 'yes',
+        properties: item.properties || [],
+        index
+      })) : [];
       json.resources.forEach((item, index) => {
         this.manifest[index] = item;
         if (item.rel && item.rel[0] === 'cover') {
@@ -4765,7 +4751,7 @@ function requirePackaging() {
           id: item.id || '',
           href: item.href,
           label: item.label || item.title || '',
-          title: item.title
+          title: item.title ?? ''
         };
         return navItem;
       }) : [];
@@ -4792,9 +4778,6 @@ function requirePackaging() {
   packaging.default = Packaging;
   return packaging;
 }
-
-var packagingExports = requirePackaging();
-var Packaging = /*@__PURE__*/getDefaultExportFromCjs(packagingExports);
 
 var navigation = {};
 
@@ -5084,9 +5067,6 @@ function requireNavigation() {
   navigation.default = Navigation;
   return navigation;
 }
-
-var navigationExports = requireNavigation();
-var Navigation = /*@__PURE__*/getDefaultExportFromCjs(navigationExports);
 
 var resources$1 = {exports: {}};
 
@@ -5584,9 +5564,6 @@ function requireResources() {
   return resources$1.exports;
 }
 
-var resourcesExports = requireResources();
-var Resources = /*@__PURE__*/getDefaultExportFromCjs(resourcesExports);
-
 var pagelist = {};
 
 var hasRequiredPagelist;
@@ -5799,17 +5776,7 @@ function requirePagelist() {
   return pagelist;
 }
 
-var pagelistExports = requirePagelist();
-var PageList = /*@__PURE__*/getDefaultExportFromCjs(pagelistExports);
-
-var hookExports = requireHook();
-var Hook = /*@__PURE__*/getDefaultExportFromCjs(hookExports);
-
-var epubcfiExports = requireEpubcfi();
-var CFI = /*@__PURE__*/getDefaultExportFromCjs(epubcfiExports);
-
-var queueExports = requireQueue();
-var Queue = /*@__PURE__*/getDefaultExportFromCjs(queueExports);
+var rendition = {};
 
 var layout = {};
 
@@ -5907,7 +5874,7 @@ function requireLayout() {
           spread: this._spread
         });
       }
-      if (min >= 0) {
+      if (min && min >= 0) {
         this._minSpreadWidth = min;
       }
       return this._spread;
@@ -5933,7 +5900,7 @@ function requireLayout() {
       } else {
         divisor = 1;
       }
-      if (this.name === 'reflowable' && this._flow === 'paginated' && !(_gap >= 0)) {
+      if (this.name === 'reflowable' && this._flow === 'paginated' && !(_gap && _gap >= 0)) {
         gap = section % 2 === 0 ? section : section - 1;
       }
       if (this.name === 'pre-paginated') {
@@ -5984,9 +5951,9 @@ function requireLayout() {
       } else if (this._flow === 'paginated') {
         formating = contents.columns(this.width, this.height, this.columnWidth, this.gap, this.settings.direction ?? 'ltr');
       } else if (axis && axis === 'horizontal') {
-        formating = contents.size(null, this.height);
+        formating = contents.size(-1, this.height);
       } else {
-        formating = contents.size(this.width, null);
+        formating = contents.size(this.width, -1);
       }
       return formating;
     }
@@ -6033,9 +6000,6 @@ function requireLayout() {
   layout.default = Layout;
   return layout;
 }
-
-var layoutExports = requireLayout();
-var Layout = /*@__PURE__*/getDefaultExportFromCjs(layoutExports);
 
 var themes = {};
 
@@ -6327,9 +6291,6 @@ function requireThemes() {
   return themes;
 }
 
-var themesExports = requireThemes();
-var Themes = /*@__PURE__*/getDefaultExportFromCjs(themesExports);
-
 var annotations = {};
 
 var hasRequiredAnnotations;
@@ -6582,10 +6543,61 @@ function requireAnnotations() {
   return annotations;
 }
 
-var annotationsExports = requireAnnotations();
-var Annotations = /*@__PURE__*/getDefaultExportFromCjs(annotationsExports);
+var _default = {};
 
-var constantsExports = requireConstants();
+var scrolltype = {};
+
+var hasRequiredScrolltype;
+function requireScrolltype() {
+  if (hasRequiredScrolltype) return scrolltype;
+  hasRequiredScrolltype = 1;
+  Object.defineProperty(scrolltype, "__esModule", {
+    value: true
+  });
+  scrolltype.default = scrollType;
+  scrolltype.createDefiner = createDefiner;
+  // Detect RTL scroll type
+  // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
+  function scrollType() {
+    let type = 'reverse';
+    const definer = createDefiner();
+    document.body.appendChild(definer);
+    if (definer.scrollLeft > 0) {
+      type = 'default';
+    } else {
+      // Modern browsers: always use scrollIntoView logic
+      definer.children[0].children[1].scrollIntoView();
+      if (definer.scrollLeft < 0) {
+        type = 'negative';
+      }
+    }
+    document.body.removeChild(definer);
+    return type;
+  }
+  function createDefiner() {
+    const definer = document.createElement('div');
+    definer.dir = 'rtl';
+    definer.style.position = 'fixed';
+    definer.style.width = '1px';
+    definer.style.height = '1px';
+    definer.style.top = '0px';
+    definer.style.left = '0px';
+    definer.style.overflow = 'hidden';
+    const innerDiv = document.createElement('div');
+    innerDiv.style.width = '2px';
+    const spanA = document.createElement('span');
+    spanA.style.width = '1px';
+    spanA.style.display = 'inline-block';
+    const spanB = document.createElement('span');
+    spanB.style.width = '1px';
+    spanB.style.display = 'inline-block';
+    innerDiv.appendChild(spanA);
+    innerDiv.appendChild(spanB);
+    definer.appendChild(innerDiv);
+    return definer;
+  }
+  return scrolltype;
+}
 
 var mapping = {};
 
@@ -6975,712 +6987,1063 @@ function requireMapping() {
   return mapping;
 }
 
-var mappingExports = requireMapping();
-var Mapping = /*@__PURE__*/getDefaultExportFromCjs(mappingExports);
+var stage = {};
 
-var replacementsExports = requireReplacements();
+var helpers = {};
 
-const hasNavigator = typeof navigator !== 'undefined';
-const isChrome = hasNavigator && /Chrome/.test(navigator.userAgent);
-const isWebkit = hasNavigator && !isChrome && /AppleWebKit/.test(navigator.userAgent);
-const ELEMENT_NODE = 1;
-
-/**
- * Handles DOM manipulation, queries and events for View contents
- * @class
- * @param {document} doc Document
- * @param {element} content Parent Element (typically Body)
- * @param {string} cfiBase Section component of CFIs
- * @param {number} sectionIndex Index in Spine of Conntent's Section
- */
-class Contents {
-  constructor(doc, content, cfiBase, sectionIndex) {
-    // Blank Cfi for Parsing
-    this.epubcfi = new CFI();
-    this.document = doc;
-    this.documentElement = this.document.documentElement;
-    this.content = content || this.document.body;
-    this.window = this.document.defaultView;
-    this._size = {
-      width: 0,
-      height: 0
+var hasRequiredHelpers;
+function requireHelpers() {
+  if (hasRequiredHelpers) return helpers;
+  hasRequiredHelpers = 1;
+  Object.defineProperty(helpers, "__esModule", {
+    value: true
+  });
+  helpers.debounce = debounce;
+  helpers.throttle = throttle;
+  /**
+   * Creates a debounced function that delays invoking the provided function
+   * until after the specified wait time has elapsed since the last invocation.
+   */
+  function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
     };
-    this.sectionIndex = sectionIndex || 0;
-    this.cfiBase = cfiBase || '';
-    this.epubReadingSystem('epub.js', constantsExports.EPUBJS_VERSION);
-    this.called = 0;
-    this.active = true;
-    this.listeners();
   }
-
   /**
-   * Get DOM events that are listened for and passed along
+   * Creates a throttled function that only invokes the provided function
+   * at most once per every specified wait time.
    */
-  static get listenedEvents() {
-    return constantsExports.DOM_EVENTS;
-  }
-
-  /**
-   * Get or Set width
-   * @param {number} [w]
-   * @returns {number} width
-   */
-  width(w) {
-    // var frame = this.documentElement;
-    var frame = this.content;
-    if (w && coreExports.isNumber(w)) {
-      w = w + 'px';
-    }
-    if (w) {
-      frame.style.width = w;
-      // this.content.style.width = w;
-    }
-    return parseInt(this.window.getComputedStyle(frame)['width']);
-  }
-
-  /**
-   * Get or Set height
-   * @param {number} [h]
-   * @returns {number} height
-   */
-  height(h) {
-    // var frame = this.documentElement;
-    var frame = this.content;
-    if (h && coreExports.isNumber(h)) {
-      h = h + 'px';
-    }
-    if (h) {
-      frame.style.height = h;
-      // this.content.style.height = h;
-    }
-    return parseInt(this.window.getComputedStyle(frame)['height']);
-  }
-
-  /**
-   * Get or Set width of the contents
-   * @param {number} [w]
-   * @returns {number} width
-   */
-  contentWidth(w) {
-    var content = this.content || this.document.body;
-    if (w && coreExports.isNumber(w)) {
-      w = w + 'px';
-    }
-    if (w) {
-      content.style.width = w;
-    }
-    return parseInt(this.window.getComputedStyle(content)['width']);
-  }
-
-  /**
-   * Get or Set height of the contents
-   * @param {number} [h]
-   * @returns {number} height
-   */
-  contentHeight(h) {
-    var content = this.content || this.document.body;
-    if (h && coreExports.isNumber(h)) {
-      h = h + 'px';
-    }
-    if (h) {
-      content.style.height = h;
-    }
-    return parseInt(this.window.getComputedStyle(content)['height']);
-  }
-
-  /**
-   * Get the width of the text using Range
-   * @returns {number} width
-   */
-  textWidth() {
-    let rect;
-    let width;
-    let range = this.document.createRange();
-    let content = this.content || this.document.body;
-    let border = coreExports.borders(content);
-
-    // Select the contents of frame
-    range.selectNodeContents(content);
-
-    // get the width of the text content
-    rect = range.getBoundingClientRect();
-    width = rect.width;
-    if (border && border.width) {
-      width += border.width;
-    }
-    return Math.round(width);
-  }
-
-  /**
-   * Get the height of the text using Range
-   * @returns {number} height
-   */
-  textHeight() {
-    let rect;
-    let height;
-    let range = this.document.createRange();
-    let content = this.content || this.document.body;
-    range.selectNodeContents(content);
-    rect = range.getBoundingClientRect();
-    height = rect.bottom;
-    return Math.round(height);
-  }
-
-  /**
-   * Get documentElement scrollWidth
-   * @returns {number} width
-   */
-  scrollWidth() {
-    var width = this.documentElement.scrollWidth;
-    return width;
-  }
-
-  /**
-   * Get documentElement scrollHeight
-   * @returns {number} height
-   */
-  scrollHeight() {
-    var height = this.documentElement.scrollHeight;
-    return height;
-  }
-
-  /**
-   * Set overflow css style of the contents
-   * @param {string} [overflow]
-   */
-  overflow(overflow) {
-    if (overflow) {
-      this.documentElement.style.overflow = overflow;
-    }
-    return this.window.getComputedStyle(this.documentElement)['overflow'];
-  }
-
-  /**
-   * Set overflowX css style of the documentElement
-   * @param {string} [overflow]
-   */
-  overflowX(overflow) {
-    if (overflow) {
-      this.documentElement.style.overflowX = overflow;
-    }
-    return this.window.getComputedStyle(this.documentElement)['overflowX'];
-  }
-
-  /**
-   * Set overflowY css style of the documentElement
-   * @param {string} [overflow]
-   */
-  overflowY(overflow) {
-    if (overflow) {
-      this.documentElement.style.overflowY = overflow;
-    }
-    return this.window.getComputedStyle(this.documentElement)['overflowY'];
-  }
-
-  /**
-   * Set Css styles on the contents element (typically Body)
-   * @param {string} property
-   * @param {string} value
-   * @param {boolean} [priority] set as "important"
-   */
-  css(property, value, priority) {
-    var content = this.content || this.document.body;
-    if (value) {
-      content.style.setProperty(property, value, priority ? 'important' : '');
-    } else {
-      content.style.removeProperty(property);
-    }
-    return this.window.getComputedStyle(content)[property];
-  }
-
-  /**
-   * Get or Set the viewport element
-   * @param {object} [options]
-   * @param {string} [options.width]
-   * @param {string} [options.height]
-   * @param {string} [options.scale]
-   * @param {string} [options.minimum]
-   * @param {string} [options.maximum]
-   * @param {string} [options.scalable]
-   */
-  viewport(options) {
-    // var width, height, scale, minimum, maximum, scalable;
-    var $viewport = this.document.querySelector("meta[name='viewport']");
-    var parsed = {
-      width: undefined,
-      height: undefined,
-      scale: undefined,
-      minimum: undefined,
-      maximum: undefined,
-      scalable: undefined
+  function throttle(func, wait) {
+    let lastCall = 0;
+    return function (...args) {
+      const now = Date.now();
+      if (now - lastCall >= wait) {
+        lastCall = now;
+        func.apply(this, args);
+      }
     };
-    var newContent = [];
-    var settings = {};
+  }
+  return helpers;
+}
 
+var hasRequiredStage;
+function requireStage() {
+  if (hasRequiredStage) return stage;
+  hasRequiredStage = 1;
+  Object.defineProperty(stage, "__esModule", {
+    value: true
+  });
+  const core_1 = requireCore();
+  const helpers_1 = requireHelpers();
+  class Stage {
+    constructor(_options) {
+      this.settings = _options || {};
+      this.id = 'epubjs-container-' + (0, core_1.uuid)();
+      this.container = this.create(this.settings);
+      if (this.settings.hidden) {
+        this.wrapper = this.wrap(this.container);
+      }
+    }
     /*
-     * check for the viewport size
-     * <meta name="viewport" content="width=1024,height=697" />
+     * Creates an element to render to.
+     * Resizes to passed width and height or to the elements size
      */
-    if ($viewport && $viewport.hasAttribute('content')) {
-      let content = $viewport.getAttribute('content');
-      let _width = content.match(/width\s*=\s*([^,]*)/);
-      let _height = content.match(/height\s*=\s*([^,]*)/);
-      let _scale = content.match(/initial-scale\s*=\s*([^,]*)/);
-      let _minimum = content.match(/minimum-scale\s*=\s*([^,]*)/);
-      let _maximum = content.match(/maximum-scale\s*=\s*([^,]*)/);
-      let _scalable = content.match(/user-scalable\s*=\s*([^,]*)/);
-      if (_width && _width.length && typeof _width[1] !== 'undefined') {
-        parsed.width = _width[1];
+    create(options) {
+      let height = options.height; // !== false ? options.height : "100%";
+      let width = options.width; // !== false ? options.width : "100%";
+      const overflow = options.overflow || false;
+      const axis = options.axis || 'vertical';
+      const direction = options.direction;
+      (0, core_1.extend)(this.settings, options);
+      if (options.height && (0, core_1.isNumber)(options.height)) {
+        height = options.height + 'px';
       }
-      if (_height && _height.length && typeof _height[1] !== 'undefined') {
-        parsed.height = _height[1];
+      if (options.width && (0, core_1.isNumber)(options.width)) {
+        width = options.width + 'px';
       }
-      if (_scale && _scale.length && typeof _scale[1] !== 'undefined') {
-        parsed.scale = _scale[1];
+      // Create new container element
+      const container = document.createElement('div');
+      container.id = this.id;
+      container.classList.add('epub-container');
+      // Style Element
+      // container.style.fontSize = "0";
+      container.style.wordSpacing = '0';
+      container.style.lineHeight = '0';
+      container.style.verticalAlign = 'top';
+      container.style.position = 'relative';
+      if (axis === 'horizontal') {
+        // container.style.whiteSpace = "nowrap";
+        container.style.display = 'flex';
+        container.style.flexDirection = 'row';
+        container.style.flexWrap = 'nowrap';
       }
-      if (_minimum && _minimum.length && typeof _minimum[1] !== 'undefined') {
-        parsed.minimum = _minimum[1];
+      if (width) {
+        container.style.width = width;
       }
-      if (_maximum && _maximum.length && typeof _maximum[1] !== 'undefined') {
-        parsed.maximum = _maximum[1];
+      if (height) {
+        container.style.height = height;
       }
-      if (_scalable && _scalable.length && typeof _scalable[1] !== 'undefined') {
-        parsed.scalable = _scalable[1];
-      }
-    }
-    settings = coreExports.defaults(options || {}, parsed);
-    if (options) {
-      if (settings.width) {
-        newContent.push('width=' + settings.width);
-      }
-      if (settings.height) {
-        newContent.push('height=' + settings.height);
-      }
-      if (settings.scale) {
-        newContent.push('initial-scale=' + settings.scale);
-      }
-      if (settings.scalable === 'no') {
-        newContent.push('minimum-scale=' + settings.scale);
-        newContent.push('maximum-scale=' + settings.scale);
-        newContent.push('user-scalable=' + settings.scalable);
-      } else {
-        if (settings.scalable) {
-          newContent.push('user-scalable=' + settings.scalable);
-        }
-        if (settings.minimum) {
-          newContent.push('minimum-scale=' + settings.minimum);
-        }
-        if (settings.maximum) {
-          newContent.push('minimum-scale=' + settings.maximum);
+      if (typeof overflow === 'string') {
+        if (overflow === 'scroll' && axis === 'vertical') {
+          container.style.overflowY = overflow;
+          container.style.overflowX = 'hidden';
+        } else if (overflow === 'scroll' && axis === 'horizontal') {
+          container.style.overflowY = 'hidden';
+          container.style.overflowX = overflow;
+        } else {
+          container.style.overflow = overflow;
         }
       }
-      if (!$viewport) {
-        $viewport = this.document.createElement('meta');
-        $viewport.setAttribute('name', 'viewport');
-        this.document.querySelector('head').appendChild($viewport);
+      if (direction) {
+        container.dir = direction;
+        container.style['direction'] = direction;
       }
-      $viewport.setAttribute('content', newContent.join(', '));
-      this.window.scrollTo(0, 0);
-    }
-    return settings;
-  }
-
-  /**
-   * Event emitter for when the contents has expanded
-   * @private
-   */
-  expand() {
-    this.emit(constantsExports.EVENTS.CONTENTS.EXPAND);
-  }
-
-  /**
-   * Add DOM listeners
-   * @private
-   */
-  listeners() {
-    this.imageLoadListeners();
-    this.mediaQueryListeners();
-
-    // this.fontLoadListeners();
-
-    this.addEventListeners();
-    this.addSelectionListeners();
-
-    // this.transitionListeners();
-
-    if (typeof ResizeObserver === 'undefined') {
-      this.resizeListeners();
-      this.visibilityListeners();
-    } else {
-      this.resizeObservers();
-    }
-
-    // this.mutationObservers();
-
-    this.linksHandler();
-  }
-
-  /**
-   * Remove DOM listeners
-   * @private
-   */
-  removeListeners() {
-    this.removeEventListeners();
-    this.removeSelectionListeners();
-    if (this.observer) {
-      this.observer.disconnect();
-    }
-    clearTimeout(this.expanding);
-  }
-
-  /**
-   * Check if size of contents has changed and
-   * emit 'resize' event if it has.
-   * @private
-   */
-  resizeCheck() {
-    let width = this.textWidth();
-    let height = this.textHeight();
-    if (width != this._size.width || height != this._size.height) {
-      this._size = {
-        width: width,
-        height: height
-      };
-      this.onResize && this.onResize(this._size);
-      this.emit(constantsExports.EVENTS.CONTENTS.RESIZE, this._size);
-    }
-  }
-
-  /**
-   * Poll for resize detection
-   * @private
-   */
-  resizeListeners() {
-    // Test size again
-    clearTimeout(this.expanding);
-    requestAnimationFrame(this.resizeCheck.bind(this));
-    this.expanding = setTimeout(this.resizeListeners.bind(this), 350);
-  }
-
-  /**
-   * Listen for visibility of tab to change
-   * @private
-   */
-  visibilityListeners() {
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && this.active === false) {
-        this.active = true;
-        this.resizeListeners();
-      } else {
-        this.active = false;
-        clearTimeout(this.expanding);
+      if (direction && this.settings.fullsize) {
+        document.body.style['direction'] = direction;
       }
-    });
-  }
-
-  /**
-   * Use css transitions to detect resize
-   * @private
-   */
-  transitionListeners() {
-    let body = this.content;
-    body.style['transitionProperty'] = 'font, font-size, font-size-adjust, font-stretch, font-variation-settings, font-weight, width, height';
-    body.style['transitionDuration'] = '0.001ms';
-    body.style['transitionTimingFunction'] = 'linear';
-    body.style['transitionDelay'] = '0';
-    this._resizeCheck = this.resizeCheck.bind(this);
-    this.document.addEventListener('transitionend', this._resizeCheck);
-  }
-
-  /**
-   * Listen for media query changes and emit 'expand' event
-   * Adapted from: https://github.com/tylergaw/media-query-events/blob/master/js/mq-events.js
-   * @private
-   */
-  mediaQueryListeners() {
-    var sheets = this.document.styleSheets;
-    var mediaChangeHandler = function (m) {
-      if (m.matches && !this._expanding) {
-        setTimeout(this.expand.bind(this), 1);
+      return container;
+    }
+    wrap(container) {
+      const wrapper = document.createElement('div');
+      wrapper.style.visibility = 'hidden';
+      wrapper.style.overflow = 'hidden';
+      wrapper.style.width = '0';
+      wrapper.style.height = '0';
+      wrapper.appendChild(container);
+      return wrapper;
+    }
+    getElement(_element) {
+      let element;
+      if (typeof _element !== 'string' && (0, core_1.isElement)(_element)) {
+        element = _element;
+      } else if (typeof _element === 'string') {
+        element = document.getElementById(_element);
       }
-    }.bind(this);
-    for (var i = 0; i < sheets.length; i += 1) {
-      var rules;
-      // Firefox errors if we access cssRules cross-domain
-      try {
-        rules = sheets[i].cssRules;
-      } catch (e) {
+      if (!element) {
+        throw new Error('Not an Element');
+      }
+      return element;
+    }
+    attachTo(what) {
+      const element = this.getElement(what);
+      if (!element) {
         return;
       }
-      if (!rules) return; // Stylesheets changed
-      for (var j = 0; j < rules.length; j += 1) {
-        //if (rules[j].constructor === CSSMediaRule) {
-        if (rules[j].media) {
-          var mql = this.window.matchMedia(rules[j].media.mediaText);
-          mql.addListener(mediaChangeHandler);
-          //mql.onchange = mediaChangeHandler;
-        }
+      let base;
+      if (this.settings.hidden) {
+        base = this.wrapper;
+      } else {
+        base = this.container;
+      }
+      if (base) {
+        element.appendChild(base);
+      }
+      this.element = element;
+      return element;
+    }
+    getContainer() {
+      return this.container;
+    }
+    onResize(func) {
+      // Only listen to window for resize event if width and height are not fixed.
+      // This applies if it is set to a percent or auto.
+      if (!(0, core_1.isNumber)(this.settings.width) || !(0, core_1.isNumber)(this.settings.height)) {
+        this.resizeFunc = (0, helpers_1.throttle)(func, 50);
+        window.addEventListener('resize', this.resizeFunc, false);
       }
     }
-  }
-
-  /**
-   * Use ResizeObserver to listen for changes in the DOM and check for resize
-   * @private
-   */
-  resizeObservers() {
-    // create an observer instance
-    this.observer = new ResizeObserver(() => {
-      requestAnimationFrame(this.resizeCheck.bind(this));
-    });
-
-    // pass in the target node
-    this.observer.observe(this.document.documentElement);
-  }
-
-  /**
-   * Use MutationObserver to listen for changes in the DOM and check for resize
-   * @private
-   */
-  mutationObservers() {
-    // create an observer instance
-    this.observer = new MutationObserver(() => {
-      this.resizeCheck();
-    });
-
-    // configuration of the observer:
-    let config = {
-      attributes: true,
-      childList: true,
-      characterData: true,
-      subtree: true
-    };
-
-    // pass in the target node, as well as the observer options
-    this.observer.observe(this.document, config);
-  }
-
-  /**
-   * Test if images are loaded or add listener for when they load
-   * @private
-   */
-  imageLoadListeners() {
-    var images = this.document.querySelectorAll('img');
-    var img;
-    for (var i = 0; i < images.length; i++) {
-      img = images[i];
-      if (typeof img.naturalWidth !== 'undefined' && img.naturalWidth === 0) {
-        img.onload = this.expand.bind(this);
+    onOrientationChange(func) {
+      this.orientationChangeFunc = func;
+      window.addEventListener('orientationchange', this.orientationChangeFunc, false);
+    }
+    size(width, height) {
+      let bounds;
+      const _width = width || this.settings.width;
+      const _height = height || this.settings.height;
+      if (this.element === undefined) {
+        // Handle case where element is not defined
+        throw new Error('Element is not defined. Please attach the stage to an element first.');
       }
-    }
-  }
-
-  /**
-   * Listen for font load and check for resize when loaded
-   * @private
-   */
-  fontLoadListeners() {
-    if (!this.document || !this.document.fonts) {
-      return;
-    }
-    this.document.fonts.ready.then(function () {
-      this.resizeCheck();
-    }.bind(this));
-  }
-
-  /**
-   * Get the documentElement
-   * @returns {element} documentElement
-   */
-  root() {
-    if (!this.document) return null;
-    return this.document.documentElement;
-  }
-
-  /**
-   * Get the location offset of a EpubCFI or an #id
-   * @param {string | EpubCFI} target
-   * @param {string} [ignoreClass] for the cfi
-   * @returns { {left: Number, top: Number }
-   */
-  locationOf(target, ignoreClass) {
-    var position;
-    var targetPos = {
-      left: 0,
-      top: 0
-    };
-    if (!this.document) return targetPos;
-    if (this.epubcfi.isCfiString(target)) {
-      let range = new CFI(target).toRange(this.document, ignoreClass);
-      if (range) {
-        try {
-          if (!range.endContainer || range.startContainer == range.endContainer && range.startOffset == range.endOffset) {
-            // If the end for the range is not set, it results in collapsed becoming
-            // true. This in turn leads to inconsistent behaviour when calling
-            // getBoundingRect. Wrong bounds lead to the wrong page being displayed.
-            // https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/15684911/
-            let pos = range.startContainer.textContent.indexOf(' ', range.startOffset);
-            if (pos == -1) {
-              pos = range.startContainer.textContent.length;
-            }
-            range.setEnd(range.startContainer, pos);
-          }
-        } catch (e) {
-          console.error('setting end offset to start container length failed', e);
+      if (width === undefined) {
+        bounds = this.element.getBoundingClientRect();
+        if (bounds.width) {
+          width = String(Math.floor(bounds.width));
+          this.container.style.width = width + 'px';
         }
-        if (range.startContainer.nodeType === Node.ELEMENT_NODE) {
-          position = range.startContainer.getBoundingClientRect();
-          targetPos.left = position.left;
-          targetPos.top = position.top;
+      } else {
+        if ((0, core_1.isNumber)(width)) {
+          this.container.style.width = width + 'px';
         } else {
-          // Webkit does not handle collapsed range bounds correctly
-          // https://bugs.webkit.org/show_bug.cgi?id=138949
+          this.container.style.width = width;
+        }
+      }
+      if (height === undefined) {
+        bounds = bounds || this.element.getBoundingClientRect();
+        if (bounds.height) {
+          height = String(bounds.height);
+          this.container.style.height = height + 'px';
+        }
+      } else {
+        if ((0, core_1.isNumber)(height)) {
+          this.container.style.height = height + 'px';
+        } else {
+          this.container.style.height = height;
+        }
+      }
+      if (!(0, core_1.isNumber)(width)) {
+        width = String(this.container.clientWidth);
+      }
+      if (!(0, core_1.isNumber)(height)) {
+        height = String(this.container.clientHeight);
+      }
+      this.containerStyles = window.getComputedStyle(this.container);
+      this.containerPadding = {
+        left: String(parseFloat(this.containerStyles.paddingLeft) || 0),
+        right: String(parseFloat(this.containerStyles.paddingRight) || 0),
+        top: String(parseFloat(this.containerStyles.paddingTop) || 0),
+        bottom: String(parseFloat(this.containerStyles.paddingBottom) || 0)
+      };
+      // Bounds not set, get them from window
+      const _windowBounds = (0, core_1.windowBounds)();
+      const bodyStyles = window.getComputedStyle(document.body);
+      const bodyPadding = {
+        left: String(parseFloat(bodyStyles.paddingLeft) || 0),
+        right: String(parseFloat(bodyStyles.paddingRight) || 0),
+        top: String(parseFloat(bodyStyles.paddingTop) || 0),
+        bottom: String(parseFloat(bodyStyles.paddingBottom) || 0)
+      };
+      if (!_width) {
+        const leftPad = parseFloat(bodyPadding.left ?? '0');
+        const rightPad = parseFloat(bodyPadding.right ?? '0');
+        width = String(_windowBounds.width - leftPad - rightPad);
+      }
+      if (this.settings.fullsize && !_height || !_height) {
+        const topPad = parseFloat(bodyPadding.top ?? '0');
+        const bottomPad = parseFloat(bodyPadding.bottom ?? '0');
+        height = String(_windowBounds.height - topPad - bottomPad);
+      }
+      const containerLeft = parseFloat(this.containerPadding?.left ?? '0');
+      const containerRight = parseFloat(this.containerPadding?.right ?? '0');
+      const containerTop = parseFloat(this.containerPadding?.top ?? '0');
+      const containerBottom = parseFloat(this.containerPadding?.bottom ?? '0');
+      return {
+        width: parseFloat(width) - containerLeft - containerRight,
+        height: parseFloat(height) - containerTop - containerBottom
+      };
+    }
+    bounds() {
+      let box;
+      if (this.container.style.overflow !== 'visible') {
+        box = this.container && this.container.getBoundingClientRect();
+      }
+      if (!box || !box.width || !box.height) {
+        return (0, core_1.windowBounds)();
+      } else {
+        return box;
+      }
+    }
+    getSheet() {
+      const style = document.createElement('style');
+      // WebKit hack --> https://davidwalsh.name/add-rules-stylesheets
+      style.appendChild(document.createTextNode(''));
+      document.head.appendChild(style);
+      return style.sheet;
+    }
+    addStyleRules(selector, rulesArray) {
+      const scope = '#' + this.id + ' ';
+      let rules = '';
+      if (!this.sheet) {
+        this.sheet = this.getSheet() ?? undefined;
+      }
+      rulesArray.forEach(function (set) {
+        for (const prop in set) {
+          if (Object.prototype.hasOwnProperty.call(set, prop)) {
+            rules += prop + ':' + set[prop] + ';';
+          }
+        }
+      });
+      this.sheet?.insertRule(scope + selector + ' {' + rules + '}', 0);
+    }
+    axis(axis) {
+      if (axis === 'horizontal') {
+        this.container.style.display = 'flex';
+        this.container.style.flexDirection = 'row';
+        this.container.style.flexWrap = 'nowrap';
+      } else {
+        this.container.style.display = 'block';
+      }
+      this.settings.axis = axis;
+    }
+    direction(dir) {
+      if (this.container) {
+        this.container.dir = dir;
+        this.container.style['direction'] = dir;
+      }
+      if (this.settings.fullsize) {
+        document.body.style['direction'] = dir;
+      }
+      this.settings.dir = dir;
+    }
+    overflow(overflow) {
+      if (this.container) {
+        if (overflow === 'scroll' && this.settings.axis === 'vertical') {
+          this.container.style.overflowY = overflow;
+          this.container.style.overflowX = 'hidden';
+        } else if (overflow === 'scroll' && this.settings.axis === 'horizontal') {
+          this.container.style.overflowY = 'hidden';
+          this.container.style.overflowX = overflow;
+        } else {
+          this.container.style.overflow = overflow;
+        }
+      }
+      this.settings.overflow = overflow;
+    }
+    destroy() {
+      if (this.element) {
+        if (this.element.contains(this.container)) {
+          this.element.removeChild(this.container);
+        }
+        if (this.resizeFunc) {
+          window.removeEventListener('resize', this.resizeFunc);
+        }
+        if (this.orientationChangeFunc) {
+          window.removeEventListener('orientationchange', this.orientationChangeFunc);
+        }
+      }
+    }
+  }
+  stage.default = Stage;
+  return stage;
+}
 
-          // Construct a new non-collapsed range
-          if (isWebkit) {
-            let container = range.startContainer;
-            let newRange = new Range();
-            try {
-              if (container.nodeType === ELEMENT_NODE) {
-                position = container.getBoundingClientRect();
-              } else if (range.startOffset + 2 < container.length) {
-                newRange.setStart(container, range.startOffset);
-                newRange.setEnd(container, range.startOffset + 2);
-                position = newRange.getBoundingClientRect();
-              } else if (range.startOffset - 2 > 0) {
-                newRange.setStart(container, range.startOffset - 2);
-                newRange.setEnd(container, range.startOffset);
-                position = newRange.getBoundingClientRect();
-              } else {
-                // empty, return the parent element
-                position = container.parentNode.getBoundingClientRect();
+var views = {};
+
+var hasRequiredViews;
+function requireViews() {
+  if (hasRequiredViews) return views;
+  hasRequiredViews = 1;
+  Object.defineProperty(views, "__esModule", {
+    value: true
+  });
+  class Views {
+    constructor(container) {
+      this.container = container;
+      this._views = [];
+      this.length = 0;
+      this.hidden = false;
+    }
+    all() {
+      return this._views;
+    }
+    first() {
+      return this._views[0];
+    }
+    last() {
+      return this._views[this._views.length - 1];
+    }
+    indexOf(view) {
+      return this._views.indexOf(view);
+    }
+    slice(...args) {
+      return this._views.slice(...args);
+    }
+    get(i) {
+      return this._views[i];
+    }
+    append(view) {
+      this._views.push(view);
+      if (this.container) {
+        this.container.appendChild(view.element);
+      }
+      this.length++;
+      return view;
+    }
+    prepend(view) {
+      this._views.unshift(view);
+      if (this.container) {
+        this.container.insertBefore(view.element, this.container.firstChild);
+      }
+      this.length++;
+      return view;
+    }
+    insert(view, index) {
+      this._views.splice(index, 0, view);
+      if (this.container) {
+        if (index < this.container.children.length) {
+          this.container.insertBefore(view.element, this.container.children[index]);
+        } else {
+          this.container.appendChild(view.element);
+        }
+      }
+      this.length++;
+      return view;
+    }
+    remove(view) {
+      const index = this._views.indexOf(view);
+      if (index > -1) {
+        this._views.splice(index, 1);
+      }
+      this.destroy(view);
+      this.length--;
+    }
+    destroy(view) {
+      if (view.displayed) {
+        view.destroy();
+      }
+      if (this.container) {
+        this.container.removeChild(view.element);
+      }
+    }
+    // Iterators
+    forEach(callback) {
+      return this._views.forEach(callback);
+    }
+    clear() {
+      // Remove all views
+      let view;
+      const len = this.length;
+      if (!this.length) return;
+      for (let i = 0; i < len; i++) {
+        view = this._views[i];
+        this.destroy(view);
+      }
+      this._views = [];
+      this.length = 0;
+    }
+    find(section) {
+      let view;
+      const len = this.length;
+      for (let i = 0; i < len; i++) {
+        view = this._views[i];
+        if (view.displayed && view.section?.index == section.index) {
+          return view;
+        }
+      }
+    }
+    displayed() {
+      const displayed = [];
+      let view;
+      const len = this.length;
+      for (let i = 0; i < len; i++) {
+        view = this._views[i];
+        if (view.displayed) {
+          displayed.push(view);
+        }
+      }
+      return displayed;
+    }
+    show() {
+      let view;
+      const len = this.length;
+      for (let i = 0; i < len; i++) {
+        view = this._views[i];
+        if (view.displayed) {
+          view.show();
+        }
+      }
+      this.hidden = false;
+    }
+    hide() {
+      let view;
+      const len = this.length;
+      for (let i = 0; i < len; i++) {
+        view = this._views[i];
+        if (view.displayed) {
+          view.hide();
+        }
+      }
+      this.hidden = true;
+    }
+  }
+  views.default = Views;
+  return views;
+}
+
+var iframe = {};
+
+var contents = {};
+
+var hasRequiredContents;
+function requireContents() {
+  if (hasRequiredContents) return contents;
+  hasRequiredContents = 1;
+  var __importDefault = contents && contents.__importDefault || function (mod) {
+    return mod && mod.__esModule ? mod : {
+      "default": mod
+    };
+  };
+  Object.defineProperty(contents, "__esModule", {
+    value: true
+  });
+  const event_emitter_1 = __importDefault(requireEventEmitter());
+  const core_1 = requireCore();
+  const epubcfi_1 = __importDefault(requireEpubcfi());
+  const mapping_1 = __importDefault(requireMapping());
+  const replacements_1 = requireReplacements();
+  const constants_1 = requireConstants();
+  /**
+   * Handles DOM manipulation, queries and events for View contents
+   */
+  class Contents {
+    constructor(doc, content, cfiBase, sectionIndex) {
+      this._size = {
+        width: 0,
+        height: 0
+      };
+      this.epubcfi = new epubcfi_1.default();
+      this.called = 0;
+      this.active = true;
+      this.expanding = undefined;
+      this.observer = null;
+      this._layoutStyle = null;
+      this.readyState = 'loading';
+      this.selectionEndTimeout = null;
+      this.document = doc;
+      this.documentElement = this.document.documentElement;
+      this.content = content || this.document.body;
+      this.window = this.document.defaultView;
+      this.sectionIndex = sectionIndex || 0;
+      this.cfiBase = cfiBase || '';
+      this.epubReadingSystem('epub.js', constants_1.EPUBJS_VERSION);
+      this.listeners();
+    }
+    /**
+     * Get DOM events that are listened for and passed along
+     */
+    static get listenedEvents() {
+      return constants_1.DOM_EVENTS;
+    }
+    /**
+     * Get or Set width
+     */
+    width(w) {
+      // var frame = this.documentElement;
+      const frame = this.content;
+      if (w && (0, core_1.isNumber)(w)) {
+        w = w + 'px';
+      }
+      if (w) {
+        frame.style.width = String(w);
+        // this.content.style.width = w;
+      }
+      return parseInt(this.window.getComputedStyle(frame)['width']);
+    }
+    /**
+     * Get or Set height
+     * @param {number} [h]
+     * @returns {number} height
+     */
+    height(h) {
+      // var frame = this.documentElement;
+      const frame = this.content;
+      if (h && (0, core_1.isNumber)(h)) {
+        h = h + 'px';
+      }
+      if (h) {
+        frame.style.height = String(h);
+        // this.content.style.height = h;
+      }
+      return parseInt(this.window.getComputedStyle(frame)['height']);
+    }
+    /**
+     * Get or Set width of the contents
+     * @param {number} [w]
+     * @returns {number} width
+     */
+    contentWidth(w) {
+      const content = this.content || this.document.body;
+      if (w && (0, core_1.isNumber)(w)) {
+        w = w + 'px';
+      }
+      if (w) {
+        content.style.width = String(w);
+      }
+      return parseInt(this.window.getComputedStyle(content)['width']);
+    }
+    /**
+     * Get or Set height of the contents
+     * @param {number} [h]
+     * @returns {number} height
+     */
+    contentHeight(h) {
+      const content = this.content || this.document.body;
+      if (h && (0, core_1.isNumber)(h)) {
+        h = h + 'px';
+      }
+      if (h) {
+        content.style.height = String(h);
+      }
+      return parseInt(this.window.getComputedStyle(content)['height']);
+    }
+    /**
+     * Get the width of the text using Range
+     */
+    textWidth() {
+      let width;
+      const range = this.document.createRange();
+      const content = this.content || this.document.body;
+      const border = (0, core_1.borders)(content);
+      // Select the contents of frame
+      range.selectNodeContents(content);
+      // get the width of the text content
+      const rect = range.getBoundingClientRect();
+      width = rect.width;
+      if (border && border.width) {
+        width += border.width;
+      }
+      return Math.round(width);
+    }
+    /**
+     * Get the height of the text using Range
+     * @returns {number} height
+     */
+    textHeight() {
+      const range = this.document.createRange();
+      const content = this.content || this.document.body;
+      range.selectNodeContents(content);
+      const rect = range.getBoundingClientRect();
+      const height = rect.bottom;
+      return Math.round(height);
+    }
+    /**
+     * Get documentElement scrollWidth
+     */
+    scrollWidth() {
+      const width = this.documentElement.scrollWidth;
+      return width;
+    }
+    /**
+     * Get documentElement scrollHeight
+     */
+    scrollHeight() {
+      const height = this.documentElement.scrollHeight;
+      return height;
+    }
+    /**
+     * Set overflow css style of the contents
+     */
+    overflow(overflow) {
+      if (overflow) {
+        this.documentElement.style.overflow = overflow;
+      }
+      return this.window.getComputedStyle(this.documentElement)['overflow'];
+    }
+    /**
+     * Set overflowX css style of the documentElement
+     */
+    overflowX(overflow) {
+      if (overflow) {
+        this.documentElement.style.overflowX = overflow;
+      }
+      return this.window.getComputedStyle(this.documentElement)['overflowX'];
+    }
+    /**
+     * Set overflowY css style of the documentElement
+     */
+    overflowY(overflow) {
+      if (overflow) {
+        this.documentElement.style.overflowY = overflow;
+      }
+      return this.window.getComputedStyle(this.documentElement)['overflowY'];
+    }
+    /**
+     * Set Css styles on the contents element (typically Body)
+     * @param {string} property
+     * @param {string} value
+     * @param {boolean} [priority] set as "important"
+     */
+    css(property, value, priority) {
+      const content = this.content || this.document.body;
+      if (value) {
+        content.style.setProperty(property, value, priority ? 'important' : '');
+      } else {
+        content.style.removeProperty(property);
+      }
+      return this.window.getComputedStyle(content)[property];
+    }
+    /**
+     * Get or Set the viewport element
+     * @param {object} [options]
+     * @param {string} [options.width]
+     * @param {string} [options.height]
+     * @param {string} [options.scale]
+     * @param {string} [options.minimum]
+     * @param {string} [options.maximum]
+     * @param {string} [options.scalable]
+     */
+    viewport(options) {
+      // var width, height, scale, minimum, maximum, scalable;
+      let $viewport = this.document.querySelector("meta[name='viewport']");
+      const parsed = {
+        width: undefined,
+        height: undefined,
+        scale: undefined,
+        minimum: undefined,
+        maximum: undefined,
+        scalable: undefined
+      };
+      const newContent = [];
+      /*
+       * check for the viewport size
+       * <meta name="viewport" content="width=1024,height=697" />
+       */
+      if ($viewport && $viewport.hasAttribute('content')) {
+        const content = $viewport.getAttribute('content');
+        if (!content) return parsed;
+        const _width = content.match(/width\s*=\s*([^,]*)/);
+        const _height = content.match(/height\s*=\s*([^,]*)/);
+        const _scale = content.match(/initial-scale\s*=\s*([^,]*)/);
+        const _minimum = content.match(/minimum-scale\s*=\s*([^,]*)/);
+        const _maximum = content.match(/maximum-scale\s*=\s*([^,]*)/);
+        const _scalable = content.match(/user-scalable\s*=\s*([^,]*)/);
+        if (_width && _width.length && typeof _width[1] !== 'undefined') {
+          parsed.width = _width[1];
+        }
+        if (_height && _height.length && typeof _height[1] !== 'undefined') {
+          parsed.height = _height[1];
+        }
+        if (_scale && _scale.length && typeof _scale[1] !== 'undefined') {
+          parsed.scale = _scale[1];
+        }
+        if (_minimum && _minimum.length && typeof _minimum[1] !== 'undefined') {
+          parsed.minimum = _minimum[1];
+        }
+        if (_maximum && _maximum.length && typeof _maximum[1] !== 'undefined') {
+          parsed.maximum = _maximum[1];
+        }
+        if (_scalable && _scalable.length && typeof _scalable[1] !== 'undefined') {
+          parsed.scalable = _scalable[1];
+        }
+      }
+      const settings = (0, core_1.defaults)(options || {}, parsed);
+      if (options) {
+        if (settings.width) {
+          newContent.push('width=' + settings.width);
+        }
+        if (settings.height) {
+          newContent.push('height=' + settings.height);
+        }
+        if (settings.scale) {
+          newContent.push('initial-scale=' + settings.scale);
+        }
+        if (settings.scalable === 'no') {
+          newContent.push('minimum-scale=' + settings.scale);
+          newContent.push('maximum-scale=' + settings.scale);
+          newContent.push('user-scalable=' + settings.scalable);
+        } else {
+          if (settings.scalable) {
+            newContent.push('user-scalable=' + settings.scalable);
+          }
+          if (settings.minimum) {
+            newContent.push('minimum-scale=' + settings.minimum);
+          }
+          if (settings.maximum) {
+            newContent.push('minimum-scale=' + settings.maximum);
+          }
+        }
+        if (!$viewport) {
+          $viewport = this.document.createElement('meta');
+          $viewport.setAttribute('name', 'viewport');
+          this.document.querySelector('head').appendChild($viewport);
+        }
+        $viewport.setAttribute('content', newContent.join(', '));
+        this.window.scrollTo(0, 0);
+      }
+      return settings;
+    }
+    /**
+     * Event emitter for when the contents has expanded
+     */
+    expand() {
+      this.emit(constants_1.EVENTS.CONTENTS.EXPAND);
+    }
+    /**
+     * Add DOM listeners
+     */
+    listeners() {
+      this.imageLoadListeners();
+      this.mediaQueryListeners();
+      // this.fontLoadListeners();
+      this.addEventListeners();
+      this.addSelectionListeners();
+      if (typeof ResizeObserver === 'undefined') {
+        this.resizeListeners();
+        this.visibilityListeners();
+      } else {
+        this.resizeObservers();
+      }
+      // this.mutationObservers();
+      this.linksHandler();
+    }
+    /**
+     * Remove DOM listeners
+     */
+    removeListeners() {
+      this.removeEventListeners();
+      this.removeSelectionListeners();
+      if (this.observer) {
+        this.observer.disconnect();
+      }
+      clearTimeout(this.expanding);
+    }
+    /**
+     * Check if size of contents has changed and
+     * emit 'resize' event if it has.
+     */
+    resizeCheck() {
+      const width = this.textWidth();
+      const height = this.textHeight();
+      if (width != this._size.width || height != this._size.height) {
+        this._size = {
+          width: width,
+          height: height
+        };
+        if (this.onResize) {
+          this.onResize(this._size);
+        }
+        this.emit(constants_1.EVENTS.CONTENTS.RESIZE, this._size);
+      }
+    }
+    /**
+     * Poll for resize detection
+     * @private
+     */
+    resizeListeners() {
+      // Test size again
+      clearTimeout(this.expanding);
+      requestAnimationFrame(this.resizeCheck.bind(this));
+      this.expanding = setTimeout(this.resizeListeners.bind(this), 350);
+    }
+    /**
+     * Listen for visibility of tab to change
+     * @private
+     */
+    visibilityListeners() {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && this.active === false) {
+          this.active = true;
+          this.resizeListeners();
+        } else {
+          this.active = false;
+          clearTimeout(this.expanding);
+        }
+      });
+    }
+    /**
+     * Listen for media query changes and emit 'expand' event
+     * Adapted from: https://github.com/tylergaw/media-query-events/blob/master/js/mq-events.js
+     * @private
+     */
+    mediaQueryListeners() {
+      const sheets = this.document.styleSheets;
+      const mediaChangeHandler = m => {
+        if (m.matches && !this._expanding) {
+          setTimeout(() => this.expand(), 1);
+        }
+      };
+      for (let i = 0; i < sheets.length; i += 1) {
+        let rules;
+        // Firefox errors if we access cssRules cross-domain
+        try {
+          rules = sheets[i].cssRules;
+        } catch {
+          return;
+        }
+        if (!rules) return; // Stylesheets changed
+        for (let j = 0; j < rules.length; j += 1) {
+          const rule = rules[j];
+          // Only CSSMediaRule has a media property
+          if (rule.type === CSSRule.MEDIA_RULE && rule.media) {
+            const mql = this.window.matchMedia(rule.media.mediaText);
+            mql.addListener(mediaChangeHandler);
+          }
+        }
+      }
+    }
+    /**
+     * Use ResizeObserver to listen for changes in the DOM and check for resize
+     */
+    resizeObservers() {
+      // create an observer instance
+      const resizeObserver = new ResizeObserver(() => {
+        requestAnimationFrame(this.resizeCheck.bind(this));
+      });
+      this.observer = resizeObserver;
+      // pass in the target node
+      resizeObserver.observe(this.document.documentElement);
+    }
+    /**
+     * Use MutationObserver to listen for changes in the DOM and check for resize
+     * @private
+     */
+    mutationObservers() {
+      // create an observer instance
+      this.observer = new MutationObserver(() => {
+        this.resizeCheck();
+      });
+      // configuration of the observer:
+      const config = {
+        attributes: true,
+        childList: true,
+        characterData: true,
+        subtree: true
+      };
+      // pass in the target node, as well as the observer options
+      this.observer.observe(this.document, config);
+    }
+    /**
+     * Test if images are loaded or add listener for when they load
+     */
+    imageLoadListeners() {
+      const images = this.document.querySelectorAll('img');
+      let img;
+      for (let i = 0; i < images.length; i++) {
+        img = images[i];
+        if (typeof img.naturalWidth !== 'undefined' && img.naturalWidth === 0) {
+          img.onload = this.expand.bind(this);
+        }
+      }
+    }
+    /**
+     * Listen for font load and check for resize when loaded
+     */
+    fontLoadListeners() {
+      if (!this.document || !this.document.fonts) {
+        return;
+      }
+      this.document.fonts.ready.then(() => {
+        this.resizeCheck();
+      });
+    }
+    /**
+     * Get the documentElement
+     */
+    root() {
+      if (!this.document) return null;
+      return this.document.documentElement;
+    }
+    /**
+     * Get the location offset of a EpubCFI or an #id
+     */
+    locationOf(target, ignoreClass) {
+      let position;
+      const targetPos = {
+        left: 0,
+        top: 0
+      };
+      if (!this.document) return targetPos;
+      if (this.epubcfi.isCfiString(target)) {
+        const range = new epubcfi_1.default(target).toRange(this.document, ignoreClass);
+        if (range) {
+          try {
+            if (!range.endContainer || range.startContainer == range.endContainer && range.startOffset == range.endOffset) {
+              // If the end for the range is not set, it results in collapsed becoming
+              // true. This in turn leads to inconsistent behaviour when calling
+              // getBoundingRect. Wrong bounds lead to the wrong page being displayed.
+              // https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/15684911/
+              let pos = range.startContainer.textContent.indexOf(' ', range.startOffset);
+              if (pos == -1) {
+                pos = range.startContainer.textContent.length;
               }
-            } catch (e) {
-              console.error(e, e.stack);
+              range.setEnd(range.startContainer, pos);
             }
+          } catch (e) {
+            console.error('setting end offset to start container length failed', e);
+          }
+          if (range.startContainer.nodeType === Node.ELEMENT_NODE && range.startContainer instanceof Element) {
+            position = range.startContainer.getBoundingClientRect();
+            targetPos.left = position.left;
+            targetPos.top = position.top;
           } else {
+            // Construct a new non-collapsed range
             position = range.getBoundingClientRect();
           }
         }
-      }
-    } else if (typeof target === 'string' && target.indexOf('#') > -1) {
-      let id = target.substring(target.indexOf('#') + 1);
-      let el = this.document.getElementById(id);
-      if (el) {
-        if (isWebkit) {
-          // Webkit reports incorrect bounding rects in Columns
-          let newRange = new Range();
-          newRange.selectNode(el);
-          position = newRange.getBoundingClientRect();
-        } else {
+      } else if (typeof target === 'string' && target.indexOf('#') > -1) {
+        const id = target.substring(target.indexOf('#') + 1);
+        const el = this.document.getElementById(id);
+        if (el) {
           position = el.getBoundingClientRect();
         }
       }
-    }
-    if (position) {
-      targetPos.left = position.left;
-      targetPos.top = position.top;
-    }
-    return targetPos;
-  }
-
-  /**
-   * Append a stylesheet link to the document head
-   * @param {string} src url
-   */
-  addStylesheet(src) {
-    return new Promise(function (resolve) {
-      var $stylesheet;
-      var ready = false;
-      if (!this.document) {
-        resolve(false);
-        return;
+      if (position) {
+        targetPos.left = position.left;
+        targetPos.top = position.top;
       }
-
+      return targetPos;
+    }
+    /**
+     * Append a stylesheet link to the document head
+     */
+    addStylesheet(src) {
+      return new Promise(resolve => {
+        let $stylesheet;
+        let ready = false;
+        if (!this.document) {
+          resolve(false);
+          return;
+        }
+        // Check if link already exists
+        $stylesheet = this.document.querySelector("link[href='" + src + "']");
+        if ($stylesheet) {
+          resolve(true);
+          return; // already present
+        }
+        $stylesheet = this.document.createElement('link');
+        $stylesheet.type = 'text/css';
+        $stylesheet.rel = 'stylesheet';
+        $stylesheet.href = src;
+        $stylesheet.onload = () => {
+          if (!ready) {
+            ready = true;
+            setTimeout(() => {
+              resolve(true);
+            }, 1);
+          }
+        };
+        this.document.head.appendChild($stylesheet);
+      });
+    }
+    _getStylesheetNode(key) {
+      let styleEl;
+      key = 'epubjs-inserted-css-' + (key || '');
+      if (!this.document) return false;
       // Check if link already exists
-      $stylesheet = this.document.querySelector("link[href='" + src + "']");
-      if ($stylesheet) {
-        resolve(true);
-        return; // already present
+      styleEl = this.document.getElementById(key);
+      if (!styleEl) {
+        styleEl = this.document.createElement('style');
+        styleEl.id = key;
+        // Append style element to head
+        this.document.head.appendChild(styleEl);
       }
-      $stylesheet = this.document.createElement('link');
-      $stylesheet.type = 'text/css';
-      $stylesheet.rel = 'stylesheet';
-      $stylesheet.href = src;
-      $stylesheet.onload = $stylesheet.onreadystatechange = function () {
-        if (!ready && (!this.readyState || this.readyState == 'complete')) {
-          ready = true;
-          // Let apply
-          setTimeout(() => {
-            resolve(true);
-          }, 1);
-        }
-      };
-      this.document.head.appendChild($stylesheet);
-    }.bind(this));
-  }
-  _getStylesheetNode(key) {
-    var styleEl;
-    key = 'epubjs-inserted-css-' + (key || '');
-    if (!this.document) return false;
-
-    // Check if link already exists
-    styleEl = this.document.getElementById(key);
-    if (!styleEl) {
-      styleEl = this.document.createElement('style');
-      styleEl.id = key;
-      // Append style element to head
-      this.document.head.appendChild(styleEl);
+      return styleEl;
     }
-    return styleEl;
-  }
-
-  /**
-   * Append stylesheet css
-   * @param {string} serializedCss
-   * @param {string} key If the key is the same, the CSS will be replaced instead of inserted
-   */
-  addStylesheetCss(serializedCss, key) {
-    if (!this.document || !serializedCss) return false;
-    var styleEl;
-    styleEl = this._getStylesheetNode(key);
-    styleEl.innerHTML = serializedCss;
-    return true;
-  }
-
-  /**
-   * Append stylesheet rules to a generate stylesheet
-   * Array: https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet/insertRule
-   * Object: https://github.com/desirable-objects/json-to-css
-   * @param {array | object} rules
-   * @param {string} key If the key is the same, the CSS will be replaced instead of inserted
-   */
-  addStylesheetRules(rules, key) {
-    var styleSheet;
-    if (!this.document || !rules || rules.length === 0) return;
-
-    // Grab style sheet
-    styleSheet = this._getStylesheetNode(key).sheet;
-    if (Object.prototype.toString.call(rules) === '[object Array]') {
-      for (var i = 0, rl = rules.length; i < rl; i++) {
-        var j = 1,
-          rule = rules[i],
-          selector = rules[i][0],
-          propStr = '';
-        // If the second argument of a rule is an array of arrays, correct our variables.
-        if (Object.prototype.toString.call(rule[1][0]) === '[object Array]') {
-          rule = rule[1];
-          j = 0;
-        }
-        for (var pl = rule.length; j < pl; j++) {
-          var prop = rule[j];
-          propStr += prop[0] + ':' + prop[1] + (prop[2] ? ' !important' : '') + ';\n';
-        }
-
-        // Insert CSS Rule
-        styleSheet.insertRule(selector + '{' + propStr + '}', styleSheet.cssRules.length);
+    /**
+     * Append stylesheet css
+     * @param key If the key is the same, the CSS will be replaced instead of inserted
+     */
+    addStylesheetCss(serializedCss, key) {
+      if (!this.document || !serializedCss) return false;
+      const styleEl = this._getStylesheetNode(key);
+      if (styleEl) {
+        styleEl.innerHTML = serializedCss;
       }
-    } else {
+      return true;
+    }
+    /**
+     * Append stylesheet rules to a generate stylesheet
+     * Array: https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleSheet/insertRule
+     * Object: https://github.com/desirable-objects/json-to-css
+     * @param {array | object} rules
+     * @param {string} key If the key is the same, the CSS will be replaced instead of inserted
+     */
+    addStylesheetRules(rules, key) {
+      if (!this.document || !rules) return;
+      const styleNode = this._getStylesheetNode(key);
+      if (!(styleNode instanceof HTMLStyleElement) || !styleNode.sheet) return;
+      const styleSheet = styleNode.sheet;
       const selectors = Object.keys(rules);
       selectors.forEach(selector => {
         const definition = rules[selector];
@@ -7701,429 +8064,359 @@ class Contents {
         }
       });
     }
-  }
-
-  /**
-   * Append a script tag to the document head
-   * @param {string} src url
-   * @returns {Promise} loaded
-   */
-  addScript(src) {
-    return new Promise(function (resolve) {
-      var $script;
-      var ready = false;
+    /**
+     * Append a script tag to the document head
+     */
+    addScript(src) {
+      return new Promise(resolve => {
+        let ready = false;
+        if (!this.document) {
+          resolve(false);
+          return;
+        }
+        const $script = this.document.createElement('script');
+        $script.type = 'text/javascript';
+        $script.async = true;
+        $script.src = src;
+        $script.onload = function () {
+          if (!ready) {
+            ready = true;
+            setTimeout(() => {
+              resolve(true);
+            }, 1);
+          }
+        };
+        this.document.head.appendChild($script);
+      });
+    }
+    /**
+     * Add a class to the contents container
+     */
+    addClass(className) {
+      if (!this.document) return;
+      const content = this.content || this.document.body;
+      if (content) {
+        content.classList.add(className);
+      }
+    }
+    /**
+     * Remove a class from the contents container
+     */
+    removeClass(className) {
+      if (!this.document) return;
+      const content = this.content || this.document.body;
+      if (content) {
+        content.classList.remove(className);
+      }
+    }
+    /**
+     * Add DOM event listeners
+     */
+    addEventListeners() {
       if (!this.document) {
-        resolve(false);
         return;
       }
-      $script = this.document.createElement('script');
-      $script.type = 'text/javascript';
-      $script.async = true;
-      $script.src = src;
-      $script.onload = $script.onreadystatechange = function () {
-        if (!ready && (!this.readyState || this.readyState == 'complete')) {
-          ready = true;
-          setTimeout(function () {
-            resolve(true);
-          }, 1);
+      this._triggerEvent = this.triggerEvent.bind(this);
+      constants_1.DOM_EVENTS.forEach(eventName => {
+        this.document.addEventListener(eventName, this._triggerEvent, false);
+      });
+    }
+    /**
+     * Remove DOM event listeners
+     */
+    removeEventListeners() {
+      if (!this.document) {
+        return;
+      }
+      constants_1.DOM_EVENTS.forEach(eventName => {
+        this.document.removeEventListener(eventName, this._triggerEvent, false);
+      });
+      this._triggerEvent = undefined;
+    }
+    /**
+     * Emit passed browser events
+     */
+    triggerEvent(e) {
+      this.emit(e.type, e);
+    }
+    /**
+     * Add listener for text selection
+     */
+    addSelectionListeners() {
+      if (!this.document) {
+        return;
+      }
+      this._onSelectionChange = this.onSelectionChange.bind(this);
+      this.document.addEventListener('selectionchange', this._onSelectionChange, {
+        passive: true
+      });
+    }
+    /**
+     * Remove listener for text selection
+     */
+    removeSelectionListeners() {
+      if (!this.document) {
+        return;
+      }
+      this.document.removeEventListener('selectionchange', this._onSelectionChange, false);
+      this._onSelectionChange = undefined;
+    }
+    /**
+     * Handle getting text on selection
+     * @private
+     */
+    onSelectionChange() {
+      if (this.selectionEndTimeout) {
+        clearTimeout(this.selectionEndTimeout);
+      }
+      this.selectionEndTimeout = setTimeout(() => {
+        const selection = this.window.getSelection();
+        this.triggerSelectedEvent(selection);
+      }, 250);
+    }
+    /**
+     * Emit event on text selection
+     * @private
+     */
+    triggerSelectedEvent(selection) {
+      let range, cfirange;
+      if (selection && selection.rangeCount > 0) {
+        range = selection.getRangeAt(0);
+        if (!range.collapsed) {
+          // cfirange = this.section.cfiFromRange(range);
+          cfirange = new epubcfi_1.default(range, this.cfiBase).toString();
+          this.emit(constants_1.EVENTS.CONTENTS.SELECTED, cfirange);
+          this.emit(constants_1.EVENTS.CONTENTS.SELECTED_RANGE, range);
+        }
+      }
+    }
+    /**
+     * Get a Dom Range from EpubCFI
+     */
+    range(_cfi, ignoreClass) {
+      const cfi = new epubcfi_1.default(_cfi);
+      return cfi.toRange(this.document, ignoreClass);
+    }
+    /**
+     * Get an EpubCFI from a Dom Range
+     */
+    cfiFromRange(range, ignoreClass) {
+      return new epubcfi_1.default(range, this.cfiBase, ignoreClass).toString();
+    }
+    /**
+     * Get an EpubCFI from a Dom node
+     */
+    cfiFromNode(node, ignoreClass) {
+      return new epubcfi_1.default(node, this.cfiBase, ignoreClass).toString();
+    }
+    /**
+     * Size the contents to a given width and height
+     */
+    size(width, height) {
+      const viewport = {
+        scale: '1.0',
+        scalable: 'no'
+      };
+      this.layoutStyle('scrolling');
+      if (width >= 0) {
+        this.width(width);
+        viewport.width = String(width);
+        this.css('padding', '0 ' + width / 12 + 'px');
+      }
+      if (height >= 0) {
+        this.height(height);
+        viewport.height = String(height);
+      }
+      this.css('margin', '0');
+      this.css('box-sizing', 'border-box');
+      this.viewport(viewport);
+    }
+    /**
+     * Apply columns to the contents for pagination
+     * @param {number} width
+     * @param {number} height
+     * @param {number} columnWidth
+     * @param {number} gap
+     */
+    columns(width, height, columnWidth, gap, dir) {
+      const COLUMN_AXIS = (0, core_1.prefixed)('column-axis');
+      const COLUMN_GAP = (0, core_1.prefixed)('column-gap');
+      const COLUMN_WIDTH = (0, core_1.prefixed)('column-width');
+      const COLUMN_FILL = (0, core_1.prefixed)('column-fill');
+      const writingModeValue = this.writingMode();
+      const axis = typeof writingModeValue === 'string' && writingModeValue.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
+      this.layoutStyle('paginated');
+      if (dir === 'rtl' && axis === 'horizontal') {
+        this.direction(dir);
+      }
+      this.width(width);
+      this.height(height);
+      // Deal with Mobile trying to scale to viewport
+      this.viewport({
+        width: String(width),
+        height: String(height),
+        scale: '1.0',
+        scalable: 'no'
+      });
+      // TODO: inline-block needs more testing
+      // Fixes Safari column cut offs, but causes RTL issues
+      // this.css("display", "inline-block");
+      this.css('overflow-y', 'hidden');
+      this.css('margin', '0', true);
+      if (axis === 'vertical') {
+        this.css('padding-top', gap / 2 + 'px', true);
+        this.css('padding-bottom', gap / 2 + 'px', true);
+        this.css('padding-left', '20px');
+        this.css('padding-right', '20px');
+        this.css(COLUMN_AXIS, 'vertical');
+      } else {
+        this.css('padding-top', '20px');
+        this.css('padding-bottom', '20px');
+        this.css('padding-left', gap / 2 + 'px', true);
+        this.css('padding-right', gap / 2 + 'px', true);
+        this.css(COLUMN_AXIS, 'horizontal');
+      }
+      this.css('box-sizing', 'border-box');
+      this.css('max-width', 'inherit');
+      this.css(COLUMN_FILL, 'auto');
+      this.css(COLUMN_GAP, gap + 'px');
+      this.css(COLUMN_WIDTH, columnWidth + 'px');
+      // Fix glyph clipping in WebKit
+      // https://github.com/futurepress/epub.js/issues/983
+      this.css('-webkit-line-box-contain', 'block glyphs replaced');
+    }
+    /**
+     * Scale contents from center
+     * @param {number} scale
+     * @param {number} offsetX
+     * @param {number} offsetY
+     */
+    scaler(scale, offsetX, offsetY) {
+      const scaleStr = 'scale(' + scale + ')';
+      let translateStr = '';
+      // this.css("position", "absolute"));
+      this.css('transform-origin', 'top left');
+      if (offsetX >= 0 || offsetY >= 0) {
+        translateStr = ' translate(' + (offsetX || 0) + 'px, ' + (offsetY || 0) + 'px )';
+      }
+      this.css('transform', scaleStr + translateStr);
+    }
+    /**
+     * Fit contents into a fixed width and height
+     * @param {number} width
+     * @param {number} height
+     */
+    fit(width, height, section) {
+      const viewport = this.viewport();
+      const viewportWidth = parseInt(viewport.width);
+      const viewportHeight = parseInt(viewport.height);
+      const widthScale = width / viewportWidth;
+      const heightScale = height / viewportHeight;
+      const scale = widthScale < heightScale ? widthScale : heightScale;
+      // the translate does not work as intended, elements can end up unaligned
+      // var offsetY = (height - (viewportHeight * scale)) / 2;
+      // var offsetX = 0;
+      // if (this.sectionIndex % 2 === 1) {
+      // 	offsetX = width - (viewportWidth * scale);
+      // }
+      this.layoutStyle('paginated');
+      // scale needs width and height to be set
+      this.width(viewportWidth);
+      this.height(viewportHeight);
+      this.overflow('hidden');
+      // Scale to the correct size
+      this.scaler(scale, 0, 0);
+      // this.scaler(scale, offsetX > 0 ? offsetX : 0, offsetY);
+      // background images are not scaled by transform
+      this.css('background-size', viewportWidth * scale + 'px ' + viewportHeight * scale + 'px');
+      this.css('background-color', 'transparent');
+      if (section && section.properties.includes('page-spread-left')) {
+        // set margin since scale is weird
+        const marginLeft = width - viewportWidth * scale;
+        this.css('margin-left', marginLeft + 'px');
+      }
+    }
+    /**
+     * Set the direction of the text
+     * @param {string} [dir="ltr"] "rtl" | "ltr"
+     */
+    direction(dir = 'ltr') {
+      if (this.documentElement) {
+        this.documentElement.style['direction'] = dir;
+      }
+    }
+    mapPage(cfiBase, layout, start, end, dev) {
+      // Pass dev as the fourth argument, direction and axis as undefined
+      const mapping = new mapping_1.default(layout, undefined, undefined, dev);
+      return mapping.page(this, cfiBase, start, end);
+    }
+    /**
+     * Emit event when link in content is clicked
+     * @private
+     */
+    linksHandler() {
+      (0, replacements_1.replaceLinks)(this.content, href => {
+        this.emit(constants_1.EVENTS.CONTENTS.LINK_CLICKED, href);
+      });
+    }
+    /**
+     * Set the writingMode of the text
+     */
+    writingMode(mode) {
+      const WRITING_MODE = (0, core_1.prefixed)('writing-mode');
+      if (mode !== undefined) {
+        this.content.style.setProperty(WRITING_MODE, mode);
+        return;
+      }
+      return this.content.style.getPropertyValue(WRITING_MODE) || 'horizontal-tb';
+    }
+    /**
+     * Set the layoutStyle of the content
+     */
+    layoutStyle(style) {
+      if (style) {
+        this._layoutStyle = style;
+        navigator.epubReadingSystem.layoutStyle = this._layoutStyle;
+      }
+      return this._layoutStyle || 'paginated';
+    }
+    /**
+     * Add the epubReadingSystem object to the navigator
+     */
+    epubReadingSystem(name, version) {
+      navigator.epubReadingSystem = {
+        name: name,
+        version: version,
+        layoutStyle: this.layoutStyle(),
+        hasFeature: function (feature) {
+          switch (feature) {
+            case 'dom-manipulation':
+              return true;
+            case 'layout-changes':
+              return true;
+            case 'touch-events':
+              return true;
+            case 'mouse-events':
+              return true;
+            case 'keyboard-events':
+              return true;
+            case 'spine-scripting':
+              return false;
+            default:
+              return false;
+          }
         }
       };
-      this.document.head.appendChild($script);
-    }.bind(this));
-  }
-
-  /**
-   * Add a class to the contents container
-   * @param {string} className
-   */
-  addClass(className) {
-    var content;
-    if (!this.document) return;
-    content = this.content || this.document.body;
-    if (content) {
-      content.classList.add(className);
+      return navigator.epubReadingSystem;
+    }
+    destroy() {
+      this.removeListeners();
     }
   }
-
-  /**
-   * Remove a class from the contents container
-   * @param {string} removeClass
-   */
-  removeClass(className) {
-    var content;
-    if (!this.document) return;
-    content = this.content || this.document.body;
-    if (content) {
-      content.classList.remove(className);
-    }
-  }
-
-  /**
-   * Add DOM event listeners
-   * @private
-   */
-  addEventListeners() {
-    if (!this.document) {
-      return;
-    }
-    this._triggerEvent = this.triggerEvent.bind(this);
-    constantsExports.DOM_EVENTS.forEach(function (eventName) {
-      this.document.addEventListener(eventName, this._triggerEvent, {
-        passive: true
-      });
-    }, this);
-  }
-
-  /**
-   * Remove DOM event listeners
-   * @private
-   */
-  removeEventListeners() {
-    if (!this.document) {
-      return;
-    }
-    constantsExports.DOM_EVENTS.forEach(function (eventName) {
-      this.document.removeEventListener(eventName, this._triggerEvent, {
-        passive: true
-      });
-    }, this);
-    this._triggerEvent = undefined;
-  }
-
-  /**
-   * Emit passed browser events
-   * @private
-   */
-  triggerEvent(e) {
-    this.emit(e.type, e);
-  }
-
-  /**
-   * Add listener for text selection
-   * @private
-   */
-  addSelectionListeners() {
-    if (!this.document) {
-      return;
-    }
-    this._onSelectionChange = this.onSelectionChange.bind(this);
-    this.document.addEventListener('selectionchange', this._onSelectionChange, {
-      passive: true
-    });
-  }
-
-  /**
-   * Remove listener for text selection
-   * @private
-   */
-  removeSelectionListeners() {
-    if (!this.document) {
-      return;
-    }
-    this.document.removeEventListener('selectionchange', this._onSelectionChange, {
-      passive: true
-    });
-    this._onSelectionChange = undefined;
-  }
-
-  /**
-   * Handle getting text on selection
-   * @private
-   */
-  onSelectionChange() {
-    if (this.selectionEndTimeout) {
-      clearTimeout(this.selectionEndTimeout);
-    }
-    this.selectionEndTimeout = setTimeout(function () {
-      var selection = this.window.getSelection();
-      this.triggerSelectedEvent(selection);
-    }.bind(this), 250);
-  }
-
-  /**
-   * Emit event on text selection
-   * @private
-   */
-  triggerSelectedEvent(selection) {
-    var range, cfirange;
-    if (selection && selection.rangeCount > 0) {
-      range = selection.getRangeAt(0);
-      if (!range.collapsed) {
-        // cfirange = this.section.cfiFromRange(range);
-        cfirange = new CFI(range, this.cfiBase).toString();
-        this.emit(constantsExports.EVENTS.CONTENTS.SELECTED, cfirange);
-        this.emit(constantsExports.EVENTS.CONTENTS.SELECTED_RANGE, range);
-      }
-    }
-  }
-
-  /**
-   * Get a Dom Range from EpubCFI
-   * @param {EpubCFI} _cfi
-   * @param {string} [ignoreClass]
-   * @returns {Range} range
-   */
-  range(_cfi, ignoreClass) {
-    var cfi = new CFI(_cfi);
-    return cfi.toRange(this.document, ignoreClass);
-  }
-
-  /**
-   * Get an EpubCFI from a Dom Range
-   * @param {Range} range
-   * @param {string} [ignoreClass]
-   * @returns {EpubCFI} cfi
-   */
-  cfiFromRange(range, ignoreClass) {
-    return new CFI(range, this.cfiBase, ignoreClass).toString();
-  }
-
-  /**
-   * Get an EpubCFI from a Dom node
-   * @param {node} node
-   * @param {string} [ignoreClass]
-   * @returns {EpubCFI} cfi
-   */
-  cfiFromNode(node, ignoreClass) {
-    return new CFI(node, this.cfiBase, ignoreClass).toString();
-  }
-
-  // TODO: find where this is used - remove?
-  map(layout) {
-    var map = new Mapping(layout);
-    return map.section();
-  }
-
-  /**
-   * Size the contents to a given width and height
-   * @param {number} [width]
-   * @param {number} [height]
-   */
-  size(width, height) {
-    var viewport = {
-      scale: 1.0,
-      scalable: 'no'
-    };
-    this.layoutStyle('scrolling');
-    if (width >= 0) {
-      this.width(width);
-      viewport.width = width;
-      this.css('padding', '0 ' + width / 12 + 'px');
-    }
-    if (height >= 0) {
-      this.height(height);
-      viewport.height = height;
-    }
-    this.css('margin', '0');
-    this.css('box-sizing', 'border-box');
-    this.viewport(viewport);
-  }
-
-  /**
-   * Apply columns to the contents for pagination
-   * @param {number} width
-   * @param {number} height
-   * @param {number} columnWidth
-   * @param {number} gap
-   */
-  columns(width, height, columnWidth, gap, dir) {
-    let COLUMN_AXIS = coreExports.prefixed('column-axis');
-    let COLUMN_GAP = coreExports.prefixed('column-gap');
-    let COLUMN_WIDTH = coreExports.prefixed('column-width');
-    let COLUMN_FILL = coreExports.prefixed('column-fill');
-    let writingMode = this.writingMode();
-    let axis = writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
-    this.layoutStyle('paginated');
-    if (dir === 'rtl' && axis === 'horizontal') {
-      this.direction(dir);
-    }
-    this.width(width);
-    this.height(height);
-
-    // Deal with Mobile trying to scale to viewport
-    this.viewport({
-      width: width,
-      height: height,
-      scale: 1.0,
-      scalable: 'no'
-    });
-
-    // TODO: inline-block needs more testing
-    // Fixes Safari column cut offs, but causes RTL issues
-    // this.css("display", "inline-block");
-
-    this.css('overflow-y', 'hidden');
-    this.css('margin', '0', true);
-    if (axis === 'vertical') {
-      this.css('padding-top', gap / 2 + 'px', true);
-      this.css('padding-bottom', gap / 2 + 'px', true);
-      this.css('padding-left', '20px');
-      this.css('padding-right', '20px');
-      this.css(COLUMN_AXIS, 'vertical');
-    } else {
-      this.css('padding-top', '20px');
-      this.css('padding-bottom', '20px');
-      this.css('padding-left', gap / 2 + 'px', true);
-      this.css('padding-right', gap / 2 + 'px', true);
-      this.css(COLUMN_AXIS, 'horizontal');
-    }
-    this.css('box-sizing', 'border-box');
-    this.css('max-width', 'inherit');
-    this.css(COLUMN_FILL, 'auto');
-    this.css(COLUMN_GAP, gap + 'px');
-    this.css(COLUMN_WIDTH, columnWidth + 'px');
-
-    // Fix glyph clipping in WebKit
-    // https://github.com/futurepress/epub.js/issues/983
-    this.css('-webkit-line-box-contain', 'block glyphs replaced');
-  }
-
-  /**
-   * Scale contents from center
-   * @param {number} scale
-   * @param {number} offsetX
-   * @param {number} offsetY
-   */
-  scaler(scale, offsetX, offsetY) {
-    var scaleStr = 'scale(' + scale + ')';
-    var translateStr = '';
-    // this.css("position", "absolute"));
-    this.css('transform-origin', 'top left');
-    if (offsetX >= 0 || offsetY >= 0) {
-      translateStr = ' translate(' + (offsetX || 0) + 'px, ' + (offsetY || 0) + 'px )';
-    }
-    this.css('transform', scaleStr + translateStr);
-  }
-
-  /**
-   * Fit contents into a fixed width and height
-   * @param {number} width
-   * @param {number} height
-   */
-  fit(width, height, section) {
-    var viewport = this.viewport();
-    var viewportWidth = parseInt(viewport.width);
-    var viewportHeight = parseInt(viewport.height);
-    var widthScale = width / viewportWidth;
-    var heightScale = height / viewportHeight;
-    var scale = widthScale < heightScale ? widthScale : heightScale;
-
-    // the translate does not work as intended, elements can end up unaligned
-    // var offsetY = (height - (viewportHeight * scale)) / 2;
-    // var offsetX = 0;
-    // if (this.sectionIndex % 2 === 1) {
-    // 	offsetX = width - (viewportWidth * scale);
-    // }
-
-    this.layoutStyle('paginated');
-
-    // scale needs width and height to be set
-    this.width(viewportWidth);
-    this.height(viewportHeight);
-    this.overflow('hidden');
-
-    // Scale to the correct size
-    this.scaler(scale, 0, 0);
-    // this.scaler(scale, offsetX > 0 ? offsetX : 0, offsetY);
-
-    // background images are not scaled by transform
-    this.css('background-size', viewportWidth * scale + 'px ' + viewportHeight * scale + 'px');
-    this.css('background-color', 'transparent');
-    if (section && section.properties.includes('page-spread-left')) {
-      // set margin since scale is weird
-      var marginLeft = width - viewportWidth * scale;
-      this.css('margin-left', marginLeft + 'px');
-    }
-  }
-
-  /**
-   * Set the direction of the text
-   * @param {string} [dir="ltr"] "rtl" | "ltr"
-   */
-  direction(dir) {
-    if (this.documentElement) {
-      this.documentElement.style['direction'] = dir;
-    }
-  }
-  mapPage(cfiBase, layout, start, end, dev) {
-    var mapping = new Mapping(layout, dev);
-    return mapping.page(this, cfiBase, start, end);
-  }
-
-  /**
-   * Emit event when link in content is clicked
-   * @private
-   */
-  linksHandler() {
-    replacementsExports.replaceLinks(this.content, href => {
-      this.emit(constantsExports.EVENTS.CONTENTS.LINK_CLICKED, href);
-    });
-  }
-
-  /**
-   * Set the writingMode of the text
-   * @param {string} [mode="horizontal-tb"] "horizontal-tb" | "vertical-rl" | "vertical-lr"
-   */
-  writingMode(mode) {
-    let WRITING_MODE = coreExports.prefixed('writing-mode');
-    if (mode && this.documentElement) {
-      this.documentElement.style[WRITING_MODE] = mode;
-    }
-    return this.window.getComputedStyle(this.documentElement)[WRITING_MODE] || '';
-  }
-
-  /**
-   * Set the layoutStyle of the content
-   * @param {string} [style="paginated"] "scrolling" | "paginated"
-   * @private
-   */
-  layoutStyle(style) {
-    if (style) {
-      this._layoutStyle = style;
-      navigator.epubReadingSystem.layoutStyle = this._layoutStyle;
-    }
-    return this._layoutStyle || 'paginated';
-  }
-
-  /**
-   * Add the epubReadingSystem object to the navigator
-   * @param {string} name
-   * @param {string} version
-   * @private
-   */
-  epubReadingSystem(name, version) {
-    navigator.epubReadingSystem = {
-      name: name,
-      version: version,
-      layoutStyle: this.layoutStyle(),
-      hasFeature: function (feature) {
-        switch (feature) {
-          case 'dom-manipulation':
-            return true;
-          case 'layout-changes':
-            return true;
-          case 'touch-events':
-            return true;
-          case 'mouse-events':
-            return true;
-          case 'keyboard-events':
-            return true;
-          case 'spine-scripting':
-            return false;
-          default:
-            return false;
-        }
-      }
-    };
-    return navigator.epubReadingSystem;
-  }
-  destroy() {
-    // this.document.removeEventListener('transitionend', this._resizeCheck);
-
-    this.removeListeners();
-  }
+  (0, event_emitter_1.default)(Contents.prototype);
+  contents.default = Contents;
+  return contents;
 }
-EventEmitter(Contents.prototype);
 
 function createElement(name) {
     return document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -8411,3760 +8704,2475 @@ function setCoords(el, coords) {
     el.style.setProperty('width', `${coords.width}px`, 'important');
 }
 
-// Subclass Pane to inject custom SVG styling
-class StyledPane extends Pane {
-  constructor(target, container, transparency) {
-    super(target, container);
-    console.debug('[StyledPane] Used for overlay');
-    // Add custom styling to the SVG element only if transparency is true
-    if (transparency) {
-      console.debug('[StyledPane] Transparency block executed');
-      this.element.style.zIndex = '-3';
-      this.element.style.position = 'absolute';
+var marksPane_esm = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	Highlight: Highlight,
+	Mark: Mark,
+	Pane: Pane,
+	Underline: Underline
+});
+
+var require$$5$1 = /*@__PURE__*/getAugmentedNamespace(marksPane_esm);
+
+var hasRequiredIframe;
+function requireIframe() {
+  if (hasRequiredIframe) return iframe;
+  hasRequiredIframe = 1;
+  var __importDefault = iframe && iframe.__importDefault || function (mod) {
+    return mod && mod.__esModule ? mod : {
+      "default": mod
+    };
+  };
+  Object.defineProperty(iframe, "__esModule", {
+    value: true
+  });
+  const event_emitter_1 = __importDefault(requireEventEmitter());
+  const core_1 = requireCore();
+  const epubcfi_1 = __importDefault(requireEpubcfi());
+  const contents_1 = __importDefault(requireContents());
+  const constants_1 = requireConstants();
+  const marks_pane_1 = require$$5$1;
+  // Subclass Pane to inject custom SVG styling
+  class StyledPane extends marks_pane_1.Pane {
+    constructor(target, container, transparency) {
+      super(target, container);
+      // @ts-expect-error We should add a public method to get the method in Pane
+      const svgElement = this.element;
+      // Add custom styling to the SVG element only if transparency is true
+      if (transparency) {
+        svgElement.style.zIndex = '-3';
+        svgElement.style.position = 'absolute';
+      }
+      // You can add more styles if needed
+      svgElement.style.zIndex = '-3';
+      svgElement.style.position = 'absolute';
     }
-    // You can add more styles if needed
-    this.element.style.zIndex = '-3';
-    this.element.style.position = 'absolute';
   }
-}
-class IframeView {
-  constructor(section, options) {
-    this.settings = coreExports.extend({
-      ignoreClass: '',
-      axis: undefined,
-      //options.layout && options.layout.props.flow === "scrolled" ? "vertical" : "horizontal",
-      direction: undefined,
-      width: 0,
-      height: 0,
-      layout: undefined,
-      globalLayoutProperties: {},
-      method: undefined,
-      forceRight: false,
-      allowScriptedContent: false,
-      allowPopups: false,
-      transparency: false // New option for transparent background
-    }, options || {});
-    this.id = 'epubjs-view-' + coreExports.uuid();
-    this.section = section;
-    this.index = section.index;
-    this.element = this.container(this.settings.axis);
-    this.added = false;
-    this.displayed = false;
-    this.rendered = false;
-
-    // this.width  = this.settings.width;
-    // this.height = this.settings.height;
-
-    this.fixedWidth = 0;
-    this.fixedHeight = 0;
-
-    // Blank Cfi for Parsing
-    this.epubcfi = new CFI();
-    this.layout = this.settings.layout;
-    // Dom events to listen for
-    // this.listenedEvents = ["keydown", "keyup", "keypressed", "mouseup", "mousedown", "click", "touchend", "touchstart"];
-
-    this.pane = undefined;
-    this.highlights = {};
-    this.underlines = {};
-    this.marks = {};
-  }
-  container(axis) {
-    var element = document.createElement('div');
-    element.classList.add('epub-view');
-
-    // this.element.style.minHeight = "100px";
-    element.style.height = '0px';
-    element.style.width = '0px';
-    element.style.overflow = 'hidden';
-    element.style.position = 'relative';
-    element.style.display = 'block';
-    if (axis && axis == 'horizontal') {
-      element.style.flex = 'none';
-    } else {
-      element.style.flex = 'initial';
+  class IframeView {
+    constructor(section, options = {}) {
+      this.added = false;
+      this.displayed = false;
+      this.rendered = false;
+      this.fixedWidth = 0;
+      this.fixedHeight = 0;
+      this.epubcfi = new epubcfi_1.default();
+      this._width = 0;
+      this._height = 0;
+      this.lockedWidth = 0;
+      this.lockedHeight = 0;
+      this.stopExpanding = false;
+      this.resizing = false;
+      this._expanding = false;
+      this.highlights = {};
+      this.underlines = {};
+      this.marks = {};
+      this._needsReframe = false;
+      this.rendering = false;
+      console.log('[IframeView] constructor called with section:', section);
+      this.settings = (0, core_1.extend)({
+        ignoreClass: '',
+        axis: undefined,
+        //options.layout && options.layout.props.flow === "scrolled" ? "vertical" : "horizontal",
+        direction: undefined,
+        width: 0,
+        height: 0,
+        layout: undefined,
+        globalLayoutProperties: {},
+        method: undefined,
+        forceRight: false,
+        allowScriptedContent: false,
+        allowPopups: false,
+        transparency: false // New option for transparent background
+      }, options || {});
+      console.log('[IframeView] constructor called with settings:', this.settings);
+      this.id = 'epubjs-view-' + (0, core_1.uuid)();
+      this.section = section;
+      this.index = section.index;
+      if (this.settings.axis === undefined) {
+        throw new Error('Axis is not defined');
+      }
+      this.element = this.container(this.settings.axis);
+      this.added = false;
+      this.displayed = false;
+      this.rendered = false;
+      this.fixedWidth = 0;
+      this.fixedHeight = 0;
+      // Blank Cfi for Parsing
+      this.epubcfi = new epubcfi_1.default();
+      this.layout = this.settings.layout;
+      // Dom events to listen for
+      // this.listenedEvents = ["keydown", "keyup", "keypressed", "mouseup", "mousedown", "click", "touchend", "touchstart"];
+      this.pane = undefined;
+      this.highlights = {};
+      this.underlines = {};
+      this.marks = {};
     }
-    return element;
-  }
-  create() {
-    if (this.iframe) {
-      return this.iframe;
-    }
-    if (!this.element) {
-      this.element = this.createContainer();
-    }
-    this.iframe = document.createElement('iframe');
-    this.iframe.id = this.id;
-    this.iframe.scrolling = 'no'; // Might need to be removed: breaks ios width calculations
-    this.iframe.style.overflow = 'hidden';
-    this.iframe.seamless = 'seamless';
-    this.iframe.style.border = 'none';
-
-    // Set transparent background if option is enabled
-    if (this.settings.transparency) {
-      this.iframe.style.background = 'transparent';
-      this.iframe.allowTransparency = 'true';
-    }
-
-    // sandbox
-    this.iframe.sandbox = 'allow-same-origin';
-    if (this.settings.allowScriptedContent) {
-      this.iframe.sandbox += ' allow-scripts';
-    }
-    if (this.settings.allowPopups) {
-      this.iframe.sandbox += ' allow-popups';
-    }
-    this.iframe.setAttribute('enable-annotation', 'true');
-    this.resizing = true;
-
-    // this.iframe.style.display = "none";
-    this.element.style.visibility = 'hidden';
-    this.iframe.style.visibility = 'hidden';
-    this.iframe.style.width = '0';
-    this.iframe.style.height = '0';
-    this._width = 0;
-    this._height = 0;
-    this.element.setAttribute('ref', this.index);
-    this.added = true;
-    this.elementBounds = coreExports.bounds(this.element);
-
-    // if(width || height){
-    //   this.resize(width, height);
-    // } else if(this.width && this.height){
-    //   this.resize(this.width, this.height);
-    // } else {
-    //   this.iframeBounds = bounds(this.iframe);
-    // }
-
-    if ('srcdoc' in this.iframe) {
-      this.supportsSrcdoc = true;
-    } else {
-      this.supportsSrcdoc = false;
-    }
-    if (!this.settings.method) {
-      this.settings.method = this.supportsSrcdoc ? 'srcdoc' : 'write';
-    }
-    return this.iframe;
-  }
-  render(request) {
-    // view.onLayout = this.layout.format.bind(this.layout);
-    this.create();
-
-    // Fit to size of the container, apply padding
-    this.size();
-    if (!this.sectionRender) {
-      this.sectionRender = this.section.render(request);
-    }
-
-    // Render Chain
-    return this.sectionRender.then(function (contents) {
-      return this.load(contents);
-    }.bind(this)).then(function () {
-      // find and report the writingMode axis
-      let writingMode = this.contents.writingMode();
-
-      // Set the axis based on the flow and writing mode
-      let axis;
-      if (this.settings.flow === 'scrolled') {
-        axis = writingMode.indexOf('vertical') === 0 ? 'horizontal' : 'vertical';
+    container(axis) {
+      const element = document.createElement('div');
+      element.classList.add('epub-view');
+      // this.element.style.minHeight = "100px";
+      element.style.height = '0px';
+      element.style.width = '0px';
+      element.style.overflow = 'hidden';
+      element.style.position = 'relative';
+      element.style.display = 'block';
+      if (axis && axis == 'horizontal') {
+        element.style.flex = 'none';
       } else {
-        axis = writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
+        element.style.flex = 'initial';
       }
-      if (writingMode.indexOf('vertical') === 0 && this.settings.flow === 'paginated') {
-        this.layout.delta = this.layout.height;
+      return element;
+    }
+    create() {
+      console.log('[IframeView] create called');
+      if (this.iframe) {
+        return this.iframe;
       }
-      this.setAxis(axis);
-      this.emit(constantsExports.EVENTS.VIEWS.AXIS, axis);
-      this.setWritingMode(writingMode);
-      this.emit(constantsExports.EVENTS.VIEWS.WRITING_MODE, writingMode);
-
-      // apply the layout function to the contents
-      this.layout.format(this.contents, this.section, this.axis);
-
-      // Listen for events that require an expansion of the iframe
-      this.addListeners();
-      return new Promise(resolve => {
-        // Expand the iframe to the full size of the content
-        this.expand();
-        if (this.settings.forceRight) {
-          this.element.style.marginLeft = this.width() + 'px';
-        }
-        resolve();
-      });
-    }.bind(this), function (e) {
-      this.emit(constantsExports.EVENTS.VIEWS.LOAD_ERROR, e);
-      return new Promise((resolve, reject) => {
-        reject(e);
-      });
-    }.bind(this)).then(function () {
-      this.emit(constantsExports.EVENTS.VIEWS.RENDERED, this.section);
-    }.bind(this));
-  }
-  reset() {
-    if (this.iframe) {
+      if (!this.element) {
+        this.element = this.createContainer();
+      }
+      this.iframe = document.createElement('iframe');
+      this.iframe.id = this.id;
+      this.iframe.scrolling = 'no'; // Might need to be removed: breaks ios width calculations
+      this.iframe.style.overflow = 'hidden';
+      this.iframe.seamless = 'seamless';
+      this.iframe.style.border = 'none';
+      // Set transparent background if option is enabled
+      if (this.settings.transparency) {
+        this.iframe.style.background = 'transparent';
+        this.iframe.allowTransparency = 'true';
+      }
+      // sandbox
+      this.iframe.sandbox = 'allow-same-origin';
+      if (this.settings.allowScriptedContent) {
+        this.iframe.sandbox += ' allow-scripts';
+      }
+      if (this.settings.allowPopups) {
+        this.iframe.sandbox += ' allow-popups';
+      }
+      this.iframe.setAttribute('enable-annotation', 'true');
+      this.resizing = true;
+      // this.iframe.style.display = "none";
+      this.element.style.visibility = 'hidden';
+      this.iframe.style.visibility = 'hidden';
       this.iframe.style.width = '0';
       this.iframe.style.height = '0';
       this._width = 0;
       this._height = 0;
-      this._textWidth = undefined;
-      this._contentWidth = undefined;
-      this._textHeight = undefined;
-      this._contentHeight = undefined;
+      this.element.setAttribute('ref', String(this.index));
+      this.added = true;
+      this.elementBounds = (0, core_1.bounds)(this.element);
+      if ('srcdoc' in this.iframe) {
+        this.supportsSrcdoc = true;
+      } else {
+        this.supportsSrcdoc = false;
+      }
+      if (!this.settings.method) {
+        this.settings.method = this.supportsSrcdoc ? 'srcdoc' : 'write';
+      }
+      return this.iframe;
     }
-    this._needsReframe = true;
-  }
-
-  // Determine locks base on settings
-  size(_width, _height) {
-    var width = _width || this.settings.width;
-    var height = _height || this.settings.height;
-    if (this.layout && this.layout.name === 'pre-paginated') {
-      this.lock('both', width, height);
-    } else if (this.settings.axis === 'horizontal') {
-      this.lock('height', width, height);
-    } else {
-      this.lock('width', width, height);
+    /**
+     * Stub for createContainer to resolve TypeScript errors.
+     * Returns a new div element.
+     */
+    createContainer() {
+      return document.createElement('div');
     }
-    this.settings.width = width;
-    this.settings.height = height;
-  }
-
-  // Lock an axis to element dimensions, taking borders into account
-  lock(what, width, height) {
-    var elBorders = coreExports.borders(this.element);
-    var iframeBorders;
-    if (this.iframe) {
-      iframeBorders = coreExports.borders(this.iframe);
-    } else {
-      iframeBorders = {
-        width: 0,
-        height: 0
+    render(request) {
+      this.create();
+      // Fit to size of the container, apply padding
+      this.size();
+      if (!this.sectionRender) {
+        this.sectionRender = this.section.render(request);
+      }
+      // Render Chain
+      return this.sectionRender.then(contents => {
+        return this.load(contents);
+      }).then(() => {
+        // find and report the writingMode axis
+        const writingMode = this.contents.writingMode();
+        // Set the axis based on the flow and writing mode
+        let axis;
+        if (this.settings.flow === 'scrolled') {
+          axis = writingMode.indexOf('vertical') === 0 ? 'horizontal' : 'vertical';
+        } else {
+          axis = writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
+        }
+        if (writingMode.indexOf('vertical') === 0 && this.settings.flow === 'paginated') {
+          this.layout.delta = this.layout.height;
+        }
+        this.setAxis(axis);
+        this.emit(constants_1.EVENTS.VIEWS.AXIS, axis);
+        this.setWritingMode(writingMode);
+        this.emit(constants_1.EVENTS.VIEWS.WRITING_MODE, writingMode);
+        // apply the layout function to the contents
+        this.layout.format(this.contents, this.section, this.axis);
+        // Listen for events that require an expansion of the iframe
+        this.addListeners();
+        return new Promise(resolve => {
+          // Expand the iframe to the full size of the content
+          this.expand();
+          if (this.settings.forceRight) {
+            this.element.style.marginLeft = this.width() + 'px';
+          }
+          resolve();
+        });
+      }, e => {
+        this.emit(constants_1.EVENTS.VIEWS.LOAD_ERROR, e);
+        return new Promise((resolve, reject) => {
+          reject(e);
+        });
+      }).then(() => {
+        this.emit(constants_1.EVENTS.VIEWS.RENDERED, this.section);
+      });
+    }
+    reset() {
+      if (this.iframe) {
+        this.iframe.style.width = '0';
+        this.iframe.style.height = '0';
+        this._width = 0;
+        this._height = 0;
+        this._textWidth = undefined;
+        this._contentWidth = undefined;
+        this._textHeight = undefined;
+        this._contentHeight = undefined;
+      }
+      this._needsReframe = true;
+    }
+    // Determine locks base on settings
+    size(_width, _height) {
+      const width = _width || this.settings.width;
+      const height = _height || this.settings.height;
+      if (this.layout && this.layout.name === 'pre-paginated') {
+        this.lock('both', width, height);
+      } else if (this.settings.axis === 'horizontal') {
+        this.lock('height', width, height);
+      } else {
+        this.lock('width', width, height);
+      }
+      this.settings.width = width;
+      this.settings.height = height;
+    }
+    // Lock an axis to element dimensions, taking borders into account
+    lock(what, width, height) {
+      const elBorders = (0, core_1.borders)(this.element);
+      let iframeBorders;
+      if (this.iframe) {
+        iframeBorders = (0, core_1.borders)(this.iframe);
+      } else {
+        iframeBorders = {
+          width: 0,
+          height: 0
+        };
+      }
+      if (what == 'width' && (0, core_1.isNumber)(width)) {
+        this.lockedWidth = width - elBorders.width - iframeBorders.width;
+        // this.resize(this.lockedWidth, width); //  width keeps ratio correct
+      }
+      if (what == 'height' && (0, core_1.isNumber)(height)) {
+        this.lockedHeight = height - elBorders.height - iframeBorders.height;
+        // this.resize(width, this.lockedHeight);
+      }
+      if (what === 'both' && (0, core_1.isNumber)(width) && (0, core_1.isNumber)(height)) {
+        this.lockedWidth = width - elBorders.width - iframeBorders.width;
+        this.lockedHeight = height - elBorders.height - iframeBorders.height;
+        // this.resize(this.lockedWidth, this.lockedHeight);
+      }
+      if (this.displayed && this.iframe) {
+        // this.contents.layout();
+        this.expand();
+      }
+    }
+    // Resize a single axis based on content dimensions
+    expand() {
+      let width = this.lockedWidth;
+      let height = this.lockedHeight;
+      let columns;
+      if (!this.iframe || this._expanding) return;
+      this._expanding = true;
+      // Pre-paginated layout
+      if (this.layout.name === 'pre-paginated') {
+        width = this.layout?.columnWidth ?? width;
+        height = this.layout?.height ?? height;
+      }
+      // Horizontal axis
+      else if (this.settings.axis === 'horizontal') {
+        if (!this.contents) throw new Error('Contents not loaded');
+        if (!this.layout) throw new Error('Layout not defined');
+        width = this.contents.textWidth();
+        if (this.layout?.pageWidth && width % this.layout.pageWidth > 0) {
+          width = Math.ceil(width / this.layout.pageWidth) * this.layout.pageWidth;
+        }
+        if (this.settings.forceEvenPages && this.layout?.pageWidth) {
+          columns = width / this.layout.pageWidth;
+          if (this.layout?.divisor && this.layout.divisor > 1 && this.layout.name === 'reflowable' && columns % 2 > 0) {
+            width += this.layout.pageWidth;
+          }
+        }
+      }
+      // Vertical axis
+      else if (this.settings.axis === 'vertical') {
+        if (!this.contents) throw new Error('Contents not loaded');
+        height = this.contents.textHeight();
+        if (this.settings.flow === 'paginated' && this.layout?.height && height % this.layout.height > 0) {
+          height = Math.ceil(height / this.layout.height) * this.layout.height;
+        }
+      }
+      // Spread mode support
+      if (this.layout && this.layout._spread &&
+      // or use a getter if available
+      typeof this.layout.pageWidth === 'number' && typeof this.layout.divisor === 'number' && this.layout.divisor > 1) {
+        // Spread mode logic
+        const spreadWidth = this.layout.pageWidth * this.layout.divisor;
+        if (this._needsReframe || spreadWidth != this._width || height != this._height) {
+          this.reframe(spreadWidth, height);
+        }
+      } else {
+        if (this._needsReframe || width != this._width || height != this._height) {
+          this.reframe(width, height);
+        }
+      }
+      this._expanding = false;
+    }
+    reframe(width, height) {
+      if (this.iframe === undefined) {
+        throw new Error('Iframe not defined');
+      }
+      if ((0, core_1.isNumber)(width)) {
+        this.element.style.width = width + 'px';
+        this.iframe.style.width = width + 'px';
+        this._width = width;
+      }
+      if ((0, core_1.isNumber)(height)) {
+        this.element.style.height = height + 'px';
+        this.iframe.style.height = height + 'px';
+        this._height = height;
+      }
+      const widthDelta = this.prevBounds ? width - this.prevBounds.width : width;
+      const heightDelta = this.prevBounds ? height - this.prevBounds.height : height;
+      const size = {
+        width: width,
+        height: height,
+        widthDelta: widthDelta,
+        heightDelta: heightDelta
       };
-    }
-    if (what == 'width' && coreExports.isNumber(width)) {
-      this.lockedWidth = width - elBorders.width - iframeBorders.width;
-      // this.resize(this.lockedWidth, width); //  width keeps ratio correct
-    }
-    if (what == 'height' && coreExports.isNumber(height)) {
-      this.lockedHeight = height - elBorders.height - iframeBorders.height;
-      // this.resize(width, this.lockedHeight);
-    }
-    if (what === 'both' && coreExports.isNumber(width) && coreExports.isNumber(height)) {
-      this.lockedWidth = width - elBorders.width - iframeBorders.width;
-      this.lockedHeight = height - elBorders.height - iframeBorders.height;
-      // this.resize(this.lockedWidth, this.lockedHeight);
-    }
-    if (this.displayed && this.iframe) {
-      // this.contents.layout();
-      this.expand();
-    }
-  }
-
-  // Resize a single axis based on content dimensions
-  expand() {
-    var width = this.lockedWidth;
-    var height = this.lockedHeight;
-    var columns;
-    if (!this.iframe || this._expanding) return;
-    this._expanding = true;
-    if (this.layout.name === 'pre-paginated') {
-      width = this.layout.columnWidth;
-      height = this.layout.height;
-    }
-    // Expand Horizontally
-    else if (this.settings.axis === 'horizontal') {
-      // Get the width of the text
-      width = this.contents.textWidth();
-      if (width % this.layout.pageWidth > 0) {
-        width = Math.ceil(width / this.layout.pageWidth) * this.layout.pageWidth;
-      }
-      if (this.settings.forceEvenPages) {
-        columns = width / this.layout.pageWidth;
-        if (this.layout.divisor > 1 && this.layout.name === 'reflowable' && columns % 2 > 0) {
-          // add a blank page
-          width += this.layout.pageWidth;
+      this.pane?.render();
+      requestAnimationFrame(() => {
+        let mark;
+        for (const m in this.marks) {
+          if (Object.prototype.hasOwnProperty.call(this.marks, m)) {
+            mark = this.marks[m];
+            this.placeMark(mark.element, mark.range);
+          }
         }
-      }
-    } // Expand Vertically
-    else if (this.settings.axis === 'vertical') {
-      height = this.contents.textHeight();
-      if (this.settings.flow === 'paginated' && height % this.layout.height > 0) {
-        height = Math.ceil(height / this.layout.height) * this.layout.height;
-      }
+      });
+      this.onResize(this, size);
+      this.emit(constants_1.EVENTS.VIEWS.RESIZED, size);
+      this.prevBounds = size;
+      this.elementBounds = (0, core_1.bounds)(this.element);
     }
-
-    // Only Resize if dimensions have changed or
-    // if Frame is still hidden, so needs reframing
-    if (this._needsReframe || width != this._width || height != this._height) {
-      this.reframe(width, height);
-    }
-    this._expanding = false;
-  }
-  reframe(width, height) {
-    var size;
-    if (coreExports.isNumber(width)) {
-      this.element.style.width = width + 'px';
-      this.iframe.style.width = width + 'px';
-      this._width = width;
-    }
-    if (coreExports.isNumber(height)) {
-      this.element.style.height = height + 'px';
-      this.iframe.style.height = height + 'px';
-      this._height = height;
-    }
-    let widthDelta = this.prevBounds ? width - this.prevBounds.width : width;
-    let heightDelta = this.prevBounds ? height - this.prevBounds.height : height;
-    size = {
-      width: width,
-      height: height,
-      widthDelta: widthDelta,
-      heightDelta: heightDelta
-    };
-    this.pane && this.pane.render();
-    requestAnimationFrame(() => {
-      let mark;
-      for (let m in this.marks) {
-        if (Object.prototype.hasOwnProperty.call(this.marks, m)) {
-          mark = this.marks[m];
-          this.placeMark(mark.element, mark.range);
-        }
-      }
-    });
-    this.onResize(this, size);
-    this.emit(constantsExports.EVENTS.VIEWS.RESIZED, size);
-    this.prevBounds = size;
-    this.elementBounds = coreExports.bounds(this.element);
-  }
-  load(contents) {
-    var loading = new coreExports.defer();
-    var loaded = loading.promise;
-    if (!this.iframe) {
-      loading.reject(new Error('No Iframe Available'));
-      return loaded;
-    }
-    this.iframe.onload = function (event) {
-      this.onLoad(event, loading);
-    }.bind(this);
-    if (this.settings.method === 'blobUrl') {
-      this.blobUrl = coreExports.createBlobUrl(contents, 'application/xhtml+xml');
-      this.iframe.src = this.blobUrl;
-      this.element.appendChild(this.iframe);
-    } else if (this.settings.method === 'srcdoc') {
-      this.iframe.srcdoc = contents;
-      this.element.appendChild(this.iframe);
-    } else {
-      this.element.appendChild(this.iframe);
-      this.document = this.iframe.contentDocument;
-      if (!this.document) {
-        loading.reject(new Error('No Document Available'));
+    load(contents) {
+      const loading = new core_1.defer();
+      const loaded = loading.promise;
+      if (!this.iframe) {
+        loading.reject(new Error('No Iframe Available'));
         return loaded;
       }
-      this.iframe.contentDocument.open();
-      // For Cordova windows platform
-      if (typeof window.MSApp !== 'undefined' && window.MSApp.execUnsafeLocalFunction) {
-        var outerThis = this;
-        window.MSApp.execUnsafeLocalFunction(function () {
-          outerThis.iframe.contentDocument.write(contents);
+      this.iframe.onload = event => {
+        this.onLoad(event, loading);
+      };
+      if (this.settings.method === 'blobUrl') {
+        this.blobUrl = (0, core_1.createBlobUrl)(contents, 'application/xhtml+xml');
+        this.iframe.src = this.blobUrl;
+        this.element.appendChild(this.iframe);
+      } else if (this.settings.method === 'srcdoc') {
+        this.iframe.srcdoc = contents;
+        this.element.appendChild(this.iframe);
+      } else {
+        this.element.appendChild(this.iframe);
+        this.document = this.iframe.contentDocument ?? undefined;
+        if (!this.document) {
+          loading.reject(new Error('No Document Available'));
+          return loaded;
+        }
+        this.iframe.contentDocument?.open();
+        this.iframe.contentDocument?.write(contents);
+        this.iframe.contentDocument?.close();
+      }
+      return loaded;
+    }
+    onLoad(event, promise) {
+      if (this.iframe === undefined) {
+        throw new Error('Iframe not defined');
+      }
+      this.window = this.iframe.contentWindow ?? undefined;
+      this.document = this.iframe.contentDocument ?? undefined;
+      // Inject transparent background if option is enabled
+      if (this.settings.transparency && this.document && this.document.body) {
+        this.document.body.style.background = 'transparent';
+        // Also inject a style tag for full coverage
+        const style = this.document.createElement('style');
+        style.innerHTML = 'html, body { background: transparent !important; }';
+        this.document.head.appendChild(style);
+      }
+      if (this.document === undefined) {
+        throw new Error('Document not defined');
+      }
+      this.contents = new contents_1.default(this.document, this.document.body, this.section.cfiBase, this.section.index);
+      this.rendering = false;
+      let link = this.document.querySelector("link[rel='canonical']");
+      if (link) {
+        if (this.section.canonical) {
+          link.setAttribute('href', this.section.canonical);
+        }
+      } else {
+        link = this.document.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        if (this.section.canonical) {
+          link.setAttribute('href', this.section.canonical);
+        }
+        this.document.querySelector('head')?.appendChild(link);
+      }
+      this.contents.on(constants_1.EVENTS.CONTENTS.EXPAND, () => {
+        if (this.displayed && this.iframe) {
+          this.expand();
+          if (this.contents) {
+            this.layout.format(this.contents);
+          }
+        }
+      });
+      this.contents.on(constants_1.EVENTS.CONTENTS.RESIZE, () => {
+        if (this.displayed && this.iframe) {
+          this.expand();
+          if (this.contents) {
+            this.layout.format(this.contents);
+          }
+        }
+      });
+      promise.resolve(this.contents);
+    }
+    setLayout(layout) {
+      this.layout = layout;
+      if (this.contents) {
+        this.layout.format(this.contents);
+        this.expand();
+      }
+    }
+    setAxis(axis) {
+      this.settings.axis = axis;
+      if (axis == 'horizontal') {
+        this.element.style.flex = 'none';
+      } else {
+        this.element.style.flex = 'initial';
+      }
+      this.size();
+    }
+    setWritingMode(mode) {
+      // this.element.style.writingMode = writingMode;
+      this.writingMode = mode;
+    }
+    addListeners() {
+      //TODO: Add content listeners for expanding
+    }
+    removeListeners() {
+      //TODO: remove content listeners for expanding
+    }
+    display(request) {
+      const displayed = new core_1.defer();
+      if (!this.displayed) {
+        this.render(request).then(() => {
+          this.emit(constants_1.EVENTS.VIEWS.DISPLAYED, this);
+          this.onDisplayed(this);
+          this.displayed = true;
+          displayed.resolve(this);
+        }, function (err) {
+          displayed.reject(err);
         });
       } else {
-        this.iframe.contentDocument.write(contents);
-      }
-      this.iframe.contentDocument.close();
-    }
-    return loaded;
-  }
-  onLoad(event, promise) {
-    this.window = this.iframe.contentWindow;
-    this.document = this.iframe.contentDocument;
-
-    // Inject transparent background if option is enabled
-    if (this.settings.transparency && this.document && this.document.body) {
-      this.document.body.style.background = 'transparent';
-      // Also inject a style tag for full coverage
-      const style = this.document.createElement('style');
-      style.innerHTML = 'html, body { background: transparent !important; }';
-      this.document.head.appendChild(style);
-    }
-    this.contents = new Contents(this.document, this.document.body, this.section.cfiBase, this.section.index);
-    this.rendering = false;
-    var link = this.document.querySelector("link[rel='canonical']");
-    if (link) {
-      link.setAttribute('href', this.section.canonical);
-    } else {
-      link = this.document.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      link.setAttribute('href', this.section.canonical);
-      this.document.querySelector('head').appendChild(link);
-    }
-    this.contents.on(constantsExports.EVENTS.CONTENTS.EXPAND, () => {
-      if (this.displayed && this.iframe) {
-        this.expand();
-        if (this.contents) {
-          this.layout.format(this.contents);
-        }
-      }
-    });
-    this.contents.on(constantsExports.EVENTS.CONTENTS.RESIZE, () => {
-      if (this.displayed && this.iframe) {
-        this.expand();
-        if (this.contents) {
-          this.layout.format(this.contents);
-        }
-      }
-    });
-    promise.resolve(this.contents);
-  }
-  setLayout(layout) {
-    this.layout = layout;
-    if (this.contents) {
-      this.layout.format(this.contents);
-      this.expand();
-    }
-  }
-  setAxis(axis) {
-    this.settings.axis = axis;
-    if (axis == 'horizontal') {
-      this.element.style.flex = 'none';
-    } else {
-      this.element.style.flex = 'initial';
-    }
-    this.size();
-  }
-  setWritingMode(mode) {
-    // this.element.style.writingMode = writingMode;
-    this.writingMode = mode;
-  }
-  addListeners() {
-    //TODO: Add content listeners for expanding
-  }
-  removeListeners() {
-    //TODO: remove content listeners for expanding
-  }
-  display(request) {
-    var displayed = new coreExports.defer();
-    if (!this.displayed) {
-      this.render(request).then(function () {
-        this.emit(constantsExports.EVENTS.VIEWS.DISPLAYED, this);
-        this.onDisplayed(this);
-        this.displayed = true;
         displayed.resolve(this);
-      }.bind(this), function (err) {
-        displayed.reject(err, this);
-      });
-    } else {
-      displayed.resolve(this);
+      }
+      return displayed.promise;
     }
-    return displayed.promise;
-  }
-  show() {
-    this.element.style.visibility = 'visible';
-    if (this.iframe) {
-      this.iframe.style.visibility = 'visible';
-
-      // Remind Safari to redraw the iframe
-      this.iframe.style.transform = 'translateZ(0)';
-      this.iframe.offsetWidth;
-      this.iframe.style.transform = null;
+    show() {
+      this.element.style.visibility = 'visible';
+      if (this.iframe) {
+        this.iframe.style.visibility = 'visible';
+        // Remind Safari to redraw the iframe
+        this.iframe.style.transform = 'translateZ(0)';
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        this.iframe.offsetWidth;
+        // @ts-expect-error Part of a redrawing hack for Safari
+        this.iframe.style.transform = null;
+      }
+      this.emit(constants_1.EVENTS.VIEWS.SHOWN, this);
     }
-    this.emit(constantsExports.EVENTS.VIEWS.SHOWN, this);
-  }
-  hide() {
-    // this.iframe.style.display = "none";
-    this.element.style.visibility = 'hidden';
-    this.iframe.style.visibility = 'hidden';
-    this.stopExpanding = true;
-    this.emit(constantsExports.EVENTS.VIEWS.HIDDEN, this);
-  }
-  offset() {
-    return {
-      top: this.element.offsetTop,
-      left: this.element.offsetLeft
-    };
-  }
-  width() {
-    return this._width;
-  }
-  height() {
-    return this._height;
-  }
-  position() {
-    return this.element.getBoundingClientRect();
-  }
-  locationOf(target) {
-    var targetPos = this.contents.locationOf(target, this.settings.ignoreClass);
-    return {
-      left: targetPos.left,
-      top: targetPos.top
-    };
-  }
-  onDisplayed() {
-    // Stub, override with a custom functions
-  }
-  onResize() {
-    // Stub, override with a custom functions
-  }
-  bounds(force) {
-    if (force || !this.elementBounds) {
-      this.elementBounds = coreExports.bounds(this.element);
+    hide() {
+      // this.iframe.style.display = "none";
+      this.element.style.visibility = 'hidden';
+      this.iframe.style.visibility = 'hidden';
+      this.stopExpanding = true;
+      this.emit(constants_1.EVENTS.VIEWS.HIDDEN, this);
     }
-    return this.elementBounds;
-  }
-  highlight(cfiRange, data = {}, cb, className = 'epubjs-hl', styles = {}) {
-    if (!this.contents) {
-      return;
+    offset() {
+      return {
+        top: this.element.offsetTop,
+        left: this.element.offsetLeft
+      };
     }
-    let attributes;
-    if (this.settings.transparency) {
-      attributes = Object.assign({
-        fill: 'yellow',
-        'fill-opacity': '1.0',
-        'mix-blend-mode': 'normal'
-      }, styles);
-    } else {
-      attributes = Object.assign({
-        fill: 'yellow',
-        'fill-opacity': '0.3',
+    width() {
+      return this._width;
+    }
+    height() {
+      return this._height;
+    }
+    position() {
+      return this.element.getBoundingClientRect();
+    }
+    locationOf(target) {
+      if (this.contents === undefined) {
+        throw new Error('Contents not loaded');
+      }
+      const targetPos = this.contents.locationOf(target, this.settings.ignoreClass);
+      return {
+        left: targetPos.left,
+        top: targetPos.top
+      };
+    }
+    onDisplayed(view) {
+      console.log('[InlineView] onDisplayed called', view);
+      // Stub, override with a custom functions
+    }
+    onResize(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _viewer,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _newSize) {
+      // Stub, override with a custom functions
+    }
+    bounds(force = false) {
+      if (force || !this.elementBounds) {
+        this.elementBounds = (0, core_1.bounds)(this.element);
+      }
+      return this.elementBounds;
+    }
+    highlight(cfiRange, data = {}, cb, className = 'epubjs-hl', styles = {}) {
+      if (!this.contents) {
+        return;
+      }
+      let attributes;
+      if (this.settings.transparency) {
+        attributes = Object.assign({
+          fill: 'yellow',
+          'fill-opacity': '1.0',
+          'mix-blend-mode': 'normal'
+        }, styles);
+      } else {
+        attributes = Object.assign({
+          fill: 'yellow',
+          'fill-opacity': '0.3',
+          'mix-blend-mode': 'multiply'
+        }, styles);
+      }
+      const range = this.contents.range(cfiRange);
+      const emitter = () => {
+        this.emit(constants_1.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
+      };
+      data['epubcfi'] = cfiRange;
+      if (this.iframe === undefined) {
+        throw new Error('Iframe not defined');
+      }
+      if (!this.pane) {
+        this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
+      }
+      const m = new marks_pane_1.Highlight(range, className, data, attributes);
+      const h = this.pane.addMark(m);
+      // @ts-expect-error we should add a class to Mark to get the element
+      const highlightElement = h.element;
+      this.highlights[cfiRange] = {
+        mark: h,
+        element: highlightElement,
+        listeners: [emitter, cb]
+      };
+      highlightElement.setAttribute('ref', className);
+      highlightElement.addEventListener('click', emitter);
+      highlightElement.addEventListener('touchstart', emitter);
+      if (cb) {
+        highlightElement.addEventListener('click', cb);
+        highlightElement.addEventListener('touchstart', cb);
+      }
+      return h;
+    }
+    underline(cfiRange, data = {}, cb, className = 'epubjs-ul', styles = {}) {
+      if (!this.contents) {
+        return;
+      }
+      const attributes = Object.assign({
+        stroke: 'black',
+        'stroke-opacity': '0.3',
         'mix-blend-mode': 'multiply'
       }, styles);
+      const range = this.contents.range(cfiRange);
+      const emitter = () => {
+        this.emit(constants_1.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
+      };
+      data['epubcfi'] = cfiRange;
+      if (this.iframe === undefined) {
+        throw new Error('Iframe not defined');
+      }
+      if (!this.pane) {
+        this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
+      }
+      const m = new marks_pane_1.Underline(range, className, data, attributes);
+      const h = this.pane.addMark(m);
+      // @ts-expect-error we should add a class to Mark to get the element
+      const underlineElement = h.element;
+      this.underlines[cfiRange] = {
+        mark: h,
+        element: underlineElement,
+        listeners: [emitter, cb]
+      };
+      underlineElement.setAttribute('ref', className);
+      underlineElement.addEventListener('click', emitter);
+      underlineElement.addEventListener('touchstart', emitter);
+      if (cb) {
+        underlineElement.addEventListener('click', cb);
+        underlineElement.addEventListener('touchstart', cb);
+      }
+      return h;
     }
-    let range = this.contents.range(cfiRange);
-    let emitter = () => {
-      this.emit(constantsExports.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
-    };
-    data['epubcfi'] = cfiRange;
-    if (!this.pane) {
-      this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
+    mark(cfiRange, data = {}, cb) {
+      if (!this.contents) {
+        return null;
+      }
+      if (cfiRange in this.marks) {
+        const item = this.marks[cfiRange];
+        return item;
+      }
+      let range = this.contents.range(cfiRange);
+      if (!range) {
+        return null;
+      }
+      const container = range.commonAncestorContainer;
+      const parent = container.nodeType === 1 ? container : container.parentNode;
+      const emitter = () => {
+        this.emit(constants_1.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
+      };
+      if (range.collapsed && container.nodeType === 1) {
+        range = new Range();
+        range.selectNodeContents(container);
+      } else if (range.collapsed) {
+        // Webkit doesn't like collapsed ranges
+        range = new Range();
+        range.selectNodeContents(parent);
+      }
+      const mark = this.document.createElement('a');
+      mark.setAttribute('ref', 'epubjs-mk');
+      mark.style.position = 'absolute';
+      mark.dataset['epubcfi'] = cfiRange;
+      if (data) {
+        Object.keys(data).forEach(key => {
+          mark.dataset[key] = data[key];
+        });
+      }
+      if (cb) {
+        mark.addEventListener('click', cb);
+        mark.addEventListener('touchstart', cb);
+      }
+      mark.addEventListener('click', emitter);
+      mark.addEventListener('touchstart', emitter);
+      this.placeMark(mark, range);
+      this.element.appendChild(mark);
+      this.marks[cfiRange] = {
+        element: mark,
+        range: range,
+        listeners: [emitter, cb]
+      };
+      return parent;
     }
-    let m = new Highlight(range, className, data, attributes);
-    let h = this.pane.addMark(m);
-    this.highlights[cfiRange] = {
-      mark: h,
-      element: h.element,
-      listeners: [emitter, cb]
-    };
-    h.element.setAttribute('ref', className);
-    h.element.addEventListener('click', emitter);
-    h.element.addEventListener('touchstart', emitter);
-    if (cb) {
-      h.element.addEventListener('click', cb);
-      h.element.addEventListener('touchstart', cb);
-    }
-    return h;
-  }
-  underline(cfiRange, data = {}, cb, className = 'epubjs-ul', styles = {}) {
-    if (!this.contents) {
-      return;
-    }
-    const attributes = Object.assign({
-      stroke: 'black',
-      'stroke-opacity': '0.3',
-      'mix-blend-mode': 'multiply'
-    }, styles);
-    let range = this.contents.range(cfiRange);
-    let emitter = () => {
-      this.emit(constantsExports.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
-    };
-    data['epubcfi'] = cfiRange;
-    if (!this.pane) {
-      this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
-    }
-    let m = new Underline(range, className, data, attributes);
-    let h = this.pane.addMark(m);
-    this.underlines[cfiRange] = {
-      mark: h,
-      element: h.element,
-      listeners: [emitter, cb]
-    };
-    h.element.setAttribute('ref', className);
-    h.element.addEventListener('click', emitter);
-    h.element.addEventListener('touchstart', emitter);
-    if (cb) {
-      h.element.addEventListener('click', cb);
-      h.element.addEventListener('touchstart', cb);
-    }
-    return h;
-  }
-  mark(cfiRange, data = {}, cb) {
-    if (!this.contents) {
-      return;
-    }
-    if (cfiRange in this.marks) {
-      let item = this.marks[cfiRange];
-      return item;
-    }
-    let range = this.contents.range(cfiRange);
-    if (!range) {
-      return;
-    }
-    let container = range.commonAncestorContainer;
-    let parent = container.nodeType === 1 ? container : container.parentNode;
-    let emitter = () => {
-      this.emit(constantsExports.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
-    };
-    if (range.collapsed && container.nodeType === 1) {
-      range = new Range();
-      range.selectNodeContents(container);
-    } else if (range.collapsed) {
-      // Webkit doesn't like collapsed ranges
-      range = new Range();
-      range.selectNodeContents(parent);
-    }
-    let mark = this.document.createElement('a');
-    mark.setAttribute('ref', 'epubjs-mk');
-    mark.style.position = 'absolute';
-    mark.dataset['epubcfi'] = cfiRange;
-    if (data) {
-      Object.keys(data).forEach(key => {
-        mark.dataset[key] = data[key];
-      });
-    }
-    if (cb) {
-      mark.addEventListener('click', cb);
-      mark.addEventListener('touchstart', cb);
-    }
-    mark.addEventListener('click', emitter);
-    mark.addEventListener('touchstart', emitter);
-    this.placeMark(mark, range);
-    this.element.appendChild(mark);
-    this.marks[cfiRange] = {
-      element: mark,
-      range: range,
-      listeners: [emitter, cb]
-    };
-    return parent;
-  }
-  placeMark(element, range) {
-    let top, right, left;
-    if (this.layout.name === 'pre-paginated' || this.settings.axis !== 'horizontal') {
-      let pos = range.getBoundingClientRect();
-      top = pos.top;
-      right = pos.right;
-    } else {
-      // Element might break columns, so find the left most element
-      let rects = range.getClientRects();
-      let rect;
-      for (var i = 0; i != rects.length; i++) {
-        rect = rects[i];
-        if (!left || rect.left < left) {
-          left = rect.left;
-          // right = rect.right;
-          right = Math.ceil(left / this.layout.props.pageWidth) * this.layout.props.pageWidth - this.layout.gap / 2;
-          top = rect.top;
+    placeMark(element, range) {
+      let top, right, left;
+      if (this.layout.name === 'pre-paginated' || this.settings.axis !== 'horizontal') {
+        const pos = range.getBoundingClientRect();
+        top = pos.top;
+        right = pos.right;
+      } else {
+        // Element might break columns, so find the left most element
+        const rects = range.getClientRects();
+        if (this.layout === undefined) {
+          throw new Error('Layout not defined');
+        }
+        let rect;
+        for (let i = 0; i != rects.length; i++) {
+          rect = rects[i];
+          if (!left || rect.left < left) {
+            left = rect.left;
+            // right = rect.right;
+            right = Math.ceil(left / this.layout.props.pageWidth) * this.layout.props.pageWidth - this.layout.gap / 2;
+            top = rect.top;
+          }
         }
       }
+      element.style.top = `${top}px`;
+      element.style.left = `${right}px`;
     }
-    element.style.top = `${top}px`;
-    element.style.left = `${right}px`;
-  }
-  unhighlight(cfiRange) {
-    let item;
-    if (cfiRange in this.highlights) {
-      item = this.highlights[cfiRange];
-      this.pane.removeMark(item.mark);
-      item.listeners.forEach(l => {
-        if (l) {
-          item.element.removeEventListener('click', l);
-          item.element.removeEventListener('touchstart', l);
-        }
-      });
-      delete this.highlights[cfiRange];
-    }
-  }
-  ununderline(cfiRange) {
-    let item;
-    if (cfiRange in this.underlines) {
-      item = this.underlines[cfiRange];
-      this.pane.removeMark(item.mark);
-      item.listeners.forEach(l => {
-        if (l) {
-          item.element.removeEventListener('click', l);
-          item.element.removeEventListener('touchstart', l);
-        }
-      });
-      delete this.underlines[cfiRange];
-    }
-  }
-  unmark(cfiRange) {
-    let item;
-    if (cfiRange in this.marks) {
-      item = this.marks[cfiRange];
-      this.element.removeChild(item.element);
-      item.listeners.forEach(l => {
-        if (l) {
-          item.element.removeEventListener('click', l);
-          item.element.removeEventListener('touchstart', l);
-        }
-      });
-      delete this.marks[cfiRange];
-    }
-  }
-  destroy() {
-    for (let cfiRange in this.highlights) {
-      this.unhighlight(cfiRange);
-    }
-    for (let cfiRange in this.underlines) {
-      this.ununderline(cfiRange);
-    }
-    for (let cfiRange in this.marks) {
-      this.unmark(cfiRange);
-    }
-    if (this.blobUrl) {
-      coreExports.revokeBlobUrl(this.blobUrl);
-    }
-    if (this.displayed) {
-      this.displayed = false;
-      this.removeListeners();
-      this.contents.destroy();
-      this.stopExpanding = true;
-      this.element.removeChild(this.iframe);
-      if (this.pane) {
-        this.pane.element.remove();
-        this.pane = undefined;
+    unhighlight(cfiRange) {
+      let item;
+      if (cfiRange in this.highlights) {
+        item = this.highlights[cfiRange];
+        this.pane.removeMark(item.mark);
+        item.listeners.forEach(l => {
+          if (l) {
+            item.element.removeEventListener('click', l);
+            item.element.removeEventListener('touchstart', l);
+          }
+        });
+        delete this.highlights[cfiRange];
       }
-      this.iframe = undefined;
-      this.contents = undefined;
-      this._textWidth = null;
-      this._textHeight = null;
-      this._width = null;
-      this._height = null;
     }
-
-    // this.element.style.height = "0px";
-    // this.element.style.width = "0px";
+    ununderline(cfiRange) {
+      let item;
+      if (cfiRange in this.underlines) {
+        if (this.pane === undefined) {
+          throw new Error('Pane not defined');
+        }
+        item = this.underlines[cfiRange];
+        this.pane.removeMark(item.mark);
+        item.listeners.forEach(l => {
+          if (l) {
+            item.element.removeEventListener('click', l);
+            item.element.removeEventListener('touchstart', l);
+          }
+        });
+        delete this.underlines[cfiRange];
+      }
+    }
+    unmark(cfiRange) {
+      if (cfiRange in this.marks) {
+        const item = this.marks[cfiRange];
+        this.element.removeChild(item.element);
+        item.listeners.forEach(l => {
+          if (l) {
+            item.element.removeEventListener('click', l);
+            item.element.removeEventListener('touchstart', l);
+          }
+        });
+        delete this.marks[cfiRange];
+      }
+    }
+    destroy() {
+      for (const cfiRange in this.highlights) {
+        this.unhighlight(cfiRange);
+      }
+      for (const cfiRange in this.underlines) {
+        this.ununderline(cfiRange);
+      }
+      for (const cfiRange in this.marks) {
+        this.unmark(cfiRange);
+      }
+      if (this.blobUrl) {
+        (0, core_1.revokeBlobUrl)(this.blobUrl);
+      }
+      if (this.displayed) {
+        this.displayed = false;
+        this.removeListeners();
+        this.contents?.destroy();
+        this.stopExpanding = true;
+        this.element.removeChild(this.iframe);
+        if (this.pane) {
+          this.pane = undefined;
+        }
+        this.iframe = undefined;
+        this.contents = undefined;
+        this._textWidth = undefined;
+        this._textHeight = undefined;
+      }
+      // this.element.style.height = "0px";
+      // this.element.style.width = "0px";
+    }
   }
+  (0, event_emitter_1.default)(IframeView.prototype);
+  iframe.default = IframeView;
+  return iframe;
 }
-EventEmitter(IframeView.prototype);
 
-var scrolltype = {};
-
-var hasRequiredScrolltype;
-function requireScrolltype() {
-  if (hasRequiredScrolltype) return scrolltype;
-  hasRequiredScrolltype = 1;
-  Object.defineProperty(scrolltype, "__esModule", {
+var hasRequired_default;
+function require_default() {
+  if (hasRequired_default) return _default;
+  hasRequired_default = 1;
+  var __importDefault = _default && _default.__importDefault || function (mod) {
+    return mod && mod.__esModule ? mod : {
+      "default": mod
+    };
+  };
+  Object.defineProperty(_default, "__esModule", {
     value: true
   });
-  scrolltype.default = scrollType;
-  scrolltype.createDefiner = createDefiner;
-  // Detect RTL scroll type
-  // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
-  function scrollType() {
-    let type = 'reverse';
-    const definer = createDefiner();
-    document.body.appendChild(definer);
-    if (definer.scrollLeft > 0) {
-      type = 'default';
-    } else {
-      // Modern browsers: always use scrollIntoView logic
-      definer.children[0].children[1].scrollIntoView();
-      if (definer.scrollLeft < 0) {
-        type = 'negative';
+  const event_emitter_1 = __importDefault(requireEventEmitter());
+  const core_1 = requireCore();
+  const scrolltype_1 = __importDefault(requireScrolltype());
+  const mapping_1 = __importDefault(requireMapping());
+  const queue_1 = __importDefault(requireQueue());
+  const stage_1 = __importDefault(requireStage());
+  const views_1 = __importDefault(requireViews());
+  const constants_1 = requireConstants();
+  const iframe_1 = __importDefault(requireIframe());
+  class DefaultViewManager {
+    constructor(options) {
+      this.name = 'default';
+      this.rendered = false;
+      this.optsSettings = options.settings;
+      this.View = options.view;
+      this.request = options.request;
+      this.renditionQueue = options.queue;
+      this.q = new queue_1.default(this);
+      this.settings = {
+        infinite: true,
+        hidden: false,
+        width: undefined,
+        height: undefined,
+        axis: undefined,
+        writingMode: undefined,
+        flow: 'scrolled',
+        ignoreClass: '',
+        fullsize: undefined,
+        allowScriptedContent: false,
+        allowPopups: false,
+        ...(options.settings || {})
+      };
+      (0, core_1.extend)(this.settings, options.settings || {});
+      this.viewSettings = {
+        ignoreClass: this.settings.ignoreClass,
+        axis: this.settings.axis,
+        flow: this.settings.flow,
+        layout: this.layout,
+        method: this.settings.method,
+        // srcdoc, blobUrl, write
+        width: 0,
+        height: 0,
+        forceEvenPages: true,
+        allowScriptedContent: this.settings.allowScriptedContent,
+        allowPopups: this.settings.allowPopups
+      };
+      this.rendered = false;
+    }
+    render(element, size) {
+      console.log('[DefaultViewManager] render called, with element:', element);
+      const tag = element.tagName;
+      if (typeof this.settings.fullsize === 'undefined' && tag && (tag.toLowerCase() == 'body' || tag.toLowerCase() == 'html')) {
+        this.settings.fullsize = true;
       }
-    }
-    document.body.removeChild(definer);
-    return type;
-  }
-  function createDefiner() {
-    const definer = document.createElement('div');
-    definer.dir = 'rtl';
-    definer.style.position = 'fixed';
-    definer.style.width = '1px';
-    definer.style.height = '1px';
-    definer.style.top = '0px';
-    definer.style.left = '0px';
-    definer.style.overflow = 'hidden';
-    const innerDiv = document.createElement('div');
-    innerDiv.style.width = '2px';
-    const spanA = document.createElement('span');
-    spanA.style.width = '1px';
-    spanA.style.display = 'inline-block';
-    const spanB = document.createElement('span');
-    spanB.style.width = '1px';
-    spanB.style.display = 'inline-block';
-    innerDiv.appendChild(spanA);
-    innerDiv.appendChild(spanB);
-    definer.appendChild(innerDiv);
-    return definer;
-  }
-  return scrolltype;
-}
-
-var scrolltypeExports = requireScrolltype();
-var scrollType = /*@__PURE__*/getDefaultExportFromCjs(scrolltypeExports);
-
-var helpers = {};
-
-var hasRequiredHelpers;
-function requireHelpers() {
-  if (hasRequiredHelpers) return helpers;
-  hasRequiredHelpers = 1;
-  Object.defineProperty(helpers, "__esModule", {
-    value: true
-  });
-  helpers.debounce = debounce;
-  helpers.throttle = throttle;
-  /**
-   * Creates a debounced function that delays invoking the provided function
-   * until after the specified wait time has elapsed since the last invocation.
-   */
-  function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-  }
-  /**
-   * Creates a throttled function that only invokes the provided function
-   * at most once per every specified wait time.
-   */
-  function throttle(func, wait) {
-    let lastCall = 0;
-    return function (...args) {
-      const now = Date.now();
-      if (now - lastCall >= wait) {
-        lastCall = now;
-        func.apply(this, args);
+      if (this.settings.fullsize) {
+        this.settings.overflow = 'visible';
+        this.overflow = this.settings.overflow;
       }
-    };
-  }
-  return helpers;
-}
-
-var helpersExports = requireHelpers();
-
-class Stage {
-  constructor(_options) {
-    this.settings = _options || {};
-    this.id = 'epubjs-container-' + coreExports.uuid();
-    this.container = this.create(this.settings);
-    if (this.settings.hidden) {
-      this.wrapper = this.wrap(this.container);
+      this.settings.size = size;
+      this.settings.rtlScrollType = (0, scrolltype_1.default)();
+      // Save the stage
+      this.stage = new stage_1.default({
+        width: size ? String(size.width) : undefined,
+        height: size ? String(size.height) : undefined,
+        overflow: this.overflow,
+        hidden: this.settings.hidden,
+        axis: this.settings.axis,
+        fullsize: this.settings.fullsize,
+        direction: this.settings.direction
+      });
+      this.stage.attachTo(element);
+      // Get this stage container div
+      this.container = this.stage.getContainer();
+      // Views array methods
+      this.views = new views_1.default(this.container);
+      // Calculate Stage Size
+      this._bounds = this.bounds();
+      this._stageSize = this.stage.size();
+      // Set the dimensions for views
+      this.viewSettings.width = this._stageSize.width;
+      this.viewSettings.height = this._stageSize.height;
+      // Function to handle a resize event.
+      // Will only attach if width and height are both fixed.
+      this.stage.onResize(this.onResized.bind(this));
+      this.stage.onOrientationChange(this.onOrientationChange.bind(this));
+      // Add Event Listeners
+      this.addEventListeners();
+      console.log('[DefaultViewManager] has layout:', this.layout);
+      // Add Layout method
+      // this.applyLayoutMethod();
+      if (this.layout) {
+        console.log('[DefaultViewManager] calling updateLayout');
+        this.updateLayout();
+      }
+      this.rendered = true;
     }
-  }
-
-  /*
-   * Creates an element to render to.
-   * Resizes to passed width and height or to the elements size
-   */
-  create(options) {
-    let height = options.height; // !== false ? options.height : "100%";
-    let width = options.width; // !== false ? options.width : "100%";
-    let overflow = options.overflow || false;
-    let axis = options.axis || 'vertical';
-    let direction = options.direction;
-    coreExports.extend(this.settings, options);
-    if (options.height && coreExports.isNumber(options.height)) {
-      height = options.height + 'px';
-    }
-    if (options.width && coreExports.isNumber(options.width)) {
-      width = options.width + 'px';
-    }
-
-    // Create new container element
-    let container = document.createElement('div');
-    container.id = this.id;
-    container.classList.add('epub-container');
-
-    // Style Element
-    // container.style.fontSize = "0";
-    container.style.wordSpacing = '0';
-    container.style.lineHeight = '0';
-    container.style.verticalAlign = 'top';
-    container.style.position = 'relative';
-    if (axis === 'horizontal') {
-      // container.style.whiteSpace = "nowrap";
-      container.style.display = 'flex';
-      container.style.flexDirection = 'row';
-      container.style.flexWrap = 'nowrap';
-    }
-    if (width) {
-      container.style.width = width;
-    }
-    if (height) {
-      container.style.height = height;
-    }
-    if (overflow) {
-      if (overflow === 'scroll' && axis === 'vertical') {
-        container.style['overflow-y'] = overflow;
-        container.style['overflow-x'] = 'hidden';
-      } else if (overflow === 'scroll' && axis === 'horizontal') {
-        container.style['overflow-y'] = 'hidden';
-        container.style['overflow-x'] = overflow;
+    addEventListeners() {
+      let scroller;
+      window.addEventListener('unload', () => {
+        this.destroy();
+      });
+      if (!this.settings.fullsize) {
+        scroller = this.container;
       } else {
-        container.style['overflow'] = overflow;
+        scroller = window;
       }
+      this._onScroll = this.onScroll.bind(this);
+      scroller.addEventListener('scroll', this._onScroll);
     }
-    if (direction) {
-      container.dir = direction;
-      container.style['direction'] = direction;
-    }
-    if (direction && this.settings.fullsize) {
-      document.body.style['direction'] = direction;
-    }
-    return container;
-  }
-  wrap(container) {
-    var wrapper = document.createElement('div');
-    wrapper.style.visibility = 'hidden';
-    wrapper.style.overflow = 'hidden';
-    wrapper.style.width = '0';
-    wrapper.style.height = '0';
-    wrapper.appendChild(container);
-    return wrapper;
-  }
-  getElement(_element) {
-    var element;
-    if (coreExports.isElement(_element)) {
-      element = _element;
-    } else if (typeof _element === 'string') {
-      element = document.getElementById(_element);
-    }
-    if (!element) {
-      throw new Error('Not an Element');
-    }
-    return element;
-  }
-  attachTo(what) {
-    var element = this.getElement(what);
-    if (!element) {
-      return;
-    }
-    var base;
-    if (this.settings.hidden) {
-      base = this.wrapper;
-    } else {
-      base = this.container;
-    }
-    element.appendChild(base);
-    this.element = element;
-    return element;
-  }
-  getContainer() {
-    return this.container;
-  }
-  onResize(func) {
-    // Only listen to window for resize event if width and height are not fixed.
-    // This applies if it is set to a percent or auto.
-    if (!coreExports.isNumber(this.settings.width) || !coreExports.isNumber(this.settings.height)) {
-      this.resizeFunc = helpersExports.throttle(func, 50);
-      window.addEventListener('resize', this.resizeFunc, false);
-    }
-  }
-  onOrientationChange(func) {
-    this.orientationChangeFunc = func;
-    window.addEventListener('orientationchange', this.orientationChangeFunc, false);
-  }
-  size(width, height) {
-    var bounds;
-    let _width = width || this.settings.width;
-    let _height = height || this.settings.height;
-
-    // If width or height are set to false, inherit them from containing element
-    if (width === null) {
-      bounds = this.element.getBoundingClientRect();
-      if (bounds.width) {
-        width = Math.floor(bounds.width);
-        this.container.style.width = width + 'px';
-      }
-    } else {
-      if (coreExports.isNumber(width)) {
-        this.container.style.width = width + 'px';
+    removeEventListeners() {
+      let scroller;
+      if (!this.settings.fullsize) {
+        scroller = this.container;
       } else {
-        this.container.style.width = width;
+        scroller = window;
       }
+      scroller.removeEventListener('scroll', this._onScroll);
+      this._onScroll = undefined;
     }
-    if (height === null) {
-      bounds = bounds || this.element.getBoundingClientRect();
-      if (bounds.height) {
-        height = bounds.height;
-        this.container.style.height = height + 'px';
-      }
-    } else {
-      if (coreExports.isNumber(height)) {
-        this.container.style.height = height + 'px';
-      } else {
-        this.container.style.height = height;
-      }
+    destroy() {
+      clearTimeout(this.orientationTimeout);
+      clearTimeout(this.resizeTimeout);
+      clearTimeout(this.afterScrolled);
+      this.clear();
+      this.removeEventListeners();
+      this.stage.destroy();
+      this.rendered = false;
     }
-    if (!coreExports.isNumber(width)) {
-      width = this.container.clientWidth;
-    }
-    if (!coreExports.isNumber(height)) {
-      height = this.container.clientHeight;
-    }
-    this.containerStyles = window.getComputedStyle(this.container);
-    this.containerPadding = {
-      left: parseFloat(this.containerStyles['padding-left']) || 0,
-      right: parseFloat(this.containerStyles['padding-right']) || 0,
-      top: parseFloat(this.containerStyles['padding-top']) || 0,
-      bottom: parseFloat(this.containerStyles['padding-bottom']) || 0
-    };
-
-    // Bounds not set, get them from window
-    let _windowBounds = coreExports.windowBounds();
-    let bodyStyles = window.getComputedStyle(document.body);
-    let bodyPadding = {
-      left: parseFloat(bodyStyles['padding-left']) || 0,
-      right: parseFloat(bodyStyles['padding-right']) || 0,
-      top: parseFloat(bodyStyles['padding-top']) || 0,
-      bottom: parseFloat(bodyStyles['padding-bottom']) || 0
-    };
-    if (!_width) {
-      width = _windowBounds.width - bodyPadding.left - bodyPadding.right;
-    }
-    if (this.settings.fullsize && !_height || !_height) {
-      height = _windowBounds.height - bodyPadding.top - bodyPadding.bottom;
-    }
-    return {
-      width: width - this.containerPadding.left - this.containerPadding.right,
-      height: height - this.containerPadding.top - this.containerPadding.bottom
-    };
-  }
-  bounds() {
-    let box;
-    if (this.container.style.overflow !== 'visible') {
-      box = this.container && this.container.getBoundingClientRect();
-    }
-    if (!box || !box.width || !box.height) {
-      return coreExports.windowBounds();
-    } else {
-      return box;
-    }
-  }
-  getSheet() {
-    var style = document.createElement('style');
-
-    // WebKit hack --> https://davidwalsh.name/add-rules-stylesheets
-    style.appendChild(document.createTextNode(''));
-    document.head.appendChild(style);
-    return style.sheet;
-  }
-  addStyleRules(selector, rulesArray) {
-    var scope = '#' + this.id + ' ';
-    var rules = '';
-    if (!this.sheet) {
-      this.sheet = this.getSheet();
-    }
-    rulesArray.forEach(function (set) {
-      for (var prop in set) {
-        if (Object.prototype.hasOwnProperty.call(set, prop)) {
-          rules += prop + ':' + set[prop] + ';';
-        }
-      }
-    });
-    this.sheet.insertRule(scope + selector + ' {' + rules + '}', 0);
-  }
-  axis(axis) {
-    if (axis === 'horizontal') {
-      this.container.style.display = 'flex';
-      this.container.style.flexDirection = 'row';
-      this.container.style.flexWrap = 'nowrap';
-    } else {
-      this.container.style.display = 'block';
-    }
-    this.settings.axis = axis;
-  }
-
-  // orientation(orientation) {
-  // 	if (orientation === "landscape") {
-  //
-  // 	} else {
-  //
-  // 	}
-  //
-  // 	this.orientation = orientation;
-  // }
-
-  direction(dir) {
-    if (this.container) {
-      this.container.dir = dir;
-      this.container.style['direction'] = dir;
-    }
-    if (this.settings.fullsize) {
-      document.body.style['direction'] = dir;
-    }
-    this.settings.dir = dir;
-  }
-  overflow(overflow) {
-    if (this.container) {
-      if (overflow === 'scroll' && this.settings.axis === 'vertical') {
-        this.container.style['overflow-y'] = overflow;
-        this.container.style['overflow-x'] = 'hidden';
-      } else if (overflow === 'scroll' && this.settings.axis === 'horizontal') {
-        this.container.style['overflow-y'] = 'hidden';
-        this.container.style['overflow-x'] = overflow;
-      } else {
-        this.container.style['overflow'] = overflow;
-      }
-    }
-    this.settings.overflow = overflow;
-  }
-  destroy() {
-    if (this.element) {
-      if (this.settings.hidden) {
-        this.wrapper;
-      } else {
-        this.container;
-      }
-      if (this.element.contains(this.container)) {
-        this.element.removeChild(this.container);
-      }
-      window.removeEventListener('resize', this.resizeFunc);
-      window.removeEventListener('orientationChange', this.orientationChangeFunc);
-    }
-  }
-}
-
-class Views {
-  constructor(container) {
-    this.container = container;
-    this._views = [];
-    this.length = 0;
-    this.hidden = false;
-  }
-  all() {
-    return this._views;
-  }
-  first() {
-    return this._views[0];
-  }
-  last() {
-    return this._views[this._views.length - 1];
-  }
-  indexOf(view) {
-    return this._views.indexOf(view);
-  }
-  slice() {
-    return this._views.slice.apply(this._views, arguments);
-  }
-  get(i) {
-    return this._views[i];
-  }
-  append(view) {
-    this._views.push(view);
-    if (this.container) {
-      this.container.appendChild(view.element);
-    }
-    this.length++;
-    return view;
-  }
-  prepend(view) {
-    this._views.unshift(view);
-    if (this.container) {
-      this.container.insertBefore(view.element, this.container.firstChild);
-    }
-    this.length++;
-    return view;
-  }
-  insert(view, index) {
-    this._views.splice(index, 0, view);
-    if (this.container) {
-      if (index < this.container.children.length) {
-        this.container.insertBefore(view.element, this.container.children[index]);
-      } else {
-        this.container.appendChild(view.element);
-      }
-    }
-    this.length++;
-    return view;
-  }
-  remove(view) {
-    var index = this._views.indexOf(view);
-    if (index > -1) {
-      this._views.splice(index, 1);
-    }
-    this.destroy(view);
-    this.length--;
-  }
-  destroy(view) {
-    if (view.displayed) {
-      view.destroy();
-    }
-    if (this.container) {
-      this.container.removeChild(view.element);
-    }
-    view = null;
-  }
-
-  // Iterators
-
-  forEach() {
-    return this._views.forEach.apply(this._views, arguments);
-  }
-  clear() {
-    // Remove all views
-    var view;
-    var len = this.length;
-    if (!this.length) return;
-    for (var i = 0; i < len; i++) {
-      view = this._views[i];
-      this.destroy(view);
-    }
-    this._views = [];
-    this.length = 0;
-  }
-  find(section) {
-    var view;
-    var len = this.length;
-    for (var i = 0; i < len; i++) {
-      view = this._views[i];
-      if (view.displayed && view.section.index == section.index) {
-        return view;
-      }
-    }
-  }
-  displayed() {
-    var displayed = [];
-    var view;
-    var len = this.length;
-    for (var i = 0; i < len; i++) {
-      view = this._views[i];
-      if (view.displayed) {
-        displayed.push(view);
-      }
-    }
-    return displayed;
-  }
-  show() {
-    var view;
-    var len = this.length;
-    for (var i = 0; i < len; i++) {
-      view = this._views[i];
-      if (view.displayed) {
-        view.show();
-      }
-    }
-    this.hidden = false;
-  }
-  hide() {
-    var view;
-    var len = this.length;
-    for (var i = 0; i < len; i++) {
-      view = this._views[i];
-      if (view.displayed) {
-        view.hide();
-      }
-    }
-    this.hidden = true;
-  }
-}
-
-class DefaultViewManager {
-  constructor(options) {
-    this.name = 'default';
-    this.optsSettings = options.settings;
-    this.View = options.view;
-    this.request = options.request;
-    this.renditionQueue = options.queue;
-    this.q = new Queue(this);
-    this.settings = coreExports.extend(this.settings || {}, {
-      infinite: true,
-      hidden: false,
-      width: undefined,
-      height: undefined,
-      axis: undefined,
-      writingMode: undefined,
-      flow: 'scrolled',
-      ignoreClass: '',
-      fullsize: undefined,
-      allowScriptedContent: false,
-      allowPopups: false
-    });
-    coreExports.extend(this.settings, options.settings || {});
-    this.viewSettings = {
-      ignoreClass: this.settings.ignoreClass,
-      axis: this.settings.axis,
-      flow: this.settings.flow,
-      layout: this.layout,
-      method: this.settings.method,
-      // srcdoc, blobUrl, write
-      width: 0,
-      height: 0,
-      forceEvenPages: true,
-      allowScriptedContent: this.settings.allowScriptedContent,
-      allowPopups: this.settings.allowPopups
-    };
-    this.rendered = false;
-  }
-  render(element, size) {
-    let tag = element.tagName;
-    if (typeof this.settings.fullsize === 'undefined' && tag && (tag.toLowerCase() == 'body' || tag.toLowerCase() == 'html')) {
-      this.settings.fullsize = true;
-    }
-    if (this.settings.fullsize) {
-      this.settings.overflow = 'visible';
-      this.overflow = this.settings.overflow;
-    }
-    this.settings.size = size;
-    this.settings.rtlScrollType = scrollType();
-
-    // Save the stage
-    this.stage = new Stage({
-      width: size.width,
-      height: size.height,
-      overflow: this.overflow,
-      hidden: this.settings.hidden,
-      axis: this.settings.axis,
-      fullsize: this.settings.fullsize,
-      direction: this.settings.direction
-    });
-    this.stage.attachTo(element);
-
-    // Get this stage container div
-    this.container = this.stage.getContainer();
-
-    // Views array methods
-    this.views = new Views(this.container);
-
-    // Calculate Stage Size
-    this._bounds = this.bounds();
-    this._stageSize = this.stage.size();
-
-    // Set the dimensions for views
-    this.viewSettings.width = this._stageSize.width;
-    this.viewSettings.height = this._stageSize.height;
-
-    // Function to handle a resize event.
-    // Will only attach if width and height are both fixed.
-    this.stage.onResize(this.onResized.bind(this));
-    this.stage.onOrientationChange(this.onOrientationChange.bind(this));
-
-    // Add Event Listeners
-    this.addEventListeners();
-
-    // Add Layout method
-    // this.applyLayoutMethod();
-    if (this.layout) {
-      this.updateLayout();
-    }
-    this.rendered = true;
-  }
-  addEventListeners() {
-    var scroller;
-    window.addEventListener('unload', function () {
-      this.destroy();
-    }.bind(this));
-    if (!this.settings.fullsize) {
-      scroller = this.container;
-    } else {
-      scroller = window;
-    }
-    this._onScroll = this.onScroll.bind(this);
-    scroller.addEventListener('scroll', this._onScroll);
-  }
-  removeEventListeners() {
-    var scroller;
-    if (!this.settings.fullsize) {
-      scroller = this.container;
-    } else {
-      scroller = window;
-    }
-    scroller.removeEventListener('scroll', this._onScroll);
-    this._onScroll = undefined;
-  }
-  destroy() {
-    clearTimeout(this.orientationTimeout);
-    clearTimeout(this.resizeTimeout);
-    clearTimeout(this.afterScrolled);
-    this.clear();
-    this.removeEventListeners();
-    this.stage.destroy();
-    this.rendered = false;
-
-    /*
-       clearTimeout(this.trimTimeout);
-      if(this.settings.hidden) {
-        this.element.removeChild(this.wrapper);
-      } else {
-        this.element.removeChild(this.container);
-      }
-    */
-  }
-  onOrientationChange() {
-    let {
-      orientation
-    } = window;
-    if (this.optsSettings.resizeOnOrientationChange) {
-      this.resize();
-    }
-
-    // Per ampproject:
-    // In IOS 10.3, the measured size of an element is incorrect if the
-    // element size depends on window size directly and the measurement
-    // happens in window.resize event. Adding a timeout for correct
-    // measurement. See https://github.com/ampproject/amphtml/issues/8479
-    clearTimeout(this.orientationTimeout);
-    this.orientationTimeout = setTimeout(function () {
-      this.orientationTimeout = undefined;
+    onOrientationChange() {
+      const {
+        orientation
+      } = window;
       if (this.optsSettings.resizeOnOrientationChange) {
         this.resize();
       }
-      this.emit(constantsExports.EVENTS.MANAGERS.ORIENTATION_CHANGE, orientation);
-    }.bind(this), 500);
-  }
-  onResized() {
-    this.resize();
-  }
-  resize(width, height, epubcfi) {
-    let stageSize = this.stage.size(width, height);
-
-    // For Safari, wait for orientation to catch up
-    // if the window is a square
-    this.winBounds = coreExports.windowBounds();
-    if (this.orientationTimeout && this.winBounds.width === this.winBounds.height) {
-      // reset the stage size for next resize
-      this._stageSize = undefined;
-      return;
+      // Per ampproject:
+      // In IOS 10.3, the measured size of an element is incorrect if the
+      // element size depends on window size directly and the measurement
+      // happens in window.resize event. Adding a timeout for correct
+      // measurement. See https://github.com/ampproject/amphtml/issues/8479
+      clearTimeout(this.orientationTimeout);
+      this.orientationTimeout = setTimeout(() => {
+        this.orientationTimeout = undefined;
+        if (this.optsSettings.resizeOnOrientationChange) {
+          this.resize();
+        }
+        this.emit(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, orientation);
+      }, 500);
     }
-    if (this._stageSize && this._stageSize.width === stageSize.width && this._stageSize.height === stageSize.height) {
-      // Size is the same, no need to resize
-      return;
+    onResized() {
+      this.resize();
     }
-    this._stageSize = stageSize;
-    this._bounds = this.bounds();
-
-    // Clear current views
-    this.clear();
-
-    // Update for new views
-    this.viewSettings.width = this._stageSize.width;
-    this.viewSettings.height = this._stageSize.height;
-    this.updateLayout();
-    this.emit(constantsExports.EVENTS.MANAGERS.RESIZED, {
-      width: this._stageSize.width,
-      height: this._stageSize.height
-    }, epubcfi);
-  }
-  createView(section, forceRight) {
-    return new this.View(section, coreExports.extend(this.viewSettings, {
-      forceRight
-    }));
-  }
-  handleNextPrePaginated(forceRight, section, action) {
-    let next;
-    if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
-      if (forceRight || section.index === 0) {
-        // First page (cover) should stand alone for pre-paginated books
+    resize(width, height, epubcfi) {
+      const stageSize = this.stage.size(width, height);
+      // For Safari, wait for orientation to catch up
+      // if the window is a square
+      this.winBounds = (0, core_1.windowBounds)();
+      if (this.orientationTimeout && this.winBounds.width === this.winBounds.height) {
+        // reset the stage size for next resize
+        this._stageSize = undefined;
         return;
       }
-      next = section.next();
-      if (next && !next.properties.includes('page-spread-left')) {
-        return action.call(this, next);
+      if (this._stageSize && this._stageSize.width === stageSize.width && this._stageSize.height === stageSize.height) {
+        // Size is the same, no need to resize
+        return;
+      }
+      this._stageSize = stageSize;
+      this._bounds = this.bounds();
+      // Clear current views
+      this.clear();
+      // Update for new views
+      this.viewSettings.width = this._stageSize.width;
+      this.viewSettings.height = this._stageSize.height;
+      this.updateLayout();
+      this.emit(constants_1.EVENTS.MANAGERS.RESIZED, {
+        width: this._stageSize.width,
+        height: this._stageSize.height
+      }, epubcfi);
+    }
+    createView(section, forceRight = false) {
+      console.log('[DefaultViewManager] createView called with section:', section);
+      console.log('[DefaultViewManager] createView view:', this.View);
+      return new iframe_1.default(section, (0, core_1.extend)(this.viewSettings, {
+        forceRight
+      }));
+    }
+    handleNextPrePaginated(forceRight, section, action) {
+      let next;
+      if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
+        if (forceRight || section.index === 0) {
+          // First page (cover) should stand alone for pre-paginated books
+          return;
+        }
+        next = section.next();
+        if (next && !next.properties.includes('page-spread-left')) {
+          return action.call(this, next);
+        }
       }
     }
-  }
-  display(section, target) {
-    var displaying = new coreExports.defer();
-    var displayed = displaying.promise;
-
-    // Check if moving to target is needed
-    if (target === section.href || coreExports.isNumber(target)) {
-      target = undefined;
-    }
-
-    // Check to make sure the section we want isn't already shown
-    var visible = this.views.find(section);
-
-    // View is already shown, just move to correct location in view
-    if (visible && section && this.layout.name !== 'pre-paginated') {
-      let offset = visible.offset();
-      if (this.settings.direction === 'ltr') {
-        this.scrollTo(offset.left, offset.top, true);
-      } else {
-        let width = visible.width();
-        this.scrollTo(offset.left + width, offset.top, true);
+    display(section, target) {
+      console.log('[DefaultViewManager] display called with section:', section);
+      console.log('[DefaultViewManager] display called with target:', target);
+      const displaying = new core_1.defer();
+      const displayed = displaying.promise;
+      // Check if moving to target is needed
+      if (target === section.href || (0, core_1.isNumber)(target)) {
+        target = undefined;
       }
-      if (target) {
-        let offset = visible.locationOf(target);
-        let width = visible.width();
-        this.moveTo(offset, width);
+      // Check to make sure the section we want isn't already shown
+      const visible = this.views.find(section);
+      console.log('[DefaultViewManager] visible:', visible);
+      console.log('[DefaultViewManager] layout name:', this.layout.name);
+      // View is already shown, just move to correct location in view
+      if (visible && section && this.layout.name !== 'pre-paginated') {
+        const offset = visible.offset();
+        if (this.settings.direction === 'ltr') {
+          this.scrollTo(offset.left, offset.top, true);
+        } else {
+          const width = visible.width();
+          this.scrollTo(offset.left + width, offset.top, true);
+        }
+        if (target) {
+          const offset = visible.locationOf(target);
+          const width = visible.width();
+          this.moveTo(offset, width);
+        }
+        displaying.resolve(undefined);
+        return displayed;
       }
-      displaying.resolve();
+      // Hide all current views
+      this.clear();
+      let forceRight = false;
+      if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && section.properties.includes('page-spread-right')) {
+        forceRight = true;
+      }
+      this.add(section, forceRight).then(view => {
+        // Move to correct place within the section, if needed
+        if (target) {
+          const offset = view.locationOf(target);
+          const width = view.width();
+          this.moveTo(offset, width);
+        }
+      }, err => {
+        displaying.reject(err);
+      }).then(() => {
+        return this.handleNextPrePaginated(forceRight, section, this.add);
+      }).then(() => {
+        this.views.show();
+        displaying.resolve(undefined);
+      });
       return displayed;
     }
-
-    // Hide all current views
-    this.clear();
-    let forceRight = false;
-    if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && section.properties.includes('page-spread-right')) {
-      forceRight = true;
+    afterDisplayed(view) {
+      console.log('[DefaultViewManager] afterDisplayed called with view:', view);
+      this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
     }
-    this.add(section, forceRight).then(function (view) {
-      // Move to correct place within the section, if needed
-      if (target) {
-        let offset = view.locationOf(target);
-        let width = view.width();
-        this.moveTo(offset, width);
-      }
-    }.bind(this), err => {
-      displaying.reject(err);
-    }).then(function () {
-      return this.handleNextPrePaginated(forceRight, section, this.add);
-    }.bind(this)).then(function () {
-      this.views.show();
-      displaying.resolve();
-    }.bind(this));
-    // .then(function(){
-    // 	return this.hooks.display.trigger(view);
-    // }.bind(this))
-    // .then(function(){
-    // 	this.views.show();
-    // }.bind(this));
-    return displayed;
-  }
-  afterDisplayed(view) {
-    this.emit(constantsExports.EVENTS.MANAGERS.ADDED, view);
-  }
-  afterResized(view) {
-    this.emit(constantsExports.EVENTS.MANAGERS.RESIZE, view.section);
-  }
-  moveTo(offset, width) {
-    var distX = 0,
-      distY = 0;
-    if (!this.isPaginated) {
-      distY = offset.top;
-    } else {
-      distX = Math.floor(offset.left / this.layout.delta) * this.layout.delta;
-      if (distX + this.layout.delta > this.container.scrollWidth) {
-        distX = this.container.scrollWidth - this.layout.delta;
-      }
-      distY = Math.floor(offset.top / this.layout.delta) * this.layout.delta;
-      if (distY + this.layout.delta > this.container.scrollHeight) {
-        distY = this.container.scrollHeight - this.layout.delta;
-      }
+    afterResized(view) {
+      this.emit(constants_1.EVENTS.MANAGERS.RESIZE, view.section);
     }
-    if (this.settings.direction === 'rtl') {
-      /***
-        the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
-        to distX or use `Math.ceil` function, or multiply offset.left by -1
-        before `Math.floor`
-      */
-      distX = distX + this.layout.delta;
-      distX = distX - width;
+    async add(section, forceRight = false) {
+      const view = this.createView(section, forceRight);
+      console.log('[DefaultViewManager] add called and created view:', view);
+      this.views.append(view);
+      // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
+      view.onDisplayed = this.afterDisplayed.bind(this);
+      view.onResize = this.afterResized.bind(this);
+      view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
+        this.updateAxis(axis);
+      });
+      view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
+        this.updateWritingMode(mode);
+      });
+      return view.display(this.request).then(() => view);
     }
-    this.scrollTo(distX, distY, true);
-  }
-  add(section, forceRight) {
-    var view = this.createView(section, forceRight);
-    this.views.append(view);
-
-    // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
-    view.onDisplayed = this.afterDisplayed.bind(this);
-    view.onResize = this.afterResized.bind(this);
-    view.on(constantsExports.EVENTS.VIEWS.AXIS, axis => {
-      this.updateAxis(axis);
-    });
-    view.on(constantsExports.EVENTS.VIEWS.WRITING_MODE, mode => {
-      this.updateWritingMode(mode);
-    });
-    return view.display(this.request);
-  }
-  append(section, forceRight) {
-    var view = this.createView(section, forceRight);
-    this.views.append(view);
-    view.onDisplayed = this.afterDisplayed.bind(this);
-    view.onResize = this.afterResized.bind(this);
-    view.on(constantsExports.EVENTS.VIEWS.AXIS, axis => {
-      this.updateAxis(axis);
-    });
-    view.on(constantsExports.EVENTS.VIEWS.WRITING_MODE, mode => {
-      this.updateWritingMode(mode);
-    });
-    return view.display(this.request);
-  }
-  prepend(section, forceRight) {
-    var view = this.createView(section, forceRight);
-    view.on(constantsExports.EVENTS.VIEWS.RESIZED, bounds => {
-      this.counter(bounds);
-    });
-    this.views.prepend(view);
-    view.onDisplayed = this.afterDisplayed.bind(this);
-    view.onResize = this.afterResized.bind(this);
-    view.on(constantsExports.EVENTS.VIEWS.AXIS, axis => {
-      this.updateAxis(axis);
-    });
-    view.on(constantsExports.EVENTS.VIEWS.WRITING_MODE, mode => {
-      this.updateWritingMode(mode);
-    });
-    return view.display(this.request);
-  }
-  counter(bounds) {
-    if (this.settings.axis === 'vertical') {
-      this.scrollBy(0, bounds.heightDelta, true);
-    } else {
-      this.scrollBy(bounds.widthDelta, 0, true);
-    }
-  }
-
-  // resizeView(view) {
-  //
-  // 	if(this.settings.globalLayoutProperties.layout === "pre-paginated") {
-  // 		view.lock("both", this.bounds.width, this.bounds.height);
-  // 	} else {
-  // 		view.lock("width", this.bounds.width, this.bounds.height);
-  // 	}
-  //
-  // };
-
-  next() {
-    var next;
-    var left;
-    let dir = this.settings.direction;
-    if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === 'horizontal' && (!dir || dir === 'ltr')) {
-      this.scrollLeft = this.container.scrollLeft;
-      left = this.container.scrollLeft + this.container.offsetWidth + this.layout.delta;
-      if (left <= this.container.scrollWidth) {
-        this.scrollBy(this.layout.delta, 0, true);
+    moveTo(offset, width) {
+      let distX = 0,
+        distY = 0;
+      if (!this.isPaginated) {
+        distY = offset.top;
       } else {
-        next = this.views.last().section.next();
+        distX = Math.floor(offset.left / this.layout.delta) * this.layout.delta;
+        if (distX + this.layout.delta > this.container.scrollWidth) {
+          distX = this.container.scrollWidth - this.layout.delta;
+        }
+        distY = Math.floor(offset.top / this.layout.delta) * this.layout.delta;
+        if (distY + this.layout.delta > this.container.scrollHeight) {
+          distY = this.container.scrollHeight - this.layout.delta;
+        }
       }
-    } else if (this.isPaginated && this.settings.axis === 'horizontal' && dir === 'rtl') {
-      this.scrollLeft = this.container.scrollLeft;
-      if (this.settings.rtlScrollType === 'default') {
+      if (this.settings.direction === 'rtl') {
+        /***
+                  the `floor` function above (L343) is on positive values, so we should add one `layout.delta`
+                  to distX or use `Math.ceil` function, or multiply offset.left by -1
+                  before `Math.floor`
+              */
+        distX = distX + this.layout.delta;
+        distX = distX - width;
+      }
+      this.scrollTo(distX, distY, true);
+    }
+    async append(section, forceRight = false) {
+      const view = this.createView(section, forceRight);
+      console.log('[DefaultViewManager] append called and created view:', view);
+      this.views.append(view);
+      view.onDisplayed = this.afterDisplayed.bind(this);
+      view.onResize = this.afterResized.bind(this);
+      view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
+        this.updateAxis(axis);
+      });
+      view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
+        this.updateWritingMode(mode);
+      });
+      return view.display(this.request).then(() => view);
+    }
+    async prepend(section, forceRight = false) {
+      const view = this.createView(section, forceRight);
+      view.on(constants_1.EVENTS.VIEWS.RESIZED, bounds => {
+        this.counter(bounds);
+      });
+      this.views.prepend(view);
+      view.onDisplayed = this.afterDisplayed.bind(this);
+      view.onResize = this.afterResized.bind(this);
+      view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
+        this.updateAxis(axis);
+      });
+      view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
+        this.updateWritingMode(mode);
+      });
+      return view.display(this.request).then(() => view);
+    }
+    counter(bounds) {
+      if (this.settings.axis === 'vertical') {
+        this.scrollBy(0, bounds.heightDelta, true);
+      } else {
+        this.scrollBy(bounds.widthDelta, 0, true);
+      }
+    }
+    next() {
+      let next;
+      let left;
+      const dir = this.settings.direction;
+      if (this.views === undefined || !this.views.length) {
+        return Promise.resolve();
+      }
+      if (this.isPaginated && this.settings.axis === 'horizontal' && (!dir || dir === 'ltr')) {
+        this.scrollLeft = this.container.scrollLeft;
+        left = this.container.scrollLeft + this.container.offsetWidth + this.layout.delta;
+        if (left <= this.container.scrollWidth) {
+          this.scrollBy(this.layout.delta, 0, true);
+        } else {
+          const lastView = this.views.last();
+          if (lastView && lastView.section) {
+            next = lastView.section.next();
+          }
+        }
+      } else if (this.isPaginated && this.settings.axis === 'horizontal' && dir === 'rtl') {
+        this.scrollLeft = this.container.scrollLeft;
+        if (this.settings.rtlScrollType === 'default') {
+          left = this.container.scrollLeft;
+          if (left > 0) {
+            this.scrollBy(this.layout.delta, 0, true);
+          } else {
+            const lastView = this.views.last();
+            if (lastView && lastView.section) {
+              next = lastView.section.next();
+            }
+          }
+        } else {
+          left = this.container.scrollLeft + this.layout.delta * -1;
+          if (left > this.container.scrollWidth * -1) {
+            this.scrollBy(this.layout.delta, 0, true);
+          } else {
+            const lastView = this.views.last();
+            if (lastView && lastView.section) {
+              next = lastView.section.next();
+            }
+          }
+        }
+      } else if (this.isPaginated && this.settings.axis === 'vertical') {
+        this.scrollTop = this.container.scrollTop;
+        const top = this.container.scrollTop + this.container.offsetHeight;
+        if (top < this.container.scrollHeight) {
+          this.scrollBy(0, this.layout.height, true);
+        } else {
+          const lastView = this.views.last();
+          if (lastView && lastView.section) {
+            next = lastView.section.next();
+          }
+        }
+      } else {
+        const lastView = this.views.last();
+        if (lastView && lastView.section) {
+          next = lastView.section.next();
+        }
+      }
+      if (next) {
+        this.clear();
+        // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
+        this.updateLayout();
+        let forceRight = false;
+        if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && next.properties.includes('page-spread-right')) {
+          forceRight = true;
+        }
+        return this.append(next, forceRight).then(() => {
+          return this.handleNextPrePaginated(forceRight, next, this.append);
+        }, err => {
+          return err;
+        }).then(() => {
+          // Reset position to start for scrolled-doc vertical-rl in default mode
+          if (!this.isPaginated && this.settings.axis === 'horizontal' && this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default') {
+            this.scrollTo(this.container.scrollWidth, 0, true);
+          }
+          this.views.show();
+        });
+      }
+      // Return resolved promise when no next section is available
+      return Promise.resolve();
+    }
+    prev() {
+      let prev;
+      let left;
+      const dir = this.settings.direction;
+      if (this.views === undefined || !this.views.length) {
+        return Promise.resolve();
+      }
+      if (this.isPaginated && this.settings.axis === 'horizontal' && (!dir || dir === 'ltr')) {
+        this.scrollLeft = this.container.scrollLeft;
         left = this.container.scrollLeft;
         if (left > 0) {
-          this.scrollBy(this.layout.delta, 0, true);
-        } else {
-          next = this.views.last().section.next();
-        }
-      } else {
-        left = this.container.scrollLeft + this.layout.delta * -1;
-        if (left > this.container.scrollWidth * -1) {
-          this.scrollBy(this.layout.delta, 0, true);
-        } else {
-          next = this.views.last().section.next();
-        }
-      }
-    } else if (this.isPaginated && this.settings.axis === 'vertical') {
-      this.scrollTop = this.container.scrollTop;
-      let top = this.container.scrollTop + this.container.offsetHeight;
-      if (top < this.container.scrollHeight) {
-        this.scrollBy(0, this.layout.height, true);
-      } else {
-        next = this.views.last().section.next();
-      }
-    } else {
-      next = this.views.last().section.next();
-    }
-    if (next) {
-      this.clear();
-      // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
-      this.updateLayout();
-      let forceRight = false;
-      if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && next.properties.includes('page-spread-right')) {
-        forceRight = true;
-      }
-      return this.append(next, forceRight).then(function () {
-        return this.handleNextPrePaginated(forceRight, next, this.append);
-      }.bind(this), err => {
-        return err;
-      }).then(function () {
-        // Reset position to start for scrolled-doc vertical-rl in default mode
-        if (!this.isPaginated && this.settings.axis === 'horizontal' && this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default') {
-          this.scrollTo(this.container.scrollWidth, 0, true);
-        }
-        this.views.show();
-      }.bind(this));
-    }
-  }
-  prev() {
-    var prev;
-    var left;
-    let dir = this.settings.direction;
-    if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === 'horizontal' && (!dir || dir === 'ltr')) {
-      this.scrollLeft = this.container.scrollLeft;
-      left = this.container.scrollLeft;
-      if (left > 0) {
-        this.scrollBy(-this.layout.delta, 0, true);
-      } else {
-        prev = this.views.first().section.prev();
-      }
-    } else if (this.isPaginated && this.settings.axis === 'horizontal' && dir === 'rtl') {
-      this.scrollLeft = this.container.scrollLeft;
-      if (this.settings.rtlScrollType === 'default') {
-        left = this.container.scrollLeft + this.container.offsetWidth;
-        if (left < this.container.scrollWidth) {
           this.scrollBy(-this.layout.delta, 0, true);
         } else {
-          prev = this.views.first().section.prev();
-        }
-      } else {
-        left = this.container.scrollLeft;
-        if (left < 0) {
-          this.scrollBy(-this.layout.delta, 0, true);
-        } else {
-          prev = this.views.first().section.prev();
-        }
-      }
-    } else if (this.isPaginated && this.settings.axis === 'vertical') {
-      this.scrollTop = this.container.scrollTop;
-      let top = this.container.scrollTop;
-      if (top > 0) {
-        this.scrollBy(0, -this.layout.height, true);
-      } else {
-        prev = this.views.first().section.prev();
-      }
-    } else {
-      prev = this.views.first().section.prev();
-    }
-    if (prev) {
-      this.clear();
-      // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
-      this.updateLayout();
-      let forceRight = false;
-      if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && typeof prev.prev() !== 'object') {
-        forceRight = true;
-      }
-      return this.prepend(prev, forceRight).then(function () {
-        var left;
-        if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
-          left = prev.prev();
-          if (left) {
-            return this.prepend(left);
+          const firstView = this.views.first();
+          if (firstView && firstView.section) {
+            prev = firstView.section.prev();
           }
         }
-      }.bind(this), err => {
-        return err;
-      }).then(function () {
-        if (this.isPaginated && this.settings.axis === 'horizontal') {
-          if (this.settings.direction === 'rtl') {
-            if (this.settings.rtlScrollType === 'default') {
-              this.scrollTo(0, 0, true);
-            } else {
-              this.scrollTo(this.container.scrollWidth * -1 + this.layout.delta, 0, true);
-            }
+      } else if (this.isPaginated && this.settings.axis === 'horizontal' && dir === 'rtl') {
+        this.scrollLeft = this.container.scrollLeft;
+        if (this.settings.rtlScrollType === 'default') {
+          left = this.container.scrollLeft + this.container.offsetWidth;
+          if (left < this.container.scrollWidth) {
+            this.scrollBy(-this.layout.delta, 0, true);
           } else {
-            this.scrollTo(this.container.scrollWidth - this.layout.delta, 0, true);
+            const firstView = this.views.first();
+            if (firstView && firstView.section) {
+              prev = firstView.section.prev();
+            }
+          }
+        } else {
+          left = this.container.scrollLeft;
+          if (left < 0) {
+            this.scrollBy(-this.layout.delta, 0, true);
+          } else {
+            const firstView = this.views.first();
+            if (firstView && firstView.section) {
+              prev = firstView.section.prev();
+            }
           }
         }
-        this.views.show();
-      }.bind(this));
-    }
-  }
-  current() {
-    var visible = this.visible();
-    if (visible.length) {
-      // Current is the last visible view
-      return visible[visible.length - 1];
-    }
-    return null;
-  }
-  clear() {
-    // this.q.clear();
-
-    if (this.views) {
-      this.views.hide();
-      this.scrollTo(0, 0, true);
-      this.views.clear();
-    }
-  }
-  currentLocation() {
-    this.updateLayout();
-    if (this.isPaginated && this.settings.axis === 'horizontal') {
-      this.location = this.paginatedLocation();
-    } else {
-      this.location = this.scrolledLocation();
-    }
-    return this.location;
-  }
-  scrolledLocation() {
-    let visible = this.visible();
-    let container = this.container.getBoundingClientRect();
-    let pageHeight = container.height < window.innerHeight ? container.height : window.innerHeight;
-    let pageWidth = container.width < window.innerWidth ? container.width : window.innerWidth;
-    let vertical = this.settings.axis === 'vertical';
-    this.settings.direction === 'rtl';
-    let offset = 0;
-    let used = 0;
-    if (this.settings.fullsize) {
-      offset = vertical ? window.scrollY : window.scrollX;
-    }
-    let sections = visible.map(view => {
-      let {
-        index,
-        href
-      } = view.section;
-      let position = view.position();
-      let width = view.width();
-      let height = view.height();
-      let startPos;
-      let endPos;
-      let stopPos;
-      let totalPages;
-      if (vertical) {
-        startPos = offset + container.top - position.top + used;
-        endPos = startPos + pageHeight - used;
-        totalPages = this.layout.count(height, pageHeight).pages;
-        stopPos = pageHeight;
+      } else if (this.isPaginated && this.settings.axis === 'vertical') {
+        this.scrollTop = this.container.scrollTop;
+        const top = this.container.scrollTop;
+        if (top > 0) {
+          this.scrollBy(0, -this.layout.height, true);
+        } else {
+          const firstView = this.views.first();
+          if (firstView && firstView.section) {
+            prev = firstView.section.prev();
+          }
+        }
       } else {
-        startPos = offset + container.left - position.left + used;
-        endPos = startPos + pageWidth - used;
-        totalPages = this.layout.count(width, pageWidth).pages;
-        stopPos = pageWidth;
+        const firstView = this.views.first();
+        if (firstView && firstView.section) {
+          prev = firstView.section.prev();
+        }
       }
-      let currPage = Math.ceil(startPos / stopPos);
-      let pages = [];
-      let endPage = Math.ceil(endPos / stopPos);
-
-      // Reverse page counts for horizontal rtl
-      if (this.settings.direction === 'rtl' && !vertical) {
-        let tempStartPage = currPage;
-        currPage = totalPages - endPage;
-        endPage = totalPages - tempStartPage;
-      }
-      pages = [];
-      for (var i = currPage; i <= endPage; i++) {
-        let pg = i + 1;
-        pages.push(pg);
-      }
-      let mapping = this.mapping.page(view.contents, view.section.cfiBase, startPos, endPos);
-      return {
-        index,
-        href,
-        pages,
-        totalPages,
-        mapping
-      };
-    });
-    return sections;
-  }
-  paginatedLocation() {
-    let visible = this.visible();
-    let container = this.container.getBoundingClientRect();
-    let left = 0;
-    let used = 0;
-    if (this.settings.fullsize) {
-      left = window.scrollX;
-    }
-    let sections = visible.map(view => {
-      let {
-        index,
-        href
-      } = view.section;
-      let offset;
-      let position = view.position();
-      let width = view.width();
-
-      // Find mapping
-      let start;
-      let end;
-      let pageWidth;
-      if (this.settings.direction === 'rtl') {
-        offset = container.right - left;
-        pageWidth = Math.min(Math.abs(offset - position.left), this.layout.width) - used;
-        end = position.width - (position.right - offset) - used;
-        start = end - pageWidth;
-      } else {
-        offset = container.left + left;
-        pageWidth = Math.min(position.right - offset, this.layout.width) - used;
-        start = offset - position.left + used;
-        end = start + pageWidth;
-      }
-      used += pageWidth;
-      let mapping = this.mapping.page(view.contents, view.section.cfiBase, start, end);
-      let totalPages = this.layout.count(width).pages;
-      let startPage = Math.floor(start / this.layout.pageWidth);
-      let pages = [];
-      let endPage = Math.floor(end / this.layout.pageWidth);
-
-      // start page should not be negative
-      if (startPage < 0) {
-        startPage = 0;
-        endPage = endPage + 1;
-      }
-
-      // Reverse page counts for rtl
-      if (this.settings.direction === 'rtl') {
-        let tempStartPage = startPage;
-        startPage = totalPages - endPage;
-        endPage = totalPages - tempStartPage;
-      }
-      for (var i = startPage + 1; i <= endPage; i++) {
-        let pg = i;
-        pages.push(pg);
-      }
-      return {
-        index,
-        href,
-        pages,
-        totalPages,
-        mapping
-      };
-    });
-    return sections;
-  }
-  isVisible(view, offsetPrev, offsetNext, _container) {
-    var position = view.position();
-    var container = _container || this.bounds();
-    if (this.settings.axis === 'horizontal' && position.right > container.left - offsetPrev && position.left < container.right + offsetNext) {
-      return true;
-    } else if (this.settings.axis === 'vertical' && position.bottom > container.top - offsetPrev && position.top < container.bottom + offsetNext) {
-      return true;
-    }
-    return false;
-  }
-  visible() {
-    var container = this.bounds();
-    var views = this.views.displayed();
-    var viewsLength = views.length;
-    var visible = [];
-    var isVisible;
-    var view;
-    for (var i = 0; i < viewsLength; i++) {
-      view = views[i];
-      isVisible = this.isVisible(view, 0, 0, container);
-      if (isVisible === true) {
-        visible.push(view);
-      }
-    }
-    return visible;
-  }
-  scrollBy(x, y, silent) {
-    let dir = this.settings.direction === 'rtl' ? -1 : 1;
-    if (silent) {
-      this.ignore = true;
-    }
-    if (!this.settings.fullsize) {
-      if (x) this.container.scrollLeft += x * dir;
-      if (y) this.container.scrollTop += y;
-    } else {
-      window.scrollBy(x * dir, y * dir);
-    }
-    this.scrolled = true;
-  }
-  scrollTo(x, y, silent) {
-    if (silent) {
-      this.ignore = true;
-    }
-    if (!this.settings.fullsize) {
-      this.container.scrollLeft = x;
-      this.container.scrollTop = y;
-    } else {
-      window.scrollTo(x, y);
-    }
-    this.scrolled = true;
-  }
-  onScroll() {
-    let scrollTop;
-    let scrollLeft;
-    if (!this.settings.fullsize) {
-      scrollTop = this.container.scrollTop;
-      scrollLeft = this.container.scrollLeft;
-    } else {
-      scrollTop = window.scrollY;
-      scrollLeft = window.scrollX;
-    }
-    this.scrollTop = scrollTop;
-    this.scrollLeft = scrollLeft;
-    if (!this.ignore) {
-      this.emit(constantsExports.EVENTS.MANAGERS.SCROLL, {
-        top: scrollTop,
-        left: scrollLeft
-      });
-      clearTimeout(this.afterScrolled);
-      this.afterScrolled = setTimeout(function () {
-        this.emit(constantsExports.EVENTS.MANAGERS.SCROLLED, {
-          top: this.scrollTop,
-          left: this.scrollLeft
+      if (prev) {
+        this.clear();
+        // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
+        this.updateLayout();
+        let forceRight = false;
+        if (this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && typeof prev.prev() !== 'object') {
+          forceRight = true;
+        }
+        return this.prepend(prev, forceRight).then(() => {
+          let left;
+          if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
+            left = prev.prev();
+            if (left) {
+              return this.prepend(left);
+            }
+          }
+        }, err => {
+          return err;
+        }).then(() => {
+          if (this.isPaginated && this.settings.axis === 'horizontal') {
+            if (this.settings.direction === 'rtl') {
+              if (this.settings.rtlScrollType === 'default') {
+                this.scrollTo(0, 0, true);
+              } else {
+                this.scrollTo(this.container.scrollWidth * -1 + this.layout.delta, 0, true);
+              }
+            } else {
+              this.scrollTo(this.container.scrollWidth - this.layout.delta, 0, true);
+            }
+          }
+          this.views.show();
         });
-      }.bind(this), 20);
-    } else {
-      this.ignore = false;
+      }
+      // Return resolved promise when no prev section is available
+      return Promise.resolve();
     }
-  }
-  bounds() {
-    var bounds;
-    bounds = this.stage.bounds();
-    return bounds;
-  }
-  applyLayout(layout) {
-    this.layout = layout;
-    this.updateLayout();
-    if (this.views && this.views.length > 0 && this.layout.name === 'pre-paginated') {
-      this.display(this.views.first().section);
+    current() {
+      const visible = this.visible();
+      if (visible.length) {
+        // Current is the last visible view
+        return visible[visible.length - 1];
+      }
+      return null;
     }
-    // this.manager.layout(this.layout.format);
-  }
-  updateLayout() {
-    if (!this.stage) {
-      return;
+    clear() {
+      // this.q.clear();
+      if (this.views) {
+        this.views.hide();
+        this.scrollTo(0, 0, true);
+        this.views.clear();
+      }
     }
-    this._stageSize = this.stage.size();
-    if (!this.isPaginated) {
-      this.layout.calculate(this._stageSize.width, this._stageSize.height);
-    } else {
-      this.layout.calculate(this._stageSize.width, this._stageSize.height, this.settings.gap);
-
-      // Set the look ahead offset for what is visible
-      this.settings.offset = this.layout.delta / this.layout.divisor;
-
-      // this.stage.addStyleRules("iframe", [{"margin-right" : this.layout.gap + "px"}]);
+    currentLocation() {
+      this.updateLayout();
+      if (this.isPaginated && this.settings.axis === 'horizontal') {
+        this.location = this.paginatedLocation();
+      } else {
+        this.location = this.scrolledLocation();
+      }
+      return this.location;
     }
-
-    // Set the dimensions for views
-    this.viewSettings.width = this.layout.width;
-    this.viewSettings.height = this.layout.height;
-    this.setLayout(this.layout);
-  }
-  setLayout(layout) {
-    this.viewSettings.layout = layout;
-    this.mapping = new Mapping(layout.props, this.settings.direction, this.settings.axis);
-    if (this.views) {
+    scrolledLocation() {
+      const visible = this.visible();
+      const container = this.container.getBoundingClientRect();
+      const pageHeight = container.height < window.innerHeight ? container.height : window.innerHeight;
+      const pageWidth = container.width < window.innerWidth ? container.width : window.innerWidth;
+      const vertical = this.settings.axis === 'vertical';
+      let offset = 0;
+      const used = 0;
+      if (this.settings.fullsize) {
+        offset = vertical ? window.scrollY : window.scrollX;
+      }
+      const sections = visible.map(view => {
+        const {
+          index,
+          href
+        } = view.section;
+        const position = view.position();
+        const width = view.width();
+        const height = view.height();
+        let startPos;
+        let endPos;
+        let stopPos;
+        let totalPages;
+        if (vertical) {
+          startPos = offset + container.top - position.top + used;
+          endPos = startPos + pageHeight - used;
+          totalPages = this.layout.count(height, pageHeight).pages;
+          stopPos = pageHeight;
+        } else {
+          startPos = offset + container.left - position.left + used;
+          endPos = startPos + pageWidth - used;
+          totalPages = this.layout.count(width, pageWidth).pages;
+          stopPos = pageWidth;
+        }
+        let currPage = Math.ceil(startPos / stopPos);
+        let pages = [];
+        let endPage = Math.ceil(endPos / stopPos);
+        // Reverse page counts for horizontal rtl
+        if (this.settings.direction === 'rtl' && !vertical) {
+          const tempStartPage = currPage;
+          currPage = totalPages - endPage;
+          endPage = totalPages - tempStartPage;
+        }
+        pages = [];
+        for (let i = currPage; i <= endPage; i++) {
+          const pg = i + 1;
+          pages.push(pg);
+        }
+        if (this.mapping === undefined) {
+          throw new Error('Mapping is not defined');
+        }
+        const mapping = this.mapping.page(view.contents, view.section.cfiBase, startPos, endPos);
+        return {
+          index,
+          href,
+          pages,
+          totalPages,
+          mapping
+        };
+      });
+      return sections;
+    }
+    paginatedLocation() {
+      const visible = this.visible();
+      const container = this.container.getBoundingClientRect();
+      let left = 0;
+      let used = 0;
+      if (this.settings.fullsize) {
+        left = window.scrollX;
+      }
+      const sections = visible.map(view => {
+        const {
+          index,
+          href
+        } = view.section;
+        let offset;
+        const position = view.position();
+        const width = view.width();
+        // Find mapping
+        let start;
+        let end;
+        let pageWidth;
+        if (this.settings.direction === 'rtl') {
+          offset = container.right - left;
+          pageWidth = Math.min(Math.abs(offset - position.left), this.layout.width) - used;
+          end = position.width - (position.right - offset) - used;
+          start = end - pageWidth;
+        } else {
+          offset = container.left + left;
+          pageWidth = Math.min(position.right - offset, this.layout.width) - used;
+          start = offset - position.left + used;
+          end = start + pageWidth;
+        }
+        used += pageWidth;
+        if (this.mapping === undefined) {
+          throw new Error('Mapping is not defined');
+        }
+        const mapping = this.mapping.page(view.contents, view.section.cfiBase, start, end);
+        const totalPages = this.layout.count(width).pages;
+        let startPage = 0;
+        let endPage = 0;
+        const pages = [];
+        if (this.layout.pageWidth && this.layout.pageWidth > 0) {
+          startPage = Math.floor(start / this.layout.pageWidth);
+          endPage = Math.floor(end / this.layout.pageWidth);
+          // start page should not be negative
+          if (startPage < 0) {
+            startPage = 0;
+            endPage = endPage + 1;
+          }
+          // Reverse page counts for rtl
+          if (this.settings.direction === 'rtl') {
+            const tempStartPage = startPage;
+            startPage = totalPages - endPage;
+            endPage = totalPages - tempStartPage;
+          }
+          for (let i = startPage + 1; i <= endPage; i++) {
+            const pg = i;
+            pages.push(pg);
+          }
+        }
+        // Always return an object to satisfy the type annotation
+        return {
+          index,
+          href,
+          pages,
+          totalPages,
+          mapping
+        };
+      });
+      return sections;
+    }
+    isVisible(view, offsetPrev, offsetNext, _container) {
+      const position = view.position();
+      const container = _container || this.bounds();
+      if (this.settings.axis === 'horizontal' && position.right > container.left - offsetPrev && position.left < container.right + offsetNext) {
+        return true;
+      } else if (this.settings.axis === 'vertical' && position.bottom > container.top - offsetPrev && position.top < container.bottom + offsetNext) {
+        return true;
+      }
+      return false;
+    }
+    visible() {
+      const container = this.bounds();
+      const views = this.views.displayed();
+      const viewsLength = views.length;
+      const visible = [];
+      let isVisible;
+      let view;
+      for (let i = 0; i < viewsLength; i++) {
+        view = views[i];
+        isVisible = this.isVisible(view, 0, 0, container);
+        if (isVisible === true) {
+          visible.push(view);
+        }
+      }
+      return visible;
+    }
+    scrollBy(x, y, silent) {
+      const dir = this.settings.direction === 'rtl' ? -1 : 1;
+      if (silent) {
+        this.ignore = true;
+      }
+      if (!this.settings.fullsize) {
+        if (x) this.container.scrollLeft += x * dir;
+        if (y) this.container.scrollTop += y;
+      } else {
+        window.scrollBy(x * dir, y * dir);
+      }
+      this.scrolled = true;
+    }
+    scrollTo(x, y, silent) {
+      if (silent) {
+        this.ignore = true;
+      }
+      if (!this.settings.fullsize) {
+        this.container.scrollLeft = x;
+        this.container.scrollTop = y;
+      } else {
+        window.scrollTo(x, y);
+      }
+      this.scrolled = true;
+    }
+    onScroll() {
+      let scrollTop;
+      let scrollLeft;
+      if (!this.settings.fullsize) {
+        scrollTop = this.container.scrollTop;
+        scrollLeft = this.container.scrollLeft;
+      } else {
+        scrollTop = window.scrollY;
+        scrollLeft = window.scrollX;
+      }
+      this.scrollTop = scrollTop;
+      this.scrollLeft = scrollLeft;
+      if (!this.ignore) {
+        this.emit(constants_1.EVENTS.MANAGERS.SCROLL, {
+          top: scrollTop,
+          left: scrollLeft
+        });
+        clearTimeout(this.afterScrolled);
+        this.afterScrolled = setTimeout(() => {
+          this.emit(constants_1.EVENTS.MANAGERS.SCROLLED, {
+            top: this.scrollTop,
+            left: this.scrollLeft
+          });
+        }, 20);
+      } else {
+        this.ignore = false;
+      }
+    }
+    bounds() {
+      return this.stage.bounds();
+    }
+    applyLayout(layout) {
+      this.layout = layout;
+      this.updateLayout();
+      if (this.views && this.views.length > 0 && this.layout.name === 'pre-paginated') {
+        const firstView = this.views.first();
+        if (firstView && firstView.section) {
+          this.display(firstView.section);
+        }
+      }
+      // this.manager.layout(this.layout.format);
+    }
+    updateLayout() {
+      console.log('[DefaultViewManager] updateLayout called');
+      if (!this.stage) {
+        return;
+      }
+      this._stageSize = this.stage.size();
+      if (!this.isPaginated) {
+        this.layout.calculate(this._stageSize.width, this._stageSize.height);
+      } else {
+        this.layout.calculate(this._stageSize.width, this._stageSize.height, this.settings.gap);
+        // Set the look ahead offset for what is visible
+        this.settings.offset = this.layout.delta / this.layout.divisor;
+        // this.stage.addStyleRules("iframe", [{"margin-right" : this.layout.gap + "px"}]);
+      }
+      // Set the dimensions for views
+      this.viewSettings.width = this.layout.width;
+      this.viewSettings.height = this.layout.height;
+      this.setLayout(this.layout);
+    }
+    setLayout(layout) {
+      console.log('[DefaultViewManager] setLayout called with layout:', layout);
+      this.viewSettings.layout = layout;
+      this.mapping = new mapping_1.default(
+      // @ts-expect-error this should be fixed at some point
+      layout.props, this.settings.direction, this.settings.axis);
+      if (this.views) {
+        this.views.forEach(function (view) {
+          if (view) {
+            view.setLayout(layout);
+          }
+        });
+      }
+    }
+    updateWritingMode(mode) {
+      this.writingMode = mode;
+    }
+    updateAxis(axis, forceUpdate) {
+      if (!forceUpdate && axis === this.settings.axis) {
+        return;
+      }
+      this.settings.axis = axis;
+      this.stage?.axis(axis);
+      this.viewSettings.axis = axis;
+      if (this.mapping) {
+        this.mapping = new mapping_1.default(
+        // @ts-expect-error this should be fixed at some point
+        this.layout.props, this.settings.direction, this.settings.axis);
+      }
+      if (this.layout) {
+        if (axis === 'vertical') {
+          this.layout.spread('none');
+        } else {
+          this.layout.spread(this.layout.settings.spread);
+        }
+      }
+    }
+    updateFlow(flow, defaultScrolledOverflow = 'auto') {
+      const isPaginated = flow === 'paginated' || flow === 'auto';
+      this.isPaginated = isPaginated;
+      if (flow === 'scrolled-doc' || flow === 'scrolled-continuous' || flow === 'scrolled') {
+        this.updateAxis('vertical');
+      } else {
+        this.updateAxis('horizontal');
+      }
+      this.viewSettings.flow = flow;
+      if (!this.settings.overflow) {
+        this.overflow = isPaginated ? 'hidden' : defaultScrolledOverflow;
+      } else {
+        this.overflow = this.settings.overflow;
+      }
+      this.stage?.overflow(this.overflow);
+      this.updateLayout();
+    }
+    getContents() {
+      const contents = [];
+      if (!this.views) {
+        return contents;
+      }
       this.views.forEach(function (view) {
-        if (view) {
-          view.setLayout(layout);
+        const viewContents = view && view.contents;
+        if (viewContents) {
+          contents.push(viewContents);
         }
       });
-    }
-  }
-  updateWritingMode(mode) {
-    this.writingMode = mode;
-  }
-  updateAxis(axis, forceUpdate) {
-    if (!forceUpdate && axis === this.settings.axis) {
-      return;
-    }
-    this.settings.axis = axis;
-    this.stage && this.stage.axis(axis);
-    this.viewSettings.axis = axis;
-    if (this.mapping) {
-      this.mapping = new Mapping(this.layout.props, this.settings.direction, this.settings.axis);
-    }
-    if (this.layout) {
-      if (axis === 'vertical') {
-        this.layout.spread('none');
-      } else {
-        this.layout.spread(this.layout.settings.spread);
-      }
-    }
-  }
-  updateFlow(flow, defaultScrolledOverflow = 'auto') {
-    let isPaginated = flow === 'paginated' || flow === 'auto';
-    this.isPaginated = isPaginated;
-    if (flow === 'scrolled-doc' || flow === 'scrolled-continuous' || flow === 'scrolled') {
-      this.updateAxis('vertical');
-    } else {
-      this.updateAxis('horizontal');
-    }
-    this.viewSettings.flow = flow;
-    if (!this.settings.overflow) {
-      this.overflow = isPaginated ? 'hidden' : defaultScrolledOverflow;
-    } else {
-      this.overflow = this.settings.overflow;
-    }
-    this.stage && this.stage.overflow(this.overflow);
-    this.updateLayout();
-  }
-  getContents() {
-    var contents = [];
-    if (!this.views) {
       return contents;
     }
-    this.views.forEach(function (view) {
-      const viewContents = view && view.contents;
-      if (viewContents) {
-        contents.push(viewContents);
-      }
-    });
-    return contents;
+    direction(dir = 'ltr') {
+      this.settings.direction = dir;
+      this.stage?.direction(dir);
+      this.viewSettings.direction = dir;
+      this.updateLayout();
+    }
+    isRendered() {
+      return this.rendered;
+    }
   }
-  direction(dir = 'ltr') {
-    this.settings.direction = dir;
-    this.stage && this.stage.direction(dir);
-    this.viewSettings.direction = dir;
-    this.updateLayout();
-  }
-  isRendered() {
-    return this.rendered;
-  }
+  //-- Enable binding events to Manager
+  (0, event_emitter_1.default)(DefaultViewManager.prototype);
+  _default.default = DefaultViewManager;
+  return _default;
 }
 
-//-- Enable binding events to Manager
-EventEmitter(DefaultViewManager.prototype);
-
-// easing equations from https://github.com/danro/easing-js/blob/master/easing.js
-const PI_D2 = Math.PI / 2;
-const EASING_EQUATIONS = {
-  easeOutSine: function (pos) {
-    return Math.sin(pos * PI_D2);
-  },
-  easeInOutSine: function (pos) {
-    return -0.5 * (Math.cos(Math.PI * pos) - 1);
-  },
-  easeInOutQuint: function (pos) {
-    if ((pos /= 0.5) < 1) {
-      return 0.5 * Math.pow(pos, 5);
-    }
-    return 0.5 * (Math.pow(pos - 2, 5) + 2);
-  },
-  easeInCubic: function (pos) {
-    return Math.pow(pos, 3);
-  }
-};
-class Snap {
-  constructor(manager, options) {
-    this.settings = coreExports.extend({
-      duration: 80,
-      minVelocity: 0.2,
-      minDistance: 10,
-      easing: EASING_EQUATIONS['easeInCubic']
-    }, options || {});
-    this.supportsTouch = this.supportsTouch();
-    if (this.supportsTouch) {
-      this.setup(manager);
-    }
-  }
-  setup(manager) {
-    this.manager = manager;
-    this.layout = this.manager.settings.fullsize;
-    if (this.fullsize) {
-      this.element = this.manager.stage.element;
-      this.scroller = window;
-      this.disableScroll();
-    } else {
-      this.element = this.manager.stage.container;
-      this.scroller = this.element;
-      this.element.style['WebkitOverflowScrolling'] = 'touch';
-    }
-
-    // this.overflow = this.manager.overflow;
-
-    // set lookahead offset to page width
-    this.manager.settings.offset = this.layout.width;
-    this.manager.settings.afterScrolledTimeout = this.settings.duration * 2;
-    this.isVertical = this.manager.settings.axis === 'vertical';
-
-    // disable snapping if not paginated or axis in not horizontal
-    if (!this.manager.isPaginated || this.isVertical) {
-      return;
-    }
-    this.touchCanceler = false;
-    this.resizeCanceler = false;
-    this.snapping = false;
-    this.scrollLeft;
-    this.scrollTop;
-    this.startTouchX = undefined;
-    this.startTouchY = undefined;
-    this.startTime = undefined;
-    this.endTouchX = undefined;
-    this.endTouchY = undefined;
-    this.endTime = undefined;
-    this.addListeners();
-  }
-  supportsTouch() {
-    if ('ontouchstart' in window || typeof window.DocumentTouch !== 'undefined' && document instanceof window.DocumentTouch) {
-      return true;
-    }
-    return false;
-  }
-  disableScroll() {
-    this.element.style.overflow = 'hidden';
-  }
-  enableScroll() {
-    this.element.style.overflow = '';
-  }
-  addListeners() {
-    this._onResize = this.onResize.bind(this);
-    window.addEventListener('resize', this._onResize);
-    this._onScroll = this.onScroll.bind(this);
-    this.scroller.addEventListener('scroll', this._onScroll);
-    this._onTouchStart = this.onTouchStart.bind(this);
-    this.scroller.addEventListener('touchstart', this._onTouchStart, {
-      passive: true
-    });
-    this.on('touchstart', this._onTouchStart);
-    this._onTouchMove = this.onTouchMove.bind(this);
-    this.scroller.addEventListener('touchmove', this._onTouchMove, {
-      passive: true
-    });
-    this.on('touchmove', this._onTouchMove);
-    this._onTouchEnd = this.onTouchEnd.bind(this);
-    this.scroller.addEventListener('touchend', this._onTouchEnd, {
-      passive: true
-    });
-    this.on('touchend', this._onTouchEnd);
-    this._afterDisplayed = this.afterDisplayed.bind(this);
-    this.manager.on(constantsExports.EVENTS.MANAGERS.ADDED, this._afterDisplayed);
-  }
-  removeListeners() {
-    window.removeEventListener('resize', this._onResize);
-    this._onResize = undefined;
-    this.scroller.removeEventListener('scroll', this._onScroll);
-    this._onScroll = undefined;
-    this.scroller.removeEventListener('touchstart', this._onTouchStart, {
-      passive: true
-    });
-    this.off('touchstart', this._onTouchStart);
-    this._onTouchStart = undefined;
-    this.scroller.removeEventListener('touchmove', this._onTouchMove, {
-      passive: true
-    });
-    this.off('touchmove', this._onTouchMove);
-    this._onTouchMove = undefined;
-    this.scroller.removeEventListener('touchend', this._onTouchEnd, {
-      passive: true
-    });
-    this.off('touchend', this._onTouchEnd);
-    this._onTouchEnd = undefined;
-    this.manager.off(constantsExports.EVENTS.MANAGERS.ADDED, this._afterDisplayed);
-    this._afterDisplayed = undefined;
-  }
-  afterDisplayed(view) {
-    let contents = view.contents;
-    ['touchstart', 'touchmove', 'touchend'].forEach(e => {
-      contents.on(e, ev => this.triggerViewEvent(ev, contents));
-    });
-  }
-  triggerViewEvent(e, contents) {
-    this.emit(e.type, e, contents);
-  }
-  onScroll() {
-    this.scrollLeft = this.fullsize ? window.scrollX : this.scroller.scrollLeft;
-    this.scrollTop = this.fullsize ? window.scrollY : this.scroller.scrollTop;
-  }
-  onResize() {
-    this.resizeCanceler = true;
-  }
-  onTouchStart(e) {
-    let {
-      screenX,
-      screenY
-    } = e.touches[0];
-    if (this.fullsize) {
-      this.enableScroll();
-    }
-    this.touchCanceler = true;
-    if (!this.startTouchX) {
-      this.startTouchX = screenX;
-      this.startTouchY = screenY;
-      this.startTime = this.now();
-    }
-    this.endTouchX = screenX;
-    this.endTouchY = screenY;
-    this.endTime = this.now();
-  }
-  onTouchMove(e) {
-    let {
-      screenX,
-      screenY
-    } = e.touches[0];
-    let deltaY = Math.abs(screenY - this.endTouchY);
-    this.touchCanceler = true;
-    if (!this.fullsize && deltaY < 10) {
-      this.element.scrollLeft -= screenX - this.endTouchX;
-    }
-    this.endTouchX = screenX;
-    this.endTouchY = screenY;
-    this.endTime = this.now();
-  }
-  onTouchEnd() {
-    if (this.fullsize) {
-      this.disableScroll();
-    }
-    this.touchCanceler = false;
-    let swipped = this.wasSwiped();
-    if (swipped !== 0) {
-      this.snap(swipped);
-    } else {
-      this.snap();
-    }
-    this.startTouchX = undefined;
-    this.startTouchY = undefined;
-    this.startTime = undefined;
-    this.endTouchX = undefined;
-    this.endTouchY = undefined;
-    this.endTime = undefined;
-  }
-  wasSwiped() {
-    let snapWidth = this.layout.pageWidth * this.layout.divisor;
-    let distance = this.endTouchX - this.startTouchX;
-    let absolute = Math.abs(distance);
-    let time = this.endTime - this.startTime;
-    let velocity = distance / time;
-    let minVelocity = this.settings.minVelocity;
-    if (absolute <= this.settings.minDistance || absolute >= snapWidth) {
-      return 0;
-    }
-    if (velocity > minVelocity) {
-      // previous
-      return -1;
-    } else if (velocity < -minVelocity) {
-      // next
-      return 1;
-    }
-  }
-  needsSnap() {
-    let left = this.scrollLeft;
-    let snapWidth = this.layout.pageWidth * this.layout.divisor;
-    return left % snapWidth !== 0;
-  }
-  snap(howMany = 0) {
-    let left = this.scrollLeft;
-    let snapWidth = this.layout.pageWidth * this.layout.divisor;
-    let snapTo = Math.round(left / snapWidth) * snapWidth;
-    if (howMany) {
-      snapTo += howMany * snapWidth;
-    }
-    return this.smoothScrollTo(snapTo);
-  }
-  smoothScrollTo(destination) {
-    const deferred = new coreExports.defer();
-    const start = this.scrollLeft;
-    const startTime = this.now();
-    const duration = this.settings.duration;
-    this.snapping = true;
-
-    // add animation loop
-    function tick() {
-      const now = this.now();
-      const time = Math.min(1, (now - startTime) / duration);
-      if (this.touchCanceler || this.resizeCanceler) {
-        this.resizeCanceler = false;
-        this.snapping = false;
-        deferred.resolve();
-        return;
-      }
-      if (time < 1) {
-        window.requestAnimationFrame(tick.bind(this));
-        this.scrollTo(start + (destination - start) * time, 0);
-      } else {
-        this.scrollTo(destination, 0);
-        this.snapping = false;
-        deferred.resolve();
-      }
-    }
-    tick.call(this);
-    return deferred.promise;
-  }
-  scrollTo(left = 0, top = 0) {
-    if (this.fullsize) {
-      window.scroll(left, top);
-    } else {
-      this.scroller.scrollLeft = left;
-      this.scroller.scrollTop = top;
-    }
-  }
-  now() {
-    return 'now' in window.performance ? performance.now() : new Date().getTime();
-  }
-  destroy() {
-    if (!this.scroller) {
-      return;
-    }
-    if (this.fullsize) {
-      this.enableScroll();
-    }
-    this.removeListeners();
-    this.scroller = undefined;
-  }
-}
-EventEmitter(Snap.prototype);
-
-class ContinuousViewManager extends DefaultViewManager {
-  constructor(options) {
-    super(options);
-    this.name = 'continuous';
-    this.settings = coreExports.extend(this.settings || {}, {
-      infinite: true,
-      overflow: undefined,
-      axis: undefined,
-      writingMode: undefined,
-      flow: 'scrolled',
-      offset: 500,
-      offsetDelta: 250,
-      width: undefined,
-      height: undefined,
-      snap: false,
-      afterScrolledTimeout: 10,
-      allowScriptedContent: false,
-      allowPopups: false,
-      transparency: false
-    });
-    coreExports.extend(this.settings, options.settings || {});
-
-    // Gap can be 0, but defaults doesn't handle that
-    if (options.settings.gap != 'undefined' && options.settings.gap === 0) {
-      this.settings.gap = options.settings.gap;
-    }
-    this.viewSettings = {
-      ignoreClass: this.settings.ignoreClass,
-      axis: this.settings.axis,
-      flow: this.settings.flow,
-      layout: this.layout,
-      width: 0,
-      height: 0,
-      forceEvenPages: false,
-      allowScriptedContent: this.settings.allowScriptedContent,
-      allowPopups: this.settings.allowPopups,
-      transparency: this.settings.transparency
+var hasRequiredRendition;
+function requireRendition() {
+  if (hasRequiredRendition) return rendition;
+  hasRequiredRendition = 1;
+  var __importDefault = rendition && rendition.__importDefault || function (mod) {
+    return mod && mod.__esModule ? mod : {
+      "default": mod
     };
-    this.scrollTop = 0;
-    this.scrollLeft = 0;
-  }
-  display(section, target) {
-    return DefaultViewManager.prototype.display.call(this, section, target).then(function () {
-      return this.fill();
-    }.bind(this));
-  }
-  fill(_full) {
-    var full = _full || new coreExports.defer();
-    this.q.enqueue(() => {
-      return this.check();
-    }).then(result => {
-      if (result) {
-        this.fill(full);
+  };
+  Object.defineProperty(rendition, "__esModule", {
+    value: true
+  });
+  rendition.Rendition = void 0;
+  const event_emitter_1 = __importDefault(requireEventEmitter());
+  const core_1 = requireCore();
+  const hook_1 = __importDefault(requireHook());
+  const epubcfi_1 = __importDefault(requireEpubcfi());
+  const queue_1 = __importDefault(requireQueue());
+  const layout_1 = __importDefault(requireLayout());
+  const themes_1 = __importDefault(requireThemes());
+  const annotations_1 = __importDefault(requireAnnotations());
+  const constants_1 = requireConstants();
+  const default_1 = __importDefault(require_default());
+  /**
+   * Displays an Epub as a series of Views for each Section.
+   * Requires Manager and View class to handle specifics of rendering
+   * the section content.
+   * @class
+   * @param {Book} book
+   * @param {object} [options]
+   * @param {number} [options.width]
+   * @param {number} [options.height]
+   * @param {string} [options.ignoreClass] class for the cfi parser to ignore
+   * @param {string | function | object} [options.manager='default']
+   * @param {string | function} [options.view='iframe']
+   * @param {string} [options.layout] layout to force
+   * @param {string} [options.spread] force spread value
+   * @param {number} [options.minSpreadWidth] overridden by spread: none (never) / both (always)
+   * @param {string} [options.stylesheet] url of stylesheet to be injected
+   * @param {boolean} [options.resizeOnOrientationChange] false to disable orientation events
+   * @param {string} [options.script] url of script to be injected
+   * @param {boolean | object} [options.snap=false] use snap scrolling
+   * @param {string} [options.defaultDirection='ltr'] default text direction
+   * @param {boolean} [options.allowScriptedContent=false] enable running scripts in content
+   * @param {boolean} [options.allowPopups=false] enable opening popup in content
+   */
+  class Rendition {
+    constructor(book, options) {
+      this.location = null;
+      this.book = book;
+      this.q = new queue_1.default(this);
+      this.settings = {
+        width: undefined,
+        height: undefined,
+        ignoreClass: '',
+        view: 'iframe',
+        // or use a proper View instance if available
+        flow: undefined,
+        layout: undefined,
+        spread: undefined,
+        minSpreadWidth: 400,
+        stylesheet: undefined,
+        resizeOnOrientationChange: true,
+        script: undefined,
+        snap: false,
+        defaultDirection: 'ltr',
+        allowScriptedContent: false,
+        allowPopups: false,
+        ...options
+      };
+      if (typeof this.settings.manager === 'object') {
+        console.log('[Rendition] using existing manager:', this.settings.manager);
+        this.manager = this.settings.manager;
       } else {
-        full.resolve();
-      }
-    });
-    return full.promise;
-  }
-  moveTo(offset) {
-    // var bounds = this.stage.bounds();
-    // var dist = Math.floor(offset.top / bounds.height) * bounds.height;
-    var distX = 0,
-      distY = 0;
-    if (!this.isPaginated) {
-      distY = offset.top;
-    } else {
-      distX = Math.floor(offset.left / this.layout.delta) * this.layout.delta;
-    }
-    if (distX > 0 || distY > 0) {
-      this.scrollBy(distX, distY, true);
-    }
-  }
-  afterResized(view) {
-    this.emit(constantsExports.EVENTS.MANAGERS.RESIZE, view.section);
-  }
-
-  // Remove Previous Listeners if present
-  removeShownListeners(view) {
-    // view.off("shown", this.afterDisplayed);
-    // view.off("shown", this.afterDisplayedAbove);
-    view.onDisplayed = function () {};
-  }
-  add(section) {
-    var view = this.createView(section);
-    this.views.append(view);
-    view.on(constantsExports.EVENTS.VIEWS.RESIZED, () => {
-      view.expanded = true;
-    });
-    view.on(constantsExports.EVENTS.VIEWS.AXIS, axis => {
-      this.updateAxis(axis);
-    });
-    view.on(constantsExports.EVENTS.VIEWS.WRITING_MODE, mode => {
-      this.updateWritingMode(mode);
-    });
-
-    // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
-    view.onDisplayed = this.afterDisplayed.bind(this);
-    view.onResize = this.afterResized.bind(this);
-    return view.display(this.request);
-  }
-  append(section) {
-    var view = this.createView(section);
-    view.on(constantsExports.EVENTS.VIEWS.RESIZED, () => {
-      view.expanded = true;
-    });
-    view.on(constantsExports.EVENTS.VIEWS.AXIS, axis => {
-      this.updateAxis(axis);
-    });
-    view.on(constantsExports.EVENTS.VIEWS.WRITING_MODE, mode => {
-      this.updateWritingMode(mode);
-    });
-    this.views.append(view);
-    view.onDisplayed = this.afterDisplayed.bind(this);
-    return view;
-  }
-  prepend(section) {
-    var view = this.createView(section);
-    view.on(constantsExports.EVENTS.VIEWS.RESIZED, bounds => {
-      this.counter(bounds);
-      view.expanded = true;
-    });
-    view.on(constantsExports.EVENTS.VIEWS.AXIS, axis => {
-      this.updateAxis(axis);
-    });
-    view.on(constantsExports.EVENTS.VIEWS.WRITING_MODE, mode => {
-      this.updateWritingMode(mode);
-    });
-    this.views.prepend(view);
-    view.onDisplayed = this.afterDisplayed.bind(this);
-    return view;
-  }
-  counter(bounds) {
-    if (this.settings.axis === 'vertical') {
-      this.scrollBy(0, bounds.heightDelta, true);
-    } else {
-      this.scrollBy(bounds.widthDelta, 0, true);
-    }
-  }
-  update(_offset) {
-    var container = this.bounds();
-    var views = this.views.all();
-    var viewsLength = views.length;
-    var offset = typeof _offset != 'undefined' ? _offset : this.settings.offset || 0;
-    var isVisible;
-    var view;
-    var updating = new coreExports.defer();
-    var promises = [];
-    for (var i = 0; i < viewsLength; i++) {
-      view = views[i];
-      isVisible = this.isVisible(view, offset, offset, container);
-      if (isVisible === true) {
-        // console.log("visible " + view.index, view.displayed);
-
-        if (!view.displayed) {
-          let displayed = view.display(this.request).then(function (view) {
-            view.show();
-          }, () => {
-            view.hide();
-          });
-          promises.push(displayed);
-        } else {
-          view.show();
-        }
-      } else {
-        this.q.enqueue(view.destroy.bind(view));
-        // console.log("hidden " + view.index, view.displayed);
-
-        clearTimeout(this.trimTimeout);
-        this.trimTimeout = setTimeout(function () {
-          this.q.enqueue(this.trim.bind(this));
-        }.bind(this), 250);
-      }
-    }
-    if (promises.length) {
-      return Promise.all(promises).catch(err => {
-        updating.reject(err);
-      });
-    } else {
-      updating.resolve();
-      return updating.promise;
-    }
-  }
-  check(_offsetLeft, _offsetTop) {
-    var checking = new coreExports.defer();
-    var newViews = [];
-    var horizontal = this.settings.axis === 'horizontal';
-    var delta = this.settings.offset || 0;
-    if (_offsetLeft && horizontal) {
-      delta = _offsetLeft;
-    }
-    if (_offsetTop && !horizontal) {
-      delta = _offsetTop;
-    }
-    var bounds = this._bounds; // bounds saved this until resize
-
-    let offset = horizontal ? this.scrollLeft : this.scrollTop;
-    let visibleLength = horizontal ? Math.floor(bounds.width) : bounds.height;
-    let contentLength = horizontal ? this.container.scrollWidth : this.container.scrollHeight;
-    let writingMode = this.writingMode && this.writingMode.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
-    let rtlScrollType = this.settings.rtlScrollType;
-    let rtl = this.settings.direction === 'rtl';
-    if (!this.settings.fullsize) {
-      // Scroll offset starts at width of element
-      if (rtl && rtlScrollType === 'default' && writingMode === 'horizontal') {
-        offset = contentLength - visibleLength - offset;
-      }
-      // Scroll offset starts at 0 and goes negative
-      if (rtl && rtlScrollType === 'negative' && writingMode === 'horizontal') {
-        offset = offset * -1;
-      }
-    } else {
-      // Scroll offset starts at 0 and goes negative
-      if (horizontal && rtl && rtlScrollType === 'negative' || !horizontal && rtl && rtlScrollType === 'default') {
-        offset = offset * -1;
-      }
-    }
-    let prepend = () => {
-      let first = this.views.first();
-      let prev = first && first.section.prev();
-      if (prev) {
-        newViews.push(this.prepend(prev));
-      }
-    };
-    let append = () => {
-      let last = this.views.last();
-      let next = last && last.section.next();
-      if (next) {
-        newViews.push(this.append(next));
-      }
-    };
-    let end = offset + visibleLength + delta;
-    let start = offset - delta;
-    if (end >= contentLength) {
-      append();
-    }
-    if (start < 0) {
-      prepend();
-    }
-    let promises = newViews.map(view => {
-      return view.display(this.request);
-    });
-    if (newViews.length) {
-      return Promise.all(promises).then(() => {
-        return this.check();
-      }).then(() => {
-        // Check to see if anything new is on screen after rendering
-        return this.update(delta);
-      }, err => {
-        return err;
-      });
-    } else {
-      this.q.enqueue(function () {
-        this.update();
-      }.bind(this));
-      checking.resolve(false);
-      return checking.promise;
-    }
-  }
-  trim() {
-    var task = new coreExports.defer();
-    var displayed = this.views.displayed();
-    var first = displayed[0];
-    var last = displayed[displayed.length - 1];
-    var firstIndex = this.views.indexOf(first);
-    var lastIndex = this.views.indexOf(last);
-    var above = this.views.slice(0, firstIndex);
-    var below = this.views.slice(lastIndex + 1);
-
-    // Erase all but last above
-    for (var i = 0; i < above.length - 1; i++) {
-      this.erase(above[i], above);
-    }
-
-    // Erase all except first below
-    for (var j = 1; j < below.length; j++) {
-      this.erase(below[j]);
-    }
-    task.resolve();
-    return task.promise;
-  }
-  erase(view, above) {
-    //Trim
-
-    var prevTop;
-    var prevLeft;
-    if (!this.settings.fullsize) {
-      prevTop = this.container.scrollTop;
-      prevLeft = this.container.scrollLeft;
-    } else {
-      prevTop = window.scrollY;
-      prevLeft = window.scrollX;
-    }
-    var bounds = view.bounds();
-    this.views.remove(view);
-    if (above) {
-      if (this.settings.axis === 'vertical') {
-        this.scrollTo(0, prevTop - bounds.height, true);
-      } else {
-        if (this.settings.direction === 'rtl') {
-          if (!this.settings.fullsize) {
-            this.scrollTo(prevLeft, 0, true);
-          } else {
-            this.scrollTo(prevLeft + Math.floor(bounds.width), 0, true);
+        console.log('[Rendition] creating new manager');
+        console.log('[Rendition] creating new layout, settings:', this.settings);
+        const layoutInstance = new layout_1.default({
+          layout: this.settings.layout || 'reflowable',
+          spread: this.settings.spread || 'auto',
+          minSpreadWidth: typeof this.settings.minSpreadWidth === 'number' ? this.settings.minSpreadWidth : 400,
+          direction: this.settings.direction || 'ltr',
+          flow: this.settings.flow || 'auto'
+        });
+        // Ensure width and height are numbers or undefined
+        const width = typeof this.settings.width === 'number' ? this.settings.width : undefined;
+        const height = typeof this.settings.height === 'number' ? this.settings.height : undefined;
+        this.manager = new default_1.default({
+          view: this.settings.view,
+          queue: this.q,
+          request: this.book.load.bind(this.book),
+          settings: {
+            ...this.settings,
+            layout: layoutInstance,
+            width,
+            height,
+            afterScrolledTimeout: 10
           }
-        } else {
-          this.scrollTo(prevLeft - Math.floor(bounds.width), 0, true);
-        }
+        });
       }
-    }
-  }
-  addEventListeners() {
-    window.addEventListener('unload', function () {
-      this.ignore = true;
-      // this.scrollTo(0,0);
-      this.destroy();
-    }.bind(this));
-    this.addScrollListeners();
-    if (this.isPaginated && this.settings.snap) {
-      this.snapper = new Snap(this, this.settings.snap && typeof this.settings.snap === 'object' && this.settings.snap);
-    }
-  }
-  addScrollListeners() {
-    var scroller;
-    this.tick = coreExports.requestAnimationFrame;
-    let dir = this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default' ? -1 : 1;
-    this.scrollDeltaVert = 0;
-    this.scrollDeltaHorz = 0;
-    if (!this.settings.fullsize) {
-      scroller = this.container;
-      this.scrollTop = this.container.scrollTop;
-      this.scrollLeft = this.container.scrollLeft;
-    } else {
-      scroller = window;
-      this.scrollTop = window.scrollY * dir;
-      this.scrollLeft = window.scrollX * dir;
-    }
-    this._onScroll = this.onScroll.bind(this);
-    scroller.addEventListener('scroll', this._onScroll);
-    this._scrolled = helpersExports.debounce(this.scrolled.bind(this), 30);
-    // this.tick.call(window, this.onScroll.bind(this));
-
-    this.didScroll = false;
-  }
-  removeEventListeners() {
-    var scroller;
-    if (!this.settings.fullsize) {
-      scroller = this.container;
-    } else {
-      scroller = window;
-    }
-    scroller.removeEventListener('scroll', this._onScroll);
-    this._onScroll = undefined;
-  }
-  onScroll() {
-    let scrollTop;
-    let scrollLeft;
-    let dir = this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default' ? -1 : 1;
-    if (!this.settings.fullsize) {
-      scrollTop = this.container.scrollTop;
-      scrollLeft = this.container.scrollLeft;
-    } else {
-      scrollTop = window.scrollY * dir;
-      scrollLeft = window.scrollX * dir;
-    }
-    this.scrollTop = scrollTop;
-    this.scrollLeft = scrollLeft;
-    if (!this.ignore) {
-      this._scrolled();
-    } else {
-      this.ignore = false;
-    }
-    this.scrollDeltaVert += Math.abs(scrollTop - this.prevScrollTop);
-    this.scrollDeltaHorz += Math.abs(scrollLeft - this.prevScrollLeft);
-    this.prevScrollTop = scrollTop;
-    this.prevScrollLeft = scrollLeft;
-    clearTimeout(this.scrollTimeout);
-    this.scrollTimeout = setTimeout(function () {
-      this.scrollDeltaVert = 0;
-      this.scrollDeltaHorz = 0;
-    }.bind(this), 150);
-    clearTimeout(this.afterScrolled);
-    this.didScroll = false;
-  }
-  scrolled() {
-    this.q.enqueue(function () {
-      return this.check();
-    }.bind(this));
-    this.emit(constantsExports.EVENTS.MANAGERS.SCROLL, {
-      top: this.scrollTop,
-      left: this.scrollLeft
-    });
-    clearTimeout(this.afterScrolled);
-    this.afterScrolled = setTimeout(function () {
-      // Don't report scroll if we are about the snap
-      if (this.snapper && this.snapper.supportsTouch && this.snapper.needsSnap()) {
-        return;
+      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, (...args) => {
+        const view = args[0];
+        console.log('[Rendition] manager on added called with args:', args);
+        console.log('[Rendition] manager on afterDisplayed called with view:', view);
+        this.afterDisplayed(view);
+      });
+      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, (...args) => {
+        const view = args[0];
+        this.afterRemoved(view);
+      });
+      this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, (...args) => {
+        const size = args[0];
+        const epubcfi = args[1];
+        this.onResized(size, epubcfi);
+      });
+      this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, (...args) => {
+        const orientation = args[0];
+        this.onOrientationChange(orientation);
+      });
+      this.hooks = {
+        display: new hook_1.default(this),
+        serialize: new hook_1.default(this),
+        content: new hook_1.default(this),
+        unloaded: new hook_1.default(this),
+        layout: new hook_1.default(this),
+        render: new hook_1.default(this),
+        show: new hook_1.default(this)
+      };
+      this.hooks.content.register(this.handleLinks.bind(this));
+      this.hooks.content.register(this.passEvents.bind(this));
+      this.hooks.content.register(this.adjustImages.bind(this));
+      if (this.book.spine === undefined) {
+        throw new Error('Book spine is not defined');
       }
-      this.emit(constantsExports.EVENTS.MANAGERS.SCROLLED, {
-        top: this.scrollTop,
-        left: this.scrollLeft
-      });
-    }.bind(this), this.settings.afterScrolledTimeout);
-  }
-  next() {
-    let delta = this.layout.props.name === 'pre-paginated' && this.layout.props.spread ? this.layout.props.delta * 2 : this.layout.props.delta;
-    if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === 'horizontal') {
-      this.scrollBy(delta, 0, true);
-    } else {
-      this.scrollBy(0, this.layout.height, true);
-    }
-    this.q.enqueue(function () {
-      return this.check();
-    }.bind(this));
-  }
-  prev() {
-    let delta = this.layout.props.name === 'pre-paginated' && this.layout.props.spread ? this.layout.props.delta * 2 : this.layout.props.delta;
-    if (!this.views.length) return;
-    if (this.isPaginated && this.settings.axis === 'horizontal') {
-      this.scrollBy(-delta, 0, true);
-    } else {
-      this.scrollBy(0, -this.layout.height, true);
-    }
-    this.q.enqueue(function () {
-      return this.check();
-    }.bind(this));
-  }
-  updateFlow(flow) {
-    if (this.rendered && this.snapper) {
-      this.snapper.destroy();
-      this.snapper = undefined;
-    }
-    super.updateFlow(flow, 'scroll');
-    if (this.rendered && this.isPaginated && this.settings.snap) {
-      this.snapper = new Snap(this, this.settings.snap && typeof this.settings.snap === 'object' && this.settings.snap);
-    }
-  }
-  destroy() {
-    super.destroy();
-    if (this.snapper) {
-      this.snapper.destroy();
-    }
-  }
-}
-
-/**
- * Displays an Epub as a series of Views for each Section.
- * Requires Manager and View class to handle specifics of rendering
- * the section content.
- * @class
- * @param {Book} book
- * @param {object} [options]
- * @param {number} [options.width]
- * @param {number} [options.height]
- * @param {string} [options.ignoreClass] class for the cfi parser to ignore
- * @param {string | function | object} [options.manager='default']
- * @param {string | function} [options.view='iframe']
- * @param {string} [options.layout] layout to force
- * @param {string} [options.spread] force spread value
- * @param {number} [options.minSpreadWidth] overridden by spread: none (never) / both (always)
- * @param {string} [options.stylesheet] url of stylesheet to be injected
- * @param {boolean} [options.resizeOnOrientationChange] false to disable orientation events
- * @param {string} [options.script] url of script to be injected
- * @param {boolean | object} [options.snap=false] use snap scrolling
- * @param {string} [options.defaultDirection='ltr'] default text direction
- * @param {boolean} [options.allowScriptedContent=false] enable running scripts in content
- * @param {boolean} [options.allowPopups=false] enable opening popup in content
- */
-class Rendition {
-  constructor(book, options) {
-    this.settings = coreExports.extend(this.settings || {}, {
-      width: null,
-      height: null,
-      ignoreClass: '',
-      manager: 'default',
-      view: 'iframe',
-      flow: null,
-      layout: null,
-      spread: null,
-      minSpreadWidth: 800,
-      stylesheet: null,
-      resizeOnOrientationChange: true,
-      script: null,
-      snap: false,
-      defaultDirection: 'ltr',
-      allowScriptedContent: false,
-      allowPopups: false
-    });
-    coreExports.extend(this.settings, options);
-    if (typeof this.settings.manager === 'object') {
-      this.manager = this.settings.manager;
-    }
-    this.book = book;
-
-    /**
-     * Adds Hook methods to the Rendition prototype
-     * @member {object} hooks
-     * @property {Hook} hooks.content
-     * @memberof Rendition
-     */
-    this.hooks = {};
-    this.hooks.display = new Hook(this);
-    this.hooks.serialize = new Hook(this);
-    this.hooks.content = new Hook(this);
-    this.hooks.unloaded = new Hook(this);
-    this.hooks.layout = new Hook(this);
-    this.hooks.render = new Hook(this);
-    this.hooks.show = new Hook(this);
-    this.hooks.content.register(this.handleLinks.bind(this));
-    this.hooks.content.register(this.passEvents.bind(this));
-    this.hooks.content.register(this.adjustImages.bind(this));
-    this.book.spine.hooks.content.register(this.injectIdentifier.bind(this));
-    if (this.settings.stylesheet) {
-      this.book.spine.hooks.content.register(this.injectStylesheet.bind(this));
-    }
-    if (this.settings.script) {
-      this.book.spine.hooks.content.register(this.injectScript.bind(this));
-    }
-
-    /**
-     * @member {Themes} themes
-     * @memberof Rendition
-     */
-    this.themes = new Themes(this);
-
-    /**
-     * @member {Annotations} annotations
-     * @memberof Rendition
-     */
-    this.annotations = new Annotations(this);
-    this.epubcfi = new CFI();
-    this.q = new Queue(this);
-
-    /**
-     * A Rendered Location Range
-     * @typedef location
-     * @type {Object}
-     * @property {object} start
-     * @property {string} start.index
-     * @property {string} start.href
-     * @property {object} start.displayed
-     * @property {EpubCFI} start.cfi
-     * @property {number} start.location
-     * @property {number} start.percentage
-     * @property {number} start.displayed.page
-     * @property {number} start.displayed.total
-     * @property {object} end
-     * @property {string} end.index
-     * @property {string} end.href
-     * @property {object} end.displayed
-     * @property {EpubCFI} end.cfi
-     * @property {number} end.location
-     * @property {number} end.percentage
-     * @property {number} end.displayed.page
-     * @property {number} end.displayed.total
-     * @property {boolean} atStart
-     * @property {boolean} atEnd
-     * @memberof Rendition
-     */
-    this.location = undefined;
-
-    // Hold queue until book is opened
-    this.q.enqueue(this.book.opened);
-    this.starting = new coreExports.defer();
-    /**
-     * @member {promise} started returns after the rendition has started
-     * @memberof Rendition
-     */
-    this.started = this.starting.promise;
-
-    // Block the queue until rendering is started
-    this.q.enqueue(this.start);
-  }
-
-  /**
-   * Set the manager function
-   * @param {function} manager
-   */
-  setManager(manager) {
-    this.manager = manager;
-  }
-
-  /**
-   * Require the manager from passed string, or as a class function
-   * @param  {string|object} manager [description]
-   * @return {method}
-   */
-  requireManager(manager) {
-    var viewManager;
-
-    // If manager is a string, try to load from imported managers
-    if (typeof manager === 'string' && manager === 'default') {
-      viewManager = DefaultViewManager;
-    } else if (typeof manager === 'string' && manager === 'continuous') {
-      viewManager = ContinuousViewManager;
-    } else {
-      // otherwise, assume we were passed a class function
-      viewManager = manager;
-    }
-    return viewManager;
-  }
-
-  /**
-   * Require the view from passed string, or as a class function
-   * @param  {string|object} view
-   * @return {view}
-   */
-  requireView(view) {
-    var View;
-
-    // If view is a string, try to load from imported views,
-    if (typeof view == 'string' && view === 'iframe') {
-      View = IframeView;
-    } else {
-      // otherwise, assume we were passed a class function
-      View = view;
-    }
-    return View;
-  }
-
-  /**
-   * Start the rendering
-   * @return {Promise} rendering has started
-   */
-  start() {
-    if (!this.settings.layout && (this.book.package.metadata.layout === 'pre-paginated' || this.book.displayOptions.fixedLayout === 'true')) {
-      this.settings.layout = 'pre-paginated';
-    }
-    switch (this.book.package.metadata.spread) {
-      case 'none':
-        this.settings.spread = 'none';
-        break;
-      case 'both':
-        this.settings.spread = true;
-        break;
-    }
-    if (!this.manager) {
-      this.ViewManager = this.requireManager(this.settings.manager);
-      this.View = this.requireView(this.settings.view);
-      this.manager = new this.ViewManager({
-        view: this.View,
-        queue: this.q,
-        request: this.book.load.bind(this.book),
-        settings: this.settings
-      });
-    }
-    this.direction(this.book.package.metadata.direction || this.settings.defaultDirection);
-
-    // Parse metadata to get layout props
-    this.settings.globalLayoutProperties = this.determineLayoutProperties(this.book.package.metadata);
-    this.flow(this.settings.globalLayoutProperties.flow);
-    this.layout(this.settings.globalLayoutProperties);
-
-    // Listen for displayed views
-    this.manager.on(constantsExports.EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
-    this.manager.on(constantsExports.EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
-
-    // Listen for resizing
-    this.manager.on(constantsExports.EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
-
-    // Listen for rotation
-    this.manager.on(constantsExports.EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
-
-    // Listen for scroll changes
-    this.manager.on(constantsExports.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
-
-    /**
-     * Emit that rendering has started
-     * @event started
-     * @memberof Rendition
-     */
-    this.emit(constantsExports.EVENTS.RENDITION.STARTED);
-
-    // Start processing queue
-    this.starting.resolve();
-  }
-
-  /**
-   * Call to attach the container to an element in the dom
-   * Container must be attached before rendering can begin
-   * @param  {element} element to attach to
-   * @return {Promise}
-   */
-  attachTo(element) {
-    return this.q.enqueue(function () {
-      // Start rendering
-      this.manager.render(element, {
-        width: this.settings.width,
-        height: this.settings.height
-      });
-
+      this.book.spine.hooks.content.register(this.injectIdentifier.bind(this));
+      if (this.settings.stylesheet) {
+        this.book.spine.hooks.content.register(this.injectStylesheet.bind(this));
+      }
+      if (this.settings.script) {
+        this.book.spine.hooks.content.register(this.injectScript.bind(this));
+      }
       /**
-       * Emit that rendering has attached to an element
-       * @event attached
+       * @member {Themes} themes
        * @memberof Rendition
        */
-      this.emit(constantsExports.EVENTS.RENDITION.ATTACHED);
-    }.bind(this));
-  }
-
-  /**
-   * Display a point in the book
-   * The request will be added to the rendering Queue,
-   * so it will wait until book is opened, rendering started
-   * and all other rendering tasks have finished to be called.
-   * @param  {string} target Url or EpubCFI
-   * @return {Promise}
-   */
-  display(target) {
-    if (this.displaying) {
-      this.displaying.resolve();
+      this.themes = new themes_1.default(this);
+      /**
+       * @member {Annotations} annotations
+       * @memberof Rendition
+       */
+      this.annotations = new annotations_1.default(this);
+      this.epubcfi = new epubcfi_1.default();
+      /**
+       * A Rendered Location Range
+       * @typedef location
+       * @type {Object}
+       * @property {object} start
+       * @property {string} start.index
+       * @property {string} start.href
+       * @property {object} start.displayed
+       * @property {EpubCFI} start.cfi
+       * @property {number} start.location
+       * @property {number} start.percentage
+       * @property {number} start.displayed.page
+       * @property {number} start.displayed.total
+       * @property {object} end
+       * @property {string} end.index
+       * @property {string} end.href
+       * @property {object} end.displayed
+       * @property {EpubCFI} end.cfi
+       * @property {number} end.location
+       * @property {number} end.percentage
+       * @property {number} end.displayed.page
+       * @property {number} end.displayed.total
+       * @property {boolean} atStart
+       * @property {boolean} atEnd
+       * @memberof Rendition
+       */
+      this.location = null;
+      // Hold queue until book is opened
+      this.q.enqueue(this.book.opened);
+      this.starting = new core_1.defer();
+      /**
+       * @member {promise} started returns after the rendition has started
+       * @memberof Rendition
+       */
+      this.started = this.starting.promise;
+      // Block the queue until rendering is started
+      this.q.enqueue(this.start);
     }
-    return this.q.enqueue(this._display, target);
-  }
-
-  /**
-   * Tells the manager what to display immediately
-   * @private
-   * @param  {string} target Url or EpubCFI
-   * @return {Promise}
-   */
-  _display(target) {
-    if (!this.book) {
-      return;
+    /**
+     * Set the manager function
+     */
+    setManager(manager) {
+      this.manager = manager;
     }
-    var displaying = new coreExports.defer();
-    var displayed = displaying.promise;
-    var section;
-    this.displaying = displaying;
-
-    // Check if this is a book percentage
-    if (this.book.locations.length() && coreExports.isFloat(target)) {
-      target = this.book.locations.cfiFromPercentage(parseFloat(target));
+    /**
+     * Start the rendering
+     */
+    async start() {
+      if (!this.book.packaging || !this.book.packaging.metadata) {
+        console.error('[Rendition] start failed: book.packaging or metadata is undefined');
+        console.error(JSON.stringify(this.book.ready));
+        return;
+      }
+      if (!this.settings.layout && (this.book.packaging.metadata.layout === 'pre-paginated' || this.book.displayOptions.fixedLayout === 'true')) {
+        this.settings.layout = 'pre-paginated';
+      }
+      switch (this.book.packaging.metadata.spread) {
+        case 'none':
+          this.settings.spread = 'none';
+          break;
+        case 'both':
+          this.settings.spread = 'auto';
+          break;
+      }
+      if (!this.manager) {
+        this.ViewManager = this.settings.manager;
+        this.View = this.settings.view;
+        if (typeof this.ViewManager === 'function') {
+          this.manager = new this.ViewManager({
+            view: this.View,
+            queue: this.q,
+            request: this.book.load.bind(this.book),
+            settings: this.settings
+          });
+        }
+      }
+      this.direction(this.book.packaging.metadata.direction || this.settings.defaultDirection);
+      // Parse metadata to get layout props
+      this.settings.globalLayoutProperties = this.determineLayoutProperties(this.book.packaging.metadata);
+      this.flow(this.settings.globalLayoutProperties.flow);
+      this.layout(this.settings.globalLayoutProperties);
+      // Listen for displayed views
+      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
+      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
+      // Listen for resizing
+      this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
+      // Listen for rotation
+      this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
+      // Listen for scroll changes
+      this.manager.on(constants_1.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
+      /**
+       * Emit that rendering has started
+       * @event started
+       * @memberof Rendition
+       */
+      this.emit(constants_1.EVENTS.RENDITION.STARTED);
+      // Start processing queue
+      this.starting.resolve();
     }
-    section = this.book.spine.get(target);
-    if (!section) {
-      displaying.reject(new Error('No Section Found'));
+    /**
+     * Call to attach the container to an element in the dom
+     * Container must be attached before rendering can begin
+     * @return {Promise}
+     */
+    attachTo(element) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      return this.q.enqueue(() => {
+        // Start rendering with the request function
+        if (typeof element === 'string') {
+          console.log('[Rendition] received a string as element:', element);
+        }
+        this.manager.render(element);
+        /**
+         * Emit that rendering has attached to an element
+         * @event attached
+         * @memberof Rendition
+         */
+        this.emit(constants_1.EVENTS.RENDITION.ATTACHED);
+      });
+    }
+    /**
+     * Display a point in the book
+     * The request will be added to the rendering Queue,
+     * so it will wait until book is opened, rendering started
+     * and all other rendering tasks have finished to be called.
+     * @param  {string} target Url or EpubCFI
+     * @return {Promise}
+     */
+    display(target) {
+      console.log('[Rendition] display called with target:', target);
+      if (this.displaying) {
+        this.displaying.resolve(true);
+      }
+      return this.q.enqueue(this._display, target);
+    }
+    /**
+     * Tells the manager what to display immediately
+     *
+     * @param  {string} target Url or EpubCFI
+     * @return {Promise}
+     */
+    _display(target) {
+      console.log('[Rendition] _display called with target:', target);
+      if (!this.book) {
+        console.error('[Rendition] display called without a book');
+        return Promise.resolve(false);
+      }
+      const displaying = new core_1.defer();
+      const displayed = displaying.promise;
+      this.displaying = displaying;
+      // Check if this is a book percentage
+      if (this.book.locations && this.book.locations.length() && (0, core_1.isFloat)(target)) {
+        target = this.book.locations.cfiFromPercentage(parseFloat(target));
+      }
+      if (!this.book.spine) {
+        console.error('[Rendition] display called without a book spine');
+        return Promise.resolve(false);
+      }
+      const section = this.book.spine.get(target);
+      console.log('[Rendition] display called with section from book spine:', section);
+      if (!section) {
+        displaying.reject(new Error('No Section Found'));
+        return displayed;
+      }
+      this.manager.display(section).then(() => {
+        displaying.resolve(true);
+        this.displaying = undefined;
+        /**
+         * Emit that a section has been displayed
+         * @event displayed
+         * @param {Section} section
+         * @memberof Rendition
+         */
+        this.emit(constants_1.EVENTS.RENDITION.DISPLAYED, section);
+        this.reportLocation();
+      }, err => {
+        /**
+         * Emit that has been an error displaying
+         * @event displayError
+         * @param {Section} section
+         * @memberof Rendition
+         */
+        this.emit(constants_1.EVENTS.RENDITION.DISPLAY_ERROR, err);
+      });
       return displayed;
     }
-    this.manager.display(section, target).then(() => {
-      displaying.resolve(section);
-      this.displaying = undefined;
-
-      /**
-       * Emit that a section has been displayed
-       * @event displayed
-       * @param {Section} section
-       * @memberof Rendition
-       */
-      this.emit(constantsExports.EVENTS.RENDITION.DISPLAYED, section);
-      this.reportLocation();
-    }, err => {
-      /**
-       * Emit that has been an error displaying
-       * @event displayError
-       * @param {Section} section
-       * @memberof Rendition
-       */
-      this.emit(constantsExports.EVENTS.RENDITION.DISPLAY_ERROR, err);
-    });
-    return displayed;
-  }
-
-  /*
-  render(view, show) {
-  	// view.onLayout = this.layout.format.bind(this.layout);
-  view.create();
-  	// Fit to size of the container, apply padding
-  this.manager.resizeView(view);
-  	// Render Chain
-  return view.section.render(this.book.request)
-  	.then(function(contents){
-  		return view.load(contents);
-  	}.bind(this))
-  	.then(function(doc){
-  		return this.hooks.content.trigger(view, this);
-  	}.bind(this))
-  	.then(function(){
-  		this.layout.format(view.contents);
-  		return this.hooks.layout.trigger(view, this);
-  	}.bind(this))
-  	.then(function(){
-  		return view.display();
-  	}.bind(this))
-  	.then(function(){
-  		return this.hooks.render.trigger(view, this);
-  	}.bind(this))
-  	.then(function(){
-  		if(show !== false) {
-  			this.q.enqueue(function(view){
-  				view.show();
-  			}, view);
-  		}
-  		// this.map = new Map(view, this.layout);
-  		this.hooks.show.trigger(view, this);
-  		this.trigger("rendered", view.section);
-  		}.bind(this))
-  	.catch(function(e){
-  		this.trigger("loaderror", e);
-  	}.bind(this));
-  }
-  */
-
-  /**
-   * Report what section has been displayed
-   * @private
-   * @param  {*} view
-   */
-  afterDisplayed(view) {
-    view.on(constantsExports.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
-    this.hooks.render.trigger(view, this).then(() => {
-      if (view.contents) {
-        this.hooks.content.trigger(view.contents, this).then(() => {
-          /**
-           * Emit that a section has been rendered
-           * @event rendered
-           * @param {Section} section
-           * @param {View} view
-           * @memberof Rendition
-           */
-          this.emit(constantsExports.EVENTS.RENDITION.RENDERED, view.section, view);
-        });
-      } else {
-        this.emit(constantsExports.EVENTS.RENDITION.RENDERED, view.section, view);
-      }
-    });
-  }
-
-  /**
-   * Report what has been removed
-   * @private
-   * @param  {*} view
-   */
-  afterRemoved(view) {
-    this.hooks.unloaded.trigger(view, this).then(() => {
-      /**
-       * Emit that a section has been removed
-       * @event removed
-       * @param {Section} section
-       * @param {View} view
-       * @memberof Rendition
-       */
-      this.emit(constantsExports.EVENTS.RENDITION.REMOVED, view.section, view);
-    });
-  }
-
-  /**
-   * Report resize events and display the last seen location
-   * @private
-   */
-  onResized(size, epubcfi) {
+    getContents() {
+      return this.manager.getContents();
+    }
     /**
-     * Emit that the rendition has been resized
-     * @event resized
-     * @param {number} width
-     * @param {height} height
-     * @param {string} epubcfi (optional)
-     * @memberof Rendition
+     * Report what section has been displayed
      */
-    this.emit(constantsExports.EVENTS.RENDITION.RESIZED, {
-      width: size.width,
-      height: size.height
-    }, epubcfi);
-    if (this.location && this.location.start) {
-      this.display(epubcfi || this.location.start.cfi);
-    }
-  }
-
-  /**
-   * Report orientation events and display the last seen location
-   * @private
-   */
-  onOrientationChange(orientation) {
-    /**
-     * Emit that the rendition has been rotated
-     * @event orientationchange
-     * @param {string} orientation
-     * @memberof Rendition
-     */
-    this.emit(constantsExports.EVENTS.RENDITION.ORIENTATION_CHANGE, orientation);
-  }
-
-  /**
-   * Move the Rendition to a specific offset
-   * Usually you would be better off calling display()
-   * @param {object} offset
-   */
-  moveTo(offset) {
-    this.manager.moveTo(offset);
-  }
-
-  /**
-   * Trigger a resize of the views
-   * @param {number} [width]
-   * @param {number} [height]
-   * @param {string} [epubcfi] (optional)
-   */
-  resize(width, height, epubcfi) {
-    if (width) {
-      this.settings.width = width;
-    }
-    if (height) {
-      this.settings.height = height;
-    }
-    this.manager.resize(width, height, epubcfi);
-  }
-
-  /**
-   * Clear all rendered views
-   */
-  clear() {
-    this.manager.clear();
-  }
-
-  /**
-   * Go to the next "page" in the rendition
-   * @return {Promise}
-   */
-  next() {
-    return this.q.enqueue(this.manager.next.bind(this.manager)).then(this.reportLocation.bind(this));
-  }
-
-  /**
-   * Go to the previous "page" in the rendition
-   * @return {Promise}
-   */
-  prev() {
-    return this.q.enqueue(this.manager.prev.bind(this.manager)).then(this.reportLocation.bind(this));
-  }
-
-  //-- http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
-  /**
-   * Determine the Layout properties from metadata and settings
-   * @private
-   * @param  {object} metadata
-   * @return {object} properties
-   */
-  determineLayoutProperties(metadata) {
-    var properties;
-    var layout = this.settings.layout || metadata.layout || 'reflowable';
-    var spread = this.settings.spread || metadata.spread || 'auto';
-    var orientation = this.settings.orientation || metadata.orientation || 'auto';
-    var flow = this.settings.flow || metadata.flow || 'auto';
-    var viewport = metadata.viewport || '';
-    var minSpreadWidth = this.settings.minSpreadWidth || metadata.minSpreadWidth || 800;
-    var direction = this.settings.direction || metadata.direction || 'ltr';
-    if ((this.settings.width === 0 || this.settings.width > 0) && (this.settings.height === 0 || this.settings.height > 0)) ;
-    properties = {
-      layout: layout,
-      spread: spread,
-      orientation: orientation,
-      flow: flow,
-      viewport: viewport,
-      minSpreadWidth: minSpreadWidth,
-      direction: direction
-    };
-    return properties;
-  }
-
-  /**
-   * Adjust the flow of the rendition to paginated or scrolled
-   * (scrolled-continuous vs scrolled-doc are handled by different view managers)
-   * @param  {string} flow
-   */
-  flow(flow) {
-    var _flow = flow;
-    if (flow === 'scrolled' || flow === 'scrolled-doc' || flow === 'scrolled-continuous') {
-      _flow = 'scrolled';
-    }
-    if (flow === 'auto' || flow === 'paginated') {
-      _flow = 'paginated';
-    }
-    this.settings.flow = flow;
-    if (this._layout) {
-      this._layout.flow(_flow);
-    }
-    if (this.manager && this._layout) {
-      this.manager.applyLayout(this._layout);
-    }
-    if (this.manager) {
-      this.manager.updateFlow(_flow);
-    }
-    if (this.manager && this.manager.isRendered() && this.location) {
-      this.manager.clear();
-      this.display(this.location.start.cfi);
-    }
-  }
-
-  /**
-   * Adjust the layout of the rendition to reflowable or pre-paginated
-   * @param  {object} settings
-   */
-  layout(settings) {
-    if (settings) {
-      this._layout = new Layout(settings);
-      this._layout.spread(settings.spread, this.settings.minSpreadWidth);
-
-      // this.mapping = new Mapping(this._layout.props);
-
-      this._layout.on(constantsExports.EVENTS.LAYOUT.UPDATED, (props, changed) => {
-        this.emit(constantsExports.EVENTS.RENDITION.LAYOUT, props, changed);
+    afterDisplayed(view) {
+      console.log('[Rendition] afterDisplayed called with view:', view);
+      view.on(constants_1.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
+      this.hooks.render.trigger(view, this).then(() => {
+        if (view.contents) {
+          this.hooks.content.trigger(view.contents, this).then(() => {
+            /**
+             * Emit that a section has been rendered
+             * @event rendered
+             * @param {Section} section
+             * @param {View} view
+             * @memberof Rendition
+             */
+            this.emit(constants_1.EVENTS.RENDITION.RENDERED, view.section, view);
+          });
+        } else {
+          this.emit(constants_1.EVENTS.RENDITION.RENDERED, view.section, view);
+        }
       });
     }
-    if (this.manager && this._layout) {
-      this.manager.applyLayout(this._layout);
+    /**
+     * Report what has been removed
+     */
+    afterRemoved(view) {
+      this.hooks.unloaded.trigger(view, this).then(() => {
+        /**
+         * Emit that a section has been removed
+         * @event removed
+         * @param {Section} section
+         * @param {View} view
+         * @memberof Rendition
+         */
+        this.emit(constants_1.EVENTS.RENDITION.REMOVED, view.section, view);
+      });
     }
-    return this._layout;
-  }
-
-  /**
-   * Adjust if the rendition uses spreads
-   * @param  {string} spread none | auto (TODO: implement landscape, portrait, both)
-   * @param  {int} [min] min width to use spreads at
-   */
-  spread(spread, min) {
-    this.settings.spread = spread;
-    if (min) {
-      this.settings.minSpreadWidth = min;
+    /**
+     * Report resize events and display the last seen location
+     */
+    onResized(size, epubcfi) {
+      /**
+       * Emit that the rendition has been resized
+       * @event resized
+       * @param {number} width
+       * @param {height} height
+       * @param {string} epubcfi (optional)
+       * @memberof Rendition
+       */
+      this.emit(constants_1.EVENTS.RENDITION.RESIZED, {
+        width: size.width,
+        height: size.height
+      }, epubcfi);
+      if (this.location && this.location.start) {
+        this.display(epubcfi || this.location.start.cfi);
+      }
     }
-    if (this._layout) {
-      this._layout.spread(spread, min);
+    /**
+     * Report orientation events and display the last seen location
+     * @private
+     */
+    onOrientationChange(orientation) {
+      /**
+       * Emit that the rendition has been rotated
+       * @event orientationchange
+       * @param {string} orientation
+       * @memberof Rendition
+       */
+      this.emit(constants_1.EVENTS.RENDITION.ORIENTATION_CHANGE, orientation);
     }
-    if (this.manager && this.manager.isRendered()) {
-      this.manager.updateLayout();
+    /**
+     * Trigger a resize of the views
+     * @param {number} [width]
+     * @param {number} [height]
+     * @param {string} [epubcfi] (optional)
+     */
+    resize(width, height, epubcfi) {
+      if (width) {
+        this.settings.width = width;
+      }
+      if (height) {
+        this.settings.height = height;
+      }
+      this.manager.resize(String(width), String(height), epubcfi);
     }
-  }
-
-  /**
-   * Adjust the direction of the rendition
-   * @param  {string} dir
-   */
-  direction(dir) {
-    this.settings.direction = dir || 'ltr';
-    if (this.manager) {
-      this.manager.direction(this.settings.direction);
-    }
-    if (this.manager && this.manager.isRendered() && this.location) {
+    /**
+     * Clear all rendered views
+     */
+    clear() {
       this.manager.clear();
-      this.display(this.location.start.cfi);
     }
-  }
-
-  /**
-   * Report the current location
-   * @fires relocated
-   * @fires locationChanged
-   */
-  reportLocation() {
-    return this.q.enqueue(function reportedLocation() {
-      requestAnimationFrame(function reportedLocationAfterRAF() {
-        var location = this.manager.currentLocation();
-        if (location && location.then && typeof location.then === 'function') {
-          location.then(function (result) {
-            let located = this.located(result);
-            if (!located || !located.start || !located.end) {
+    /**
+     * Go to the next "page" in the rendition
+     */
+    next() {
+      return this.q.enqueue(this.manager.next.bind(this.manager)).then(this.reportLocation.bind(this));
+    }
+    /**
+     * Go to the previous "page" in the rendition
+     */
+    prev() {
+      return this.q.enqueue(this.manager.prev.bind(this.manager)).then(this.reportLocation.bind(this));
+    }
+    //-- http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
+    /**
+     * Determine the Layout properties from metadata and settings
+     */
+    determineLayoutProperties(metadata) {
+      const layout = this.settings.layout || metadata.layout || 'reflowable';
+      const spread = this.settings.spread || metadata.spread || 'auto';
+      const orientation = this.settings.orientation || metadata.orientation || 'auto';
+      const flow = this.settings.flow || metadata.flow || 'auto';
+      const viewport = metadata.viewport || '';
+      const minSpreadWidth = this.settings.minSpreadWidth || metadata.minSpreadWidth || 800;
+      const direction = this.settings.direction || metadata.direction || 'ltr';
+      return {
+        layout: layout,
+        spread: spread,
+        orientation: orientation,
+        flow: flow,
+        viewport: viewport,
+        minSpreadWidth: minSpreadWidth,
+        direction: direction
+      };
+    }
+    /**
+     * Adjust the flow of the rendition to paginated or scrolled
+     * (scrolled-continuous vs scrolled-doc are handled by different view managers)
+     */
+    flow(flow) {
+      let _flow = flow;
+      if (flow === 'scrolled' || flow === 'scrolled-doc' || flow === 'scrolled-continuous') {
+        _flow = 'scrolled';
+      }
+      if (flow === 'auto' || flow === 'paginated') {
+        _flow = 'paginated';
+      }
+      this.settings.flow = flow;
+      if (this._layout) {
+        this._layout.flow(_flow);
+      }
+      if (this.manager && this._layout) {
+        this.manager.applyLayout(this._layout);
+      }
+      if (this.manager) {
+        this.manager.updateFlow(_flow);
+      }
+      if (this.manager && this.manager.isRendered() && this.location) {
+        this.manager.clear();
+        this.display(this.location.start.cfi);
+      }
+    }
+    /**
+     * Adjust the layout of the rendition to reflowable or pre-paginated
+     * @param  {object} settings
+     */
+    layout(settings) {
+      if (settings) {
+        this._layout = new layout_1.default(settings);
+        this._layout.spread(settings.spread, this.settings.minSpreadWidth);
+        // this.mapping = new Mapping(this._layout.props);
+        this._layout.on(constants_1.EVENTS.LAYOUT.UPDATED, (props, changed) => {
+          this.emit(constants_1.EVENTS.RENDITION.LAYOUT, props, changed);
+        });
+      }
+      if (this.manager && this._layout) {
+        this.manager.applyLayout(this._layout);
+      }
+      return this._layout;
+    }
+    /**
+     * Adjust if the rendition uses spreads
+     * @param  {int} [min] min width to use spreads at
+     */
+    spread(spread, min) {
+      console.log('[Rendition] spread called with:', spread, min);
+      this.settings.spread = spread;
+      if (min) {
+        this.settings.minSpreadWidth = min;
+      }
+      if (this._layout) {
+        this._layout.spread(spread, min);
+      }
+      if (this.manager && this.manager.isRendered()) {
+        this.manager.updateLayout();
+      }
+    }
+    /**
+     * Adjust the direction of the rendition
+     */
+    direction(dir) {
+      this.settings.direction = dir || 'ltr';
+      if (this.manager) {
+        this.manager.direction(this.settings.direction);
+      }
+      if (this.manager && this.manager.isRendered() && this.location) {
+        this.manager.clear();
+        this.display(this.location.start.cfi);
+      }
+    }
+    /**
+     * Report the current location
+     * @fires relocated
+     * @fires locationChanged
+     */
+    reportLocation() {
+      return this.q.enqueue(() => {
+        requestAnimationFrame(() => {
+          const pageLocations = this.manager.currentLocation();
+          if (pageLocations && Array.isArray(pageLocations) && pageLocations.length > 0) {
+            // Map PageLocation[] to LocationPoint[]
+            const locationPoints = pageLocations.map(pl => ({
+              index: pl.index,
+              href: pl.href,
+              cfi: pl.mapping?.start ?? '',
+              displayed: {
+                page: pl.pages[0] || 1,
+                total: pl.totalPages ?? 0
+              },
+              pages: pl.pages,
+              totalPages: pl.totalPages,
+              mapping: pl.mapping
+            }));
+            const located = this.located(locationPoints);
+            if (!located) {
               return;
             }
             this.location = located;
-            this.emit(constantsExports.EVENTS.RENDITION.LOCATION_CHANGED, {
-              index: this.location.start.index,
-              href: this.location.start.href,
-              start: this.location.start.cfi,
-              end: this.location.end.cfi,
-              percentage: this.location.start.percentage
-            });
-            this.emit(constantsExports.EVENTS.RENDITION.RELOCATED, this.location);
-          }.bind(this));
-        } else if (location) {
-          let located = this.located(location);
-          if (!located || !located.start || !located.end) {
-            return;
+            /**
+             * @event relocated
+             * @type {displayedLocation}
+             * @memberof Rendition
+             */
+            this.emit(constants_1.EVENTS.RENDITION.RELOCATED, this.location);
           }
-          this.location = located;
-
-          /**
-           * @event locationChanged
-           * @deprecated
-           * @type {object}
-           * @property {number} index
-           * @property {string} href
-           * @property {EpubCFI} start
-           * @property {EpubCFI} end
-           * @property {number} percentage
-           * @memberof Rendition
-           */
-          this.emit(constantsExports.EVENTS.RENDITION.LOCATION_CHANGED, {
-            index: this.location.start.index,
-            href: this.location.start.href,
-            start: this.location.start.cfi,
-            end: this.location.end.cfi,
-            percentage: this.location.start.percentage
-          });
-
-          /**
-           * @event relocated
-           * @type {displayedLocation}
-           * @memberof Rendition
-           */
-          this.emit(constantsExports.EVENTS.RENDITION.RELOCATED, this.location);
+        });
+      });
+    }
+    /**
+     * Get the Current Location object
+     */
+    currentLocation() {
+      return this.manager.currentLocation();
+    }
+    /**
+     * Creates a Rendition#locationRange from location
+     * passed by the Manager
+     * @returns {displayedLocation}
+     */
+    located(location) {
+      if (!location.length) {
+        return null;
+      }
+      const start = location[0];
+      const end = location[location.length - 1];
+      const located = {
+        start: {
+          index: start.index,
+          href: start.href,
+          cfi: start.mapping?.start ?? '',
+          displayed: {
+            page: start.pages?.[0] ?? 1,
+            total: start.totalPages ?? 0
+          }
+        },
+        end: {
+          index: end.index,
+          href: end.href,
+          cfi: end.mapping?.end ?? '',
+          displayed: {
+            page: end.pages?.[end.pages?.length - 1] ?? 1,
+            total: end.totalPages ?? 0
+          }
         }
-      }.bind(this));
-    }.bind(this));
-  }
-
-  /**
-   * Get the Current Location object
-   * @return {displayedLocation | promise} location (may be a promise)
-   */
-  currentLocation() {
-    var location = this.manager.currentLocation();
-    if (location && location.then && typeof location.then === 'function') {
-      location.then(function (result) {
-        let located = this.located(result);
-        return located;
-      }.bind(this));
-    } else if (location) {
-      let located = this.located(location);
+      };
+      const locationStart = start.mapping?.start ? this.book.locations.locationFromCfi(start.mapping.start) : null;
+      const locationEnd = end.mapping?.end ? this.book.locations.locationFromCfi(end.mapping.end) : null;
+      if (locationStart !== null) {
+        located.start.location = locationStart;
+        located.start.percentage = this.book.locations.percentageFromLocation(locationStart);
+      }
+      if (locationEnd !== null) {
+        located.end.location = locationEnd;
+        located.end.percentage = this.book.locations.percentageFromLocation(locationEnd);
+      }
+      const pageStart = start.mapping?.start ? this.book.pageList.pageFromCfi(start.mapping.start) : -1;
+      const pageEnd = end.mapping?.end ? this.book.pageList.pageFromCfi(end.mapping.end) : -1;
+      if (pageStart !== -1) {
+        located.start.page = pageStart;
+      }
+      if (pageEnd !== -1) {
+        located.end.page = pageEnd;
+      }
+      if (end.index === this.book.spine.last()?.index && located.end.displayed.page >= located.end.displayed.total) {
+        located.atEnd = true;
+      }
+      if (start.index === this.book.spine.first()?.index && located.start.displayed.page === 1) {
+        located.atStart = true;
+      }
       return located;
     }
-  }
-
-  /**
-   * Creates a Rendition#locationRange from location
-   * passed by the Manager
-   * @returns {displayedLocation}
-   * @private
-   */
-  located(location) {
-    if (!location.length) {
-      return {};
+    /**
+     * Remove and Clean Up the Rendition
+     */
+    destroy() {
+      // @todo Clear the queue
+      this.manager?.destroy();
+      // @ts-expect-error this is only at destroy time
+      this.book = undefined;
     }
-    let start = location[0];
-    let end = location[location.length - 1];
-    let located = {
-      start: {
-        index: start.index,
-        href: start.href,
-        cfi: start.mapping.start,
-        displayed: {
-          page: start.pages[0] || 1,
-          total: start.totalPages
-        }
-      },
-      end: {
-        index: end.index,
-        href: end.href,
-        cfi: end.mapping.end,
-        displayed: {
-          page: end.pages[end.pages.length - 1] || 1,
-          total: end.totalPages
-        }
+    /**
+     * Pass the events from a view's Contents
+     */
+    passEvents(contents) {
+      constants_1.DOM_EVENTS.forEach(e => {
+        contents.on(e, ev => this.triggerViewEvent(ev, contents));
+      });
+      contents.on(constants_1.EVENTS.CONTENTS.SELECTED, e => {
+        this.triggerSelectedEvent(e, contents);
+      });
+    }
+    /**
+     * Emit events passed by a view
+     */
+    triggerViewEvent(e, contents) {
+      this.emit(e.type, e, contents);
+    }
+    /**
+     * Emit a selection event's CFI Range passed from a a view
+     * @private
+     * @param  {string} cfirange
+     */
+    triggerSelectedEvent(cfirange, contents) {
+      /**
+       * Emit that a text selection has occurred
+       * @event selected
+       * @param {string} cfirange
+       * @param {Contents} contents
+       * @memberof Rendition
+       */
+      this.emit(constants_1.EVENTS.RENDITION.SELECTED, cfirange, contents);
+    }
+    /**
+     * Emit a markClicked event with the cfiRange and data from a mark
+     * @private
+     * @param  {EpubCFI} cfirange
+     */
+    triggerMarkEvent(cfiRange, data, contents) {
+      /**
+       * Emit that a mark was clicked
+       * @event markClicked
+       * @param {EpubCFI} cfirange
+       * @param {object} data
+       * @param {Contents} contents
+       * @memberof Rendition
+       */
+      this.emit(constants_1.EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
+    }
+    /**
+     * Hook to adjust images to fit in columns
+     */
+    adjustImages(contents) {
+      if (this._layout === undefined) {
+        throw new Error('Layout is not defined');
       }
-    };
-    let locationStart = this.book.locations.locationFromCfi(start.mapping.start);
-    let locationEnd = this.book.locations.locationFromCfi(end.mapping.end);
-    if (locationStart != null) {
-      located.start.location = locationStart;
-      located.start.percentage = this.book.locations.percentageFromLocation(locationStart);
-    }
-    if (locationEnd != null) {
-      located.end.location = locationEnd;
-      located.end.percentage = this.book.locations.percentageFromLocation(locationEnd);
-    }
-    let pageStart = this.book.pageList.pageFromCfi(start.mapping.start);
-    let pageEnd = this.book.pageList.pageFromCfi(end.mapping.end);
-    if (pageStart != -1) {
-      located.start.page = pageStart;
-    }
-    if (pageEnd != -1) {
-      located.end.page = pageEnd;
-    }
-    if (end.index === this.book.spine.last().index && located.end.displayed.page >= located.end.displayed.total) {
-      located.atEnd = true;
-    }
-    if (start.index === this.book.spine.first().index && located.start.displayed.page === 1) {
-      located.atStart = true;
-    }
-    return located;
-  }
-
-  /**
-   * Remove and Clean Up the Rendition
-   */
-  destroy() {
-    // Clear the queue
-    // this.q.clear();
-    // this.q = undefined;
-
-    this.manager && this.manager.destroy();
-    this.book = undefined;
-
-    // this.views = null;
-
-    // this.hooks.display.clear();
-    // this.hooks.serialize.clear();
-    // this.hooks.content.clear();
-    // this.hooks.layout.clear();
-    // this.hooks.render.clear();
-    // this.hooks.show.clear();
-    // this.hooks = {};
-
-    // this.themes.destroy();
-    // this.themes = undefined;
-
-    // this.epubcfi = undefined;
-
-    // this.starting = undefined;
-    // this.started = undefined;
-  }
-
-  /**
-   * Pass the events from a view's Contents
-   * @private
-   * @param  {Contents} view contents
-   */
-  passEvents(contents) {
-    constantsExports.DOM_EVENTS.forEach(e => {
-      contents.on(e, ev => this.triggerViewEvent(ev, contents));
-    });
-    contents.on(constantsExports.EVENTS.CONTENTS.SELECTED, e => this.triggerSelectedEvent(e, contents));
-  }
-
-  /**
-   * Emit events passed by a view
-   * @private
-   * @param  {event} e
-   */
-  triggerViewEvent(e, contents) {
-    this.emit(e.type, e, contents);
-  }
-
-  /**
-   * Emit a selection event's CFI Range passed from a a view
-   * @private
-   * @param  {string} cfirange
-   */
-  triggerSelectedEvent(cfirange, contents) {
-    /**
-     * Emit that a text selection has occurred
-     * @event selected
-     * @param {string} cfirange
-     * @param {Contents} contents
-     * @memberof Rendition
-     */
-    this.emit(constantsExports.EVENTS.RENDITION.SELECTED, cfirange, contents);
-  }
-
-  /**
-   * Emit a markClicked event with the cfiRange and data from a mark
-   * @private
-   * @param  {EpubCFI} cfirange
-   */
-  triggerMarkEvent(cfiRange, data, contents) {
-    /**
-     * Emit that a mark was clicked
-     * @event markClicked
-     * @param {EpubCFI} cfirange
-     * @param {object} data
-     * @param {Contents} contents
-     * @memberof Rendition
-     */
-    this.emit(constantsExports.EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
-  }
-
-  /**
-   * Get a Range from a Visible CFI
-   * @param  {string} cfi EpubCfi String
-   * @param  {string} ignoreClass
-   * @return {range}
-   */
-  getRange(cfi, ignoreClass) {
-    var _cfi = new CFI(cfi);
-    var found = this.manager.visible().filter(function (view) {
-      if (_cfi.spinePos === view.index) return true;
-    });
-
-    // Should only every return 1 item
-    if (found.length) {
-      return found[0].contents.range(_cfi, ignoreClass);
-    }
-  }
-
-  /**
-   * Hook to adjust images to fit in columns
-   * @param  {Contents} contents
-   * @private
-   */
-  adjustImages(contents) {
-    if (this._layout.name === 'pre-paginated') {
+      if (this._layout.name === 'pre-paginated') {
+        return new Promise(function (resolve) {
+          resolve();
+        });
+      }
+      if (contents.window === null) {
+        return;
+      }
+      const computed = contents.window.getComputedStyle(contents.content, null);
+      const height = (contents.content.offsetHeight - (parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom))) * 0.95;
+      const horizontalPadding = parseFloat(computed.paddingLeft) + parseFloat(computed.paddingRight);
+      contents.addStylesheetRules({
+        img: {
+          'max-width': (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + 'px' : '100%') + '!important',
+          'max-height': height + 'px' + '!important',
+          'object-fit': 'contain',
+          'page-break-inside': 'avoid',
+          'break-inside': 'avoid',
+          'box-sizing': 'border-box'
+        },
+        svg: {
+          'max-width': (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + 'px' : '100%') + '!important',
+          'max-height': height + 'px' + '!important',
+          'page-break-inside': 'avoid',
+          'break-inside': 'avoid'
+        }
+      }, 'rendition-adjust-images');
       return new Promise(function (resolve) {
-        resolve();
+        // Wait to apply
+        setTimeout(function () {
+          resolve();
+        }, 1);
       });
     }
-    let computed = contents.window.getComputedStyle(contents.content, null);
-    let height = (contents.content.offsetHeight - (parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom))) * 0.95;
-    let horizontalPadding = parseFloat(computed.paddingLeft) + parseFloat(computed.paddingRight);
-    contents.addStylesheetRules({
-      img: {
-        'max-width': (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + 'px' : '100%') + '!important',
-        'max-height': height + 'px' + '!important',
-        'object-fit': 'contain',
-        'page-break-inside': 'avoid',
-        'break-inside': 'avoid',
-        'box-sizing': 'border-box'
-      },
-      svg: {
-        'max-width': (this._layout.columnWidth ? this._layout.columnWidth - horizontalPadding + 'px' : '100%') + '!important',
-        'max-height': height + 'px' + '!important',
-        'page-break-inside': 'avoid',
-        'break-inside': 'avoid'
+    /**
+     * Hook to handle link clicks in rendered content
+     */
+    handleLinks(contents) {
+      if (contents) {
+        contents.on(constants_1.EVENTS.CONTENTS.LINK_CLICKED, href => {
+          const relative = this.book.path.relative(href);
+          this.display(relative);
+        });
       }
-    });
-    return new Promise(function (resolve) {
-      // Wait to apply
-      setTimeout(function () {
-        resolve();
-      }, 1);
-    });
-  }
-
-  /**
-   * Get the Contents object of each rendered view
-   * @returns {Contents[]}
-   */
-  getContents() {
-    return this.manager ? this.manager.getContents() : [];
-  }
-
-  /**
-   * Get the views member from the manager
-   * @returns {Views}
-   */
-  views() {
-    let views = this.manager ? this.manager.views : undefined;
-    return views || [];
-  }
-
-  /**
-   * Hook to handle link clicks in rendered content
-   * @param  {Contents} contents
-   * @private
-   */
-  handleLinks(contents) {
-    if (contents) {
-      contents.on(constantsExports.EVENTS.CONTENTS.LINK_CLICKED, href => {
-        let relative = this.book.path.relative(href);
-        this.display(relative);
-      });
+    }
+    views() {
+      const views = this.manager ? this.manager.views : undefined;
+      return views || [];
+    }
+    /**
+     * Hook to handle injecting stylesheet before
+     * a Section is serialized
+     */
+    injectStylesheet(doc) {
+      const style = doc.createElement('link');
+      style.setAttribute('type', 'text/css');
+      style.setAttribute('rel', 'stylesheet');
+      if (this.settings.stylesheet) {
+        style.setAttribute('href', this.settings.stylesheet);
+      }
+      doc.getElementsByTagName('head')[0].appendChild(style);
+    }
+    /**
+     * Hook to handle injecting scripts before
+     * a Section is serialized
+     */
+    injectScript(doc) {
+      const script = doc.createElement('script');
+      script.setAttribute('type', 'text/javascript');
+      if (this.settings.script) {
+        script.setAttribute('src', this.settings.script);
+      }
+      script.textContent = ' '; // Needed to prevent self closing tag
+      doc.getElementsByTagName('head')[0].appendChild(script);
+    }
+    /**
+     * Hook to handle the document identifier before
+     * a Section is serialized
+     */
+    injectIdentifier(doc) {
+      const ident = this.book.packaging.metadata.identifier;
+      const meta = doc.createElement('meta');
+      meta.setAttribute('name', 'dc.relation.ispartof');
+      if (ident) {
+        meta.setAttribute('content', ident);
+      }
+      doc.getElementsByTagName('head')[0].appendChild(meta);
     }
   }
-
-  /**
-   * Hook to handle injecting stylesheet before
-   * a Section is serialized
-   * @param  {document} doc
-   * @param  {Section} section
-   * @private
-   */
-  injectStylesheet(doc) {
-    let style = doc.createElement('link');
-    style.setAttribute('type', 'text/css');
-    style.setAttribute('rel', 'stylesheet');
-    style.setAttribute('href', this.settings.stylesheet);
-    doc.getElementsByTagName('head')[0].appendChild(style);
-  }
-
-  /**
-   * Hook to handle injecting scripts before
-   * a Section is serialized
-   * @param  {document} doc
-   * @param  {Section} section
-   * @private
-   */
-  injectScript(doc) {
-    let script = doc.createElement('script');
-    script.setAttribute('type', 'text/javascript');
-    script.setAttribute('src', this.settings.script);
-    script.textContent = ' '; // Needed to prevent self closing tag
-    doc.getElementsByTagName('head')[0].appendChild(script);
-  }
-
-  /**
-   * Hook to handle the document identifier before
-   * a Section is serialized
-   * @param  {document} doc
-   * @param  {Section} section
-   * @private
-   */
-  injectIdentifier(doc) {
-    let ident = this.book.packaging.metadata.identifier;
-    let meta = doc.createElement('meta');
-    meta.setAttribute('name', 'dc.relation.ispartof');
-    if (ident) {
-      meta.setAttribute('content', ident);
-    }
-    doc.getElementsByTagName('head')[0].appendChild(meta);
-  }
+  rendition.Rendition = Rendition;
+  //-- Enable binding events to Renderer
+  (0, event_emitter_1.default)(Rendition.prototype);
+  rendition.default = Rendition;
+  return rendition;
 }
-
-//-- Enable binding events to Renderer
-EventEmitter(Rendition.prototype);
 
 var archive = {};
 
@@ -14312,19 +13320,19 @@ function chdir (dir) {
 }function umask() { return 0; }
 
 // from https://github.com/kumavis/browser-process-hrtime/blob/master/index.js
-var performance$1 = global$1.performance || {};
+var performance = global$1.performance || {};
 var performanceNow =
-  performance$1.now        ||
-  performance$1.mozNow     ||
-  performance$1.msNow      ||
-  performance$1.oNow       ||
-  performance$1.webkitNow  ||
+  performance.now        ||
+  performance.mozNow     ||
+  performance.msNow      ||
+  performance.oNow       ||
+  performance.webkitNow  ||
   function(){ return (new Date()).getTime() };
 
 // generate timestamp or delta
 // see http://nodejs.org/api/process.html#process_process_hrtime
 function hrtime(previousTimestamp){
-  var clocktime = performanceNow.call(performance$1)*1e-3;
+  var clocktime = performanceNow.call(performance)*1e-3;
   var seconds = Math.floor(clocktime);
   var nanoseconds = Math.floor((clocktime%1)*1e9);
   if (previousTimestamp) {
@@ -14619,12 +13627,6 @@ function requireArchive() {
   archive.default = Archive;
   return archive;
 }
-
-var archiveExports = requireArchive();
-var Archive = /*@__PURE__*/getDefaultExportFromCjs(archiveExports);
-
-var requestExports = requireRequest();
-var request = /*@__PURE__*/getDefaultExportFromCjs(requestExports);
 
 var store = {};
 
@@ -17567,7 +16569,7 @@ function requireStore() {
       const encodedUrl = window.encodeURIComponent(url);
       return this.storage.getItem(encodedUrl).then(result => {
         if (!result) {
-          return this.requester(url, 'binary', withCredentials, headers).then(data => {
+          return this.requester(url, 'binary', withCredentials ?? false, headers ?? {}).then(data => {
             return this.storage.setItem(encodedUrl, data);
           });
         }
@@ -17582,12 +16584,12 @@ function requireStore() {
      * @param  {object} [headers]
      * @return {Promise<Blob | string | JSON | Document | XMLDocument>}
      */
-    async request(url, type, withCredentials, headers) {
+    async request(url, type, withCredentials = false, headers = {}) {
       if (this.online) {
         // From network
         return this.requester(url, type, withCredentials, headers).then(data => {
           // save to store if not present
-          this.put(url);
+          this.put(url, withCredentials, headers);
           return data;
         });
       } else {
@@ -17765,9 +16767,6 @@ function requireStore() {
   return store;
 }
 
-var storeExports = requireStore();
-var Store = /*@__PURE__*/getDefaultExportFromCjs(storeExports);
-
 var displayoptions = {};
 
 var hasRequiredDisplayoptions;
@@ -17836,744 +16835,736 @@ function requireDisplayoptions() {
   return displayoptions;
 }
 
-var displayoptionsExports = requireDisplayoptions();
-var DisplayOptions = /*@__PURE__*/getDefaultExportFromCjs(displayoptionsExports);
-
-const CONTAINER_PATH = 'META-INF/container.xml';
-const IBOOKS_DISPLAY_OPTIONS_PATH = 'META-INF/com.apple.ibooks.display-options.xml';
-const INPUT_TYPE = {
-  BINARY: 'binary',
-  BASE64: 'base64',
-  EPUB: 'epub',
-  OPF: 'opf',
-  MANIFEST: 'json',
-  DIRECTORY: 'directory'
-};
-
-/**
- * An Epub representation with methods for the loading, parsing and manipulation
- * of its contents.
- * @class
- * @param {string} [url]
- * @param {object} [options]
- * @param {method} [options.requestMethod] a request function to use instead of the default
- * @param {boolean} [options.requestCredentials=undefined] send the xhr request withCredentials
- * @param {object} [options.requestHeaders=undefined] send the xhr request headers
- * @param {string} [options.encoding=binary] optional to pass 'binary' or base64' for archived Epubs
- * @param {string} [options.replacements=none] use base64, blobUrl, or none for replacing assets in archived Epubs
- * @param {method} [options.canonical] optional function to determine canonical urls for a path
- * @param {string} [options.openAs] optional string to determine the input type
- * @param {boolean} [options.keepAbsoluteUrl=false] whether to keep the absolute URL when opening
- * @param {string} [options.store=false] cache the contents in local storage, value should be the name of the reader
- * @returns {Book}
- * @example new Book("/path/to/book.epub", {})
- * @example new Book({ replacements: "blobUrl" })
- */
-class Book {
-  constructor(url, options) {
-    // Allow passing just options to the Book
-    if (typeof options === 'undefined' && typeof url !== 'string' && url instanceof Blob === false && url instanceof ArrayBuffer === false) {
-      options = url;
-      url = undefined;
-    }
-    this.settings = coreExports.extend(this.settings || {}, {
-      requestMethod: undefined,
-      requestCredentials: undefined,
-      requestHeaders: undefined,
-      encoding: undefined,
-      replacements: undefined,
-      canonical: undefined,
-      openAs: undefined,
-      store: undefined
-    });
-    coreExports.extend(this.settings, options);
-
-    // Promises
-    this.opening = new coreExports.defer();
-
-    /**
-     * @member {promise} opened returns after the book is loaded
-     * @memberof Book
-     */
-    this.opened = this.opening.promise;
-    this.isOpen = false;
-    this.loading = {
-      manifest: new coreExports.defer(),
-      spine: new coreExports.defer(),
-      metadata: new coreExports.defer(),
-      cover: new coreExports.defer(),
-      navigation: new coreExports.defer(),
-      pageList: new coreExports.defer(),
-      resources: new coreExports.defer(),
-      displayOptions: new coreExports.defer()
+var hasRequiredBook;
+function requireBook() {
+  if (hasRequiredBook) return book;
+  hasRequiredBook = 1;
+  var __importDefault = book && book.__importDefault || function (mod) {
+    return mod && mod.__esModule ? mod : {
+      "default": mod
     };
-    this.loaded = {
-      manifest: this.loading.manifest.promise,
-      spine: this.loading.spine.promise,
-      metadata: this.loading.metadata.promise,
-      cover: this.loading.cover.promise,
-      navigation: this.loading.navigation.promise,
-      pageList: this.loading.pageList.promise,
-      resources: this.loading.resources.promise,
-      displayOptions: this.loading.displayOptions.promise
-    };
-
-    /**
-     * @member {promise} ready returns after the book is loaded and parsed
-     * @memberof Book
-     * @private
-     */
-    this.ready = Promise.all([this.loaded.manifest, this.loaded.spine, this.loaded.metadata, this.loaded.cover, this.loaded.navigation, this.loaded.resources, this.loaded.displayOptions]);
-
-    // Queue for methods used before opening
-    this.isRendered = false;
-    // this._q = queue(this);
-
-    /**
-     * @member {method} request
-     * @memberof Book
-     * @private
-     */
-    this.request = this.settings.requestMethod || request;
-
-    /**
-     * @member {Spine} spine
-     * @memberof Book
-     */
-    this.spine = new Spine();
-
-    /**
-     * @member {Locations} locations
-     * @memberof Book
-     */
-    this.locations = new Locations(this.spine, this.load.bind(this));
-
-    /**
-     * @member {Navigation} navigation
-     * @memberof Book
-     */
-    this.navigation = undefined;
-
-    /**
-     * @member {PageList} pagelist
-     * @memberof Book
-     */
-    this.pageList = undefined;
-
-    /**
-     * @member {Url} url
-     * @memberof Book
-     * @private
-     */
-    this.url = undefined;
-
-    /**
-     * @member {Path} path
-     * @memberof Book
-     * @private
-     */
-    this.path = undefined;
-
-    /**
-     * @member {boolean} archived
-     * @memberof Book
-     * @private
-     */
-    this.archived = false;
-
-    /**
-     * @member {Archive} archive
-     * @memberof Book
-     * @private
-     */
-    this.archive = undefined;
-
-    /**
-     * @member {Store} storage
-     * @memberof Book
-     * @private
-     */
-    this.storage = undefined;
-
-    /**
-     * @member {Resources} resources
-     * @memberof Book
-     * @private
-     */
-    this.resources = undefined;
-
-    /**
-     * @member {Rendition} rendition
-     * @memberof Book
-     * @private
-     */
-    this.rendition = undefined;
-
-    /**
-     * @member {Container} container
-     * @memberof Book
-     * @private
-     */
-    this.container = undefined;
-
-    /**
-     * @member {Packaging} packaging
-     * @memberof Book
-     * @private
-     */
-    this.packaging = undefined;
-
-    /**
-     * @member {DisplayOptions} displayOptions
-     * @memberof DisplayOptions
-     * @private
-     */
-    this.displayOptions = undefined;
-
-    // this.toc = undefined;
-    if (this.settings.store) {
-      this.store(this.settings.store);
+  };
+  Object.defineProperty(book, "__esModule", {
+    value: true
+  });
+  const event_emitter_1 = __importDefault(requireEventEmitter());
+  const core_1 = requireCore();
+  const url_1 = __importDefault(requireUrl());
+  const path_1 = __importDefault(requirePath());
+  const spine_1 = __importDefault(requireSpine());
+  const locations_1 = __importDefault(requireLocations());
+  const container_1 = __importDefault(requireContainer());
+  const packaging_1 = __importDefault(requirePackaging());
+  const navigation_1 = __importDefault(requireNavigation());
+  const resources_1 = __importDefault(requireResources());
+  const pagelist_1 = __importDefault(requirePagelist());
+  const rendition_1 = __importDefault(requireRendition());
+  const archive_1 = __importDefault(requireArchive());
+  const request_1 = __importDefault(requireRequest());
+  const epubcfi_1 = __importDefault(requireEpubcfi());
+  const store_1 = __importDefault(requireStore());
+  const displayoptions_1 = __importDefault(requireDisplayoptions());
+  const constants_1 = requireConstants();
+  const CONTAINER_PATH = 'META-INF/container.xml';
+  const IBOOKS_DISPLAY_OPTIONS_PATH = 'META-INF/com.apple.ibooks.display-options.xml';
+  const INPUT_TYPE = {
+    BINARY: 'binary',
+    BASE64: 'base64',
+    EPUB: 'epub',
+    OPF: 'opf',
+    MANIFEST: 'json',
+    DIRECTORY: 'directory'
+  };
+  /**
+   * An Epub representation with methods for the loading, parsing and manipulation
+   * of its contents.
+   * @class
+   * @param {string} [url]
+   * @param {object} [options]
+   * @param {method} [options.requestMethod] a request function to use instead of the default
+   * @param {boolean} [options.requestCredentials=undefined] send the xhr request withCredentials
+   * @param {object} [options.requestHeaders=undefined] send the xhr request headers
+   * @param {string} [options.encoding=binary] optional to pass 'binary' or base64' for archived Epubs
+   * @param {string} [options.replacements=none] use base64, blobUrl, or none for replacing assets in archived Epubs
+   * @param {method} [options.canonical] optional function to determine canonical urls for a path
+   * @param {string} [options.openAs] optional string to determine the input type
+   * @param {boolean} [options.keepAbsoluteUrl=false] whether to keep the absolute URL when opening
+   * @param {string} [options.store=false] cache the contents in local storage, value should be the name of the reader
+   * @returns {Book}
+   * @example new Book("/path/to/book.epub", {})
+   * @example new Book({ replacements: "blobUrl" })
+   */
+  class Book {
+    constructor(url, options) {
+      this.settings = {};
+      this.isOpen = false;
+      this.isRendered = false;
+      this.archived = false;
+      // Allow passing just options to the Book
+      if (typeof options === 'undefined' && typeof url !== 'string' && url instanceof Blob === false && url instanceof ArrayBuffer === false) {
+        options = url;
+        url = undefined;
+      }
+      this.settings = (0, core_1.extend)(this.settings || {}, {
+        requestMethod: undefined,
+        requestCredentials: undefined,
+        requestHeaders: undefined,
+        encoding: undefined,
+        replacements: undefined,
+        canonical: undefined,
+        openAs: undefined,
+        store: undefined
+      });
+      if (options) (0, core_1.extend)(this.settings, options);
+      // Promises
+      this.opening = new core_1.defer();
+      /**
+       * @member {promise} opened returns after the book is loaded
+       * @memberof Book
+       */
+      this.opened = this.opening.promise;
+      this.loading = {
+        manifest: new core_1.defer(),
+        spine: new core_1.defer(),
+        metadata: new core_1.defer(),
+        cover: new core_1.defer(),
+        navigation: new core_1.defer(),
+        pageList: new core_1.defer(),
+        resources: new core_1.defer(),
+        displayOptions: new core_1.defer(),
+        packaging: new core_1.defer()
+      };
+      this.loaded = {
+        manifest: this.loading.manifest.promise,
+        spine: this.loading.spine.promise,
+        metadata: this.loading.metadata.promise,
+        cover: this.loading.cover.promise,
+        navigation: this.loading.navigation.promise,
+        pageList: this.loading.pageList.promise,
+        resources: this.loading.resources.promise,
+        displayOptions: this.loading.displayOptions.promise,
+        packaging: this.loading.packaging.promise
+      };
+      /**
+       * @member {promise} ready returns after the book is loaded and parsed
+       * @memberof Book
+       * @private
+       */
+      this.ready = Promise.all([this.loaded.manifest, this.loaded.spine, this.loaded.metadata, this.loaded.cover, this.loaded.navigation, this.loaded.resources, this.loaded.displayOptions, this.loaded.packaging]);
+      /**
+       * @member {method} request
+       * @memberof Book
+       * @private
+       */
+      this.request = this.settings.requestMethod || request_1.default;
+      /**
+       * @member {Spine} spine
+       * @memberof Book
+       */
+      this.spine = new spine_1.default();
+      /**
+       * @member {Locations} locations
+       * @memberof Book
+       */
+      this.locations = new locations_1.default(this.spine, path => this.load(path));
+      /**
+       * @member {Navigation} navigation
+       * @memberof Book
+       */
+      this.navigation = undefined;
+      /**
+       * @member {PageList} pagelist
+       * @memberof Book
+       */
+      this.pageList = undefined;
+      /**
+       * @member {Url} url
+       * @memberof Book
+       * @private
+       */
+      this.url = undefined;
+      /**
+       * @member {Path} path
+       * @memberof Book
+       * @private
+       */
+      this.path = undefined;
+      /**
+       * @member {Archive} archive
+       * @memberof Book
+       * @private
+       */
+      this.archive = undefined;
+      /**
+       * @member {Store} storage
+       * @memberof Book
+       * @private
+       */
+      this.storage = undefined;
+      /**
+       * @member {Resources} resources
+       * @memberof Book
+       * @private
+       */
+      this.resources = undefined;
+      /**
+       * @member {Rendition} rendition
+       * @memberof Book
+       * @private
+       */
+      this.rendition = undefined;
+      /**
+       * @member {Container} container
+       * @memberof Book
+       * @private
+       */
+      this.container = undefined;
+      /**
+       * @member {Packaging} packaging
+       * @memberof Book
+       * @private
+       */
+      this.packaging = undefined;
+      /**
+       * @member {DisplayOptions} displayOptions
+       * @memberof DisplayOptions
+       * @private
+       */
+      this.displayOptions = undefined;
+      // this.toc = undefined;
+      if (this.settings.store) {
+        this.store(this.settings.store);
+      }
+      if (url) {
+        this.open(url, this.settings.openAs).catch(() => {
+          const err = new Error('Cannot load book at ' + url);
+          this.emit(constants_1.EVENTS.BOOK.OPEN_FAILED, err);
+        });
+      }
     }
-    if (url) {
-      this.open(url, this.settings.openAs).catch(() => {
-        var err = new Error('Cannot load book at ' + url);
-        this.emit(constantsExports.EVENTS.BOOK.OPEN_FAILED, err);
+    /**
+     * Open a epub or url
+     * @param {string | ArrayBuffer} input Url, Path or ArrayBuffer
+     * @param {string} [what="binary", "base64", "epub", "opf", "json", "directory"] force opening as a certain type
+     * @returns {Promise} of when the book has been loaded
+     * @example book.open("/path/to/book.epub")
+     */
+    async open(input, what) {
+      let opening;
+      const type = what || this.determineType(input);
+      // Convert Blob to ArrayBuffer if needed
+      if (input instanceof Blob) {
+        return input.arrayBuffer().then(buffer => this.open(buffer, what));
+      }
+      if (type === INPUT_TYPE.BINARY) {
+        this.archived = true;
+        this.url = new url_1.default('/', '');
+        opening = this.openEpub(input);
+      } else if (type === INPUT_TYPE.BASE64) {
+        this.archived = true;
+        this.url = new url_1.default('/', '');
+        opening = this.openEpub(input, type);
+      } else if (type === INPUT_TYPE.EPUB) {
+        this.archived = true;
+        this.url = new url_1.default('/', '');
+        if (typeof input === 'string') {
+          opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(data => {
+            if (data instanceof ArrayBuffer) {
+              return this.openEpub(data);
+            }
+            throw new Error('Expected ArrayBuffer for openEpub');
+          });
+        } else {
+          throw new Error('Input must be a string for request');
+        }
+      } else if (type == INPUT_TYPE.OPF) {
+        this.url = new url_1.default(input);
+        if (this.settings.keepAbsoluteUrl) {
+          opening = this.openPackaging(input);
+        } else {
+          opening = this.openPackaging(this.url.Path.toString());
+        }
+      } else if (type == INPUT_TYPE.MANIFEST) {
+        this.url = new url_1.default(input);
+        if (this.settings.keepAbsoluteUrl) {
+          opening = this.openManifest(input);
+        } else {
+          opening = this.openManifest(this.url.Path.toString());
+        }
+      } else {
+        this.url = new url_1.default(input);
+        opening = this.openContainer(CONTAINER_PATH).then(packagePath => this.openPackaging(packagePath));
+      }
+      return opening;
+    }
+    /**
+     * Open an archived epub
+     */
+    async openEpub(data, encoding) {
+      const isBase64 = (encoding || this.settings.encoding) === 'base64';
+      return this.unarchive(data, isBase64).then(() => {
+        return this.openContainer(CONTAINER_PATH);
+      }).then(packagePath => {
+        return this.openPackaging(packagePath);
       });
     }
-  }
-
-  /**
-   * Open a epub or url
-   * @param {string | ArrayBuffer} input Url, Path or ArrayBuffer
-   * @param {string} [what="binary", "base64", "epub", "opf", "json", "directory"] force opening as a certain type
-   * @returns {Promise} of when the book has been loaded
-   * @example book.open("/path/to/book.epub")
-   */
-  open(input, what) {
-    var opening;
-    var type = what || this.determineType(input);
-    console.log('DEBUG: open() called with input:', input, 'detected type:', type);
-    if (type === INPUT_TYPE.BINARY) {
-      console.log('DEBUG: Opening as BINARY, setting archived = true');
-      this.archived = true;
-      this.url = new Url('/', '');
-      opening = this.openEpub(input);
-    } else if (type === INPUT_TYPE.BASE64) {
-      console.log('DEBUG: Opening as BASE64, setting archived = true');
-      this.archived = true;
-      this.url = new Url('/', '');
-      opening = this.openEpub(input, type);
-    } else if (type === INPUT_TYPE.EPUB) {
-      console.log('DEBUG: Opening as EPUB, setting archived = true');
-      this.archived = true;
-      this.url = new Url('/', '');
-      opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(this.openEpub.bind(this));
-    } else if (type == INPUT_TYPE.OPF) {
-      this.url = new Url(input);
-      if (this.settings.keepAbsoluteUrl) {
-        opening = this.openPackaging(input);
+    /**
+     * Open the epub container
+     */
+    async openContainer(url) {
+      return this.load(url).then(xml => {
+        this.container = new container_1.default(xml);
+        const packagePath = this.container.packagePath;
+        const resolvedPath = this.resolve(packagePath ?? '');
+        if (!resolvedPath) throw new Error('Cannot resolve packagePath');
+        return resolvedPath;
+      }).catch(err => {
+        console.error('DEBUG: Error in openContainer:', err);
+        throw err;
+      });
+    }
+    /**
+     * Open the Open Packaging Format Xml
+     */
+    async openPackaging(url) {
+      console.log('[Book] opening packaging:', url);
+      this.path = new path_1.default(url);
+      console.log('[Book] packaging path:', this.path);
+      return this.load(url).then(xml => {
+        this.packaging = new packaging_1.default(xml);
+        console.log('[Book] packaging:', this.packaging);
+        return this.unpack(this.packaging);
+      });
+    }
+    /**
+     * Open the manifest JSON
+     */
+    async openManifest(url) {
+      this.path = new path_1.default(url);
+      return this.load(url).then(json => {
+        console.log('[Book] opening manifest clears packaging', url);
+        this.packaging = new packaging_1.default();
+        const manifestObj = JSON.parse(json);
+        this.packaging.load(manifestObj);
+        return this.unpack(this.packaging);
+      });
+    }
+    /**
+     * Load a resource from the Book
+     */
+    load(path) {
+      const resolved = this.resolve(path);
+      if (resolved === undefined) {
+        throw new Error('Cannot resolve path: ' + path);
+      }
+      if (this.archived) {
+        // Determine type based on file extension
+        const extension = path.split('.').pop()?.toLowerCase();
+        let type;
+        if (extension === 'xml' || path.includes('container.xml') || path.includes('.opf')) {
+          type = 'xml';
+        } else if (extension === 'xhtml') {
+          type = 'xhtml';
+        } else if (extension === 'html' || extension === 'htm') {
+          type = 'html';
+        } else if (extension === 'json') {
+          type = 'json';
+        } else if (extension === 'ncx') {
+          type = 'ncx';
+        }
+        if (!type) {
+          throw new Error(`Unsupported file extension for archived resource: ${extension}`);
+        }
+        if (this.archive === undefined) {
+          throw new Error('Archive is not defined. Cannot load resource.');
+        }
+        // Type assertion: Archive.request returns correct type for known extensions
+        return this.archive.request(resolved, type);
+      }
+      return this.request(resolved, '', this.settings.requestCredentials, this.settings.requestHeaders);
+    }
+    /**
+     * Resolve a path to it's absolute position in the Book
+     */
+    resolve(path, absolute) {
+      if (!path) {
+        return;
+      }
+      let resolved = path;
+      const isAbsolute = typeof path === 'string' && (path.startsWith('/') || path.indexOf('://') > -1);
+      if (isAbsolute) {
+        return path;
+      }
+      if (this.path) {
+        resolved = this.path.resolve(path);
+      }
+      if (absolute != false && this.url) {
+        resolved = this.url.resolve(resolved);
+      }
+      return resolved;
+    }
+    /**
+     * Get a canonical link to a path
+     */
+    canonical(path) {
+      let url = path;
+      if (!path) {
+        return '';
+      }
+      if (this.settings.canonical) {
+        url = this.settings.canonical(path);
       } else {
-        opening = this.openPackaging(this.url.Path.toString());
+        url = this.resolve(path, true) ?? '';
       }
-    } else if (type == INPUT_TYPE.MANIFEST) {
-      this.url = new Url(input);
-      if (this.settings.keepAbsoluteUrl) {
-        opening = this.openManifest(input);
-      } else {
-        opening = this.openManifest(this.url.Path.toString());
+      return url;
+    }
+    /**
+     * Determine the type of they input passed to open
+     * @private
+     * @param  {string} input
+     * @return {string}  binary | directory | epub | opf
+     */
+    determineType(input) {
+      if (this.settings.encoding === 'base64') {
+        return INPUT_TYPE.BASE64;
       }
-    } else {
-      this.url = new Url(input);
-      opening = this.openContainer(CONTAINER_PATH).then(this.openPackaging.bind(this));
-    }
-    return opening;
-  }
-
-  /**
-   * Open an archived epub
-   * @private
-   * @param  {binary} data
-   * @param  {string} [encoding]
-   * @return {Promise}
-   */
-  openEpub(data, encoding) {
-    console.log('DEBUG: openEpub() called with data type:', typeof data, 'encoding:', encoding);
-    return this.unarchive(data, encoding || this.settings.encoding).then(() => {
-      console.log('DEBUG: unarchive completed, opening container');
-      return this.openContainer(CONTAINER_PATH);
-    }).then(packagePath => {
-      console.log('DEBUG: container opened, opening packaging at:', packagePath);
-      return this.openPackaging(packagePath);
-    });
-  }
-
-  /**
-   * Open the epub container
-   * @private
-   * @param  {string} url
-   * @return {string} packagePath
-   */
-  openContainer(url) {
-    console.log('DEBUG: openContainer() called with url:', url);
-    return this.load(url).then(xml => {
-      console.log('DEBUG: container XML loaded successfully');
-      this.container = new Container(xml);
-      console.log('DEBUG: Container instance created, packagePath:', this.container.packagePath);
-      return this.resolve(this.container.packagePath);
-    }).catch(err => {
-      console.error('DEBUG: Error in openContainer:', err);
-      throw err;
-    });
-  }
-
-  /**
-   * Open the Open Packaging Format Xml
-   * @private
-   * @param  {string} url
-   * @return {Promise}
-   */
-  openPackaging(url) {
-    this.path = new Path(url);
-    return this.load(url).then(xml => {
-      this.packaging = new Packaging(xml);
-      return this.unpack(this.packaging);
-    });
-  }
-
-  /**
-   * Open the manifest JSON
-   * @private
-   * @param  {string} url
-   * @return {Promise}
-   */
-  openManifest(url) {
-    this.path = new Path(url);
-    return this.load(url).then(json => {
-      this.packaging = new Packaging();
-      this.packaging.load(json);
-      return this.unpack(this.packaging);
-    });
-  }
-
-  /**
-   * Load a resource from the Book
-   * @param  {string} path path to the resource to load
-   * @return {Promise}     returns a promise with the requested resource
-   */
-  load(path) {
-    var resolved = this.resolve(path);
-    if (this.archived) {
-      // Determine type based on file extension
-      const extension = path.split('.').pop()?.toLowerCase();
-      let type = 'string'; // default
-
-      if (extension === 'xml' || path.includes('container.xml') || path.includes('.opf')) {
-        type = 'xml';
-      } else if (extension === 'xhtml') {
-        type = 'xhtml';
-      } else if (extension === 'html' || extension === 'htm') {
-        type = 'html';
-      } else if (extension === 'json') {
-        type = 'json';
-      } else if (extension === 'ncx') {
-        type = 'ncx';
+      if (typeof input === 'string') {
+        const url = new url_1.default(input);
+        const path = url.path();
+        let extension = path.extension;
+        // If there's a search string, remove it before determining type
+        if (extension) {
+          extension = extension.replace(/\?.*$/, '');
+        }
+        if (!extension) {
+          return INPUT_TYPE.DIRECTORY;
+        }
+        if (extension === 'epub') {
+          return INPUT_TYPE.EPUB;
+        }
+        if (extension === 'opf') {
+          return INPUT_TYPE.OPF;
+        }
+        if (extension === 'json') {
+          return INPUT_TYPE.MANIFEST;
+        }
+        // Default to binary for unknown extensions
+        return INPUT_TYPE.BINARY;
       }
-      console.log('DEBUG: Determined file type:', type, 'for path:', path);
-      return this.archive.request(resolved, type);
-    } else {
-      console.log('DEBUG: Using regular request()');
-      return this.request(resolved, null, this.settings.requestCredentials, this.settings.requestHeaders);
-    }
-  }
-
-  /**
-   * Resolve a path to it's absolute position in the Book
-   * @param  {string} path
-   * @param  {boolean} [absolute] force resolving the full URL
-   * @return {string}          the resolved path string
-   */
-  resolve(path, absolute) {
-    if (!path) {
-      return;
-    }
-    let resolved = path;
-    let isAbsolute = typeof path === 'string' && (path.startsWith('/') || path.indexOf('://') > -1);
-    if (isAbsolute) {
-      return path;
-    }
-    if (this.path) {
-      resolved = this.path.resolve(path);
-    }
-    if (absolute != false && this.url) {
-      resolved = this.url.resolve(resolved);
-    }
-    return resolved;
-  }
-
-  /**
-   * Get a canonical link to a path
-   * @param  {string} path
-   * @return {string} the canonical path string
-   */
-  canonical(path) {
-    var url = path;
-    if (!path) {
-      return '';
-    }
-    if (this.settings.canonical) {
-      url = this.settings.canonical(path);
-    } else {
-      url = this.resolve(path, true);
-    }
-    return url;
-  }
-
-  /**
-   * Determine the type of they input passed to open
-   * @private
-   * @param  {string} input
-   * @return {string}  binary | directory | epub | opf
-   */
-  determineType(input) {
-    var url;
-    var path;
-    var extension;
-    if (this.settings.encoding === 'base64') {
-      return INPUT_TYPE.BASE64;
-    }
-    if (typeof input != 'string') {
+      // Robust type checks for Blob and ArrayBuffer
+      if (typeof Blob !== 'undefined' && input instanceof Blob) {
+        return INPUT_TYPE.BINARY;
+      }
+      if (typeof ArrayBuffer !== 'undefined' && input instanceof ArrayBuffer) {
+        return INPUT_TYPE.BINARY;
+      }
+      // Fallback for unknown types
       return INPUT_TYPE.BINARY;
     }
-    url = new Url(input);
-    path = url.path();
-    extension = path.extension;
-
-    // If there's a search string, remove it before determining type
-    if (extension) {
-      extension = extension.replace(/\?.*$/, '');
-    }
-    if (!extension) {
-      return INPUT_TYPE.DIRECTORY;
-    }
-    if (extension === 'epub') {
-      return INPUT_TYPE.EPUB;
-    }
-    if (extension === 'opf') {
-      return INPUT_TYPE.OPF;
-    }
-    if (extension === 'json') {
-      return INPUT_TYPE.MANIFEST;
-    }
-  }
-
-  /**
-   * unpack the contents of the Books packaging
-   * @private
-   * @param {Packaging} packaging object
-   */
-  unpack(packaging) {
-    console.log('DEBUG: unpack() called for packaging');
-    this.package = packaging; //TODO: deprecated this
-
-    if (this.packaging.metadata.layout === '') {
-      // rendition:layout not set - check display options if book is pre-paginated
-      console.log('DEBUG: Loading display options for pre-paginated book');
-      this.load(this.url.resolve(IBOOKS_DISPLAY_OPTIONS_PATH)).then(xml => {
-        console.log('DEBUG: Display options XML loaded successfully');
-        this.displayOptions = new DisplayOptions(xml);
+    /**
+     * unpack the contents of the Books packaging
+     * @param {Packaging} packaging object
+     */
+    unpack(packaging) {
+      console.log('unpacking packaging:', packaging);
+      this.packaging = packaging;
+      console.log('[Book] unpacking packaging:', this.packaging);
+      this.loading.packaging.resolve(this.packaging);
+      if (this.packaging.metadata.layout === '') {
+        // rendition:layout not set - check display options if book is pre-paginated
+        this.load(this.url?.resolve(IBOOKS_DISPLAY_OPTIONS_PATH) ?? '').then(xml => {
+          this.displayOptions = new displayoptions_1.default(xml);
+          this.loading.displayOptions.resolve(this.displayOptions);
+        }).catch(() => {
+          this.displayOptions = new displayoptions_1.default();
+          this.loading.displayOptions.resolve(this.displayOptions);
+        });
+      } else {
+        this.displayOptions = new displayoptions_1.default();
         this.loading.displayOptions.resolve(this.displayOptions);
-      }).catch(() => {
-        console.log('DEBUG: Display options XML failed to load, using defaults');
-        this.displayOptions = new DisplayOptions();
-        this.loading.displayOptions.resolve(this.displayOptions);
+      }
+      this.spine?.unpack(this.packaging, (path, absolute) => this.resolve(path, absolute) ?? '', path => this.canonical(path) ?? '');
+      this.resources = new resources_1.default(this.packaging.manifest, {
+        archive: this.archive,
+        resolver: (path, absolute) => this.resolve(path, absolute) ?? '',
+        request: this.request.bind(this),
+        replacements: this.settings.replacements || (this.archived ? 'blobUrl' : 'base64')
       });
-    } else {
-      console.log('DEBUG: Using default display options for regular layout');
-      this.displayOptions = new DisplayOptions();
-      this.loading.displayOptions.resolve(this.displayOptions);
-    }
-    this.spine.unpack(this.packaging, this.resolve.bind(this), this.canonical.bind(this));
-    this.resources = new Resources(this.packaging.manifest, {
-      archive: this.archive,
-      resolver: this.resolve.bind(this),
-      request: this.request.bind(this),
-      replacements: this.settings.replacements || (this.archived ? 'blobUrl' : 'base64')
-    });
-    this.loadNavigation(this.packaging).then(() => {
-      // this.toc = this.navigation.toc;
-      this.loading.navigation.resolve(this.navigation);
-    });
-    if (this.packaging.coverPath) {
-      this.cover = this.resolve(this.packaging.coverPath);
-    }
-    // Resolve promises
-    this.loading.manifest.resolve(this.packaging.manifest);
-    this.loading.metadata.resolve(this.packaging.metadata);
-    this.loading.spine.resolve(this.spine);
-    this.loading.cover.resolve(this.cover);
-    this.loading.resources.resolve(this.resources);
-    this.loading.pageList.resolve(this.pageList);
-    this.isOpen = true;
-    console.log('DEBUG: Book opened, archived:', this.archived, 'replacements setting:', this.settings.replacements);
-    if (this.archived || this.settings.replacements && this.settings.replacements != 'none') {
-      console.log('DEBUG: Starting replacements for archived book');
-      this.replacements().then(() => {
-        console.log('DEBUG: Replacements completed, waiting for displayOptions');
-        return this.loaded.displayOptions.then(() => {
-          console.log('DEBUG: displayOptions resolved, resolving opening');
+      this.loadNavigation(this.packaging).then(() => {
+        // this.toc = this.navigation.toc;
+        this.loading.navigation.resolve(this.navigation);
+      });
+      if (this.packaging.coverPath) {
+        this.cover = this.resolve(this.packaging.coverPath);
+      }
+      // Resolve promises
+      this.loading.manifest.resolve(this.packaging.manifest);
+      this.loading.metadata.resolve(this.packaging.metadata);
+      this.loading.spine.resolve(this.spine);
+      this.loading.cover.resolve(this.cover);
+      this.loading.resources.resolve(this.resources);
+      this.loading.pageList.resolve(this.pageList);
+      this.isOpen = true;
+      if (this.archived || this.settings.replacements && this.settings.replacements != 'none') {
+        this.replacements().then(() => {
+          return this.loaded.displayOptions.then(() => {
+            this.opening.resolve(this);
+          });
+        }).catch(err => {
+          this.opening.reject(err);
+        });
+      } else {
+        // Resolve book opened promise
+        this.loaded.displayOptions.then(() => {
           this.opening.resolve(this);
         });
+      }
+    }
+    /**
+     * Load Navigation and PageList from package
+     */
+    async loadNavigation(packaging) {
+      const navPath = packaging.navPath || packaging.ncxPath;
+      const toc = packaging.toc;
+      // From json manifest
+      if (toc) {
+        return new Promise(resolve => {
+          this.navigation = new navigation_1.default(toc);
+          if (packaging.pageList) {
+            this.pageList = new pagelist_1.default(packaging.pageList); // TODO: handle page lists from Manifest
+          }
+          resolve(this.navigation);
+        });
+      }
+      if (!navPath) {
+        return new Promise(resolve => {
+          this.navigation = new navigation_1.default();
+          this.pageList = new pagelist_1.default();
+          resolve(this.navigation);
+        });
+      }
+      return this.load(navPath).then(xml => {
+        this.navigation = new navigation_1.default(xml);
+        this.pageList = new pagelist_1.default(xml);
+        return this.navigation;
+      });
+    }
+    /**
+     * Gets a Section of the Book from the Spine
+     * Alias for `book.spine.get`
+     */
+    section(target) {
+      return this.spine?.get(target) || null;
+    }
+    /**
+     * Sugar to render a book to an element
+     * @param  {element | string} element element or string to add a rendition to
+     * @param  {object} [options]
+     * @return {Rendition}
+     */
+    renderTo(element, options) {
+      this.rendition = new rendition_1.default(this, options);
+      this.rendition.attachTo(element);
+      return this.rendition;
+    }
+    /**
+     * Set if request should use withCredentials
+     */
+    setRequestCredentials(credentials) {
+      this.settings.requestCredentials = credentials;
+    }
+    /**
+     * Set headers request should use
+     */
+    setRequestHeaders(headers) {
+      this.settings.requestHeaders = headers;
+    }
+    /**
+     * Unarchive a zipped epub
+     */
+    async unarchive(input, isBase64) {
+      this.archive = new archive_1.default();
+      return this.archive.open(input, isBase64).then(result => {
+        return result;
       }).catch(err => {
-        console.error('DEBUG: Error in archived book opening:', err);
-        this.opening.reject(err);
-      });
-    } else {
-      console.log('DEBUG: Non-archived book, waiting for displayOptions');
-      // Resolve book opened promise
-      this.loaded.displayOptions.then(() => {
-        console.log('DEBUG: displayOptions resolved for non-archived book');
-        this.opening.resolve(this);
+        throw err;
       });
     }
-  }
-
-  /**
-   * Load Navigation and PageList from package
-   * @private
-   * @param {Packaging} packaging
-   */
-  loadNavigation(packaging) {
-    let navPath = packaging.navPath || packaging.ncxPath;
-    let toc = packaging.toc;
-
-    // From json manifest
-    if (toc) {
-      return new Promise(resolve => {
-        this.navigation = new Navigation(toc);
-        if (packaging.pageList) {
-          this.pageList = new PageList(packaging.pageList); // TODO: handle page lists from Manifest
-        }
-        resolve(this.navigation);
-      });
-    }
-    if (!navPath) {
-      return new Promise(resolve => {
-        this.navigation = new Navigation();
-        this.pageList = new PageList();
-        resolve(this.navigation);
-      });
-    }
-    return this.load(navPath, 'xml').then(xml => {
-      this.navigation = new Navigation(xml);
-      this.pageList = new PageList(xml);
-      return this.navigation;
-    });
-  }
-
-  /**
-   * Gets a Section of the Book from the Spine
-   * Alias for `book.spine.get`
-   * @param {string} target
-   * @return {Section}
-   */
-  section(target) {
-    return this.spine.get(target);
-  }
-
-  /**
-   * Sugar to render a book to an element
-   * @param  {element | string} element element or string to add a rendition to
-   * @param  {object} [options]
-   * @return {Rendition}
-   */
-  renderTo(element, options) {
-    this.rendition = new Rendition(this, options);
-    this.rendition.attachTo(element);
-    return this.rendition;
-  }
-
-  /**
-   * Set if request should use withCredentials
-   * @param {boolean} credentials
-   */
-  setRequestCredentials(credentials) {
-    this.settings.requestCredentials = credentials;
-  }
-
-  /**
-   * Set headers request should use
-   * @param {object} headers
-   */
-  setRequestHeaders(headers) {
-    this.settings.requestHeaders = headers;
-  }
-
-  /**
-   * Unarchive a zipped epub
-   * @private
-   * @param  {binary} input epub data
-   * @param  {string} [encoding]
-   * @return {Archive}
-   */
-  unarchive(input, encoding) {
-    console.log('DEBUG: unarchive() called with input type:', typeof input, 'encoding:', encoding);
-    this.archive = new Archive();
-    console.log('DEBUG: Created new Archive instance, calling archive.open()');
-    return this.archive.open(input, encoding).then(result => {
-      console.log('DEBUG: archive.open() completed successfully');
-      return result;
-    }).catch(err => {
-      console.error('DEBUG: archive.open() failed with error:', err);
-      throw err;
-    });
-  }
-
-  /**
-   * Store the epubs contents
-   * @private
-   * @param  {binary} input epub data
-   * @param  {string} [encoding]
-   * @return {Store}
-   */
-  store(name) {
-    // Use "blobUrl" or "base64" for replacements
-    let replacementsSetting = this.settings.replacements && this.settings.replacements !== 'none';
-    // Save original url
-    let originalUrl = this.url;
-    // Save original request method
-    let requester = this.settings.requestMethod || request.bind(this);
-    // Create new Store
-    this.storage = new Store(name, requester, this.resolve.bind(this));
-    // Replace request method to go through store
-    this.request = this.storage.request.bind(this.storage);
-    this.opened.then(() => {
-      if (this.archived) {
-        this.storage.requester = this.archive.request.bind(this.archive);
-      }
-      // Substitute hook
-      let substituteResources = (output, section) => {
-        section.output = this.resources.substitute(output, section.url);
+    /**
+     * Store the epubs contents
+     */
+    store(name) {
+      // Use "blobUrl" or "base64" for replacements
+      const replacementsSetting = this.settings.replacements && this.settings.replacements !== 'none';
+      // Save original url
+      const originalUrl = this.url;
+      // Save original request method
+      const requester = this.settings.requestMethod || request_1.default.bind(this);
+      // Create new Store
+      this.storage = new store_1.default(name, requester, (path, absolute) => this.resolve(path, absolute) ?? '');
+      // Replace request method to go through store
+      this.request = (url, type, withCredentials = false, headers = {}) => {
+        return this.storage.request(url, type, withCredentials, headers);
       };
-
-      // Set to use replacements
-      this.resources.settings.replacements = replacementsSetting || 'blobUrl';
-      // Create replacement urls
-      this.resources.replacements().then(() => {
-        return this.resources.replaceCss();
-      });
-      this.storage.on('offline', () => {
-        // Remove url to use relative resolving for hrefs
-        this.url = new Url('/', '');
-        // Add hook to replace resources in contents
-        this.spine.hooks.serialize.register(substituteResources);
-      });
-      this.storage.on('online', () => {
-        // Restore original url
-        this.url = originalUrl;
-        // Remove hook
-        this.spine.hooks.serialize.deregister(substituteResources);
-      });
-    });
-    return this.storage;
-  }
-
-  /**
-   * Get the cover url
-   * @return {Promise<?string>} coverUrl
-   */
-  coverUrl() {
-    return this.loaded.cover.then(() => {
-      if (!this.cover) {
-        return null;
-      }
-      if (this.archived) {
-        return this.archive.createUrl(this.cover);
-      } else {
-        return this.cover;
-      }
-    });
-  }
-
-  /**
-   * Load replacement urls
-   * @private
-   * @return {Promise} completed loading urls
-   */
-  replacements() {
-    this.spine.hooks.serialize.register((output, section) => {
-      section.output = this.resources.substitute(output, section.url);
-    });
-    return this.resources.replacements().then(() => {
-      return this.resources.replaceCss();
-    });
-  }
-
-  /**
-   * Find a DOM Range for a given CFI Range
-   * @param  {EpubCFI} cfiRange a epub cfi range
-   * @return {Promise}
-   */
-  getRange(cfiRange) {
-    var cfi = new CFI(cfiRange);
-    var item = this.spine.get(cfi.spinePos);
-    var _request = this.load.bind(this);
-    if (!item) {
-      return new Promise((resolve, reject) => {
-        reject('CFI could not be found');
+      (async () => {
+        await this.opened;
+        if (this.archived && this.archive && this.storage) {
+          const archive = this.archive;
+          this.storage.requester = (url, type) => {
+            if (['xml', 'xhtml', 'html', 'json', 'ncx'].includes(type)) {
+              return archive.request(url, type);
+            }
+            return Promise.reject(new Error(`Unsupported archive type: ${type}`));
+          };
+        }
+        // Substitute hook
+        const substituteResources = (output, section) => {
+          if (this.resources) {
+            section.output = this.resources.substitute(output, section.url);
+          }
+        };
+        if (this.resources) {
+          this.resources.settings.replacements = typeof replacementsSetting === 'string' ? replacementsSetting : 'blobUrl';
+          await this.resources.replacements();
+          await this.resources.replaceCss();
+        }
+        if (this.storage) {
+          if (typeof this.storage.on === 'function') {
+            this.storage.on('offline', () => {
+              this.url = new url_1.default('/', '');
+              if (this.spine?.hooks?.serialize) {
+                this.spine.hooks.serialize.register(substituteResources);
+              }
+            });
+            this.storage.on('online', () => {
+              this.url = originalUrl;
+              if (this.spine?.hooks?.serialize) {
+                this.spine.hooks.serialize.deregister(substituteResources);
+              }
+            });
+          }
+        }
+      })();
+      return this.storage;
+    }
+    /**
+     * Get the cover url
+     */
+    async coverUrl() {
+      return this.loaded.cover.then(() => {
+        if (!this.cover) {
+          return null;
+        }
+        if (this.archived) {
+          if (this.archive === undefined) {
+            return null;
+          }
+          return this.archive.createUrl(this.cover);
+        } else {
+          return this.cover;
+        }
       });
     }
-    return item.load(_request).then(function () {
-      var range = cfi.toRange(item.document);
-      return range;
-    });
+    /**
+     * Load replacement urls
+     */
+    async replacements() {
+      if (!this.spine || !this.resources) return;
+      this.spine.hooks.serialize.register((output, section) => {
+        section.output = this.resources.substitute(output, section.url);
+      });
+      await this.resources.replacements();
+      await this.resources.replaceCss();
+    }
+    /**
+     * Find a DOM Range for a given CFI Range
+     */
+    async getRange(cfiRange) {
+      const cfi = new epubcfi_1.default(cfiRange);
+      if (this.spine === undefined) {
+        return Promise.reject('CFI could not be found, because there is no spine object');
+      }
+      const item = this.spine.get(cfi.spinePos);
+      const _request = this.load;
+      if (!item) {
+        return Promise.reject('CFI could not be found');
+      }
+      return item.load(_request).then(function () {
+        if (!item.document) {
+          return null;
+        }
+        return cfi.toRange(item.document);
+      });
+    }
+    /**
+     * Generates the Book Key using the identifier in the manifest or other string provided
+     * @param [identifier] to use instead of metadata identifier
+     */
+    key(identifier) {
+      const ident = identifier || this.packaging?.metadata.identifier || this.url?.filename;
+      return `epubjs:${constants_1.EPUBJS_VERSION}:${ident}`;
+    }
+    /**
+     * Destroy the Book and all associated objects
+     */
+    destroy() {
+      this.opened = undefined;
+      this.loading = undefined;
+      this.loaded = undefined;
+      // @ts-expect-error this is only at destroy time
+      this.ready = undefined;
+      this.isOpen = false;
+      this.isRendered = false;
+      this.spine?.destroy();
+      this.locations?.destroy();
+      this.pageList?.destroy();
+      this.archive?.destroy();
+      this.resources?.destroy();
+      this.container?.destroy();
+      this.packaging?.destroy();
+      this.rendition?.destroy();
+      this.displayOptions?.destroy();
+      this.spine = undefined;
+      this.locations = undefined;
+      this.pageList = undefined;
+      this.archive = undefined;
+      this.resources = undefined;
+      this.container = undefined;
+      this.packaging = undefined;
+      this.rendition = undefined;
+      this.navigation = undefined;
+      this.url = undefined;
+      this.path = undefined;
+      this.archived = false;
+    }
   }
-
-  /**
-   * Generates the Book Key using the identifier in the manifest or other string provided
-   * @param  {string} [identifier] to use instead of metadata identifier
-   * @return {string} key
-   */
-  key(identifier) {
-    var ident = identifier || this.packaging.metadata.identifier || this.url.filename;
-    return `epubjs:${constantsExports.EPUBJS_VERSION}:${ident}`;
-  }
-
-  /**
-   * Destroy the Book and all associated objects
-   */
-  destroy() {
-    this.opened = undefined;
-    this.loading = undefined;
-    this.loaded = undefined;
-    this.ready = undefined;
-    this.isOpen = false;
-    this.isRendered = false;
-    this.spine && this.spine.destroy();
-    this.locations && this.locations.destroy();
-    this.pageList && this.pageList.destroy();
-    this.archive && this.archive.destroy();
-    this.resources && this.resources.destroy();
-    this.container && this.container.destroy();
-    this.packaging && this.packaging.destroy();
-    this.rendition && this.rendition.destroy();
-    this.displayOptions && this.displayOptions.destroy();
-    this.spine = undefined;
-    this.locations = undefined;
-    this.pageList = undefined;
-    this.archive = undefined;
-    this.resources = undefined;
-    this.container = undefined;
-    this.packaging = undefined;
-    this.rendition = undefined;
-    this.navigation = undefined;
-    this.url = undefined;
-    this.path = undefined;
-    this.archived = false;
-  }
+  //-- Enable binding events to book
+  (0, event_emitter_1.default)(Book.prototype);
+  book.default = Book;
+  return book;
 }
 
-//-- Enable binding events to book
-EventEmitter(Book.prototype);
+var bookExports = requireBook();
+var Book = /*@__PURE__*/getDefaultExportFromCjs(bookExports);
+
+var renditionExports = requireRendition();
+var Rendition = /*@__PURE__*/getDefaultExportFromCjs(renditionExports);
+
+var epubcfiExports = requireEpubcfi();
+var CFI = /*@__PURE__*/getDefaultExportFromCjs(epubcfiExports);
+
+var contentsExports = requireContents();
+var Contents = /*@__PURE__*/getDefaultExportFromCjs(contentsExports);
+
+var coreExports = requireCore();
+var core = /*@__PURE__*/getDefaultExportFromCjs(coreExports);
+
+var utils = /*#__PURE__*/_mergeNamespaces({
+	__proto__: null,
+	'default': core
+}, [coreExports]);
+
+var constantsExports = requireConstants();
 
 /**
  * Creates a new Book

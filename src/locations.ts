@@ -3,14 +3,14 @@ import Queue from './utils/queue';
 import EpubCFI from './epubcfi';
 import { EVENTS } from './utils/constants';
 import EventEmitter from 'event-emitter';
-import Spine from 'types/spine';
-import Section from 'types/section';
-import { SpineItem } from 'types/section';
+import Spine from './spine';
+import Section from './section';
+import SpineItem from './section';
 
-type RequestFunction = (
+type RequestFunction<T = unknown> = (
   pathOrUrl: string,
   ...args: unknown[]
-) => Promise<unknown>;
+) => Promise<T>;
 
 interface CustomRange {
   startContainer: Node | undefined;
@@ -27,7 +27,7 @@ interface CustomRange {
  */
 export class Locations {
   spine: Spine | undefined;
-  request: RequestFunction | undefined;
+  request: RequestFunction<Document>;
   pause: number | undefined;
 
   q: Queue | undefined;
@@ -47,7 +47,11 @@ export class Locations {
 
   emit!: (event: string, ...args: unknown[]) => void;
 
-  constructor(spine: Spine, request: RequestFunction, pause?: number) {
+  constructor(
+    spine: Spine,
+    request: RequestFunction<Document>,
+    pause?: number
+  ) {
     this.spine = spine;
     this.request = request;
     this.pause = pause || 100;
@@ -91,7 +95,6 @@ export class Locations {
       }
 
       return this._locations;
-      // console.log(this.percentage(this.book.rendition.location.start), this.percentage(this.book.rendition.location.end));
     });
   }
 
@@ -105,9 +108,17 @@ export class Locations {
   }
 
   process(section: Section) {
-    return section.load(this.request).then((contents: Element) => {
+    // Section.load resolves with the section contents (an Element), not the full Document
+    return section.load(this.request).then((contents: unknown) => {
       const completed = new defer();
-      const locations = this.parse(contents, section.cfiBase);
+      if (!contents) {
+        // Nothing loaded for this section
+        completed.resolve([]);
+        return completed.promise;
+      }
+      // contents is expected to be the document element for the section
+      const el = contents as Element;
+      const locations = this.parse(el, section.cfiBase!);
       this._locations = this._locations!.concat(locations);
 
       section.unload();
@@ -276,9 +287,17 @@ export class Locations {
       return Promise.resolve();
     }
 
-    return section.load(this.request).then((contents) => {
+    // Section.load resolves with the section contents (an Element), not the full Document
+    return section.load(this.request).then((contents: unknown) => {
       const completed = new defer();
-      const locations = this.parseWords(contents, section, wordCount, startCfi);
+      // Use documentElement for parseWords
+      if (!contents) {
+        completed.resolve([]);
+        return completed.promise;
+      }
+      const el = contents as Element;
+      // contents is already the documentElement for the section
+      const locations = this.parseWords(el, section, wordCount, startCfi);
       const remainingCount = count - this._locationsWords.length;
       this._locationsWords = this._locationsWords.concat(
         locations.length >= count
@@ -571,6 +590,7 @@ export class Locations {
 
   destroy() {
     this.spine = undefined;
+    // @ts-expect-error this is only at destroy time
     this.request = undefined;
     this.pause = undefined;
 

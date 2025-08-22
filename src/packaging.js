@@ -42,6 +42,7 @@ class Packaging {
         this.spine = [];
         this.metadata = {};
         this.uniqueIdentifier = '';
+        console.log('[Packaging] initializing with document:', packageDocument);
         if (packageDocument) {
             this.parse(packageDocument);
         }
@@ -50,6 +51,7 @@ class Packaging {
      * Parse OPF XML
      */
     parse(packageDocument) {
+        console.log('[Packaging] parsing document:', packageDocument);
         if (!packageDocument) {
             throw new Error('Package File Not Found');
         }
@@ -288,15 +290,12 @@ class Packaging {
         this.metadata = json.metadata;
         const spine = json.readingOrder || json.spine;
         this.spine = spine
-            ? spine.map((item, index) => {
-                const spineItem = {
-                    idref: item.idref,
-                    linear: item.linear || 'yes',
-                    properties: item.properties || [],
-                    index: index,
-                };
-                return spineItem;
-            })
+            ? spine.map((item, index) => ({
+                idref: item.idref,
+                linear: item.linear || 'yes',
+                properties: item.properties || [],
+                index,
+            }))
             : [];
         json.resources.forEach((item, index) => {
             this.manifest[index] = item;
@@ -311,7 +310,7 @@ class Packaging {
                     id: item.id || '',
                     href: item.href,
                     label: item.label || item.title || '',
-                    title: item.title,
+                    title: item.title ?? '',
                 };
                 return navItem;
             })

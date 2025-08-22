@@ -384,10 +384,6 @@ describe('Section', () => {
       expect(section.contents).toBeUndefined();
       expect(section.output).toBeUndefined();
 
-      // Function references that should be cleared
-      expect(section.next).toBeUndefined();
-      expect(section.prev).toBeUndefined();
-
       // Required properties should remain (not cleared for type safety)
       expect(section.hooks).toBeDefined();
       expect(section.idref).toBeDefined();

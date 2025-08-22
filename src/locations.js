@@ -59,7 +59,6 @@ class Locations {
                 this.currentLocation = this._currentCfi;
             }
             return this._locations;
-            // console.log(this.percentage(this.book.rendition.location.start), this.percentage(this.book.rendition.location.end));
         });
     }
     createRange() {
@@ -71,9 +70,17 @@ class Locations {
         };
     }
     process(section) {
+        // Section.load resolves with the section contents (an Element), not the full Document
         return section.load(this.request).then((contents) => {
             const completed = new core_1.defer();
-            const locations = this.parse(contents, section.cfiBase);
+            if (!contents) {
+                // Nothing loaded for this section
+                completed.resolve([]);
+                return completed.promise;
+            }
+            // contents is expected to be the document element for the section
+            const el = contents;
+            const locations = this.parse(el, section.cfiBase);
             this._locations = this._locations.concat(locations);
             section.unload();
             this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
@@ -198,9 +205,17 @@ class Locations {
         if (count && this._locationsWords.length >= count) {
             return Promise.resolve();
         }
+        // Section.load resolves with the section contents (an Element), not the full Document
         return section.load(this.request).then((contents) => {
             const completed = new core_1.defer();
-            const locations = this.parseWords(contents, section, wordCount, startCfi);
+            // Use documentElement for parseWords
+            if (!contents) {
+                completed.resolve([]);
+                return completed.promise;
+            }
+            const el = contents;
+            // contents is already the documentElement for the section
+            const locations = this.parseWords(el, section, wordCount, startCfi);
             const remainingCount = count - this._locationsWords.length;
             this._locationsWords = this._locationsWords.concat(locations.length >= count
                 ? locations.slice(0, remainingCount)
@@ -440,6 +455,7 @@ class Locations {
     }
     destroy() {
         this.spine = undefined;
+        // @ts-expect-error this is only at destroy time
         this.request = undefined;
         this.pause = undefined;
         this.q?.stop();

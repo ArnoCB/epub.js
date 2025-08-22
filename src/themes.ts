@@ -1,9 +1,13 @@
-import Rendition from '../types/rendition';
+import Rendition from './rendition';
 import Url from './utils/url';
-import Contents from '../types/contents';
+import Contents from './contents';
 
 type Theme = {
-  rules?: object;
+  rules?: {
+    [selector: string]:
+      | { [property: string]: string }
+      | { [property: string]: string }[];
+  };
   url?: string;
   serialized?: string;
   injected?: boolean;
@@ -22,7 +26,11 @@ class Themes {
       }
     | undefined = {
     default: {
-      rules: {},
+      rules: {} as {
+        [selector: string]:
+          | { [property: string]: string }
+          | { [property: string]: string }[];
+      },
       url: '',
       serialized: '',
       injected: false,
@@ -82,7 +90,14 @@ class Themes {
       typeof args[0] === 'string' &&
       typeof args[1] === 'object'
     ) {
-      return this.registerRules(args[0], args[1] as object);
+      return this.registerRules(
+        args[0],
+        args[1] as {
+          [selector: string]:
+            | { [property: string]: string }
+            | { [property: string]: string }[];
+        }
+      );
     }
     // themes.register("http://example.com/default.css")
     if (args.length === 1 && typeof args[0] === 'string') {
@@ -108,7 +123,14 @@ class Themes {
       return this.registerUrl('default', theme);
     }
     if (typeof theme === 'object') {
-      return this.registerRules('default', theme);
+      return this.registerRules(
+        'default',
+        theme as {
+          [selector: string]:
+            | { [property: string]: string }
+            | { [property: string]: string }[];
+        }
+      );
     }
   }
 
@@ -122,7 +144,14 @@ class Themes {
         if (typeof themes[theme] === 'string') {
           this.registerUrl(theme, themes[theme]);
         } else {
-          this.registerRules(theme, themes[theme] as object);
+          this.registerRules(
+            theme,
+            themes[theme] as {
+              [selector: string]:
+                | { [property: string]: string }
+                | { [property: string]: string }[];
+            }
+          );
         }
       }
     }
@@ -174,7 +203,14 @@ class Themes {
    * @param {string} name
    * @param {object} rules
    */
-  registerRules(name: string, rules: object) {
+  registerRules(
+    name: string,
+    rules: {
+      [selector: string]:
+        | { [property: string]: string }
+        | { [property: string]: string }[];
+    }
+  ) {
     if (this._themes === undefined) {
       throw new Error(
         'Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.'
@@ -210,7 +246,7 @@ class Themes {
 
     if (Array.isArray(contents)) {
       contents.forEach((content) => {
-        content.removeClass(prev);
+        content.removeClass(prev!);
         content.addClass(name);
       });
     }

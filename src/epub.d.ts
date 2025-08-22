@@ -7,16 +7,16 @@ import * as utils from './utils/core';
 /**
  * Type for the options parameter (can be improved with a more specific type)
  */
-export interface EpubOptionss {
+export interface EpubOptions {
   [key: string]: unknown;
   requestMethod?: (
     url: string,
     type: string,
-    withCredentials: object,
-    headers: object
-  ) => Promise<object>;
-  requestCredentials?: object;
-  requestHeaders?: object;
+    withCredentials?: boolean,
+    headers?: Record<string, string>
+  ) => Promise<string | Document | Blob | JSON | XMLDocument>;
+  requestCredentials?: boolean;
+  requestHeaders?: Record<string, string>;
   encoding?: string;
   replacements?: string;
   canonical?: (path: string) => string;

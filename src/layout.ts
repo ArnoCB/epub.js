@@ -2,19 +2,24 @@ import { extend } from './utils/core';
 import { EVENTS } from './utils/constants';
 import EventEmitter from 'event-emitter';
 import { Section } from './utils/replacements';
-import Contents from '../types/contents';
+import Contents from './contents';
 
 type LayoutSettings = {
   layout?: string;
-  spread?: string;
+  spread?: Spread;
   minSpreadWidth?: number;
   evenSpreads?: boolean;
   flow?: string;
   direction?: string;
 };
 
-type Flow = 'paginated' | 'scrolled' | 'scrolled-continuous' | 'scrolled-doc';
-type Spread = 'none' | 'always' | 'auto';
+export type Flow =
+  | 'paginated'
+  | 'scrolled'
+  | 'scrolled-continuous'
+  | 'scrolled-doc'
+  | 'auto';
+export type Spread = 'none' | 'always' | 'auto';
 export type Axis = 'horizontal' | 'vertical';
 type LayoutProps = {
   name: string;
@@ -30,6 +35,8 @@ type LayoutProps = {
   pageWidth?: number;
 };
 
+type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
+
 /**
  * Figures out the CSS values to apply for a layout
  * @class
@@ -39,7 +46,7 @@ type LayoutProps = {
  * @param {number} [settings.minSpreadWidth=800]
  * @param {boolean} [settings.evenSpreads=false]
  */
-class Layout {
+class Layout implements EventEmitterMethods {
   settings: LayoutSettings;
   name: string;
   _spread: boolean;
@@ -55,7 +62,8 @@ class Layout {
   columnWidth: number;
   gap: number;
   props: LayoutProps;
-  emit!: (event: string, ...args: unknown[]) => void;
+  emit!: EventEmitter['emit'];
+  on!: EventEmitter['on'];
 
   constructor(settings: LayoutSettings) {
     // Set default direction if not provided
@@ -130,14 +138,14 @@ class Layout {
    * @param  {number} min integer in pixels
    * @return {boolean} spread true | false
    */
-  spread(spread: Spread, min: number) {
+  spread(spread: Spread, min?: number) {
     if (spread) {
       this._spread = spread === 'none' ? false : true;
       // this.props.spread = this._spread;
       this.update({ spread: this._spread });
     }
 
-    if (min >= 0) {
+    if (min && min >= 0) {
       this._minSpreadWidth = min;
     }
 
@@ -150,7 +158,7 @@ class Layout {
    * @param  {number} _height height of the rendering
    * @param  {number} _gap    width of the gap between columns
    */
-  calculate(_width: number, _height: number, _gap: number) {
+  calculate(_width: number, _height: number, _gap?: number) {
     let divisor = 1;
     let gap = _gap || 0;
 
@@ -173,7 +181,7 @@ class Layout {
     if (
       this.name === 'reflowable' &&
       this._flow === 'paginated' &&
-      !(_gap >= 0)
+      !(_gap && _gap >= 0)
     ) {
       gap = section % 2 === 0 ? section : section - 1;
     }
@@ -227,7 +235,7 @@ class Layout {
   /**
    * Apply Css to a Document
    */
-  format(contents: Contents, section: Section, axis: Axis) {
+  format(contents: Contents, section?: Section, axis?: Axis) {
     let formating;
 
     if (this.name === 'pre-paginated') {
@@ -241,9 +249,9 @@ class Layout {
         this.settings.direction ?? 'ltr'
       );
     } else if (axis && axis === 'horizontal') {
-      formating = contents.size(null, this.height);
+      formating = contents.size(-1, this.height);
     } else {
-      formating = contents.size(this.width, null);
+      formating = contents.size(this.width, -1);
     }
 
     return formating;
@@ -252,7 +260,7 @@ class Layout {
   /**
    * Count number of pages
    */
-  count(totalLength: number, pageLength: number) {
+  count(totalLength: number, pageLength?: number) {
     let spreads, pages;
 
     if (this.name === 'pre-paginated') {

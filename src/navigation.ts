@@ -12,7 +12,7 @@ export interface LandmarkItem {
   type?: string;
 }
 
-interface RawNavItem {
+export interface RawNavItem {
   title: string;
   children?: RawNavItem[];
   id?: string;
