@@ -20,15 +20,7 @@
         "ecmaVersion": 2022
       }
     },
-    {
-      "files": ["test/**/*.js"],
-      "parserOptions": {
-        "sourceType": "module"
-      },
-      "env": {
-        "mocha": true
-      }
-    },
+
     {
       "files": ["src/**/*.js"],
       "parserOptions": {

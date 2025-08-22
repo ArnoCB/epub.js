@@ -1,5 +1,5 @@
 examples/
-test/fixtures/
+e2e/fixtures/
 dist/
 lib/
 node_modules/

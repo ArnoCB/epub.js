@@ -5141,9 +5141,9 @@
 	function requireMime() {
 	  if (hasRequiredMime) return mime;
 	  hasRequiredMime = 1;
-	  /*
-	   From Zip.js, by Gildas Lormeau
-	  edited down
+	  /**
+	   * From Zip.js, by Gildas Lormeau
+	   * edited down
 	   */
 	  Object.defineProperty(mime, "__esModule", {
 	    value: true

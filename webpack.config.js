@@ -21,7 +21,7 @@ module.exports = {
   },
   mode: process.env.NODE_ENV,
   entry: {
-    epub: './src/epub.js',
+    epub: './src/index.ts',
   },
   devtool: MINIMIZE ? false : 'source-map',
   output: {
@@ -52,6 +52,8 @@ module.exports = {
     fallback: {
       assert: require.resolve('assert/'),
     },
+    // Resolve TypeScript files when tests import ../src/xyz without extension
+    extensions: ['.ts', '.js', '.json'],
   },
   devServer: {
     host: hostname,
@@ -66,7 +68,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.(js|ts)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
@@ -83,6 +85,7 @@ module.exports = {
                   modules: false,
                 },
               ],
+              '@babel/preset-typescript',
             ],
           },
         },

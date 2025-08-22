@@ -10,4 +10,10 @@ module.exports = {
   // Only run TypeScript spec files in src; ignore compiled tests in lib/
   testMatch: ['<rootDir>/src/**/*.spec.ts'],
   testPathIgnorePatterns: ['<rootDir>/lib/', '<rootDir>/dist/'],
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.jest.json',
+    },
+  },
+  // No global setup/teardown required now (webserver removed)
 };

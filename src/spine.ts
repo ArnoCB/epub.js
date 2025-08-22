@@ -1,10 +1,7 @@
 import EpubCFI from './epubcfi';
 import Hook from './utils/hook';
 import Section, { SectionItem } from './section';
-import type {
-  PackagingSpineItem,
-  PackagingManifestObject,
-} from '../types/packaging';
+import type { PackagingSpineItem, PackagingManifestObject } from './packaging';
 import {
   replaceBase,
   replaceCanonical,

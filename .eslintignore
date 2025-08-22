@@ -1,4 +1,3 @@
-src/epub.js
 src/**/utils/*.js
 src/**/*.d.ts
 src/**/archive.js
@@ -10,7 +9,7 @@ lib/
 dist/
 node_modules/
 examples/
-test/fixtures/
+e2e/fixtures/
 types/
 
 # Exclude all TypeScript spec and declaration files from linting

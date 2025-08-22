@@ -144,11 +144,27 @@ npm start
 
 ## Testing
 
-Test can be run by Karma from NPM
+Testing strategy (migration)
 
-```js
+The project is moving away from the legacy `test/` Karma-based fixtures toward a simpler split:
+
+- Unit tests: keep living next to source in `src/` as `*.spec.ts` and run with Jest.
+- E2E / feature tests: live in `e2e/` and run with Playwright against a real browser.
+
+Current commands:
+
+```bash
+# run unit tests (Jest)
+npm run test:jest
+
+# run the full test pipeline (unit tests + e2e)
 npm test
+
+# run Playwright e2e tests
+npm run test:e2e
 ```
+
+Fixtures for e2e tests live under `e2e/fixtures`. See `docs/TESTING-MIGRATION.md` for migration notes if you still have legacy `test/fixtures` in CI.
 
 ## Building for Distribution
 

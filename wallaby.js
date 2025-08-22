@@ -1,18 +1,27 @@
-module.exports = function (_wallaby) {
+module.exports = function (wallaby) {
   return {
     files: [
-      'src/**/*.js',
-      { pattern: 'test/fixtures/**/*', instrument: false },
-      '!test/**/*.js',
+      'src/**/*.ts',
+      '!src/**/*.spec.ts',
+      { pattern: 'e2e/fixtures/**/*', instrument: false },
+      'package.json',
+      'tsconfig.json',
+      'tsconfig.jest.json',
     ],
-    tests: ['test/**/*.js'],
+
+    tests: ['src/**/*.spec.ts'],
+
     env: {
       type: 'node',
       runner: 'node',
     },
-    testFramework: 'mocha',
-    setup: function () {
-      // Optional: global setup for tests
+
+    testFramework: 'jest',
+
+    compilers: {
+      '**/*.ts': wallaby.compilers.typeScript({ module: 'commonjs' }),
     },
+
+    debug: false,
   };
 };

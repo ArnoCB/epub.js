@@ -139,7 +139,7 @@ describe('Archive', () => {
 
     beforeAll(() => {
       // Load the test EPUB file
-      const epubPath = path.join(__dirname, '../test/fixtures/alice.epub');
+      const epubPath = path.join(__dirname, '../e2e/fixtures/alice.epub');
       epubBuffer = fs.readFileSync(epubPath);
     });
 
