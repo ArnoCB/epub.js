@@ -6,7 +6,7 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 export default [
   // ESM build
   {
-    input: 'src/epub.js',
+    input: 'lib/epub.js',
     output: {
       file: 'dist/epub.js',
       format: 'esm',
@@ -19,7 +19,7 @@ export default [
         preferBuiltins: false,
       }),
       commonjs({
-        include: ['node_modules/**', 'src/**'],
+        include: ['node_modules/**', 'lib/**'],
         transformMixedEsModules: true,
       }),
       babel({
@@ -30,7 +30,7 @@ export default [
   },
   // UMD build
   {
-    input: 'src/epub.js',
+    input: 'lib/epub.js',
     output: {
       file: 'dist/epub.umd.js',
       format: 'umd',
@@ -44,7 +44,7 @@ export default [
         preferBuiltins: false,
       }),
       commonjs({
-        include: ['node_modules/**', 'src/**'],
+        include: ['node_modules/**', 'lib/**'],
         transformMixedEsModules: true,
       }),
       babel({

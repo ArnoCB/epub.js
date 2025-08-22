@@ -17,5 +17,13 @@
     }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "lib", "pkg", "test", "new-types", "src/**/*.js"]
+  "exclude": [
+    "node_modules",
+    "lib",
+    "pkg",
+    "test",
+    "new-types",
+    "src/**/*.js",
+    "**/*.spec.ts"
+  ]
 }

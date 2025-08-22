@@ -374,19 +374,35 @@ class IframeView implements View, EventEmitterMethods {
 
   // Determine locks base on settings
   size(_width?: number, _height?: number) {
-    const width = _width || this.settings.width;
-    const height = _height || this.settings.height;
+    // Prefer explicit numeric sizes. If not provided (or non-numeric),
+    // measure the containing element so pages are sized to the container,
+    // not the window.
+    let width = _width ?? this.settings.width;
+    let height = _height ?? this.settings.height;
 
-    if (this.layout && this.layout.name === 'pre-paginated') {
-      this.lock('both', width, height);
-    } else if (this.settings.axis === 'horizontal') {
-      this.lock('height', width, height);
-    } else {
-      this.lock('width', width, height);
+    // If width/height are not numeric, fall back to the element's bounding rect
+    try {
+      const rect = this.element.getBoundingClientRect();
+      if (!isNumber(width) || width === 0) {
+        width = Math.floor(rect.width);
+      }
+      if (!isNumber(height) || height === 0) {
+        height = Math.floor(rect.height);
+      }
+    } catch {
+      // if element is not yet in the DOM, leave provided values
     }
 
-    this.settings.width = width;
-    this.settings.height = height;
+    if (this.layout && this.layout.name === 'pre-paginated') {
+      this.lock('both', width as number, height as number);
+    } else if (this.settings.axis === 'horizontal') {
+      this.lock('height', width as number, height as number);
+    } else {
+      this.lock('width', width as number, height as number);
+    }
+
+    this.settings.width = width as number;
+    this.settings.height = height as number;
   }
 
   // Lock an axis to element dimensions, taking borders into account

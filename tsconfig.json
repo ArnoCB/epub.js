@@ -3,10 +3,11 @@
     "target": "ES6",
     "module": "NodeNext",
     "declaration": true,
-    "rootDir": ".",
+    "rootDir": "src",
     "outDir": "lib",
     "declarationDir": "new-types",
     "strict": true,
+    "sourceMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
@@ -16,6 +17,6 @@
       "path-webpack": ["node_modules/path-webpack"]
     }
   },
-  "include": ["src/**/*", "types/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "lib", "pkg", "test", "**/*.spec.ts"]
 }

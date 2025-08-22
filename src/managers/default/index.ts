@@ -135,6 +135,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       width: 0,
       height: 0,
       forceEvenPages: true,
+      transparency: this.settings.transparency,
       allowScriptedContent: this.settings.allowScriptedContent,
       allowPopups: this.settings.allowPopups,
     };
@@ -804,12 +805,13 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   scrolledLocation(): PageLocation[] {
     const visible = this.visible();
     const container = this.container.getBoundingClientRect();
-    const pageHeight =
-      container.height < window.innerHeight
-        ? container.height
-        : window.innerHeight;
-    const pageWidth =
-      container.width < window.innerWidth ? container.width : window.innerWidth;
+    // Use container dimensions by default. If fullsize is requested, fall back to window
+    const pageHeight = this.settings.fullsize
+      ? window.innerHeight
+      : container.height;
+    const pageWidth = this.settings.fullsize
+      ? window.innerWidth
+      : container.width;
     const vertical = this.settings.axis === 'vertical';
 
     let offset = 0;
@@ -1098,14 +1100,29 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     this._stageSize = this.stage.size();
 
+    // Prefer the actual container's bounding rect for layout calculations
+    // so page widths/heights match the visible container rather than
+    // falling back to window dimensions.
+    let containerRect: DOMRect | undefined;
+    try {
+      containerRect = this.container.getBoundingClientRect();
+    } catch {
+      containerRect = undefined;
+    }
+
+    const layoutWidth =
+      containerRect && containerRect.width
+        ? containerRect.width
+        : this._stageSize.width;
+    const layoutHeight =
+      containerRect && containerRect.height
+        ? containerRect.height
+        : this._stageSize.height;
+
     if (!this.isPaginated) {
-      this.layout.calculate(this._stageSize.width, this._stageSize.height);
+      this.layout.calculate(layoutWidth, layoutHeight);
     } else {
-      this.layout.calculate(
-        this._stageSize.width,
-        this._stageSize.height,
-        this.settings.gap!
-      );
+      this.layout.calculate(layoutWidth, layoutHeight, this.settings.gap!);
 
       // Set the look ahead offset for what is visible
       this.settings.offset = this.layout.delta / this.layout.divisor;

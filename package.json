@@ -10,7 +10,7 @@
     "test": "test"
   },
   "scripts": {
-    "build:utils": "tsc --project tsconfig.build.json",
+    "build:utils": "tsc -p tsconfig.json",
     "build:rollup": "rollup -c",
     "test": "jest --runInBand && karma start karma.conf.cjs --single-run",
     "docs": "documentation build src/epub.js -f html -o documentation/html/",
