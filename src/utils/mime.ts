@@ -1,6 +1,6 @@
-/*
- From Zip.js, by Gildas Lormeau
-edited down
+/**
+ * From Zip.js, by Gildas Lormeau
+ * edited down
  */
 
 const table: Record<string, Record<string, string | string[]>> = {

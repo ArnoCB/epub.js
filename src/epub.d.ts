@@ -4,6 +4,7 @@ import Rendition from './rendition.js';
 import CFI from './epubcfi';
 import Contents from './contents.js';
 import * as utils from './utils/core';
+
 /**
  * Type for the options parameter (can be improved with a more specific type)
  */

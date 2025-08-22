@@ -1,9 +1,4 @@
-import {
-  PackagingManifestObject,
-  PackagingMetadataObject,
-  PackagingSpineItem,
-  PackagingObject,
-} from './packaging';
+import { PackagingManifestObject, PackagingMetadataObject } from './packaging';
 import Rendition, { RenditionOptions } from './rendition';
 import Section, { SpineItem } from './section';
 import Archive from './archive';
@@ -22,15 +17,16 @@ export interface BookOptions {
   requestMethod?: (
     url: string,
     type: string,
-    withCredentials: object,
-    headers: object
-  ) => Promise<object>;
-  requestCredentials?: object;
-  requestHeaders?: object;
+    withCredentials?: boolean,
+    headers?: Record<string, string>
+  ) => Promise<any>;
+  requestCredentials?: boolean;
+  requestHeaders?: Record<string, string>;
   encoding?: string;
   replacements?: string;
   canonical?: (path: string) => string;
   openAs?: string;
+  keepAbsoluteUrl?: boolean;
   store?: string;
 }
 

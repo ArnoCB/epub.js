@@ -4,7 +4,7 @@ import mime from './utils/mime';
 import Path from './utils/path';
 import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
-import Resources from 'types/resources';
+import Resources from './resources';
 
 type EventEmitterMethods = Pick<EventEmitter, 'on'>;
 
@@ -122,7 +122,7 @@ class Store implements EventEmitterMethods {
     resources: Resources,
     force: boolean = false
   ): Promise<Array<unknown>> {
-    const mapped = resources.resources.map((item) => {
+    const mapped = resources.resources!.map((item) => {
       const { href } = item;
       const url = this.resolver(href);
       const encodedUrl = window.encodeURIComponent(url);

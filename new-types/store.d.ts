@@ -1,6 +1,6 @@
 import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
-import Resources from 'types/resources';
+import Resources from './resources';
 type EventEmitterMethods = Pick<EventEmitter, 'on'>;
 /**
  * Handles saving and requesting files from local storage

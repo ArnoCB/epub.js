@@ -4,7 +4,7 @@ import type {
   PackagingMetadataObject,
 } from './packaging';
 import EventEmitter from 'event-emitter';
-import type { EpubOptions } from './epub.d.ts';
+import type { BookOptions as EpubOptions } from '../types/book';
 import { extend, defer } from './utils/core';
 import Url from './utils/url';
 import Path from './utils/path';

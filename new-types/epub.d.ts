@@ -3,8 +3,6 @@ import Rendition from './rendition';
 import CFI from './epubcfi';
 import Contents from './contents';
 import * as utils from './utils/core';
-import { EPUBJS_VERSION } from './utils/constants';
-
 /**
  * Creates a new Book
  * @param {string|ArrayBuffer} url URL, Path or ArrayBuffer
@@ -12,21 +10,15 @@ import { EPUBJS_VERSION } from './utils/constants';
  * @returns {Book} a new Book object
  * @example ePub("/path/to/book.epub", {})
  */
-function ePub(url, options) {
-  return new Book(url, options);
-}
-
-ePub.VERSION = EPUBJS_VERSION;
-
-if (typeof global !== 'undefined') {
-  global.EPUBJS_VERSION = EPUBJS_VERSION;
-}
-
-ePub.Book = Book;
-ePub.Rendition = Rendition;
-ePub.Contents = Contents;
-ePub.CFI = CFI;
-ePub.utils = utils;
-
+type EPubFactory = {
+    (url: string | ArrayBuffer, options?: Record<string, unknown>): Book;
+    VERSION?: string;
+    Book?: typeof Book;
+    Rendition?: typeof Rendition;
+    Contents?: typeof Contents;
+    CFI?: typeof CFI;
+    utils?: typeof utils;
+};
+declare const ePub: EPubFactory;
 export default ePub;
 export { Book, CFI as EpubCFI, Rendition, Contents, utils };
