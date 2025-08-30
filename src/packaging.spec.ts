@@ -5,12 +5,6 @@ import { indexOfNode } from './packaging';
 Object.assign(global, { TextDecoder, TextEncoder });
 
 import { JSDOM } from 'jsdom';
-import type {
-  PackagingObject,
-  PackagingMetadataObject,
-  PackagingManifestObject,
-  PackagingSpineItem,
-} from '../types/packaging';
 
 // Mock the core utils
 jest.mock('./utils/core', () => ({
@@ -189,7 +183,7 @@ describe('Packaging', () => {
     it('should parse metadata correctly', () => {
       const packageDoc = createMockPackageDocument();
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.metadata).toBeDefined();
       expect(result.metadata.title).toBe('Test Book');
@@ -201,7 +195,7 @@ describe('Packaging', () => {
     it('should parse manifest correctly', () => {
       const packageDoc = createMockPackageDocument();
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.manifest).toBeDefined();
       expect(Object.keys(result.manifest)).toHaveLength(5);
@@ -213,7 +207,7 @@ describe('Packaging', () => {
     it('should parse spine correctly', () => {
       const packageDoc = createMockPackageDocument();
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.spine).toBeDefined();
       expect(result.spine).toHaveLength(2);
@@ -224,7 +218,7 @@ describe('Packaging', () => {
     it('should find navigation path correctly', () => {
       const packageDoc = createMockPackageDocument();
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.navPath).toBe('nav.xhtml');
     });
@@ -232,7 +226,7 @@ describe('Packaging', () => {
     it('should find NCX path correctly', () => {
       const packageDoc = createMockPackageDocument();
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       // The implementation finds the NCX by media-type
       expect(result.ncxPath).toBe('toc.ncx');
@@ -241,7 +235,7 @@ describe('Packaging', () => {
     it('should find cover path correctly', () => {
       const packageDoc = createMockPackageDocument();
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       // The implementation looks for cover-image property first, then other methods
       // Our test data has cover-image property, so it should find it
@@ -264,7 +258,7 @@ describe('Packaging', () => {
       const dom = new JSDOM(packageXml, { contentType: 'text/xml' });
       const packageDoc = dom.window.document;
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.metadata).toBeDefined();
       expect(result.metadata.title).toBe('');
@@ -286,7 +280,7 @@ describe('Packaging', () => {
       const dom = new JSDOM(packageXml, { contentType: 'text/xml' });
       const packageDoc = dom.window.document;
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.manifest).toBeDefined();
       expect(Object.keys(result.manifest)).toHaveLength(0);
@@ -308,7 +302,7 @@ describe('Packaging', () => {
       const dom = new JSDOM(packageXml, { contentType: 'text/xml' });
       const packageDoc = dom.window.document;
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.spine).toBeDefined();
       expect(result.spine).toHaveLength(0);
@@ -360,7 +354,7 @@ describe('Packaging', () => {
       };
 
       // The load function expects a parsed JSON object, not a string
-      const result: PackagingObject = packaging.load(jsonData);
+      const result = packaging.load(jsonData);
 
       expect(result.metadata.title).toBe('JSON Book');
       expect(packaging.manifest[0].href).toBe('chapter1.xhtml');
@@ -452,7 +446,7 @@ describe('Packaging', () => {
       const dom = new JSDOM(packageXml, { contentType: 'text/xml' });
       const packageDoc = dom.window.document;
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.spine).toHaveLength(2);
       expect(result.spine[0].idref).toBe('chapter1');
@@ -490,7 +484,7 @@ describe('Packaging', () => {
       ];
 
       const packageDoc = createMockPackageDocument(undefined, manifest);
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.manifest['nav'].properties).toContain('nav');
       expect(result.manifest['scripted'].properties).toContain('scripted');
@@ -516,7 +510,7 @@ describe('Packaging', () => {
       const dom = new JSDOM(packageXml, { contentType: 'text/xml' });
       const packageDoc = dom.window.document;
 
-      const result: PackagingObject = packaging.parse(packageDoc);
+      const result = packaging.parse(packageDoc);
 
       expect(result.spine[0].properties).toContain('page-spread-left');
       expect(result.spine[1].properties).toContain('page-spread-right');

@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Test Spread Mode Navigation Fix</title>
+    <script src="./dist/epub.umd.js"></script>
+  </head>
+  <body>
+    <div
+      id="viewer"
+      style="height: 600px; width: 900px; border: 1px solid #ccc"
+    ></div>
+
+    <div>
+      <button onclick="testNext()">Test next() progression</button>
+      <div id="status"></div>
+    </div>
+
+    <script>
+      let book, rendition;
+      let locations = [];
+
+      // Initialize EPUB
+      book = new ePub('./examples/alice/OPS/package.opf');
+      rendition = book.renderTo('viewer', {
+        width: 900,
+        height: 600,
+        spread: 'always',
+      });
+
+      rendition.display('chapter_001.xhtml');
+
+      rendition.on('relocated', (location) => {
+        console.log('Relocated:', JSON.stringify(location));
+        locations.push(location);
+        document.getElementById('status').innerHTML =
+          `Current location: pages ${location.start.displayed.page}-${location.end.displayed.page} of ${location.start.displayed.total}`;
+      });
+
+      async function testNext() {
+        const status = document.getElementById('status');
+        status.innerHTML = 'Testing next() progression...<br>';
+
+        // Wait for initial display
+        await new Promise((res) => setTimeout(res, 1000));
+
+        const initial = locations[locations.length - 1];
+        status.innerHTML += `Initial: pages ${initial.start.displayed.page}-${initial.end.displayed.page}<br>`;
+
+        // Call next() three times
+        for (let i = 1; i <= 3; i++) {
+          rendition.next();
+          await new Promise((res) => setTimeout(res, 500)); // Wait for relocation
+
+          const current = locations[locations.length - 1];
+          status.innerHTML += `After next() ${i}: pages ${current.start.displayed.page}-${current.end.displayed.page}<br>`;
+        }
+
+        const final = locations[locations.length - 1];
+
+        // Check if progression worked
+        const initialPage = initial.start.displayed.page;
+        const finalPage = final.start.displayed.page;
+
+        if (finalPage > initialPage) {
+          status.innerHTML += `<strong style="color: green;">✅ SUCCESS: Advanced from page ${initialPage} to page ${finalPage}!</strong>`;
+        } else {
+          status.innerHTML += `<strong style="color: red;">❌ FAILED: Stuck at page ${initialPage}</strong>`;
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -4,7 +4,7 @@ import Snap from '../helpers/snap';
 import { EVENTS } from '../../utils/constants';
 import { debounce } from '../../utils/helpers';
 import { ViewManager } from '../helpers/snap';
-import { Axis, Flow } from 'src/layout';
+import { Axis, Flow } from '../../layout';
 import Section from '../../section';
 import { View } from '../helpers/views';
 import EventEmitter from 'event-emitter';
@@ -594,6 +594,46 @@ class ContinuousViewManager
 
     if (!this.views.length) return Promise.resolve();
 
+    // Use pageWidth when available so single page advances work in spreads
+    const pageStep =
+      this.layout.pageWidth && this.layout.pageWidth > 0
+        ? this.layout.pageWidth
+        : delta;
+
+    // Prefer advancing within the current section if more pages exist
+    try {
+      const loc = this.currentLocation();
+      console.debug('[ContinuousViewManager] next() currentLocation:', loc);
+      if (loc && loc.length) {
+        const lastLoc = loc[loc.length - 1];
+        const lastDisplayed =
+          lastLoc.pages && lastLoc.pages.length
+            ? lastLoc.pages[lastLoc.pages.length - 1]
+            : 0;
+        console.debug(
+          '[ContinuousViewManager] next() lastDisplayed/total:',
+          lastDisplayed,
+          lastLoc.totalPages,
+          'pageStep:',
+          pageStep
+        );
+        if (lastDisplayed < (lastLoc.totalPages || 0)) {
+          console.debug(
+            '[ContinuousViewManager] next() advancing within section'
+          );
+          // There are more pages in the current section; advance by one page
+          if (this.isPaginated && this.settings.axis === 'horizontal') {
+            this.scrollBy(pageStep, 0, true);
+          } else {
+            this.scrollBy(0, this.layout.height, true);
+          }
+          return Promise.resolve();
+        }
+      }
+    } catch {
+      // fallback to existing behavior
+    }
+
     if (this.isPaginated && this.settings.axis === 'horizontal') {
       this.scrollBy(delta, 0, true);
     } else {
@@ -614,6 +654,39 @@ class ContinuousViewManager
         : this.layout.props.delta;
 
     if (!this.views.length) return Promise.resolve();
+
+    // Prefer moving within the current section if earlier pages exist
+    try {
+      const loc = this.currentLocation();
+      console.debug('[ContinuousViewManager] prev() currentLocation:', loc);
+      if (loc && loc.length) {
+        const firstLoc = loc[0];
+        const firstDisplayed =
+          firstLoc.pages && firstLoc.pages.length ? firstLoc.pages[0] : 1;
+        const pageStep =
+          this.layout.pageWidth && this.layout.pageWidth > 0
+            ? this.layout.pageWidth
+            : delta;
+        console.debug(
+          '[ContinuousViewManager] prev() firstDisplayed/total:',
+          firstDisplayed,
+          firstLoc.totalPages,
+          'pageStep:',
+          pageStep
+        );
+        if (firstDisplayed > 1) {
+          console.debug('[ContinuousViewManager] prev() moving within section');
+          if (this.isPaginated && this.settings.axis === 'horizontal') {
+            this.scrollBy(-pageStep, 0, true);
+          } else {
+            this.scrollBy(0, -this.layout.height, true);
+          }
+          return Promise.resolve();
+        }
+      }
+    } catch {
+      // fallback to existing behavior
+    }
 
     if (this.isPaginated && this.settings.axis === 'horizontal') {
       this.scrollBy(-delta, 0, true);

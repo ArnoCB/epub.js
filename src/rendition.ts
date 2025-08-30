@@ -774,6 +774,7 @@ export class Rendition implements EventEmitterMethods {
   reportLocation() {
     return this.q.enqueue(() => {
       requestAnimationFrame(() => {
+        const ts = new Date().toISOString();
         const pageLocations = this.manager.currentLocation();
         if (
           pageLocations &&
@@ -806,7 +807,32 @@ export class Rendition implements EventEmitterMethods {
            * @type {displayedLocation}
            * @memberof Rendition
            */
-          this.emit(EVENTS.RENDITION.RELOCATED, this.location);
+          try {
+            // push to global trace if present
+            try {
+              const g = globalThis as typeof globalThis & {
+                __navTrace?: unknown[];
+              };
+              if (g && g.__navTrace) {
+                g.__navTrace.push({
+                  ts: ts,
+                  event: 'relocated',
+                  details: this.location,
+                });
+              }
+            } catch {
+              // ignore
+            }
+            this.emit(EVENTS.RENDITION.RELOCATED, this.location);
+            console.debug(
+              '[Rendition] emitted relocated',
+              'ts=',
+              ts,
+              JSON.stringify(this.location)
+            );
+          } catch {
+            // emit may throw in tests; ignore
+          }
         }
       });
     });

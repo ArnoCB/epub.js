@@ -754,8 +754,8 @@ function requireCore() {
    * @memberof Core
    */
   function locationOf(item, array, compareFunction, _start, _end) {
-    const start = _start !== null && _start !== void 0 ? _start : 0;
-    const end = _end !== null && _end !== void 0 ? _end : array.length;
+    const start = _start ?? 0;
+    const end = _end ?? array.length;
     const pivot = Math.floor(start + (end - start) / 2);
     if (!compareFunction) {
       compareFunction = function (a, b) {
@@ -785,8 +785,8 @@ function requireCore() {
    * @memberof Core
    */
   function indexOfSorted(item, array, compareFunction, _start, _end) {
-    const start = _start !== null && _start !== void 0 ? _start : 0;
-    const end = _end !== null && _end !== void 0 ? _end : array.length;
+    const start = _start ?? 0;
+    const end = _end ?? array.length;
     const pivot = Math.floor(start + (end - start) / 2);
     if (!compareFunction) {
       compareFunction = function (a, b) {
@@ -1887,7 +1887,7 @@ function requireUrl() {
           this.hash = this.Url.hash;
           this.search = this.Url.search;
           pathname = this.Url.pathname + (this.Url.search ? this.Url.search : '');
-        } catch (_a) {
+        } catch {
           // Skip URL parsing
           this.Url = undefined;
           // resolve the pathname from the base
@@ -2115,7 +2115,6 @@ function requireEpubcfi() {
      * Parse a cfi string to a CFI object representation
      */
     parse(cfiStr) {
-      var _a, _b;
       const emptyComponent = {
         steps: [],
         terminal: {
@@ -2154,7 +2153,7 @@ function requireEpubcfi() {
       const start = range ? this.parseComponent(range[0]) : null;
       const end = range ? this.parseComponent(range[1]) : null;
       const isRange = !!range;
-      const spinePos = (_b = (_a = base.steps[1]) === null || _a === void 0 ? void 0 : _a.index) !== null && _b !== void 0 ? _b : -1;
+      const spinePos = base.steps[1]?.index ?? -1;
       return {
         spinePos,
         range: isRange,
@@ -2254,7 +2253,7 @@ function requireEpubcfi() {
       return splitStr[1] || '';
     }
     joinSteps(steps) {
-      if (!(steps === null || steps === void 0 ? void 0 : steps.length)) return '';
+      if (!steps?.length) return '';
       return steps.map(part => {
         const value = part.type === 'element' ? (part.index + 1) * 2 : 1 + 2 * part.index;
         return `${value}${part.id ? `[${part.id}]` : ''}`;
@@ -2417,7 +2416,6 @@ function requireEpubcfi() {
      * Create a CFI range object from a DOM Range or CustomRange
      */
     fromRange(range, base, ignoreClass) {
-      var _a;
       let start, end, startOffset, endOffset;
       // Duck-typing for DOM Range detection (works across iframes)
       function isDOMRange(obj) {
@@ -2440,7 +2438,7 @@ function requireEpubcfi() {
       } else {
         throw new Error('Invalid range object provided to fromRange');
       }
-      const needsIgnoring = !!(ignoreClass && ((_a = start.ownerDocument) === null || _a === void 0 ? void 0 : _a.querySelector('.' + ignoreClass)));
+      const needsIgnoring = !!(ignoreClass && start.ownerDocument?.querySelector('.' + ignoreClass));
       const patch = (node, offset) => needsIgnoring && typeof ignoreClass === 'string' ? this.patchOffset(node, offset, ignoreClass) : offset;
       // Check if the range is collapsed
       const isCollapsed = start === end && startOffset === endOffset;
@@ -2573,7 +2571,7 @@ function requireEpubcfi() {
       for (i = 0; i < len; i++) {
         const node = children[i];
         currNodeType = node.nodeType;
-        if (currNodeType === ELEMENT_NODE && node instanceof Element && node.classList.contains(ignoreClass !== null && ignoreClass !== void 0 ? ignoreClass : '')) {
+        if (currNodeType === ELEMENT_NODE && node instanceof Element && node.classList.contains(ignoreClass ?? '')) {
           currNodeType = TEXT_NODE;
         }
         if (i > 0 && currNodeType === TEXT_NODE && prevNodeType === TEXT_NODE) {
@@ -2686,7 +2684,7 @@ function requireEpubcfi() {
             container = children[step.index];
           }
         } else if (step.type === 'text') {
-          const textNodesArr = this.textNodes(container, ignoreClass !== null && ignoreClass !== void 0 ? ignoreClass : '');
+          const textNodesArr = this.textNodes(container, ignoreClass ?? '');
           container = textNodesArr[step.index];
         }
         if (!container) {
@@ -2713,7 +2711,6 @@ function requireEpubcfi() {
       return container;
     }
     fixMiss(steps, offset, _doc, ignoreClass) {
-      var _a, _b;
       let container = this.findNode(steps.slice(0, -1), _doc, ignoreClass);
       if (!container) return;
       const children = container.childNodes;
@@ -2722,7 +2719,7 @@ function requireEpubcfi() {
       for (let i = 0; i < children.length; i++) {
         if (map[i] !== lastStepIndex) continue;
         const child = children[i];
-        const len = (_b = (_a = child.textContent) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0;
+        const len = child.textContent?.length ?? 0;
         if (offset > len) {
           offset -= len;
           continue;
@@ -2736,7 +2733,6 @@ function requireEpubcfi() {
       };
     }
     toRange(_doc, ignoreClass) {
-      var _a, _b;
       const doc = _doc || document;
       // Defensive: if this is a custom range object, convert to DOM Range
       const isCustomRange = obj => {
@@ -2760,16 +2756,16 @@ function requireEpubcfi() {
       }
       try {
         range.setStart(startContainer, this.getOffset(this.start, this.path));
-      } catch (_c) {
+      } catch {
         const missed = this.fixMiss(startSteps, this.getOffset(this.start, this.path), doc, useIgnore);
-        if (missed === null || missed === void 0 ? void 0 : missed.container) range.setStart(missed.container, (_a = missed.offset) !== null && _a !== void 0 ? _a : 0);
+        if (missed?.container) range.setStart(missed.container, missed.offset ?? 0);
       }
       if (endContainer && this.end) {
         try {
           range.setEnd(endContainer, this.getOffset(this.end, this.path));
-        } catch (_d) {
+        } catch {
           const missed = this.fixMiss(endSteps, this.getOffset(this.end, this.path), doc, useIgnore);
-          if (missed === null || missed === void 0 ? void 0 : missed.container) range.setEnd(missed.container, (_b = missed.offset) !== null && _b !== void 0 ? _b : 0);
+          if (missed?.container) range.setEnd(missed.container, missed.offset ?? 0);
         }
       }
       return range;
@@ -3124,9 +3120,8 @@ function requireSection() {
         const matches = [];
         const query = _query.toLowerCase();
         const find = node => {
-          var _a, _b;
-          const text = ((_a = node.textContent) === null || _a === void 0 ? void 0 : _a.toLowerCase()) || '';
-          let range = (_b = this.document) === null || _b === void 0 ? void 0 : _b.createRange();
+          const text = node.textContent?.toLowerCase() || '';
+          let range = this.document?.createRange();
           let cfi;
           let pos = 0;
           let last = -1;
@@ -3176,7 +3171,6 @@ function requireSection() {
         const excerptLimit = 150;
         const query = _query.toLowerCase();
         const searchInNodes = nodeList => {
-          var _a, _b;
           const textWithCase = nodeList.reduce((acc, current) => {
             return acc + (current.textContent || '');
           }, '');
@@ -3187,9 +3181,9 @@ function requireSection() {
               endPos = pos + query.length;
             let endNodeIndex = 0,
               l = 0;
-            if (pos < (((_a = nodeList[startNodeIndex].textContent) === null || _a === void 0 ? void 0 : _a.length) || 0)) {
+            if (pos < (nodeList[startNodeIndex].textContent?.length || 0)) {
               while (endNodeIndex < nodeList.length - 1) {
-                l += ((_b = nodeList[endNodeIndex].textContent) === null || _b === void 0 ? void 0 : _b.length) || 0;
+                l += nodeList[endNodeIndex].textContent?.length || 0;
                 if (endPos <= l) {
                   break;
                 }
@@ -3200,8 +3194,7 @@ function requireSection() {
               const range = this.document.createRange();
               range.setStart(startNode, pos);
               const beforeEndLengthCount = nodeList.slice(0, endNodeIndex).reduce((acc, current) => {
-                var _a;
-                return acc + (((_a = current.textContent) === null || _a === void 0 ? void 0 : _a.length) || 0);
+                return acc + (current.textContent?.length || 0);
               }, 0);
               range.setEnd(endNode, beforeEndLengthCount > endPos ? endPos : endPos - beforeEndLengthCount);
               const cfi = this.cfiFromRange(range);
@@ -3240,7 +3233,6 @@ function requireSection() {
        * @return layoutProperties Object with layout properties
        */
       reconcileLayoutSettings(globalLayout) {
-        var _a;
         //-- Get the global defaults
         const settings = {
           layout: globalLayout.layout,
@@ -3248,7 +3240,7 @@ function requireSection() {
           orientation: globalLayout.orientation
         };
         //-- Get the chapter's display type
-        (_a = this.properties) === null || _a === void 0 ? void 0 : _a.forEach(function (prop) {
+        this.properties?.forEach(function (prop) {
           const rendition = prop.replace('rendition:', '');
           const split = rendition.indexOf('-');
           let property, value;
@@ -3316,9 +3308,8 @@ function requireReplacements() {
   replacements.substitute = substitute;
   const url_1 = __importDefault(requireUrl());
   function replaceBase(doc, section) {
-    var _a;
     let base;
-    let url = (_a = section.url) !== null && _a !== void 0 ? _a : '';
+    let url = section.url ?? '';
     const absolute = url.indexOf('://') > -1;
     if (!doc) {
       return;
@@ -3346,11 +3337,11 @@ function requireReplacements() {
     if (!head) return;
     link = head.querySelector("link[rel='canonical']");
     if (link) {
-      link.setAttribute('href', url !== null && url !== void 0 ? url : '');
+      link.setAttribute('href', url ?? '');
     } else {
       link = doc.createElement('link');
       link.setAttribute('rel', 'canonical');
-      link.setAttribute('href', url !== null && url !== void 0 ? url : '');
+      link.setAttribute('href', url ?? '');
       head.appendChild(link);
     }
   }
@@ -3364,26 +3355,24 @@ function requireReplacements() {
     if (!head) return;
     meta = head.querySelector("link[property='dc.identifier']");
     if (meta) {
-      meta.setAttribute('content', id !== null && id !== void 0 ? id : '');
+      meta.setAttribute('content', id ?? '');
     } else {
       meta = doc.createElement('meta');
       meta.setAttribute('name', 'dc.identifier');
-      meta.setAttribute('content', id !== null && id !== void 0 ? id : '');
+      meta.setAttribute('content', id ?? '');
       head.appendChild(meta);
     }
   }
   // TODO: move me to Contents
   function replaceLinks(contents, fn) {
-    var _a;
     const links = contents.querySelectorAll('a[href]');
     if (!links.length) {
       return;
     }
     const base = contents.ownerDocument.documentElement.querySelector('base');
-    const location = base ? (_a = base.getAttribute('href')) !== null && _a !== void 0 ? _a : undefined : undefined;
+    const location = base ? base.getAttribute('href') ?? undefined : undefined;
     const replaceLink = function (link) {
-      var _a;
-      const href = (_a = link.getAttribute('href')) !== null && _a !== void 0 ? _a : '';
+      const href = link.getAttribute('href') ?? '';
       if (href.indexOf('mailto:') === 0) {
         return;
       }
@@ -3394,7 +3383,7 @@ function requireReplacements() {
         let linkUrl;
         try {
           linkUrl = new url_1.default(href, location);
-        } catch (_b) {
+        } catch {
           // NOOP
         }
         link.onclick = function () {
@@ -3679,33 +3668,6 @@ var hasRequiredQueue;
 function requireQueue() {
   if (hasRequiredQueue) return queue$1;
   hasRequiredQueue = 1;
-  var __awaiter = queue$1 && queue$1.__awaiter || function (thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function (resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
   Object.defineProperty(queue$1, "__esModule", {
     value: true
   });
@@ -3738,17 +3700,17 @@ function requireQueue() {
         // Always execute with the queue's context
         const promise = new Promise((resolve, reject) => {
           this._q.push({
-            task: (...taskArgs) => __awaiter(this, void 0, void 0, function* () {
+            task: async (...taskArgs) => {
               try {
                 // Use Function.prototype.apply to set context
-                const result = yield taskOrPromise.apply(this.context, taskArgs);
+                const result = await taskOrPromise.apply(this.context, taskArgs);
                 resolve(result);
                 return result;
               } catch (err) {
                 reject(err);
                 throw err;
               }
-            }),
+            },
             args: args
           });
           if (this.paused == false && !this.running) {
@@ -3814,7 +3776,6 @@ function requireQueue() {
      * Run one item
      */
     dequeue() {
-      var _a;
       if (this._q.length && !this.paused) {
         const inwait = this._q.shift();
         if (!inwait) return Promise.resolve(undefined);
@@ -3833,7 +3794,7 @@ function requireQueue() {
               });
             } else {
               if (inwait.resolve) inwait.resolve(result);
-              return (_a = inwait.promise) !== null && _a !== void 0 ? _a : Promise.resolve(result);
+              return inwait.promise ?? Promise.resolve(result);
             }
           } catch (err) {
             if (inwait.reject) inwait.reject(err);
@@ -3945,33 +3906,6 @@ var hasRequiredLocations;
 function requireLocations() {
   if (hasRequiredLocations) return locations;
   hasRequiredLocations = 1;
-  var __awaiter = locations && locations.__awaiter || function (thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function (resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
   var __importDefault = locations && locations.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
@@ -4176,28 +4110,26 @@ function requireLocations() {
         return this._locationsWords;
       });
     }
-    processWords(section, wordCount, startCfi, count) {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (count && this._locationsWords.length >= count) {
-          return Promise.resolve();
-        }
-        // Section.load resolves with the section contents (an Element), not the full Document
-        return section.load(this.request).then(contents => {
-          const completed = new core_1.defer();
-          // Use documentElement for parseWords
-          if (!contents) {
-            completed.resolve([]);
-            return completed.promise;
-          }
-          const el = contents;
-          // contents is already the documentElement for the section
-          const locations = this.parseWords(el, section, wordCount, startCfi);
-          const remainingCount = count - this._locationsWords.length;
-          this._locationsWords = this._locationsWords.concat(locations.length >= count ? locations.slice(0, remainingCount) : locations);
-          section.unload();
-          this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
+    async processWords(section, wordCount, startCfi, count) {
+      if (count && this._locationsWords.length >= count) {
+        return Promise.resolve();
+      }
+      // Section.load resolves with the section contents (an Element), not the full Document
+      return section.load(this.request).then(contents => {
+        const completed = new core_1.defer();
+        // Use documentElement for parseWords
+        if (!contents) {
+          completed.resolve([]);
           return completed.promise;
-        });
+        }
+        const el = contents;
+        // contents is already the documentElement for the section
+        const locations = this.parseWords(el, section, wordCount, startCfi);
+        const remainingCount = count - this._locationsWords.length;
+        this._locationsWords = this._locationsWords.concat(locations.length >= count ? locations.slice(0, remainingCount) : locations);
+        section.unload();
+        this.processingTimeout = setTimeout(() => completed.resolve(locations), this.pause);
+        return completed.promise;
       });
     }
     //http://stackoverflow.com/questions/18679576/counting-words-in-string
@@ -4208,7 +4140,6 @@ function requireLocations() {
       return s.split(' ').length;
     }
     parseWords(contents, section, wordCount, startCfi) {
-      var _a;
       const cfiBase = section.cfiBase;
       const locations = [];
       const doc = contents.ownerDocument;
@@ -4223,7 +4154,7 @@ function requireLocations() {
       let foundStartNode = startCfi ? startCfi.spinePos !== section.index : true;
       let startNode;
       if (startCfi && section.index === startCfi.spinePos) {
-        startNode = startCfi.findNode(startCfi.range ? startCfi.path.steps.concat(((_a = startCfi.start) === null || _a === void 0 ? void 0 : _a.steps) || []) : startCfi.path.steps, contents.ownerDocument);
+        startNode = startCfi.findNode(startCfi.range ? startCfi.path.steps.concat(startCfi.start?.steps || []) : startCfi.path.steps, contents.ownerDocument);
       }
       const parser = node => {
         if (!foundStartNode) {
@@ -4419,16 +4350,14 @@ function requireLocations() {
      * Locations length
      */
     length() {
-      var _a, _b;
-      return (_b = (_a = this._locations) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0;
+      return this._locations?.length ?? 0;
     }
     destroy() {
-      var _a;
       this.spine = undefined;
       // @ts-expect-error this is only at destroy time
       this.request = undefined;
       this.pause = undefined;
-      (_a = this.q) === null || _a === void 0 ? void 0 : _a.stop();
+      this.q?.stop();
       this.q = undefined;
       this.epubcfi = undefined;
       this._locations = undefined;
@@ -4738,7 +4667,7 @@ function requirePackaging() {
      */
     findCoverPath(packageXml) {
       const pkg = packageXml.querySelector('package');
-      pkg === null || pkg === void 0 ? void 0 : pkg.getAttribute('version');
+      pkg?.getAttribute('version');
       // Try parsing cover with epub 3.
       // var node = packageXml.querySelector("item[properties='cover-image']");
       const node = packageXml.querySelector("item[properties~='cover-image']");
@@ -4805,12 +4734,11 @@ function requirePackaging() {
       });
       this.spineNodeIndex = 0;
       this.toc = json.toc ? json.toc.map(item => {
-        var _a;
         const navItem = {
           id: item.id || '',
           href: item.href,
           label: item.label || item.title || '',
-          title: (_a = item.title) !== null && _a !== void 0 ? _a : '',
+          title: item.title ?? '',
           subitems: []
         };
         return navItem;
@@ -5086,9 +5014,9 @@ function requireNavigation() {
     ncxItem(item) {
       const id = item.getAttribute('id') || '';
       const content = item.querySelector('content');
-      const src = (content === null || content === void 0 ? void 0 : content.getAttribute('src')) || '';
+      const src = content?.getAttribute('src') || '';
       const navLabel = item.querySelector('navLabel');
-      const text = (navLabel === null || navLabel === void 0 ? void 0 : navLabel.textContent) || '';
+      const text = navLabel?.textContent || '';
       const subitems = [];
       const parentNode = item.parentNode;
       let parent;
@@ -5319,33 +5247,6 @@ function requireResources() {
   hasRequiredResources = 1;
   (function (module, exports) {
 
-    var __awaiter = resources && resources.__awaiter || function (thisArg, _arguments, P, generator) {
-      function adopt(value) {
-        return value instanceof P ? value : new P(function (resolve) {
-          resolve(value);
-        });
-      }
-      return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) {
-          try {
-            step(generator.next(value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function rejected(value) {
-          try {
-            step(generator["throw"](value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function step(result) {
-          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-        }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      });
-    };
     var __importDefault = resources && resources.__importDefault || function (mod) {
       return mod && mod.__esModule ? mod : {
         "default": mod
@@ -5447,92 +5348,85 @@ function requireResources() {
       /**
        * Create a url to a resource
        */
-      createUrl(url) {
-        return __awaiter(this, void 0, void 0, function* () {
-          const parsedUrl = new url_1.default(url);
-          // mime.lookup always returns a string (defaultValue if no match)
-          const mimeType = mime_1.default.lookup(parsedUrl.filename);
-          if (this.settings === undefined) {
-            throw new Error(`Resources settings are not defined`);
+      async createUrl(url) {
+        const parsedUrl = new url_1.default(url);
+        // mime.lookup always returns a string (defaultValue if no match)
+        const mimeType = mime_1.default.lookup(parsedUrl.filename);
+        if (this.settings === undefined) {
+          throw new Error(`Resources settings are not defined`);
+        }
+        if (this.settings.archive) {
+          return this.settings.archive.createUrl(url, {
+            base64: this.settings.replacements === 'base64'
+          });
+        } else {
+          if (!this.settings.request) {
+            throw new Error(`Request method is not defined`);
           }
-          if (this.settings.archive) {
-            return this.settings.archive.createUrl(url, {
-              base64: this.settings.replacements === 'base64'
+          if (this.settings.replacements === 'base64') {
+            return this.settings.request(url, 'blob').then(response => {
+              if (!(response instanceof Blob)) {
+                throw new Error('Expected Blob response for base64 conversion');
+              }
+              return (0, core_1.blob2base64)(response);
+            }).then(base64String => {
+              const dataUrl = (0, core_1.createBase64Url)(base64String, mimeType);
+              if (!dataUrl) {
+                throw new Error('Failed to create base64 URL');
+              }
+              return dataUrl;
             });
           } else {
-            if (!this.settings.request) {
-              throw new Error(`Request method is not defined`);
-            }
-            if (this.settings.replacements === 'base64') {
-              return this.settings.request(url, 'blob').then(response => {
-                if (!(response instanceof Blob)) {
-                  throw new Error('Expected Blob response for base64 conversion');
-                }
-                return (0, core_1.blob2base64)(response);
-              }).then(base64String => {
-                const dataUrl = (0, core_1.createBase64Url)(base64String, mimeType);
-                if (!dataUrl) {
-                  throw new Error('Failed to create base64 URL');
-                }
-                return dataUrl;
-              });
-            } else {
-              return this.settings.request(url, 'blob').then(response => {
-                if (!(response instanceof Blob)) {
-                  throw new Error('Expected Blob response for blob URL creation');
-                }
-                const blobUrl = (0, core_1.createBlobUrl)(response, mimeType);
-                if (!blobUrl) {
-                  throw new Error('Failed to create blob URL');
-                }
-                return blobUrl;
-              });
-            }
+            return this.settings.request(url, 'blob').then(response => {
+              if (!(response instanceof Blob)) {
+                throw new Error('Expected Blob response for blob URL creation');
+              }
+              const blobUrl = (0, core_1.createBlobUrl)(response, mimeType);
+              if (!blobUrl) {
+                throw new Error('Failed to create blob URL');
+              }
+              return blobUrl;
+            });
           }
-        });
+        }
       }
       /**
        * Create blob urls for all the assets
        * @return returns replacement urls
        */
-      replacements() {
-        return __awaiter(this, void 0, void 0, function* () {
-          var _a;
-          if (!this.settings || this.settings.replacements === 'none') {
-            return Promise.resolve((_a = this.urls) !== null && _a !== void 0 ? _a : []);
+      async replacements() {
+        if (!this.settings || this.settings.replacements === 'none') {
+          return Promise.resolve(this.urls ?? []);
+        }
+        if (this.urls === undefined) {
+          return Promise.resolve([]);
+        }
+        const replacements = this.urls.map(url => {
+          if (!this.settings.resolver) {
+            return Promise.resolve(null);
           }
-          if (this.urls === undefined) {
-            return Promise.resolve([]);
-          }
-          const replacements = this.urls.map(url => {
-            if (!this.settings.resolver) {
-              return Promise.resolve(null);
-            }
-            const absolute = this.settings.resolver(url);
-            return this.createUrl(absolute).catch(err => {
-              console.error(err);
-              return null;
-            });
+          const absolute = this.settings.resolver(url);
+          return this.createUrl(absolute).catch(err => {
+            console.error(err);
+            return null;
           });
-          return Promise.all(replacements).then(replacementUrls => {
-            this.replacementUrls = replacementUrls.filter(url => {
-              return typeof url === 'string';
-            });
-            return replacementUrls;
+        });
+        return Promise.all(replacements).then(replacementUrls => {
+          this.replacementUrls = replacementUrls.filter(url => {
+            return typeof url === 'string';
           });
+          return replacementUrls;
         });
       }
       /**
        * Replace URLs in CSS resources
        */
       replaceCss() {
-        var _a;
         const replaced = [];
-        (_a = this.cssUrls) === null || _a === void 0 ? void 0 : _a.forEach(href => {
+        this.cssUrls?.forEach(href => {
           const replacement = this.createCssFile(href).then(replacementUrl => {
-            var _a;
             // switch the url in the replacementUrls
-            const indexInUrls = (_a = this.urls) === null || _a === void 0 ? void 0 : _a.indexOf(href);
+            const indexInUrls = this.urls?.indexOf(href);
             if (indexInUrls && indexInUrls > -1) {
               this.replacementUrls[indexInUrls] = replacementUrl;
             }
@@ -5547,7 +5441,6 @@ function requireResources() {
        * @return returns a BlobUrl to the new CSS file or a data url
        */
       createCssFile(href) {
-        var _a;
         let newUrl;
         // Check if href is an absolute path or URL
         if (href.startsWith('/') || href.includes('://')) {
@@ -5567,11 +5460,11 @@ function requireResources() {
           return Promise.resolve();
         }
         // Get asset links relative to css file
-        const relUrls = ((_a = this.urls) === null || _a === void 0 ? void 0 : _a.map(assetHref => {
+        const relUrls = this.urls?.map(assetHref => {
           const resolved = this.settings.resolver(assetHref);
           const relative = new path_1.default(absolute).relative(resolved);
           return relative;
-        })) || [];
+        }) || [];
         if (!textResponse) {
           // file not found, don't replace
           return Promise.resolve();
@@ -5739,7 +5632,6 @@ function requirePagelist() {
       return list;
     }
     ncxItem(item) {
-      var _a;
       // Use native querySelector and proper null checks
       const element = item instanceof Element ? item : null;
       if (!element) {
@@ -5749,10 +5641,10 @@ function requirePagelist() {
         };
       }
       const navLabel = element.querySelector('navLabel');
-      const navLabelText = navLabel === null || navLabel === void 0 ? void 0 : navLabel.querySelector('text');
-      const pageText = ((_a = navLabelText === null || navLabelText === void 0 ? void 0 : navLabelText.textContent) === null || _a === void 0 ? void 0 : _a.trim()) || '';
+      const navLabelText = navLabel?.querySelector('text');
+      const pageText = navLabelText?.textContent?.trim() || '';
       const content = element.querySelector('content');
-      const href = (content === null || content === void 0 ? void 0 : content.getAttribute('src')) || '';
+      const href = content?.getAttribute('src') || '';
       // Always return page as string for PageListItem
       return {
         href,
@@ -5763,11 +5655,10 @@ function requirePagelist() {
      * Page List Item
      */
     item(item) {
-      var _a;
       const element = item instanceof Element ? item : null;
-      const content = element === null || element === void 0 ? void 0 : element.querySelector('a');
-      const href = (content === null || content === void 0 ? void 0 : content.getAttribute('href')) || '';
-      const text = ((_a = content === null || content === void 0 ? void 0 : content.textContent) === null || _a === void 0 ? void 0 : _a.trim()) || '';
+      const content = element?.querySelector('a');
+      const href = content?.getAttribute('href') || '';
+      const text = content?.textContent?.trim() || '';
       const isCfi = href.indexOf('epubcfi');
       let split, packageUrl, cfi;
       if (isCfi !== -1) {
@@ -5807,16 +5698,15 @@ function requirePagelist() {
      * @return {number} page
      */
     pageFromCfi(cfi) {
-      var _a, _b;
       let pg = -1;
       if (!this.locations || this.locations.length === 0) {
         return -1;
       }
-      let index = (0, core_1.indexOfSorted)(cfi, this.locations, (_a = this.epubcfi) === null || _a === void 0 ? void 0 : _a.compare);
+      let index = (0, core_1.indexOfSorted)(cfi, this.locations, this.epubcfi?.compare);
       if (index !== -1) {
         pg = parseInt(this.pages[index], 10);
       } else {
-        index = (0, core_1.locationOf)(cfi, this.locations, (_b = this.epubcfi) === null || _b === void 0 ? void 0 : _b.compare);
+        index = (0, core_1.locationOf)(cfi, this.locations, this.epubcfi?.compare);
         pg = index - 1 >= 0 ? parseInt(this.pages[index - 1], 10) : parseInt(this.pages[0], 10);
         if (isNaN(pg)) {
           pg = -1;
@@ -6043,12 +5933,11 @@ function requireLayout() {
      * Apply Css to a Document
      */
     format(contents, section, axis) {
-      var _a;
       let formating;
       if (this.name === 'pre-paginated') {
         formating = contents.fit(this.columnWidth, this.height);
       } else if (this._flow === 'paginated') {
-        formating = contents.columns(this.width, this.height, this.columnWidth, this.gap, (_a = this.settings.direction) !== null && _a !== void 0 ? _a : 'ltr');
+        formating = contents.columns(this.width, this.height, this.columnWidth, this.gap, this.settings.direction ?? 'ltr');
       } else if (axis && axis === 'horizontal') {
         formating = contents.size(-1, this.height);
       } else {
@@ -6280,7 +6169,6 @@ function requireThemes() {
      * @param {Contents} contents
      */
     inject(contents) {
-      var _a;
       const links = [];
       const themes = this._themes;
       let theme;
@@ -6290,7 +6178,7 @@ function requireThemes() {
           if (theme.rules && Object.keys(theme.rules).length > 0 || theme.url && links.indexOf(theme.url) === -1) {
             this.add(name, contents);
           }
-          (_a = this._injected) === null || _a === void 0 ? void 0 : _a.push(name);
+          this._injected?.push(name);
         }
       }
       if (this._current !== undefined && this._current != 'default') {
@@ -6783,7 +6671,7 @@ function requireMapping() {
           throw new Error('Selection is not available');
         }
         const r = doc.createRange();
-        selection === null || selection === void 0 ? void 0 : selection.removeAllRanges();
+        selection?.removeAllRanges();
         r.setStart(startRange.startContainer, startRange.startOffset);
         r.setEnd(endRange.endContainer, endRange.endOffset);
         selection.addRange(r);
@@ -6796,8 +6684,7 @@ function requireMapping() {
     walk(root, func) {
       const filter = {
         acceptNode: function (node) {
-          var _a;
-          if (((_a = node.data) === null || _a === void 0 ? void 0 : _a.trim().length) > 0) {
+          if (node.data?.trim().length > 0) {
             return NodeFilter.FILTER_ACCEPT;
           } else {
             return NodeFilter.FILTER_REJECT;
@@ -7275,7 +7162,6 @@ function requireStage() {
       window.addEventListener('orientationchange', this.orientationChangeFunc, false);
     }
     size(width, height) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
       let bounds;
       const _width = width || this.settings.width;
       const _height = height || this.settings.height;
@@ -7332,19 +7218,19 @@ function requireStage() {
         bottom: String(parseFloat(bodyStyles.paddingBottom) || 0)
       };
       if (!_width) {
-        const leftPad = parseFloat((_a = bodyPadding.left) !== null && _a !== void 0 ? _a : '0');
-        const rightPad = parseFloat((_b = bodyPadding.right) !== null && _b !== void 0 ? _b : '0');
+        const leftPad = parseFloat(bodyPadding.left ?? '0');
+        const rightPad = parseFloat(bodyPadding.right ?? '0');
         width = String(_windowBounds.width - leftPad - rightPad);
       }
       if (this.settings.fullsize && !_height || !_height) {
-        const topPad = parseFloat((_c = bodyPadding.top) !== null && _c !== void 0 ? _c : '0');
-        const bottomPad = parseFloat((_d = bodyPadding.bottom) !== null && _d !== void 0 ? _d : '0');
+        const topPad = parseFloat(bodyPadding.top ?? '0');
+        const bottomPad = parseFloat(bodyPadding.bottom ?? '0');
         height = String(_windowBounds.height - topPad - bottomPad);
       }
-      const containerLeft = parseFloat((_f = (_e = this.containerPadding) === null || _e === void 0 ? void 0 : _e.left) !== null && _f !== void 0 ? _f : '0');
-      const containerRight = parseFloat((_h = (_g = this.containerPadding) === null || _g === void 0 ? void 0 : _g.right) !== null && _h !== void 0 ? _h : '0');
-      const containerTop = parseFloat((_k = (_j = this.containerPadding) === null || _j === void 0 ? void 0 : _j.top) !== null && _k !== void 0 ? _k : '0');
-      const containerBottom = parseFloat((_m = (_l = this.containerPadding) === null || _l === void 0 ? void 0 : _l.bottom) !== null && _m !== void 0 ? _m : '0');
+      const containerLeft = parseFloat(this.containerPadding?.left ?? '0');
+      const containerRight = parseFloat(this.containerPadding?.right ?? '0');
+      const containerTop = parseFloat(this.containerPadding?.top ?? '0');
+      const containerBottom = parseFloat(this.containerPadding?.bottom ?? '0');
       return {
         width: parseFloat(width) - containerLeft - containerRight,
         height: parseFloat(height) - containerTop - containerBottom
@@ -7369,11 +7255,10 @@ function requireStage() {
       return style.sheet;
     }
     addStyleRules(selector, rulesArray) {
-      var _a, _b;
       const scope = '#' + this.id + ' ';
       let rules = '';
       if (!this.sheet) {
-        this.sheet = (_a = this.getSheet()) !== null && _a !== void 0 ? _a : undefined;
+        this.sheet = this.getSheet() ?? undefined;
       }
       rulesArray.forEach(function (set) {
         for (const prop in set) {
@@ -7382,7 +7267,7 @@ function requireStage() {
           }
         }
       });
-      (_b = this.sheet) === null || _b === void 0 ? void 0 : _b.insertRule(scope + selector + ' {' + rules + '}', 0);
+      this.sheet?.insertRule(scope + selector + ' {' + rules + '}', 0);
     }
     axis(axis) {
       if (axis === 'horizontal') {
@@ -7531,12 +7416,11 @@ function requireViews() {
       this.length = 0;
     }
     find(section) {
-      var _a;
       let view;
       const len = this.length;
       for (let i = 0; i < len; i++) {
         view = this._views[i];
-        if (view.displayed && ((_a = view.section) === null || _a === void 0 ? void 0 : _a.index) == section.index) {
+        if (view.displayed && view.section?.index == section.index) {
           return view;
         }
       }
@@ -7967,7 +7851,7 @@ function requireContents() {
         // Firefox errors if we access cssRules cross-domain
         try {
           rules = sheets[i].cssRules;
-        } catch (_a) {
+        } catch {
           return;
         }
         if (!rules) return; // Stylesheets changed
@@ -9061,8 +8945,8 @@ function requireIframe() {
       // Prefer explicit numeric sizes. If not provided (or non-numeric),
       // measure the containing element so pages are sized to the container,
       // not the window.
-      let width = _width !== null && _width !== void 0 ? _width : this.settings.width;
-      let height = _height !== null && _height !== void 0 ? _height : this.settings.height;
+      let width = _width ?? this.settings.width;
+      let height = _height ?? this.settings.height;
       // If width/height are not numeric, fall back to the element's bounding rect
       try {
         const rect = this.element.getBoundingClientRect();
@@ -9072,7 +8956,7 @@ function requireIframe() {
         if (!(0, core_1.isNumber)(height) || height === 0) {
           height = Math.floor(rect.height);
         }
-      } catch (_a) {
+      } catch {
         // if element is not yet in the DOM, leave provided values
       }
       if (this.layout && this.layout.name === 'pre-paginated') {
@@ -9117,7 +9001,6 @@ function requireIframe() {
     }
     // Resize a single axis based on content dimensions
     expand() {
-      var _a, _b, _c, _d, _e, _f, _g, _h;
       let width = this.lockedWidth;
       let height = this.lockedHeight;
       let columns;
@@ -9125,20 +9008,20 @@ function requireIframe() {
       this._expanding = true;
       // Pre-paginated layout
       if (this.layout.name === 'pre-paginated') {
-        width = (_b = (_a = this.layout) === null || _a === void 0 ? void 0 : _a.columnWidth) !== null && _b !== void 0 ? _b : width;
-        height = (_d = (_c = this.layout) === null || _c === void 0 ? void 0 : _c.height) !== null && _d !== void 0 ? _d : height;
+        width = this.layout?.columnWidth ?? width;
+        height = this.layout?.height ?? height;
       }
       // Horizontal axis
       else if (this.settings.axis === 'horizontal') {
         if (!this.contents) throw new Error('Contents not loaded');
         if (!this.layout) throw new Error('Layout not defined');
         width = this.contents.textWidth();
-        if (((_e = this.layout) === null || _e === void 0 ? void 0 : _e.pageWidth) && width % this.layout.pageWidth > 0) {
+        if (this.layout?.pageWidth && width % this.layout.pageWidth > 0) {
           width = Math.ceil(width / this.layout.pageWidth) * this.layout.pageWidth;
         }
-        if (this.settings.forceEvenPages && ((_f = this.layout) === null || _f === void 0 ? void 0 : _f.pageWidth)) {
+        if (this.settings.forceEvenPages && this.layout?.pageWidth) {
           columns = width / this.layout.pageWidth;
-          if (((_g = this.layout) === null || _g === void 0 ? void 0 : _g.divisor) && this.layout.divisor > 1 && this.layout.name === 'reflowable' && columns % 2 > 0) {
+          if (this.layout?.divisor && this.layout.divisor > 1 && this.layout.name === 'reflowable' && columns % 2 > 0) {
             width += this.layout.pageWidth;
           }
         }
@@ -9147,7 +9030,7 @@ function requireIframe() {
       else if (this.settings.axis === 'vertical') {
         if (!this.contents) throw new Error('Contents not loaded');
         height = this.contents.textHeight();
-        if (this.settings.flow === 'paginated' && ((_h = this.layout) === null || _h === void 0 ? void 0 : _h.height) && height % this.layout.height > 0) {
+        if (this.settings.flow === 'paginated' && this.layout?.height && height % this.layout.height > 0) {
           height = Math.ceil(height / this.layout.height) * this.layout.height;
         }
       }
@@ -9168,7 +9051,6 @@ function requireIframe() {
       this._expanding = false;
     }
     reframe(width, height) {
-      var _a;
       if (this.iframe === undefined) {
         throw new Error('Iframe not defined');
       }
@@ -9190,7 +9072,7 @@ function requireIframe() {
         widthDelta: widthDelta,
         heightDelta: heightDelta
       };
-      (_a = this.pane) === null || _a === void 0 ? void 0 : _a.render();
+      this.pane?.render();
       requestAnimationFrame(() => {
         let mark;
         for (const m in this.marks) {
@@ -9206,7 +9088,6 @@ function requireIframe() {
       this.elementBounds = (0, core_1.bounds)(this.element);
     }
     load(contents) {
-      var _a, _b, _c, _d;
       const loading = new core_1.defer();
       const loaded = loading.promise;
       if (!this.iframe) {
@@ -9225,24 +9106,23 @@ function requireIframe() {
         this.element.appendChild(this.iframe);
       } else {
         this.element.appendChild(this.iframe);
-        this.document = (_a = this.iframe.contentDocument) !== null && _a !== void 0 ? _a : undefined;
+        this.document = this.iframe.contentDocument ?? undefined;
         if (!this.document) {
           loading.reject(new Error('No Document Available'));
           return loaded;
         }
-        (_b = this.iframe.contentDocument) === null || _b === void 0 ? void 0 : _b.open();
-        (_c = this.iframe.contentDocument) === null || _c === void 0 ? void 0 : _c.write(contents);
-        (_d = this.iframe.contentDocument) === null || _d === void 0 ? void 0 : _d.close();
+        this.iframe.contentDocument?.open();
+        this.iframe.contentDocument?.write(contents);
+        this.iframe.contentDocument?.close();
       }
       return loaded;
     }
     onLoad(event, promise) {
-      var _a, _b, _c;
       if (this.iframe === undefined) {
         throw new Error('Iframe not defined');
       }
-      this.window = (_a = this.iframe.contentWindow) !== null && _a !== void 0 ? _a : undefined;
-      this.document = (_b = this.iframe.contentDocument) !== null && _b !== void 0 ? _b : undefined;
+      this.window = this.iframe.contentWindow ?? undefined;
+      this.document = this.iframe.contentDocument ?? undefined;
       // Inject transparent background if option is enabled
       if (this.settings.transparency && this.document && this.document.body) {
         this.document.body.style.background = 'transparent';
@@ -9267,7 +9147,7 @@ function requireIframe() {
         if (this.section.canonical) {
           link.setAttribute('href', this.section.canonical);
         }
-        (_c = this.document.querySelector('head')) === null || _c === void 0 ? void 0 : _c.appendChild(link);
+        this.document.querySelector('head')?.appendChild(link);
       }
       this.contents.on(constants_1.EVENTS.CONTENTS.EXPAND, () => {
         if (this.displayed && this.iframe) {
@@ -9596,7 +9476,6 @@ function requireIframe() {
       }
     }
     destroy() {
-      var _a;
       for (const cfiRange in this.highlights) {
         this.unhighlight(cfiRange);
       }
@@ -9612,7 +9491,7 @@ function requireIframe() {
       if (this.displayed) {
         this.displayed = false;
         this.removeListeners();
-        (_a = this.contents) === null || _a === void 0 ? void 0 : _a.destroy();
+        this.contents?.destroy();
         this.stopExpanding = true;
         this.element.removeChild(this.iframe);
         if (this.pane) {
@@ -9636,33 +9515,6 @@ var hasRequired_default;
 function require_default() {
   if (hasRequired_default) return _default;
   hasRequired_default = 1;
-  var __awaiter = _default && _default.__awaiter || function (thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function (resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
   var __importDefault = _default && _default.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
@@ -9689,7 +9541,7 @@ function require_default() {
       this.request = options.request;
       this.renditionQueue = options.queue;
       this.q = new queue_1.default(this);
-      this.settings = Object.assign({
+      this.settings = {
         infinite: true,
         hidden: false,
         width: undefined,
@@ -9700,8 +9552,9 @@ function require_default() {
         ignoreClass: '',
         fullsize: undefined,
         allowScriptedContent: false,
-        allowPopups: false
-      }, options.settings || {});
+        allowPopups: false,
+        ...(options.settings || {})
+      };
       (0, core_1.extend)(this.settings, options.settings || {});
       this.viewSettings = {
         ignoreClass: this.settings.ignoreClass,
@@ -9915,26 +9768,66 @@ function require_default() {
       return displayed;
     }
     afterDisplayed(view) {
+      console.debug('[DefaultViewManager] afterDisplayed called for view:', view.section?.href);
+      // Fix: Ensure container scrollWidth can accommodate content width
+      if (view && view.contents) {
+        const contentWidth = view.contents.textWidth();
+        console.debug('[DefaultViewManager] afterDisplayed content width:', contentWidth);
+        if (contentWidth > this.container.offsetWidth) {
+          console.debug('[DefaultViewManager] updating phantom element for chapter content width:', contentWidth);
+          // Create/update phantom element to match current chapter's content width
+          let phantomElement = this.container.querySelector('.epub-scroll-phantom');
+          if (!phantomElement) {
+            phantomElement = document.createElement('div');
+            phantomElement.className = 'epub-scroll-phantom';
+            phantomElement.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 1px;
+            pointer-events: none;
+            visibility: hidden;
+            z-index: -1000;
+          `;
+            this.container.appendChild(phantomElement);
+          }
+          // Always update phantom width to match current chapter
+          phantomElement.style.width = contentWidth + 'px';
+          console.debug('[DefaultViewManager] afterDisplayed container now scrollWidth:', this.container.scrollWidth);
+          // Always resize view and iframe to match content width
+          console.debug('[DefaultViewManager] resizing view/iframe to content width:', contentWidth);
+          // Position content at left: 0 for proper scrolling
+          const element = view.element;
+          if (element) {
+            element.style.width = contentWidth + 'px';
+            element.style.left = '0px';
+            // Fix: Also resize the iframe inside the view element
+            const iframe = element.querySelector('iframe');
+            if (iframe) {
+              iframe.style.width = contentWidth + 'px';
+              console.debug('[DefaultViewManager] resized iframe to match content width:', contentWidth);
+            }
+          }
+        }
+      }
       this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
     }
     afterResized(view) {
       this.emit(constants_1.EVENTS.MANAGERS.RESIZE, view.section);
     }
-    add(section_1) {
-      return __awaiter(this, arguments, void 0, function* (section, forceRight = false) {
-        const view = this.createView(section, forceRight);
-        this.views.append(view);
-        // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
-        view.onDisplayed = this.afterDisplayed.bind(this);
-        view.onResize = this.afterResized.bind(this);
-        view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
-          this.updateAxis(axis);
-        });
-        view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
-          this.updateWritingMode(mode);
-        });
-        return view.display(this.request).then(() => view);
+    async add(section, forceRight = false) {
+      const view = this.createView(section, forceRight);
+      this.views.append(view);
+      // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
+      view.onDisplayed = this.afterDisplayed.bind(this);
+      view.onResize = this.afterResized.bind(this);
+      view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
+        this.updateAxis(axis);
       });
+      view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
+        this.updateWritingMode(mode);
+      });
+      return view.display(this.request).then(() => view);
     }
     moveTo(offset, width) {
       let distX = 0,
@@ -9962,38 +9855,34 @@ function require_default() {
       }
       this.scrollTo(distX, distY, true);
     }
-    append(section_1) {
-      return __awaiter(this, arguments, void 0, function* (section, forceRight = false) {
-        const view = this.createView(section, forceRight);
-        this.views.append(view);
-        view.onDisplayed = this.afterDisplayed.bind(this);
-        view.onResize = this.afterResized.bind(this);
-        view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
-          this.updateAxis(axis);
-        });
-        view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
-          this.updateWritingMode(mode);
-        });
-        return view.display(this.request).then(() => view);
+    async append(section, forceRight = false) {
+      const view = this.createView(section, forceRight);
+      this.views.append(view);
+      view.onDisplayed = this.afterDisplayed.bind(this);
+      view.onResize = this.afterResized.bind(this);
+      view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
+        this.updateAxis(axis);
       });
+      view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
+        this.updateWritingMode(mode);
+      });
+      return view.display(this.request).then(() => view);
     }
-    prepend(section_1) {
-      return __awaiter(this, arguments, void 0, function* (section, forceRight = false) {
-        const view = this.createView(section, forceRight);
-        view.on(constants_1.EVENTS.VIEWS.RESIZED, bounds => {
-          this.counter(bounds);
-        });
-        this.views.prepend(view);
-        view.onDisplayed = this.afterDisplayed.bind(this);
-        view.onResize = this.afterResized.bind(this);
-        view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
-          this.updateAxis(axis);
-        });
-        view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
-          this.updateWritingMode(mode);
-        });
-        return view.display(this.request).then(() => view);
+    async prepend(section, forceRight = false) {
+      const view = this.createView(section, forceRight);
+      view.on(constants_1.EVENTS.VIEWS.RESIZED, bounds => {
+        this.counter(bounds);
       });
+      this.views.prepend(view);
+      view.onDisplayed = this.afterDisplayed.bind(this);
+      view.onResize = this.afterResized.bind(this);
+      view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
+        this.updateAxis(axis);
+      });
+      view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
+        this.updateWritingMode(mode);
+      });
+      return view.display(this.request).then(() => view);
     }
     counter(bounds) {
       if (this.settings.axis === 'vertical') {
@@ -10011,10 +9900,36 @@ function require_default() {
       }
       if (this.isPaginated && this.settings.axis === 'horizontal' && (!dir || dir === 'ltr')) {
         this.scrollLeft = this.container.scrollLeft;
+        // Container scrollWidth expansion is now handled in afterDisplayed()
+        // This ensures totalPages calculations are correct from the start
+        // Calculate scroll position for next page
         left = this.container.scrollLeft + this.container.offsetWidth + this.layout.delta;
+        console.debug('[DefaultViewManager] next() scroll calculation:', 'scrollLeft=', this.container.scrollLeft, 'offsetWidth=', this.container.offsetWidth, 'delta=', this.layout.delta, 'calculated left=', left, 'scrollWidth=', this.container.scrollWidth);
         if (left <= this.container.scrollWidth) {
+          console.debug('[DefaultViewManager] scrolling by delta:', this.layout.delta);
           this.scrollBy(this.layout.delta, 0, true);
+          // Debug: Check scroll position after scrollBy
+          console.debug('[DefaultViewManager] after scrollBy - scrollLeft:', this.container.scrollLeft, 'container position should show content now');
+          // Debug: Check actual DOM state
+          const currentView = this.views.last();
+          if (currentView && currentView.element) {
+            const element = currentView.element;
+            console.debug('[DefaultViewManager] DOM state check:', 'container.scrollLeft=', this.container.scrollLeft, 'container.scrollWidth=', this.container.scrollWidth, 'element.style.left=', element.style.left, 'element.style.width=', element.style.width, 'element.offsetLeft=', element.offsetLeft, 'element.offsetWidth=', element.offsetWidth);
+          }
+          // Fix: Prevent immediate scroll resets by temporarily storing expected position
+          this.targetScrollLeft = this.container.scrollLeft;
+          // Add a timeout to check if scroll position gets reset
+          setTimeout(() => {
+            console.debug('[DefaultViewManager] scroll position check after 100ms:', 'expected=', this.targetScrollLeft, 'actual=', this.container.scrollLeft);
+            if (this.container.scrollLeft !== this.targetScrollLeft) {
+              console.warn('[DefaultViewManager] SCROLL RESET DETECTED!', 'Something reset scrollLeft from', this.targetScrollLeft, 'to', this.container.scrollLeft);
+            }
+          }, 100);
+          setTimeout(() => {
+            console.debug('[DefaultViewManager] scroll position check after 500ms:', 'expected=', this.targetScrollLeft, 'actual=', this.container.scrollLeft);
+          }, 500);
         } else {
+          console.debug('[DefaultViewManager] reached end of chapter, looking for next section');
           const lastView = this.views.last();
           if (lastView && lastView.section) {
             next = lastView.section.next();
@@ -10192,6 +10107,8 @@ function require_default() {
         this.scrollTo(0, 0, true);
         this.views.clear();
       }
+      // Note: Don't remove phantom element here - it should persist across chapters
+      // The phantom element maintains the expanded scrollWidth for the container
     }
     currentLocation() {
       this.updateLayout();
@@ -10222,6 +10139,15 @@ function require_default() {
         const position = view.position();
         const width = view.width();
         const height = view.height();
+        // Fix: Use actual content width for total page calculation, but container width for viewport calculation
+        let actualWidth = width;
+        if (view.contents && view.contents.textWidth) {
+          const contentWidth = view.contents.textWidth();
+          if (contentWidth > width) {
+            actualWidth = contentWidth;
+            console.debug('[DefaultViewManager] paginatedLocation using content width:', contentWidth, 'instead of view width:', width);
+          }
+        }
         let startPos;
         let endPos;
         let stopPos;
@@ -10234,8 +10160,9 @@ function require_default() {
         } else {
           startPos = offset + container.left - position.left + used;
           endPos = startPos + pageWidth - used;
-          totalPages = this.layout.count(width, pageWidth).pages;
-          stopPos = pageWidth;
+          // Use actual content width for total page count, but container width for viewport pages
+          totalPages = this.layout.count(actualWidth, pageWidth).pages;
+          stopPos = pageWidth; // Use container width, not content width, for page boundaries
         }
         let currPage = Math.ceil(startPos / stopPos);
         let pages = [];
@@ -10301,7 +10228,15 @@ function require_default() {
           throw new Error('Mapping is not defined');
         }
         const mapping = this.mapping.page(view.contents, view.section.cfiBase, start, end);
-        const totalPages = this.layout.count(width).pages;
+        // Fix: Use actual content width for pagination calculation if available
+        let actualWidth = width;
+        if (view.contents && view.contents.textWidth) {
+          const contentWidth = view.contents.textWidth();
+          if (contentWidth > width) {
+            actualWidth = contentWidth;
+          }
+        }
+        const totalPages = this.layout.count(actualWidth).pages;
         let startPage = 0;
         let endPage = 0;
         const pages = [];
@@ -10313,15 +10248,21 @@ function require_default() {
             startPage = 0;
             endPage = endPage + 1;
           }
+          // Clamp pages to not exceed totalPages (prevent white pages)
+          startPage = Math.max(0, Math.min(startPage, totalPages - 1));
+          endPage = Math.max(0, Math.min(endPage, totalPages - 1));
           // Reverse page counts for rtl
           if (this.settings.direction === 'rtl') {
             const tempStartPage = startPage;
             startPage = totalPages - endPage;
             endPage = totalPages - tempStartPage;
           }
-          for (let i = startPage + 1; i <= endPage; i++) {
+          for (let i = startPage + 1; i <= endPage + 1; i++) {
             const pg = i;
-            pages.push(pg);
+            if (pg <= totalPages) {
+              // Additional safety check
+              pages.push(pg);
+            }
           }
         }
         // Always return an object to satisfy the type annotation
@@ -10375,6 +10316,12 @@ function require_default() {
       this.scrolled = true;
     }
     scrollTo(x, y, silent) {
+      console.debug('[DefaultViewManager] scrollTo called:', 'x=', x, 'y=', y, 'silent=', silent, 'current scrollLeft=', this.container.scrollLeft);
+      // Add stack trace to identify what's calling scrollTo(0,0)
+      if (x === 0 && y === 0 && this.container.scrollLeft > 0) {
+        console.warn('[DefaultViewManager] WARNING: scrollTo(0,0) called while scrollLeft >0, this will reset scroll position!');
+        console.trace('Call stack:');
+      }
       if (silent) {
         this.ignore = true;
       }
@@ -10385,6 +10332,7 @@ function require_default() {
         window.scrollTo(x, y);
       }
       this.scrolled = true;
+      console.debug('[DefaultViewManager] after scrollTo - new scrollLeft:', this.container.scrollLeft);
     }
     onScroll() {
       let scrollTop;
@@ -10439,7 +10387,7 @@ function require_default() {
       let containerRect;
       try {
         containerRect = this.container.getBoundingClientRect();
-      } catch (_a) {
+      } catch {
         containerRect = undefined;
       }
       const layoutWidth = containerRect && containerRect.width ? containerRect.width : this._stageSize.width;
@@ -10474,12 +10422,11 @@ function require_default() {
       this.writingMode = mode;
     }
     updateAxis(axis, forceUpdate) {
-      var _a;
       if (!forceUpdate && axis === this.settings.axis) {
         return;
       }
       this.settings.axis = axis;
-      (_a = this.stage) === null || _a === void 0 ? void 0 : _a.axis(axis);
+      this.stage?.axis(axis);
       this.viewSettings.axis = axis;
       if (this.mapping) {
         this.mapping = new mapping_1.default(
@@ -10495,7 +10442,6 @@ function require_default() {
       }
     }
     updateFlow(flow, defaultScrolledOverflow = 'auto') {
-      var _a;
       const isPaginated = flow === 'paginated' || flow === 'auto';
       this.isPaginated = isPaginated;
       if (flow === 'scrolled-doc' || flow === 'scrolled-continuous' || flow === 'scrolled') {
@@ -10509,7 +10455,7 @@ function require_default() {
       } else {
         this.overflow = this.settings.overflow;
       }
-      (_a = this.stage) === null || _a === void 0 ? void 0 : _a.overflow(this.overflow);
+      this.stage?.overflow(this.overflow);
       this.updateLayout();
     }
     getContents() {
@@ -10526,9 +10472,8 @@ function require_default() {
       return contents;
     }
     direction(dir = 'ltr') {
-      var _a;
       this.settings.direction = dir;
-      (_a = this.stage) === null || _a === void 0 ? void 0 : _a.direction(dir);
+      this.stage?.direction(dir);
       this.viewSettings.direction = dir;
       this.updateLayout();
     }
@@ -10546,33 +10491,6 @@ var hasRequiredRendition;
 function requireRendition() {
   if (hasRequiredRendition) return rendition;
   hasRequiredRendition = 1;
-  var __awaiter = rendition && rendition.__awaiter || function (thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function (resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
   var __importDefault = rendition && rendition.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
@@ -10620,11 +10538,12 @@ function requireRendition() {
       this.location = null;
       this.book = book;
       this.q = new queue_1.default(this);
-      this.settings = Object.assign({
+      this.settings = {
         width: undefined,
         height: undefined,
         ignoreClass: '',
         view: 'iframe',
+        // or use a proper View instance if available
         flow: undefined,
         layout: undefined,
         spread: undefined,
@@ -10635,8 +10554,9 @@ function requireRendition() {
         snap: false,
         defaultDirection: 'ltr',
         allowScriptedContent: false,
-        allowPopups: false
-      }, options);
+        allowPopups: false,
+        ...options
+      };
       if (typeof this.settings.manager === 'object') {
         this.manager = this.settings.manager;
       } else {
@@ -10654,12 +10574,13 @@ function requireRendition() {
           view: this.settings.view,
           queue: this.q,
           request: this.book.load.bind(this.book),
-          settings: Object.assign(Object.assign({}, this.settings), {
+          settings: {
+            ...this.settings,
             layout: layoutInstance,
             width,
             height,
             afterScrolledTimeout: 10
-          })
+          }
         });
       }
       this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, (...args) => {
@@ -10759,59 +10680,57 @@ function requireRendition() {
     /**
      * Start the rendering
      */
-    start() {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (!this.book.packaging || !this.book.packaging.metadata) {
-          console.error('[Rendition] start failed: book.packaging or metadata is undefined');
-          console.error(JSON.stringify(this.book.ready));
-          return;
+    async start() {
+      if (!this.book.packaging || !this.book.packaging.metadata) {
+        console.error('[Rendition] start failed: book.packaging or metadata is undefined');
+        console.error(JSON.stringify(this.book.ready));
+        return;
+      }
+      if (!this.settings.layout && (this.book.packaging.metadata.layout === 'pre-paginated' || this.book.displayOptions.fixedLayout === 'true')) {
+        this.settings.layout = 'pre-paginated';
+      }
+      switch (this.book.packaging.metadata.spread) {
+        case 'none':
+          this.settings.spread = 'none';
+          break;
+        case 'both':
+          this.settings.spread = 'auto';
+          break;
+      }
+      if (!this.manager) {
+        this.ViewManager = this.settings.manager;
+        this.View = this.settings.view;
+        if (typeof this.ViewManager === 'function') {
+          this.manager = new this.ViewManager({
+            view: this.View,
+            queue: this.q,
+            request: this.book.load.bind(this.book),
+            settings: this.settings
+          });
         }
-        if (!this.settings.layout && (this.book.packaging.metadata.layout === 'pre-paginated' || this.book.displayOptions.fixedLayout === 'true')) {
-          this.settings.layout = 'pre-paginated';
-        }
-        switch (this.book.packaging.metadata.spread) {
-          case 'none':
-            this.settings.spread = 'none';
-            break;
-          case 'both':
-            this.settings.spread = 'auto';
-            break;
-        }
-        if (!this.manager) {
-          this.ViewManager = this.settings.manager;
-          this.View = this.settings.view;
-          if (typeof this.ViewManager === 'function') {
-            this.manager = new this.ViewManager({
-              view: this.View,
-              queue: this.q,
-              request: this.book.load.bind(this.book),
-              settings: this.settings
-            });
-          }
-        }
-        this.direction(this.book.packaging.metadata.direction || this.settings.defaultDirection);
-        // Parse metadata to get layout props
-        this.settings.globalLayoutProperties = this.determineLayoutProperties(this.book.packaging.metadata);
-        this.flow(this.settings.globalLayoutProperties.flow);
-        this.layout(this.settings.globalLayoutProperties);
-        // Listen for displayed views
-        this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
-        this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
-        // Listen for resizing
-        this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
-        // Listen for rotation
-        this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
-        // Listen for scroll changes
-        this.manager.on(constants_1.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
-        /**
-         * Emit that rendering has started
-         * @event started
-         * @memberof Rendition
-         */
-        this.emit(constants_1.EVENTS.RENDITION.STARTED);
-        // Start processing queue
-        this.starting.resolve();
-      });
+      }
+      this.direction(this.book.packaging.metadata.direction || this.settings.defaultDirection);
+      // Parse metadata to get layout props
+      this.settings.globalLayoutProperties = this.determineLayoutProperties(this.book.packaging.metadata);
+      this.flow(this.settings.globalLayoutProperties.flow);
+      this.layout(this.settings.globalLayoutProperties);
+      // Listen for displayed views
+      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
+      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
+      // Listen for resizing
+      this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
+      // Listen for rotation
+      this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
+      // Listen for scroll changes
+      this.manager.on(constants_1.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
+      /**
+       * Emit that rendering has started
+       * @event started
+       * @memberof Rendition
+       */
+      this.emit(constants_1.EVENTS.RENDITION.STARTED);
+      // Start processing queue
+      this.starting.resolve();
     }
     /**
      * Call to attach the container to an element in the dom
@@ -11107,24 +11026,22 @@ function requireRendition() {
     reportLocation() {
       return this.q.enqueue(() => {
         requestAnimationFrame(() => {
+          const ts = new Date().toISOString();
           const pageLocations = this.manager.currentLocation();
           if (pageLocations && Array.isArray(pageLocations) && pageLocations.length > 0) {
             // Map PageLocation[] to LocationPoint[]
-            const locationPoints = pageLocations.map(pl => {
-              var _a, _b, _c;
-              return {
-                index: pl.index,
-                href: pl.href,
-                cfi: (_b = (_a = pl.mapping) === null || _a === void 0 ? void 0 : _a.start) !== null && _b !== void 0 ? _b : '',
-                displayed: {
-                  page: pl.pages[0] || 1,
-                  total: (_c = pl.totalPages) !== null && _c !== void 0 ? _c : 0
-                },
-                pages: pl.pages,
-                totalPages: pl.totalPages,
-                mapping: pl.mapping
-              };
-            });
+            const locationPoints = pageLocations.map(pl => ({
+              index: pl.index,
+              href: pl.href,
+              cfi: pl.mapping?.start ?? '',
+              displayed: {
+                page: pl.pages[0] || 1,
+                total: pl.totalPages ?? 0
+              },
+              pages: pl.pages,
+              totalPages: pl.totalPages,
+              mapping: pl.mapping
+            }));
             const located = this.located(locationPoints);
             if (!located) {
               return;
@@ -11135,7 +11052,25 @@ function requireRendition() {
              * @type {displayedLocation}
              * @memberof Rendition
              */
-            this.emit(constants_1.EVENTS.RENDITION.RELOCATED, this.location);
+            try {
+              // push to global trace if present
+              try {
+                const g = globalThis;
+                if (g && g.__navTrace) {
+                  g.__navTrace.push({
+                    ts: ts,
+                    event: 'relocated',
+                    details: this.location
+                  });
+                }
+              } catch {
+                // ignore
+              }
+              this.emit(constants_1.EVENTS.RENDITION.RELOCATED, this.location);
+              console.debug('[Rendition] emitted relocated', 'ts=', ts, JSON.stringify(this.location));
+            } catch {
+              // emit may throw in tests; ignore
+            }
           }
         });
       });
@@ -11152,7 +11087,6 @@ function requireRendition() {
      * @returns {displayedLocation}
      */
     located(location) {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
       if (!location.length) {
         return null;
       }
@@ -11162,24 +11096,24 @@ function requireRendition() {
         start: {
           index: start.index,
           href: start.href,
-          cfi: (_b = (_a = start.mapping) === null || _a === void 0 ? void 0 : _a.start) !== null && _b !== void 0 ? _b : '',
+          cfi: start.mapping?.start ?? '',
           displayed: {
-            page: (_d = (_c = start.pages) === null || _c === void 0 ? void 0 : _c[0]) !== null && _d !== void 0 ? _d : 1,
-            total: (_e = start.totalPages) !== null && _e !== void 0 ? _e : 0
+            page: start.pages?.[0] ?? 1,
+            total: start.totalPages ?? 0
           }
         },
         end: {
           index: end.index,
           href: end.href,
-          cfi: (_g = (_f = end.mapping) === null || _f === void 0 ? void 0 : _f.end) !== null && _g !== void 0 ? _g : '',
+          cfi: end.mapping?.end ?? '',
           displayed: {
-            page: (_k = (_h = end.pages) === null || _h === void 0 ? void 0 : _h[((_j = end.pages) === null || _j === void 0 ? void 0 : _j.length) - 1]) !== null && _k !== void 0 ? _k : 1,
-            total: (_l = end.totalPages) !== null && _l !== void 0 ? _l : 0
+            page: end.pages?.[end.pages?.length - 1] ?? 1,
+            total: end.totalPages ?? 0
           }
         }
       };
-      const locationStart = ((_m = start.mapping) === null || _m === void 0 ? void 0 : _m.start) ? this.book.locations.locationFromCfi(start.mapping.start) : null;
-      const locationEnd = ((_o = end.mapping) === null || _o === void 0 ? void 0 : _o.end) ? this.book.locations.locationFromCfi(end.mapping.end) : null;
+      const locationStart = start.mapping?.start ? this.book.locations.locationFromCfi(start.mapping.start) : null;
+      const locationEnd = end.mapping?.end ? this.book.locations.locationFromCfi(end.mapping.end) : null;
       if (locationStart !== null) {
         located.start.location = locationStart;
         located.start.percentage = this.book.locations.percentageFromLocation(locationStart);
@@ -11188,18 +11122,18 @@ function requireRendition() {
         located.end.location = locationEnd;
         located.end.percentage = this.book.locations.percentageFromLocation(locationEnd);
       }
-      const pageStart = ((_p = start.mapping) === null || _p === void 0 ? void 0 : _p.start) ? this.book.pageList.pageFromCfi(start.mapping.start) : -1;
-      const pageEnd = ((_q = end.mapping) === null || _q === void 0 ? void 0 : _q.end) ? this.book.pageList.pageFromCfi(end.mapping.end) : -1;
+      const pageStart = start.mapping?.start ? this.book.pageList.pageFromCfi(start.mapping.start) : -1;
+      const pageEnd = end.mapping?.end ? this.book.pageList.pageFromCfi(end.mapping.end) : -1;
       if (pageStart !== -1) {
         located.start.page = pageStart;
       }
       if (pageEnd !== -1) {
         located.end.page = pageEnd;
       }
-      if (end.index === ((_r = this.book.spine.last()) === null || _r === void 0 ? void 0 : _r.index) && located.end.displayed.page >= located.end.displayed.total) {
+      if (end.index === this.book.spine.last()?.index && located.end.displayed.page >= located.end.displayed.total) {
         located.atEnd = true;
       }
-      if (start.index === ((_s = this.book.spine.first()) === null || _s === void 0 ? void 0 : _s.index) && located.start.displayed.page === 1) {
+      if (start.index === this.book.spine.first()?.index && located.start.displayed.page === 1) {
         located.atStart = true;
       }
       return located;
@@ -11208,9 +11142,8 @@ function requireRendition() {
      * Remove and Clean Up the Rendition
      */
     destroy() {
-      var _a;
       // @todo Clear the queue
-      (_a = this.manager) === null || _a === void 0 ? void 0 : _a.destroy();
+      this.manager?.destroy();
       // @ts-expect-error this is only at destroy time
       this.book = undefined;
     }
@@ -13596,33 +13529,6 @@ var hasRequiredArchive;
 function requireArchive() {
   if (hasRequiredArchive) return archive;
   hasRequiredArchive = 1;
-  var __awaiter = archive && archive.__awaiter || function (thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function (resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
   var __importDefault = archive && archive.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
@@ -13664,51 +13570,45 @@ function requireArchive() {
     /**
      * Open an archive
      */
-    open(input, isBase64) {
-      return __awaiter(this, void 0, void 0, function* () {
-        return this.getZip().loadAsync(input, {
-          base64: isBase64
-        }).then(zip => {
-          return zip;
-        }).catch(err => {
-          console.error('[Archive] open error', err);
-          throw err;
-        });
+    async open(input, isBase64) {
+      return this.getZip().loadAsync(input, {
+        base64: isBase64
+      }).then(zip => {
+        return zip;
+      }).catch(err => {
+        console.error('[Archive] open error', err);
+        throw err;
       });
     }
     /**
      * Load and Open an archive
      */
-    openUrl(zipUrl, isBase64) {
-      return __awaiter(this, void 0, void 0, function* () {
-        return (0, request_1.default)(zipUrl, 'binary', false, {}).then(data => this.getZip().loadAsync(data, {
-          base64: isBase64
-        }));
-      });
+    async openUrl(zipUrl, isBase64) {
+      return (0, request_1.default)(zipUrl, 'binary', false, {}).then(data => this.getZip().loadAsync(data, {
+        base64: isBase64
+      }));
     }
-    request(url, type) {
-      return __awaiter(this, void 0, void 0, function* () {
-        let response;
-        if (type === 'blob') {
-          response = this.getBlob(url, undefined);
-        } else {
-          response = this.getText(url);
-        }
-        if (!response) {
-          console.error('[Archive] request: file not found', url);
-          return Promise.reject({
-            message: 'File not found in the epub: ' + url,
-            stack: new Error().stack
-          });
-        }
-        try {
-          const r = yield response;
-          return this.handleResponse(r, type);
-        } catch (err) {
-          console.error('[Archive] request error', err);
-          throw err;
-        }
-      });
+    async request(url, type) {
+      let response;
+      if (type === 'blob') {
+        response = this.getBlob(url, undefined);
+      } else {
+        response = this.getText(url);
+      }
+      if (!response) {
+        console.error('[Archive] request: file not found', url);
+        return Promise.reject({
+          message: 'File not found in the epub: ' + url,
+          stack: new Error().stack
+        });
+      }
+      try {
+        const r = await response;
+        return this.handleResponse(r, type);
+      } catch (err) {
+        console.error('[Archive] request error', err);
+        throw err;
+      }
     }
     /**
      * Handle the response from request
@@ -13794,37 +13694,35 @@ function requireArchive() {
     /**
      * Create a Url from an unarchived item
      */
-    createUrl(url, options) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const _URL = window.URL || window.webkitURL;
-        const useBase64 = options && options.base64;
-        if (url in this.urlCache) {
-          return this.urlCache[url];
-        }
-        if (useBase64) {
-          const response = this.getBase64(url);
-          if (!response) {
-            return Promise.reject({
-              message: 'File not found in the epub: ' + url,
-              stack: new Error().stack
-            });
-          }
-          const tempUrl = yield response;
-          this.urlCache[url] = tempUrl;
-          return tempUrl;
-        }
-        const response = this.getBlob(url);
+    async createUrl(url, options) {
+      const _URL = window.URL || window.webkitURL;
+      const useBase64 = options && options.base64;
+      if (url in this.urlCache) {
+        return this.urlCache[url];
+      }
+      if (useBase64) {
+        const response = this.getBase64(url);
         if (!response) {
           return Promise.reject({
             message: 'File not found in the epub: ' + url,
             stack: new Error().stack
           });
         }
-        const blob = yield response;
-        const tempUrl = _URL.createObjectURL(blob);
+        const tempUrl = await response;
         this.urlCache[url] = tempUrl;
         return tempUrl;
-      });
+      }
+      const response = this.getBlob(url);
+      if (!response) {
+        return Promise.reject({
+          message: 'File not found in the epub: ' + url,
+          stack: new Error().stack
+        });
+      }
+      const blob = await response;
+      const tempUrl = _URL.createObjectURL(blob);
+      this.urlCache[url] = tempUrl;
+      return tempUrl;
     }
     /**
      * Revoke Temp Url for a archive item
@@ -16679,33 +16577,6 @@ var hasRequiredStore;
 function requireStore() {
   if (hasRequiredStore) return store;
   hasRequiredStore = 1;
-  var __awaiter = store && store.__awaiter || function (thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function (resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
   var __importDefault = store && store.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
@@ -16796,41 +16667,37 @@ function requireStore() {
      * @param  {boolean} [force] force resaving resources
      * @return {Promise<Array<unknown>>} array of stored objects (typically ArrayBuffers for binary resources)
      */
-    add(resources_1) {
-      return __awaiter(this, arguments, void 0, function* (resources, force = false) {
-        const mapped = resources.resources.map(item => {
-          const {
-            href
-          } = item;
-          const url = this.resolver(href);
-          const encodedUrl = window.encodeURIComponent(url);
-          return this.storage.getItem(encodedUrl).then(item => {
-            if (!item || force) {
-              return this.requester(url, 'binary').then(data => {
-                return this.storage.setItem(encodedUrl, data);
-              });
-            } else {
-              return item;
-            }
-          });
+    async add(resources, force = false) {
+      const mapped = resources.resources.map(item => {
+        const {
+          href
+        } = item;
+        const url = this.resolver(href);
+        const encodedUrl = window.encodeURIComponent(url);
+        return this.storage.getItem(encodedUrl).then(item => {
+          if (!item || force) {
+            return this.requester(url, 'binary').then(data => {
+              return this.storage.setItem(encodedUrl, data);
+            });
+          } else {
+            return item;
+          }
         });
-        return Promise.all(mapped);
       });
+      return Promise.all(mapped);
     }
     /**
      * Put binary data from a url to storage
      */
-    put(url, withCredentials, headers) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const encodedUrl = window.encodeURIComponent(url);
-        return this.storage.getItem(encodedUrl).then(result => {
-          if (!result) {
-            return this.requester(url, 'binary', withCredentials !== null && withCredentials !== void 0 ? withCredentials : false, headers !== null && headers !== void 0 ? headers : {}).then(data => {
-              return this.storage.setItem(encodedUrl, data);
-            });
-          }
-          return result;
-        });
+    async put(url, withCredentials, headers) {
+      const encodedUrl = window.encodeURIComponent(url);
+      return this.storage.getItem(encodedUrl).then(result => {
+        if (!result) {
+          return this.requester(url, 'binary', withCredentials ?? false, headers ?? {}).then(data => {
+            return this.storage.setItem(encodedUrl, data);
+          });
+        }
+        return result;
       });
     }
     /**
@@ -16841,51 +16708,47 @@ function requireStore() {
      * @param  {object} [headers]
      * @return {Promise<Blob | string | JSON | Document | XMLDocument>}
      */
-    request(url_1, type_1) {
-      return __awaiter(this, arguments, void 0, function* (url, type, withCredentials = false, headers = {}) {
-        if (this.online) {
-          // From network
-          return this.requester(url, type, withCredentials, headers).then(data => {
-            // save to store if not present
-            this.put(url, withCredentials, headers);
-            return data;
-          });
-        } else {
-          // From store
-          return this.retrieve(url, type);
-        }
-      });
+    async request(url, type, withCredentials = false, headers = {}) {
+      if (this.online) {
+        // From network
+        return this.requester(url, type, withCredentials, headers).then(data => {
+          // save to store if not present
+          this.put(url, withCredentials, headers);
+          return data;
+        });
+      } else {
+        // From store
+        return this.retrieve(url, type);
+      }
     }
     /**
      * Request a url from storage
      */
-    retrieve(url, type) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const path = new path_1.default(url);
-        // If type isn't set, determine it from the file extension
-        if (!type) {
-          type = path.extension;
-        }
-        let response;
-        if (type == 'blob') {
-          response = this.getBlob(url);
+    async retrieve(url, type) {
+      const path = new path_1.default(url);
+      // If type isn't set, determine it from the file extension
+      if (!type) {
+        type = path.extension;
+      }
+      let response;
+      if (type == 'blob') {
+        response = this.getBlob(url);
+      } else {
+        response = this.getText(url);
+      }
+      return response.then(r => {
+        const deferred = new core_1.defer();
+        let result;
+        if (r) {
+          result = this.handleResponse(r, type);
+          deferred.resolve(result);
         } else {
-          response = this.getText(url);
+          deferred.reject({
+            message: 'File not found in storage: ' + url,
+            stack: new Error().stack
+          });
         }
-        return response.then(r => {
-          const deferred = new core_1.defer();
-          let result;
-          if (r) {
-            result = this.handleResponse(r, type);
-            deferred.resolve(result);
-          } else {
-            deferred.reject({
-              message: 'File not found in storage: ' + url,
-              stack: new Error().stack
-            });
-          }
-          return deferred.promise;
-        });
+        return deferred.promise;
       });
     }
     /**
@@ -16909,15 +16772,13 @@ function requireStore() {
     /**
      * Get a Blob from Storage by Url
      */
-    getBlob(url, mimeType) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const encodedUrl = window.encodeURIComponent(url);
-        return this.storage.getItem(encodedUrl).then(function (uint8array) {
-          if (!uint8array) return;
-          mimeType = mimeType || mime_1.default.lookup(url);
-          return new Blob([uint8array], {
-            type: mimeType
-          });
+    async getBlob(url, mimeType) {
+      const encodedUrl = window.encodeURIComponent(url);
+      return this.storage.getItem(encodedUrl).then(function (uint8array) {
+        if (!uint8array) return;
+        mimeType = mimeType || mime_1.default.lookup(url);
+        return new Blob([uint8array], {
+          type: mimeType
         });
       });
     }
@@ -17065,10 +16926,9 @@ function requireDisplayoptions() {
       }
       const options = displayOptionsNode.querySelectorAll('option');
       options.forEach(el => {
-        var _a;
         let value = '';
         if (el.childNodes.length) {
-          value = (_a = el.childNodes[0].nodeValue) !== null && _a !== void 0 ? _a : '';
+          value = el.childNodes[0].nodeValue ?? '';
         }
         const name = el.getAttribute('name');
         switch (name) {
@@ -17103,33 +16963,6 @@ var hasRequiredBook;
 function requireBook() {
   if (hasRequiredBook) return book;
   hasRequiredBook = 1;
-  var __awaiter = book && book.__awaiter || function (thisArg, _arguments, P, generator) {
-    function adopt(value) {
-      return value instanceof P ? value : new P(function (resolve) {
-        resolve(value);
-      });
-    }
-    return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function rejected(value) {
-        try {
-          step(generator["throw"](value));
-        } catch (e) {
-          reject(e);
-        }
-      }
-      function step(result) {
-        result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-      }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
   var __importDefault = book && book.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
@@ -17340,125 +17173,114 @@ function requireBook() {
      * @returns {Promise} of when the book has been loaded
      * @example book.open("/path/to/book.epub")
      */
-    open(input, what) {
-      return __awaiter(this, void 0, void 0, function* () {
-        let opening;
-        const type = what || this.determineType(input);
-        // Convert Blob to ArrayBuffer if needed
-        if (input instanceof Blob) {
-          return input.arrayBuffer().then(buffer => this.open(buffer, what));
-        }
-        if (type === INPUT_TYPE.BINARY) {
-          this.archived = true;
-          this.url = new url_1.default('/', '');
-          opening = this.openEpub(input);
-        } else if (type === INPUT_TYPE.BASE64) {
-          this.archived = true;
-          this.url = new url_1.default('/', '');
-          opening = this.openEpub(input, type);
-        } else if (type === INPUT_TYPE.EPUB) {
-          this.archived = true;
-          this.url = new url_1.default('/', '');
-          if (typeof input === 'string') {
-            opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(data => {
-              if (data instanceof ArrayBuffer) {
-                return this.openEpub(data);
-              }
-              throw new Error('Expected ArrayBuffer for openEpub');
-            });
-          } else {
-            throw new Error('Input must be a string for request');
-          }
-        } else if (type == INPUT_TYPE.OPF) {
-          this.url = new url_1.default(input);
-          if (this.settings.keepAbsoluteUrl) {
-            opening = this.openPackaging(input);
-          } else {
-            opening = this.openPackaging(this.url.Path.toString());
-          }
-        } else if (type == INPUT_TYPE.MANIFEST) {
-          this.url = new url_1.default(input);
-          if (this.settings.keepAbsoluteUrl) {
-            opening = this.openManifest(input);
-          } else {
-            opening = this.openManifest(this.url.Path.toString());
-          }
+    async open(input, what) {
+      let opening;
+      const type = what || this.determineType(input);
+      // Convert Blob to ArrayBuffer if needed
+      if (input instanceof Blob) {
+        return input.arrayBuffer().then(buffer => this.open(buffer, what));
+      }
+      if (type === INPUT_TYPE.BINARY) {
+        this.archived = true;
+        this.url = new url_1.default('/', '');
+        opening = this.openEpub(input);
+      } else if (type === INPUT_TYPE.BASE64) {
+        this.archived = true;
+        this.url = new url_1.default('/', '');
+        opening = this.openEpub(input, type);
+      } else if (type === INPUT_TYPE.EPUB) {
+        this.archived = true;
+        this.url = new url_1.default('/', '');
+        if (typeof input === 'string') {
+          opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(data => {
+            if (data instanceof ArrayBuffer) {
+              return this.openEpub(data);
+            }
+            throw new Error('Expected ArrayBuffer for openEpub');
+          });
         } else {
-          this.url = new url_1.default(input);
-          opening = this.openContainer(CONTAINER_PATH).then(packagePath => this.openPackaging(packagePath));
+          throw new Error('Input must be a string for request');
         }
-        return opening;
-      });
+      } else if (type == INPUT_TYPE.OPF) {
+        this.url = new url_1.default(input);
+        if (this.settings.keepAbsoluteUrl) {
+          opening = this.openPackaging(input);
+        } else {
+          opening = this.openPackaging(this.url.Path.toString());
+        }
+      } else if (type == INPUT_TYPE.MANIFEST) {
+        this.url = new url_1.default(input);
+        if (this.settings.keepAbsoluteUrl) {
+          opening = this.openManifest(input);
+        } else {
+          opening = this.openManifest(this.url.Path.toString());
+        }
+      } else {
+        this.url = new url_1.default(input);
+        opening = this.openContainer(CONTAINER_PATH).then(packagePath => this.openPackaging(packagePath));
+      }
+      return opening;
     }
     /**
      * Open an archived epub
      */
-    openEpub(data, encoding) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const isBase64 = (encoding || this.settings.encoding) === 'base64';
-        return this.unarchive(data, isBase64).then(() => {
-          return this.openContainer(CONTAINER_PATH);
-        }).then(packagePath => {
-          return this.openPackaging(packagePath);
-        });
+    async openEpub(data, encoding) {
+      const isBase64 = (encoding || this.settings.encoding) === 'base64';
+      return this.unarchive(data, isBase64).then(() => {
+        return this.openContainer(CONTAINER_PATH);
+      }).then(packagePath => {
+        return this.openPackaging(packagePath);
       });
     }
     /**
      * Open the epub container
      */
-    openContainer(url) {
-      return __awaiter(this, void 0, void 0, function* () {
-        return this.load(url).then(xml => {
-          this.container = new container_1.default(xml);
-          const packagePath = this.container.packagePath;
-          const resolvedPath = this.resolve(packagePath !== null && packagePath !== void 0 ? packagePath : '');
-          if (!resolvedPath) throw new Error('Cannot resolve packagePath');
-          return resolvedPath;
-        }).catch(err => {
-          console.error('DEBUG: Error in openContainer:', err);
-          throw err;
-        });
+    async openContainer(url) {
+      return this.load(url).then(xml => {
+        this.container = new container_1.default(xml);
+        const packagePath = this.container.packagePath;
+        const resolvedPath = this.resolve(packagePath ?? '');
+        if (!resolvedPath) throw new Error('Cannot resolve packagePath');
+        return resolvedPath;
+      }).catch(err => {
+        console.error('DEBUG: Error in openContainer:', err);
+        throw err;
       });
     }
     /**
      * Open the Open Packaging Format Xml
      */
-    openPackaging(url) {
-      return __awaiter(this, void 0, void 0, function* () {
-        this.path = new path_1.default(url);
-        return this.load(url).then(xml => {
-          this.packaging = new packaging_1.default(xml);
-          return this.unpack(this.packaging);
-        });
+    async openPackaging(url) {
+      this.path = new path_1.default(url);
+      return this.load(url).then(xml => {
+        this.packaging = new packaging_1.default(xml);
+        return this.unpack(this.packaging);
       });
     }
     /**
      * Open the manifest JSON
      */
-    openManifest(url) {
-      return __awaiter(this, void 0, void 0, function* () {
-        this.path = new path_1.default(url);
-        return this.load(url).then(json => {
-          console.log('[Book] opening manifest clears packaging', url);
-          this.packaging = new packaging_1.default();
-          const manifestObj = JSON.parse(json);
-          this.packaging.load(manifestObj);
-          return this.unpack(this.packaging);
-        });
+    async openManifest(url) {
+      this.path = new path_1.default(url);
+      return this.load(url).then(json => {
+        console.log('[Book] opening manifest clears packaging', url);
+        this.packaging = new packaging_1.default();
+        const manifestObj = JSON.parse(json);
+        this.packaging.load(manifestObj);
+        return this.unpack(this.packaging);
       });
     }
     /**
      * Load a resource from the Book
      */
     load(path) {
-      var _a;
       const resolved = this.resolve(path);
       if (resolved === undefined) {
         throw new Error('Cannot resolve path: ' + path);
       }
       if (this.archived) {
         // Determine type based on file extension
-        const extension = (_a = path.split('.').pop()) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+        const extension = path.split('.').pop()?.toLowerCase();
         let type;
         if (extension === 'xml' || path.includes('container.xml') || path.includes('.opf')) {
           type = 'xml';
@@ -17506,7 +17328,6 @@ function requireBook() {
      * Get a canonical link to a path
      */
     canonical(path) {
-      var _a;
       let url = path;
       if (!path) {
         return '';
@@ -17514,7 +17335,7 @@ function requireBook() {
       if (this.settings.canonical) {
         url = this.settings.canonical(path);
       } else {
-        url = (_a = this.resolve(path, true)) !== null && _a !== void 0 ? _a : '';
+        url = this.resolve(path, true) ?? '';
       }
       return url;
     }
@@ -17566,12 +17387,11 @@ function requireBook() {
      * @param {Packaging} packaging object
      */
     unpack(packaging) {
-      var _a, _b, _c;
       this.packaging = packaging;
       this.loading.packaging.resolve(this.packaging);
       if (this.packaging.metadata.layout === '') {
         // rendition:layout not set - check display options if book is pre-paginated
-        this.load((_b = (_a = this.url) === null || _a === void 0 ? void 0 : _a.resolve(IBOOKS_DISPLAY_OPTIONS_PATH)) !== null && _b !== void 0 ? _b : '').then(xml => {
+        this.load(this.url?.resolve(IBOOKS_DISPLAY_OPTIONS_PATH) ?? '').then(xml => {
           this.displayOptions = new displayoptions_1.default(xml);
           this.loading.displayOptions.resolve(this.displayOptions);
         }).catch(() => {
@@ -17582,19 +17402,10 @@ function requireBook() {
         this.displayOptions = new displayoptions_1.default();
         this.loading.displayOptions.resolve(this.displayOptions);
       }
-      (_c = this.spine) === null || _c === void 0 ? void 0 : _c.unpack(this.packaging, (path, absolute) => {
-        var _a;
-        return (_a = this.resolve(path, absolute)) !== null && _a !== void 0 ? _a : '';
-      }, path => {
-        var _a;
-        return (_a = this.canonical(path)) !== null && _a !== void 0 ? _a : '';
-      });
+      this.spine?.unpack(this.packaging, (path, absolute) => this.resolve(path, absolute) ?? '', path => this.canonical(path) ?? '');
       this.resources = new resources_1.default(this.packaging.manifest, {
         archive: this.archive,
-        resolver: (path, absolute) => {
-          var _a;
-          return (_a = this.resolve(path, absolute)) !== null && _a !== void 0 ? _a : '';
-        },
+        resolver: (path, absolute) => this.resolve(path, absolute) ?? '',
         request: this.request.bind(this),
         replacements: this.settings.replacements || (this.archived ? 'blobUrl' : 'base64')
       });
@@ -17631,32 +17442,30 @@ function requireBook() {
     /**
      * Load Navigation and PageList from package
      */
-    loadNavigation(packaging) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const navPath = packaging.navPath || packaging.ncxPath;
-        const toc = packaging.toc;
-        // From json manifest
-        if (toc) {
-          return new Promise(resolve => {
-            this.navigation = new navigation_1.default(toc);
-            if (packaging.pageList) {
-              this.pageList = new pagelist_1.default(packaging.pageList); // TODO: handle page lists from Manifest
-            }
-            resolve(this.navigation);
-          });
-        }
-        if (!navPath) {
-          return new Promise(resolve => {
-            this.navigation = new navigation_1.default();
-            this.pageList = new pagelist_1.default();
-            resolve(this.navigation);
-          });
-        }
-        return this.load(navPath).then(xml => {
-          this.navigation = new navigation_1.default(xml);
-          this.pageList = new pagelist_1.default(xml);
-          return this.navigation;
+    async loadNavigation(packaging) {
+      const navPath = packaging.navPath || packaging.ncxPath;
+      const toc = packaging.toc;
+      // From json manifest
+      if (toc) {
+        return new Promise(resolve => {
+          this.navigation = new navigation_1.default(toc);
+          if (packaging.pageList) {
+            this.pageList = new pagelist_1.default(packaging.pageList); // TODO: handle page lists from Manifest
+          }
+          resolve(this.navigation);
         });
+      }
+      if (!navPath) {
+        return new Promise(resolve => {
+          this.navigation = new navigation_1.default();
+          this.pageList = new pagelist_1.default();
+          resolve(this.navigation);
+        });
+      }
+      return this.load(navPath).then(xml => {
+        this.navigation = new navigation_1.default(xml);
+        this.pageList = new pagelist_1.default(xml);
+        return this.navigation;
       });
     }
     /**
@@ -17664,8 +17473,7 @@ function requireBook() {
      * Alias for `book.spine.get`
      */
     section(target) {
-      var _a;
-      return ((_a = this.spine) === null || _a === void 0 ? void 0 : _a.get(target)) || null;
+      return this.spine?.get(target) || null;
     }
     /**
      * Sugar to render a book to an element
@@ -17693,14 +17501,12 @@ function requireBook() {
     /**
      * Unarchive a zipped epub
      */
-    unarchive(input, isBase64) {
-      return __awaiter(this, void 0, void 0, function* () {
-        this.archive = new archive_1.default();
-        return this.archive.open(input, isBase64).then(result => {
-          return result;
-        }).catch(err => {
-          throw err;
-        });
+    async unarchive(input, isBase64) {
+      this.archive = new archive_1.default();
+      return this.archive.open(input, isBase64).then(result => {
+        return result;
+      }).catch(err => {
+        throw err;
       });
     }
     /**
@@ -17714,16 +17520,13 @@ function requireBook() {
       // Save original request method
       const requester = this.settings.requestMethod || request_1.default.bind(this);
       // Create new Store
-      this.storage = new store_1.default(name, requester, (path, absolute) => {
-        var _a;
-        return (_a = this.resolve(path, absolute)) !== null && _a !== void 0 ? _a : '';
-      });
+      this.storage = new store_1.default(name, requester, (path, absolute) => this.resolve(path, absolute) ?? '');
       // Replace request method to go through store
       this.request = (url, type, withCredentials = false, headers = {}) => {
         return this.storage.request(url, type, withCredentials, headers);
       };
-      (() => __awaiter(this, void 0, void 0, function* () {
-        yield this.opened;
+      (async () => {
+        await this.opened;
         if (this.archived && this.archive && this.storage) {
           const archive = this.archive;
           this.storage.requester = (url, type) => {
@@ -17741,83 +17544,75 @@ function requireBook() {
         };
         if (this.resources) {
           this.resources.settings.replacements = typeof replacementsSetting === 'string' ? replacementsSetting : 'blobUrl';
-          yield this.resources.replacements();
-          yield this.resources.replaceCss();
+          await this.resources.replacements();
+          await this.resources.replaceCss();
         }
         if (this.storage) {
           if (typeof this.storage.on === 'function') {
             this.storage.on('offline', () => {
-              var _a, _b;
               this.url = new url_1.default('/', '');
-              if ((_b = (_a = this.spine) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.serialize) {
+              if (this.spine?.hooks?.serialize) {
                 this.spine.hooks.serialize.register(substituteResources);
               }
             });
             this.storage.on('online', () => {
-              var _a, _b;
               this.url = originalUrl;
-              if ((_b = (_a = this.spine) === null || _a === void 0 ? void 0 : _a.hooks) === null || _b === void 0 ? void 0 : _b.serialize) {
+              if (this.spine?.hooks?.serialize) {
                 this.spine.hooks.serialize.deregister(substituteResources);
               }
             });
           }
         }
-      }))();
+      })();
       return this.storage;
     }
     /**
      * Get the cover url
      */
-    coverUrl() {
-      return __awaiter(this, void 0, void 0, function* () {
-        return this.loaded.cover.then(() => {
-          if (!this.cover) {
+    async coverUrl() {
+      return this.loaded.cover.then(() => {
+        if (!this.cover) {
+          return null;
+        }
+        if (this.archived) {
+          if (this.archive === undefined) {
             return null;
           }
-          if (this.archived) {
-            if (this.archive === undefined) {
-              return null;
-            }
-            return this.archive.createUrl(this.cover);
-          } else {
-            return this.cover;
-          }
-        });
+          return this.archive.createUrl(this.cover);
+        } else {
+          return this.cover;
+        }
       });
     }
     /**
      * Load replacement urls
      */
-    replacements() {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (!this.spine || !this.resources) return;
-        this.spine.hooks.serialize.register((output, section) => {
-          section.output = this.resources.substitute(output, section.url);
-        });
-        yield this.resources.replacements();
-        yield this.resources.replaceCss();
+    async replacements() {
+      if (!this.spine || !this.resources) return;
+      this.spine.hooks.serialize.register((output, section) => {
+        section.output = this.resources.substitute(output, section.url);
       });
+      await this.resources.replacements();
+      await this.resources.replaceCss();
     }
     /**
      * Find a DOM Range for a given CFI Range
      */
-    getRange(cfiRange) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const cfi = new epubcfi_1.default(cfiRange);
-        if (this.spine === undefined) {
-          return Promise.reject('CFI could not be found, because there is no spine object');
+    async getRange(cfiRange) {
+      const cfi = new epubcfi_1.default(cfiRange);
+      if (this.spine === undefined) {
+        return Promise.reject('CFI could not be found, because there is no spine object');
+      }
+      const item = this.spine.get(cfi.spinePos);
+      const _request = this.load;
+      if (!item) {
+        return Promise.reject('CFI could not be found');
+      }
+      return item.load(_request).then(function () {
+        if (!item.document) {
+          return null;
         }
-        const item = this.spine.get(cfi.spinePos);
-        const _request = this.load;
-        if (!item) {
-          return Promise.reject('CFI could not be found');
-        }
-        return item.load(_request).then(function () {
-          if (!item.document) {
-            return null;
-          }
-          return cfi.toRange(item.document);
-        });
+        return cfi.toRange(item.document);
       });
     }
     /**
@@ -17825,15 +17620,13 @@ function requireBook() {
      * @param [identifier] to use instead of metadata identifier
      */
     key(identifier) {
-      var _a, _b;
-      const ident = identifier || ((_a = this.packaging) === null || _a === void 0 ? void 0 : _a.metadata.identifier) || ((_b = this.url) === null || _b === void 0 ? void 0 : _b.filename);
+      const ident = identifier || this.packaging?.metadata.identifier || this.url?.filename;
       return `epubjs:${constants_1.EPUBJS_VERSION}:${ident}`;
     }
     /**
      * Destroy the Book and all associated objects
      */
     destroy() {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _j;
       this.opened = undefined;
       this.loading = undefined;
       this.loaded = undefined;
@@ -17841,15 +17634,15 @@ function requireBook() {
       this.ready = undefined;
       this.isOpen = false;
       this.isRendered = false;
-      (_a = this.spine) === null || _a === void 0 ? void 0 : _a.destroy();
-      (_b = this.locations) === null || _b === void 0 ? void 0 : _b.destroy();
-      (_c = this.pageList) === null || _c === void 0 ? void 0 : _c.destroy();
-      (_d = this.archive) === null || _d === void 0 ? void 0 : _d.destroy();
-      (_e = this.resources) === null || _e === void 0 ? void 0 : _e.destroy();
-      (_f = this.container) === null || _f === void 0 ? void 0 : _f.destroy();
-      (_g = this.packaging) === null || _g === void 0 ? void 0 : _g.destroy();
-      (_h = this.rendition) === null || _h === void 0 ? void 0 : _h.destroy();
-      (_j = this.displayOptions) === null || _j === void 0 ? void 0 : _j.destroy();
+      this.spine?.destroy();
+      this.locations?.destroy();
+      this.pageList?.destroy();
+      this.archive?.destroy();
+      this.resources?.destroy();
+      this.container?.destroy();
+      this.packaging?.destroy();
+      this.rendition?.destroy();
+      this.displayOptions?.destroy();
       this.spine = undefined;
       this.locations = undefined;
       this.pageList = undefined;

@@ -11,13 +11,13 @@ import * as utils from './utils/core';
  * @example ePub("/path/to/book.epub", {})
  */
 type EPubFactory = {
-    (url: string | ArrayBuffer, options?: Record<string, unknown>): Book;
-    VERSION?: string;
-    Book?: typeof Book;
-    Rendition?: typeof Rendition;
-    Contents?: typeof Contents;
-    CFI?: typeof CFI;
-    utils?: typeof utils;
+  (url: string | ArrayBuffer, options?: Record<string, unknown>): Book;
+  VERSION?: string;
+  Book?: typeof Book;
+  Rendition?: typeof Rendition;
+  Contents?: typeof Contents;
+  CFI?: typeof CFI;
+  utils?: typeof utils;
 };
 declare const ePub: EPubFactory;
 export default ePub;

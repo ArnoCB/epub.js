@@ -65,14 +65,25 @@
       width: "100%",
       height: 600,
       ignoreClass: 'annotator-hl',
-      manager: "continuous",
+      manager: "default",
+      flow: "paginated",
+      spread: "auto",  // Explicitly enable spread mode
       transparency: true
     });
 
   var displayed = rendition.display(6);
 
+    // Debug: Check layout and spread settings
+    rendition.on("started", function() {
+      console.log("MANUAL: Rendition started");
+      console.log("MANUAL: Layout settings:", rendition.manager.layout);
+      console.log("MANUAL: Manager settings:", rendition.manager.settings);
+      console.log("MANUAL: Container element:", rendition.manager.container);
+    });
+
     var next = document.getElementById("next");
     next.addEventListener("click", function(){
+      console.log("MANUAL: next() clicked, current scrollLeft:", document.querySelector('#viewer').scrollLeft);
       rendition.next();
     }, false);
 
@@ -98,7 +109,10 @@
     document.addEventListener("keyup", keyListener, false);
 
     rendition.on("relocated", function(location){
-      // console.log(location);
+      console.log("MANUAL: relocated event", {
+        scrollLeft: document.querySelector('#viewer').scrollLeft,
+        location: location
+      });
     });
 
 

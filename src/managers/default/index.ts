@@ -95,6 +95,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
   ignore!: boolean;
   scrolled!: boolean;
+  targetScrollLeft?: number;
 
   constructor(options: {
     settings: DefaultViewManagerSettings;
@@ -422,6 +423,78 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   afterDisplayed(view: View) {
+    console.debug(
+      '[DefaultViewManager] afterDisplayed called for view:',
+      view.section?.href
+    );
+
+    // Fix: Ensure container scrollWidth can accommodate content width
+    if (view && view.contents) {
+      const contentWidth = view.contents.textWidth();
+      console.debug(
+        '[DefaultViewManager] afterDisplayed content width:',
+        contentWidth
+      );
+
+      if (contentWidth > this.container.offsetWidth) {
+        console.debug(
+          '[DefaultViewManager] updating phantom element for chapter content width:',
+          contentWidth
+        );
+
+        // Create/update phantom element to match current chapter's content width
+        let phantomElement = this.container.querySelector(
+          '.epub-scroll-phantom'
+        ) as HTMLElement;
+
+        if (!phantomElement) {
+          phantomElement = document.createElement('div');
+          phantomElement.className = 'epub-scroll-phantom';
+          phantomElement.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 1px;
+            pointer-events: none;
+            visibility: hidden;
+            z-index: -1000;
+          `;
+          this.container.appendChild(phantomElement);
+        }
+
+        // Always update phantom width to match current chapter
+        phantomElement.style.width = contentWidth + 'px';
+
+        console.debug(
+          '[DefaultViewManager] afterDisplayed container now scrollWidth:',
+          this.container.scrollWidth
+        );
+
+        // Always resize view and iframe to match content width
+        console.debug(
+          '[DefaultViewManager] resizing view/iframe to content width:',
+          contentWidth
+        );
+
+        // Position content at left: 0 for proper scrolling
+        const element = view.element as HTMLElement;
+        if (element) {
+          element.style.width = contentWidth + 'px';
+          element.style.left = '0px';
+
+          // Fix: Also resize the iframe inside the view element
+          const iframe = element.querySelector('iframe') as HTMLIFrameElement;
+          if (iframe) {
+            iframe.style.width = contentWidth + 'px';
+            console.debug(
+              '[DefaultViewManager] resized iframe to match content width:',
+              contentWidth
+            );
+          }
+        }
+      }
+    }
+
     this.emit(EVENTS.MANAGERS.ADDED, view);
   }
 
@@ -548,13 +621,101 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       (!dir || dir === 'ltr')
     ) {
       this.scrollLeft = this.container.scrollLeft;
+
+      // Container scrollWidth expansion is now handled in afterDisplayed()
+      // This ensures totalPages calculations are correct from the start
+
+      // Calculate scroll position for next page
       left =
         this.container.scrollLeft +
         this.container.offsetWidth +
         this.layout.delta;
+
+      console.debug(
+        '[DefaultViewManager] next() scroll calculation:',
+        'scrollLeft=',
+        this.container.scrollLeft,
+        'offsetWidth=',
+        this.container.offsetWidth,
+        'delta=',
+        this.layout.delta,
+        'calculated left=',
+        left,
+        'scrollWidth=',
+        this.container.scrollWidth
+      );
+
       if (left <= this.container.scrollWidth) {
+        console.debug(
+          '[DefaultViewManager] scrolling by delta:',
+          this.layout.delta
+        );
         this.scrollBy(this.layout.delta, 0, true);
+
+        // Debug: Check scroll position after scrollBy
+        console.debug(
+          '[DefaultViewManager] after scrollBy - scrollLeft:',
+          this.container.scrollLeft,
+          'container position should show content now'
+        );
+
+        // Debug: Check actual DOM state
+        const currentView = this.views.last();
+        if (currentView && currentView.element) {
+          const element = currentView.element as HTMLElement;
+          console.debug(
+            '[DefaultViewManager] DOM state check:',
+            'container.scrollLeft=',
+            this.container.scrollLeft,
+            'container.scrollWidth=',
+            this.container.scrollWidth,
+            'element.style.left=',
+            element.style.left,
+            'element.style.width=',
+            element.style.width,
+            'element.offsetLeft=',
+            element.offsetLeft,
+            'element.offsetWidth=',
+            element.offsetWidth
+          );
+        }
+
+        // Fix: Prevent immediate scroll resets by temporarily storing expected position
+        this.targetScrollLeft = this.container.scrollLeft;
+
+        // Add a timeout to check if scroll position gets reset
+        setTimeout(() => {
+          console.debug(
+            '[DefaultViewManager] scroll position check after 100ms:',
+            'expected=',
+            this.targetScrollLeft,
+            'actual=',
+            this.container.scrollLeft
+          );
+          if (this.container.scrollLeft !== this.targetScrollLeft) {
+            console.warn(
+              '[DefaultViewManager] SCROLL RESET DETECTED!',
+              'Something reset scrollLeft from',
+              this.targetScrollLeft,
+              'to',
+              this.container.scrollLeft
+            );
+          }
+        }, 100);
+
+        setTimeout(() => {
+          console.debug(
+            '[DefaultViewManager] scroll position check after 500ms:',
+            'expected=',
+            this.targetScrollLeft,
+            'actual=',
+            this.container.scrollLeft
+          );
+        }, 500);
       } else {
+        console.debug(
+          '[DefaultViewManager] reached end of chapter, looking for next section'
+        );
         const lastView = this.views.last();
         if (lastView && lastView.section) {
           next = lastView.section.next();
@@ -788,6 +949,9 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       this.scrollTo(0, 0, true);
       this.views.clear();
     }
+
+    // Note: Don't remove phantom element here - it should persist across chapters
+    // The phantom element maintains the expanded scrollWidth for the container
   }
 
   currentLocation(): PageLocation[] {
@@ -827,6 +991,21 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       const width = view.width();
       const height = view.height();
 
+      // Fix: Use actual content width for total page calculation, but container width for viewport calculation
+      let actualWidth = width;
+      if (view.contents && view.contents.textWidth) {
+        const contentWidth = view.contents.textWidth();
+        if (contentWidth > width) {
+          actualWidth = contentWidth;
+          console.debug(
+            '[DefaultViewManager] paginatedLocation using content width:',
+            contentWidth,
+            'instead of view width:',
+            width
+          );
+        }
+      }
+
       let startPos;
       let endPos;
       let stopPos;
@@ -840,8 +1019,9 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       } else {
         startPos = offset + container.left - position.left + used;
         endPos = startPos + pageWidth - used;
-        totalPages = this.layout.count(width, pageWidth).pages;
-        stopPos = pageWidth;
+        // Use actual content width for total page count, but container width for viewport pages
+        totalPages = this.layout.count(actualWidth, pageWidth).pages;
+        stopPos = pageWidth; // Use container width, not content width, for page boundaries
       }
 
       let currPage = Math.ceil(startPos / stopPos);
@@ -923,7 +1103,17 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         start,
         end
       );
-      const totalPages = this.layout.count(width).pages;
+
+      // Fix: Use actual content width for pagination calculation if available
+      let actualWidth = width;
+      if (view.contents && view.contents.textWidth) {
+        const contentWidth = view.contents.textWidth();
+        if (contentWidth > width) {
+          actualWidth = contentWidth;
+        }
+      }
+
+      const totalPages = this.layout.count(actualWidth).pages;
       let startPage = 0;
       let endPage = 0;
       const pages: number[] = [];
@@ -938,6 +1128,10 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
           endPage = endPage + 1;
         }
 
+        // Clamp pages to not exceed totalPages (prevent white pages)
+        startPage = Math.max(0, Math.min(startPage, totalPages - 1));
+        endPage = Math.max(0, Math.min(endPage, totalPages - 1));
+
         // Reverse page counts for rtl
         if (this.settings.direction === 'rtl') {
           const tempStartPage = startPage;
@@ -945,9 +1139,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
           endPage = totalPages - tempStartPage;
         }
 
-        for (let i = startPage + 1; i <= endPage; i++) {
+        for (let i = startPage + 1; i <= endPage + 1; i++) {
           const pg = i;
-          pages.push(pg);
+          if (pg <= totalPages) {
+            // Additional safety check
+            pages.push(pg);
+          }
         }
       }
 
@@ -1027,6 +1224,26 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   scrollTo(x: number, y: number, silent: boolean) {
+    console.debug(
+      '[DefaultViewManager] scrollTo called:',
+      'x=',
+      x,
+      'y=',
+      y,
+      'silent=',
+      silent,
+      'current scrollLeft=',
+      this.container.scrollLeft
+    );
+
+    // Add stack trace to identify what's calling scrollTo(0,0)
+    if (x === 0 && y === 0 && this.container.scrollLeft > 0) {
+      console.warn(
+        '[DefaultViewManager] WARNING: scrollTo(0,0) called while scrollLeft >0, this will reset scroll position!'
+      );
+      console.trace('Call stack:');
+    }
+
     if (silent) {
       this.ignore = true;
     }
@@ -1038,6 +1255,11 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       window.scrollTo(x, y);
     }
     this.scrolled = true;
+
+    console.debug(
+      '[DefaultViewManager] after scrollTo - new scrollLeft:',
+      this.container.scrollLeft
+    );
   }
 
   onScroll() {
