@@ -234,6 +234,11 @@
     let preRenderingEnabled = true;
     let systemLogs = [];
 
+    // Global getter functions for testing
+    window.getRendition = () => rendition;
+    window.getBook = () => book;
+    window.getPreRenderer = () => rendition?.manager?.preRenderer;
+
     // Logging function
     function addLog(message, type = 'info') {
       const timestamp = new Date().toLocaleTimeString();
@@ -254,6 +259,23 @@
         `<div class="log-entry ${log.type}">[${log.timestamp}] ${log.message}</div>`
       ).join('');
       logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    // Helper: read a desired start target from the URL (e.g., ?start=chapter_001.xhtml or ?start=3)
+    function getStartTargetFromUrl() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get('start') || params.get('href') || params.get('spine');
+        if (!raw) return null;
+        const trimmed = String(raw).trim();
+        if (trimmed === '') return null;
+        if (!isNaN(Number(trimmed))) {
+          return parseInt(trimmed, 10);
+        }
+        return trimmed; // href or CFI
+      } catch (e) {
+        return null;
+      }
     }
 
     // Initialize the book
@@ -279,8 +301,10 @@
 
       setupEventListeners();
       
-      // Display the first chapter
-      rendition.display().then(() => {
+      // Display the initial chapter: prefer URL ?start=...; fallback to chapter_001.xhtml for Moby-Dick
+      const startTarget = getStartTargetFromUrl() ?? 'chapter_001.xhtml';
+      addLog(`Initial display target: ${JSON.stringify(startTarget)}`, "info");
+      rendition.display(startTarget).then(() => {
         addLog("Initial chapter displayed", "success");
         updateStatus();
       }).catch(err => {
@@ -339,7 +363,11 @@
       });
 
       rendition.on("relocated", function(location) {
-        addLog(`Navigated to: ${location.start.cfi}`, "info");
+        const href = location?.start?.href || '(unknown)';
+        const pageInfo = location?.start?.displayed
+          ? `page ${location.start.displayed.page} / ${location.start.displayed.total}`
+          : '';
+        addLog(`Navigated to href: ${href} ${pageInfo}`, "info");
         updateStatus();
       });
 
@@ -409,11 +437,27 @@
       });
 
       document.getElementById("jump-to-chapter").addEventListener("click", function() {
-        const chapterNum = prompt("Enter chapter number (0-based):");
-        if (chapterNum !== null && !isNaN(chapterNum)) {
-          const chapterIndex = parseInt(chapterNum);
-          addLog(`Jumping to chapter ${chapterIndex}`, "info");
+        const input = prompt("Enter spine index (0-based) or href (e.g., chapter_001.xhtml):");
+        if (input === null) return;
+
+        // If numeric, treat as spine index
+        if (!isNaN(Number(input))) {
+          const chapterIndex = parseInt(input, 10);
+          addLog(`Jumping to spine index ${chapterIndex}`, "info");
           rendition.display(chapterIndex);
+          return;
+        }
+
+        // Otherwise, try to resolve href to a spine index then display
+        const raw = String(input).trim();
+        const href = raw.split('#')[0];
+        const spine = book.spine;
+        const section = spine.get(href);
+        if (section) {
+          addLog(`Jumping to href ${href} (index ${section.index})`, "info");
+          rendition.display(href);
+        } else {
+          addLog(`Could not resolve href: ${href}`, "error");
         }
       });
 

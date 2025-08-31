@@ -484,7 +484,27 @@ export class Rendition implements EventEmitterMethods {
       return displayed;
     }
 
-    this.manager.display(section).then(
+    // Extract the CFI fragment for positioning within the section
+    let cfiTarget: string | undefined;
+    if (target && target.startsWith('epubcfi(')) {
+      cfiTarget = target;
+      console.debug('[Rendition] CFI target extracted:', cfiTarget);
+    } else {
+      console.debug(
+        '[Rendition] No CFI target found, target type:',
+        typeof target,
+        'value:',
+        target
+      );
+    }
+
+    console.debug(
+      '[Rendition] calling manager.display with section:',
+      section.href,
+      'cfiTarget:',
+      cfiTarget
+    );
+    this.manager.display(section, cfiTarget).then(
       () => {
         displaying.resolve(true);
         this.displaying = undefined;

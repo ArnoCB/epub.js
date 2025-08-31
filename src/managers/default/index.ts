@@ -305,10 +305,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       preRenderSettings
     );
 
+    const requestFn: (url: string) => Promise<Document> =
+      this.request || (() => Promise.reject(new Error('No request')));
     this.preRenderer = new BookPreRenderer(
       this.container,
       preRenderSettings,
-      this.request
+      requestFn
     );
 
     console.debug(
@@ -548,62 +550,248 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     console.debug(
       '[DefaultViewManager] displaying pre-rendered chapter:',
-      chapter.section.href
+      chapter.section.href,
+      'with target:',
+      target
     );
 
     // Wait for chapter to be fully rendered
     chapter.rendered.promise
       .then(() => {
-        // Clear current views first
-        this.clear();
+        try {
+          // Save current scroll position, but only preserve it if staying in the same chapter
+          const currentScrollLeft = this.scrollLeft || 0;
+          const isNewChapter = !this.views.find(chapter.section);
 
-        // Attach the pre-rendered chapter to the main DOM
-        const attachedChapter = this.preRenderer!.attachChapter(
-          chapter.section.href
-        );
+          console.debug(
+            '[DefaultViewManager] chapter switch - isNewChapter:',
+            isNewChapter,
+            'currentScroll:',
+            currentScrollLeft,
+            'chapter:',
+            chapter.section.href,
+            'existing views:',
+            this.views.length
+          );
 
-        if (!attachedChapter) {
-          throw new Error('Failed to attach pre-rendered chapter');
+          // Clear current views first
+          this.clear();
+
+          // Verify the pre-renderer is still available
+          if (!this.preRenderer) {
+            throw new Error('Pre-renderer is no longer available');
+          }
+
+          // Attach the pre-rendered chapter to the main DOM
+          const attachedChapter = this.preRenderer.attachChapter(
+            chapter.section.href
+          );
+
+          if (!attachedChapter) {
+            throw new Error(
+              `Failed to attach pre-rendered chapter: ${chapter.section.href}`
+            );
+          }
+
+          // Verify the view is in a good state
+          if (!attachedChapter.view || !attachedChapter.element) {
+            throw new Error(
+              `Pre-rendered chapter view is invalid: ${chapter.section.href}`
+            );
+          }
+
+          // Add the view to the views system
+          // Note: We don't call display() again since it's already rendered
+          this.views.append(attachedChapter.view);
+
+          // Set up event handlers (same as in add() method)
+          attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
+          attachedChapter.view.onResize = this.afterResized.bind(this);
+
+          // Check if view has event methods before using them
+          if (typeof attachedChapter.view.on === 'function') {
+            attachedChapter.view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
+              this.updateAxis(axis);
+            });
+
+            attachedChapter.view.on(
+              EVENTS.VIEWS.WRITING_MODE,
+              (mode: string) => {
+                this.updateWritingMode(mode);
+              }
+            );
+          } else {
+            console.warn(
+              '[DefaultViewManager] view does not have event methods:',
+              typeof attachedChapter.view.on
+            );
+          }
+
+          // Mark as displayed in the views system
+          attachedChapter.view.displayed = true;
+
+          // Show the views first
+          this.views.show();
+
+          // Respect target CFI if provided; otherwise start at the beginning
+          try {
+            if (target) {
+              console.debug(
+                '[DefaultViewManager] pre-rendered chapter - positioning to target:',
+                target
+              );
+              const offset = attachedChapter.view.locationOf(target);
+              const width = attachedChapter.view.width();
+              this.moveTo(offset, width);
+            } else {
+              this.scrollTo(0, 0, true);
+            }
+          } catch (e) {
+            console.warn(
+              '[DefaultViewManager] failed to position to target for pre-rendered chapter, defaulting to start:',
+              (e as Error).message
+            );
+            this.scrollTo(0, 0, true);
+          }
+
+          // Enhanced debugging for element attachment and iframe scroll state
+          try {
+            console.debug(
+              '[DefaultViewManager] Element attachment debug info:',
+              {
+                href: chapter.section.href,
+                elementScrollLeft: attachedChapter.element.scrollLeft,
+                elementScrollTop: attachedChapter.element.scrollTop,
+                elementClientWidth: attachedChapter.element.clientWidth,
+                elementScrollWidth: attachedChapter.element.scrollWidth,
+              }
+            );
+
+            // Check iframe content scroll state
+            const iframe = attachedChapter.element.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+              console.debug('Iframe scroll debug info:', {
+                href: chapter.section.href,
+                iframeScrollX: iframe.contentWindow.scrollX,
+                iframeScrollY: iframe.contentWindow.scrollY,
+                iframeInnerWidth: iframe.contentWindow.innerWidth,
+                iframeInnerHeight: iframe.contentWindow.innerHeight,
+                iframeSrc: iframe.src,
+                contentReady: iframe.contentDocument?.readyState,
+              });
+
+              // Check body scroll state in iframe
+              const iframeBody = iframe.contentDocument?.body;
+              if (iframeBody) {
+                console.debug(
+                  '[DefaultViewManager] Iframe body scroll debug info:',
+                  {
+                    href: chapter.section.href,
+                    bodyScrollLeft: iframeBody.scrollLeft,
+                    bodyScrollTop: iframeBody.scrollTop,
+                    bodyScrollWidth: iframeBody.scrollWidth,
+                    bodyScrollHeight: iframeBody.scrollHeight,
+                    bodyClientWidth: iframeBody.clientWidth,
+                    bodyClientHeight: iframeBody.clientHeight,
+                  }
+                );
+              }
+            }
+          } catch (debugError) {
+            console.warn(
+              '[DefaultViewManager] Debug info collection failed:',
+              debugError
+            );
+          }
+
+          // Emit the displayed event
+          this.emit(EVENTS.MANAGERS.ADDED, attachedChapter.view);
+
+          console.debug(
+            '[DefaultViewManager] pre-rendered chapter displayed successfully:',
+            chapter.section.href
+          );
+
+          // If in pre-paginated spread mode, try to attach the neighbor (right page)
+          try {
+            const isPrePaginated = this.layout.name === 'pre-paginated';
+            const hasMultiplePages = this.layout.divisor > 1;
+
+            if (isPrePaginated && hasMultiplePages) {
+              const currentSection = attachedChapter.section;
+              const forceRight =
+                currentSection.properties.includes('page-spread-right');
+
+              // Mirror handleNextPrePaginated: skip if forced-right or first section
+              if (!forceRight && currentSection.index !== 0) {
+                const next = currentSection.next();
+                if (next && !next.properties.includes('page-spread-left')) {
+                  let neighborAdded = false;
+                  if (this.preRenderer) {
+                    const preNext = this.preRenderer.getChapter(next.href);
+                    if (preNext) {
+                      const attachedNext = this.preRenderer.attachChapter(
+                        next.href
+                      );
+                      if (attachedNext && attachedNext.view) {
+                        // Add to views without re-rendering
+                        this.views.append(attachedNext.view);
+
+                        // Wire events like the main view
+                        attachedNext.view.onDisplayed =
+                          this.afterDisplayed.bind(this);
+                        attachedNext.view.onResize =
+                          this.afterResized.bind(this);
+
+                        if (typeof attachedNext.view.on === 'function') {
+                          attachedNext.view.on(
+                            EVENTS.VIEWS.AXIS,
+                            (axis: Axis) => this.updateAxis(axis)
+                          );
+                          attachedNext.view.on(
+                            EVENTS.VIEWS.WRITING_MODE,
+                            (mode: string) => this.updateWritingMode(mode)
+                          );
+                        }
+
+                        attachedNext.view.displayed = true;
+                        neighborAdded = true;
+                      }
+                    }
+                  }
+
+                  // Fallback: load normally if not pre-rendered
+                  if (!neighborAdded) {
+                    this.append(next).catch((e: unknown) => {
+                      console.warn(
+                        '[DefaultViewManager] failed to append neighbor section normally:',
+                        next.href,
+                        e
+                      );
+                    });
+                  }
+
+                  // Ensure both are visible
+                  this.views.show();
+                }
+              }
+            }
+          } catch (neighborError) {
+            console.warn(
+              '[DefaultViewManager] spread neighbor attachment failed:',
+              neighborError
+            );
+          }
+
+          deferred.resolve(undefined);
+        } catch (displayError) {
+          console.error(
+            '[DefaultViewManager] error during pre-rendered chapter display:',
+            chapter.section.href,
+            displayError
+          );
+          throw displayError;
         }
-
-        // Add the view to the views system
-        // Note: We don't call display() again since it's already rendered
-        this.views.append(attachedChapter.view);
-
-        // Set up event handlers (same as in add() method)
-        attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
-        attachedChapter.view.onResize = this.afterResized.bind(this);
-
-        attachedChapter.view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-          this.updateAxis(axis);
-        });
-
-        attachedChapter.view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-          this.updateWritingMode(mode);
-        });
-
-        // Mark as displayed in the views system
-        attachedChapter.view.displayed = true;
-
-        // Handle target positioning if specified
-        if (target) {
-          const offset = attachedChapter.view.locationOf(target);
-          const width = attachedChapter.view.width();
-          this.moveTo(offset, width);
-        }
-
-        // Show the views
-        this.views.show();
-
-        // Emit the displayed event
-        this.emit(EVENTS.MANAGERS.ADDED, attachedChapter.view);
-
-        console.debug(
-          '[DefaultViewManager] pre-rendered chapter displayed successfully:',
-          chapter.section.href
-        );
-
-        deferred.resolve(undefined);
       })
       .catch((error: Error) => {
         console.error(
@@ -816,13 +1004,21 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     view.onDisplayed = this.afterDisplayed.bind(this);
     view.onResize = this.afterResized.bind(this);
 
-    view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-      this.updateAxis(axis);
-    });
+    // Check if view has event methods before using them
+    if (typeof view.on === 'function') {
+      view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
+        this.updateAxis(axis);
+      });
 
-    view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-      this.updateWritingMode(mode);
-    });
+      view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
+        this.updateWritingMode(mode);
+      });
+    } else {
+      console.warn(
+        '[DefaultViewManager] view does not have event methods in add():',
+        typeof view.on
+      );
+    }
 
     return view.display(this.request).then(() => view);
   }
@@ -866,13 +1062,21 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     view.onDisplayed = this.afterDisplayed.bind(this);
     view.onResize = this.afterResized.bind(this);
 
-    view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-      this.updateAxis(axis);
-    });
+    // Check if view has event methods before using them
+    if (typeof view.on === 'function') {
+      view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
+        this.updateAxis(axis);
+      });
 
-    view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-      this.updateWritingMode(mode);
-    });
+      view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
+        this.updateWritingMode(mode);
+      });
+    } else {
+      console.warn(
+        '[DefaultViewManager] view does not have event methods in append():',
+        typeof view.on
+      );
+    }
 
     return view.display(this.request).then(() => view);
   }
@@ -880,25 +1084,33 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   async prepend(section: Section, forceRight: boolean = false) {
     const view = this.createView(section, forceRight);
 
-    view.on(
-      EVENTS.VIEWS.RESIZED,
-      (bounds: { heightDelta: number; widthDelta: number }) => {
-        this.counter(bounds);
-      }
-    );
+    // Check if view has event methods before using them
+    if (typeof view.on === 'function') {
+      view.on(
+        EVENTS.VIEWS.RESIZED,
+        (bounds: { heightDelta: number; widthDelta: number }) => {
+          this.counter(bounds);
+        }
+      );
+
+      view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
+        this.updateAxis(axis);
+      });
+
+      view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
+        this.updateWritingMode(mode);
+      });
+    } else {
+      console.warn(
+        '[DefaultViewManager] view does not have event methods in prepend():',
+        typeof view.on
+      );
+    }
 
     this.views.prepend(view);
 
     view.onDisplayed = this.afterDisplayed.bind(this);
     view.onResize = this.afterResized.bind(this);
-
-    view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-      this.updateAxis(axis);
-    });
-
-    view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-      this.updateWritingMode(mode);
-    });
 
     return view.display(this.request).then(() => view);
   }
@@ -913,12 +1125,29 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
   async next(): Promise<void> {
     if (!this.hasViews()) return;
+    // If we're already at the last page of the last visible section, jump to next section
+    try {
+      const loc = this.currentLocation();
+      if (loc && loc.length) {
+        const lastLoc = loc[loc.length - 1];
+        const lastDisplayed =
+          lastLoc.pages && lastLoc.pages.length
+            ? lastLoc.pages[lastLoc.pages.length - 1]
+            : 1;
+        if (lastDisplayed >= lastLoc.totalPages) {
+          const next = this.views.last()?.section?.next();
+          if (next) {
+            await this.loadNextSection(next);
+            return;
+          }
+        }
+      }
+    } catch {
+      // fall through to normal forward handling
+    }
 
     const section = this.handleScrollForward();
-
-    if (section) {
-      await this.loadNextSection(section);
-    }
+    if (section) await this.loadNextSection(section);
   }
 
   async prev(): Promise<void> {
@@ -988,11 +1217,10 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   /* ---------- Directional scroll strategies ---------- */
 
   private scrollForwardLTR(): Section | undefined {
-    const left =
-      this.container.scrollLeft +
-      this.container.offsetWidth +
-      this.layout.delta;
-    if (left <= this.container.scrollWidth) {
+    const maxScrollLeft =
+      this.container.scrollWidth - this.container.offsetWidth;
+    // If we can still scroll within the current section, do so; otherwise move to next section
+    if (this.container.scrollLeft < maxScrollLeft) {
       this.scrollBy(this.layout.delta, 0, true);
       this.rememberScrollPosition();
       return;
@@ -1033,8 +1261,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       return;
     }
 
-    // Fix: When scrollLeft is 0, we should move to the previous section
-    // But first check if we're already at the beginning of the book
+    // When at the beginning of the scroll area, move to the previous section if available
     const firstSection = this.views.first()?.section;
     if (!firstSection) {
       console.debug(
@@ -1103,13 +1330,18 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       (err) => err
     );
 
-    if (
-      !this.isPaginated &&
-      this.settings.axis === 'horizontal' &&
-      this.settings.direction === 'rtl' &&
-      this.settings.rtlScrollType === 'default'
-    ) {
-      this.scrollTo(this.container.scrollWidth, 0, true);
+    // Ensure we start at the beginning of the newly loaded section for forward navigation.
+    // This fixes the case where prev() moved to the previous chapter's end and next() should
+    // return to the start of the next chapter but instead lands mid-content due to preserved scroll.
+    if (this.settings.axis === 'horizontal') {
+      if (
+        this.settings.direction === 'rtl' &&
+        this.settings.rtlScrollType === 'default'
+      ) {
+        this.scrollTo(this.container.scrollWidth, 0, true);
+      } else {
+        this.scrollTo(0, 0, true);
+      }
     }
 
     this.views.show();
@@ -1149,7 +1381,24 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       }
     );
 
+    // After prepending the previous section, move scroll to the end of content so the last page is visible
     this.adjustScrollAfterPrepend();
+    if (this.settings.axis === 'horizontal') {
+      if (
+        this.settings.direction === 'rtl' &&
+        this.settings.rtlScrollType === 'default'
+      ) {
+        // In RTL default, the start is at scrollLeft 0
+        this.scrollTo(0, 0, true);
+      } else {
+        // In LTR, go to the far right (end of the section)
+        const maxScrollLeft = Math.max(
+          0,
+          this.container.scrollWidth - this.container.offsetWidth
+        );
+        this.scrollTo(maxScrollLeft, 0, true);
+      }
+    }
     this.views.show();
   }
 
@@ -1229,21 +1478,47 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     // this.q.clear();
 
     if (this.views) {
-      this.views.hide();
+      try {
+        this.views.hide();
+      } catch (hideError) {
+        console.warn('[DefaultViewManager] error hiding views:', hideError);
+        // Try to hide views individually to isolate the problem
+        const len = this.views.length;
+        for (let i = 0; i < len; i++) {
+          const view = this.views._views[i];
+          if (view && view.displayed && view.hide) {
+            try {
+              view.hide();
+            } catch (individualHideError) {
+              console.warn(
+                '[DefaultViewManager] error hiding individual view:',
+                individualHideError
+              );
+            }
+          }
+        }
+      }
 
-      // Fix: Don't reset scroll position during clear if we're in the middle of navigation
-      // This prevents white pages during rapid backward navigation
-      const hasValidScrollPosition = this.container.scrollLeft > 0;
-      const isNavigating = this.views.length > 0; // If we have views, we're likely navigating
-
-      // Only reset scroll if we're truly clearing everything (like initial load)
-      if (!hasValidScrollPosition || !isNavigating) {
-        this.scrollTo(0, 0, true);
-      } else {
+      // Fix: For pre-rendered content, don't automatically reset scroll position
+      // Pre-rendered chapters should maintain their positioning
+      if (this.settings.usePreRendering) {
         console.debug(
-          '[DefaultViewManager] clear() preserving scroll position during navigation:',
+          '[DefaultViewManager] clear() with pre-rendering - preserving scroll position:',
           this.container.scrollLeft
         );
+      } else {
+        // Original logic for non-pre-rendered content
+        const hasValidScrollPosition = this.container.scrollLeft > 0;
+        const isNavigating = this.views.length > 0;
+
+        if (!hasValidScrollPosition || !isNavigating) {
+          this.scrollTo(0, 0, true);
+        } else {
+          console.debug(
+            '[DefaultViewManager] clear() preserving scroll position during navigation:',
+            this.container.scrollLeft
+          );
+        }
       }
 
       this.views.clear();
@@ -1393,15 +1668,84 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         end = start + pageWidth;
       }
       used += pageWidth;
-      if (this.mapping === undefined) {
-        throw new Error('Mapping is not defined');
+
+      // Fix: Limit the end position for non-pre-rendered content only
+      // Pre-rendered content should use its full width
+      let shouldLimitEnd = true;
+      if (this.preRenderer) {
+        const preRenderedChapter = this.preRenderer.getChapter(href);
+        if (preRenderedChapter && preRenderedChapter.attached) {
+          shouldLimitEnd = false;
+          console.debug(
+            '[DefaultViewManager] not limiting end position for pre-rendered chapter:',
+            href
+          );
+        }
       }
-      const mapping = this.mapping.page(
-        view.contents!,
-        view.section!.cfiBase!,
+
+      if (
+        shouldLimitEnd &&
+        this.layout.pageWidth &&
+        this.layout.pageWidth > 0
+      ) {
+        const maxEnd = start + this.layout.pageWidth;
+        if (end > maxEnd) {
+          console.debug(
+            '[DefaultViewManager] limiting end position from',
+            end,
+            'to',
+            maxEnd
+          );
+          end = maxEnd;
+          pageWidth = end - start;
+        }
+      }
+
+      // Debug: Log the positioning calculation
+      console.debug('[DefaultViewManager] paginatedLocation debug:', {
+        href,
+        containerLeft: container.left,
+        left,
+        offset,
+        positionLeft: position.left,
+        positionRight: position.right,
+        pageWidth,
         start,
-        end
-      );
+        end,
+        used,
+        containerScrollLeft: this.container.scrollLeft,
+        layoutWidth: this.layout.width,
+      });
+
+      let mapping;
+      if (this.preRenderer) {
+        const pre = this.preRenderer.getChapter(href);
+        if (pre && pre.pageMap && pre.pageMap.length) {
+          // Clamp to page boundaries using the map for stability
+          const pageWidth = this.layout.pageWidth || this.layout.width;
+          const startPage = Math.max(1, Math.floor(start / pageWidth) + 1);
+          const endPage = Math.max(startPage, Math.floor(end / pageWidth) + 1);
+          const startEntry =
+            pre.pageMap[Math.min(startPage - 1, pre.pageMap.length - 1)];
+          const endEntry =
+            pre.pageMap[Math.min(endPage - 1, pre.pageMap.length - 1)];
+          mapping = {
+            start: startEntry?.startCfi || '',
+            end: endEntry?.startCfi || '',
+          };
+        }
+      }
+      if (!mapping) {
+        if (this.mapping === undefined) {
+          throw new Error('Mapping is not defined');
+        }
+        mapping = this.mapping.page(
+          view.contents!,
+          view.section!.cfiBase!,
+          start,
+          end
+        );
+      }
 
       // Fix: Use actual content width for pagination calculation if available
       let actualWidth = width;
@@ -1412,7 +1756,36 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         }
       }
 
-      const totalPages = this.layout.count(actualWidth).pages;
+      // Calculate total pages - use pre-rendered count if available
+      let totalPages;
+      if (this.preRenderer) {
+        const preRenderedChapter = this.preRenderer.getChapter(href);
+        if (preRenderedChapter && preRenderedChapter.pageCount > 0) {
+          totalPages = preRenderedChapter.pageCount;
+          console.debug(
+            '[DefaultViewManager] using pre-rendered page count:',
+            totalPages,
+            'for chapter:',
+            href
+          );
+        } else {
+          totalPages = this.layout.count(actualWidth).pages;
+          console.debug(
+            '[DefaultViewManager] using layout-calculated page count:',
+            totalPages,
+            'for chapter:',
+            href
+          );
+        }
+      } else {
+        totalPages = this.layout.count(actualWidth).pages;
+        console.debug(
+          '[DefaultViewManager] no pre-renderer, using layout-calculated page count:',
+          totalPages,
+          'for chapter:',
+          href
+        );
+      }
       let startPage = 0;
       let endPage = 0;
       const pages: number[] = [];
@@ -1420,6 +1793,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       if (this.layout.pageWidth && this.layout.pageWidth > 0) {
         startPage = Math.floor(start / this.layout.pageWidth);
         endPage = Math.floor(end / this.layout.pageWidth);
+
+        // Fix: If we limited the end position to exactly one page width,
+        // endPage should equal startPage to show only one page
+        if (end === start + this.layout.pageWidth) {
+          endPage = startPage;
+        }
 
         // start page should not be negative
         if (startPage < 0) {
@@ -1430,6 +1809,20 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         // Clamp pages to not exceed totalPages (prevent white pages)
         startPage = Math.max(0, Math.min(startPage, totalPages - 1));
         endPage = Math.max(0, Math.min(endPage, totalPages - 1));
+
+        // Debug: Log page calculation
+        console.debug('[DefaultViewManager] page calculation debug:', {
+          href,
+          start,
+          end,
+          pageWidth: this.layout.pageWidth,
+          startPageRaw: Math.floor(start / this.layout.pageWidth),
+          endPageRaw: Math.floor(end / this.layout.pageWidth),
+          startPageClamped: startPage,
+          endPageClamped: endPage,
+          totalPages,
+          actualWidth,
+        });
 
         // Reverse page counts for rtl
         if (this.settings.direction === 'rtl') {
@@ -1445,6 +1838,13 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
             pages.push(pg);
           }
         }
+
+        // Debug: Log final page array
+        console.debug('[DefaultViewManager] final pages array:', {
+          href,
+          pages,
+          totalPages,
+        });
       }
 
       // Always return an object to satisfy the type annotation

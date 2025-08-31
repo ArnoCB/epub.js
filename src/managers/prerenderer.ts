@@ -17,6 +17,14 @@ export interface PreRenderedChapter {
   pageCount: number;
   hasWhitePages: boolean;
   whitePageIndices: number[];
+  // Optional per-page map for fast CFI->page lookup and offsets
+  pageMap?: Array<{
+    index: number; // 1-based page index within the chapter
+    startCfi?: string;
+    endCfi?: string;
+    xOffset?: number; // for horizontal/paginated
+    yOffset?: number; // for vertical/scrolled
+  }>;
 }
 
 export interface ViewSettings {
@@ -52,13 +60,13 @@ export class BookPreRenderer {
   private viewSettings: ViewSettings;
   private chapters: Map<string, PreRenderedChapter>;
   private renderingPromises: Map<string, Promise<PreRenderedChapter>>;
-  private request: any;
+  private request: (url: string) => Promise<Document>;
   private currentStatus: PreRenderingStatus;
 
   constructor(
     container: HTMLElement,
     viewSettings: ViewSettings,
-    request: any
+  request: (url: string) => Promise<Document>
   ) {
     this.container = container;
     this.viewSettings = viewSettings;
@@ -192,6 +200,18 @@ export class BookPreRenderer {
 
   private createView(section: Section): View {
     const view = new IframeView(section, this.viewSettings);
+
+    // Add a small delay to ensure EventEmitter mixin is applied
+    // This is a workaround for timing issues with the mixin
+    setTimeout(() => {
+      if (typeof view.on !== 'function') {
+        console.warn(
+          '[BookPreRenderer] EventEmitter methods still not available on view for:',
+          section.href
+        );
+      }
+    }, 0);
+
     view.onDisplayed = () => {
       console.log('[BookPreRenderer] view displayed for:', section.href);
     };
@@ -240,19 +260,99 @@ export class BookPreRenderer {
     try {
       const view = chapter.view;
       chapter.pageCount = 1;
+      chapter.pageMap = undefined;
 
       if (view.contents && view.contents.document) {
         const doc = view.contents.document;
         const body = doc.body;
 
         if (body) {
-          const contentHeight = body.scrollHeight;
-          const viewportHeight = this.viewSettings.height;
+          // Detect flow direction from viewSettings or layout
+          const isPaginated =
+            this.viewSettings.flow === 'paginated' ||
+            this.viewSettings.axis === 'horizontal' ||
+            (this.viewSettings.layout &&
+              this.viewSettings.layout._flow === 'paginated');
 
-          if (contentHeight > viewportHeight * 0.8) {
-            chapter.pageCount = Math.ceil(contentHeight / viewportHeight);
+          if (isPaginated) {
+            // For paginated/horizontal flow: use content width vs viewport width
+            const contentWidth = chapter.width; // Already calculated from textWidth()
+            const viewportWidth = this.viewSettings.width;
+
+            console.log(
+              '[BookPreRenderer] paginated flow - contentWidth:',
+              contentWidth,
+              'viewportWidth:',
+              viewportWidth
+            );
+
+            if (contentWidth > viewportWidth * 1.1) {
+              chapter.pageCount = Math.ceil(contentWidth / viewportWidth);
+            }
+
+            // Build a simple page map with xOffsets and best-effort CFIs for page starts
+            if (chapter.pageCount && chapter.pageCount > 0) {
+              const pageMap = [] as NonNullable<PreRenderedChapter['pageMap']>;
+              for (let i = 0; i < chapter.pageCount; i++) {
+                const xOffset = i * viewportWidth;
+                let startCfi: string | undefined;
+                try {
+                  // Try to compute CFI at page start using elementFromPoint
+                  const rect = {
+                    x: Math.min(xOffset + 1, contentWidth - 1),
+                    y: 1,
+                  };
+                  // Translate to iframe coordinates if needed
+                  const target = body.ownerDocument.elementFromPoint(
+                    Math.max(0, rect.x),
+                    Math.max(0, rect.y)
+                  );
+                  if (target) {
+                    const range = doc.createRange();
+                    range.selectNode(target);
+                    // Prefer section.cfiFromRange
+                    if (typeof chapter.section.cfiFromRange === 'function') {
+                      startCfi = chapter.section.cfiFromRange(
+                        range as unknown as Range
+                      );
+                    }
+                  }
+                } catch {
+                  // ignore CFI failures
+                }
+
+                pageMap.push({ index: i + 1, startCfi, xOffset });
+              }
+              chapter.pageMap = pageMap;
+            }
+          } else {
+            // For scrolled/vertical flow: use content height vs viewport height
+            const contentHeight = body.scrollHeight;
+            const viewportHeight = this.viewSettings.height;
+
+            console.log(
+              '[BookPreRenderer] scrolled flow - contentHeight:',
+              contentHeight,
+              'viewportHeight:',
+              viewportHeight
+            );
+
+            if (contentHeight > viewportHeight * 0.8) {
+              chapter.pageCount = Math.ceil(contentHeight / viewportHeight);
+            }
+
+            // Build a simple page map with yOffsets for vertical flow
+            if (chapter.pageCount && chapter.pageCount > 0) {
+              const pageMap = [] as NonNullable<PreRenderedChapter['pageMap']>;
+              for (let i = 0; i < chapter.pageCount; i++) {
+                const yOffset = i * viewportHeight;
+                pageMap.push({ index: i + 1, yOffset });
+              }
+              chapter.pageMap = pageMap;
+            }
           }
 
+          // White page detection
           const textContent = body.textContent || '';
           const trimmedText = textContent.trim();
 
@@ -322,20 +422,154 @@ export class BookPreRenderer {
 
   attachChapter(sectionHref: string): PreRenderedChapter | null {
     const chapter = this.chapters.get(sectionHref);
-    if (!chapter || chapter.attached) {
+    if (!chapter) {
+      console.warn(
+        '[BookPreRenderer] chapter not found for attachment:',
+        sectionHref
+      );
       return null;
     }
 
-    if (chapter.element.parentNode === this.offscreenContainer) {
-      this.offscreenContainer.removeChild(chapter.element);
+    if (chapter.attached) {
+      console.debug('[BookPreRenderer] chapter already attached:', sectionHref);
+      return chapter;
     }
 
-    this.container.appendChild(chapter.element);
-    chapter.attached = true;
+    try {
+      // Ensure only one chapter is marked as attached at a time
+      // Detach any other previously attached chapters in our registry
+      for (const [href, ch] of this.chapters.entries()) {
+        if (href !== sectionHref && ch.attached) {
+          ch.attached = false;
+        }
+      }
 
-    console.log('[BookPreRenderer] attached chapter to DOM:', sectionHref);
-    this.emit(EVENTS.VIEWS.DISPLAYED, chapter.view);
-    return chapter;
+      // Verify element exists and is properly rendered
+      if (!chapter.element) {
+        console.error(
+          '[BookPreRenderer] chapter element is null:',
+          sectionHref
+        );
+        return null;
+      }
+
+      // Remove from offscreen container if needed
+      if (chapter.element.parentNode === this.offscreenContainer) {
+        this.offscreenContainer.removeChild(chapter.element);
+        console.debug(
+          '[BookPreRenderer] removed from offscreen container:',
+          sectionHref
+        );
+      }
+
+      // Ensure the chapter element maintains its pre-rendered dimensions
+      if (chapter.element) {
+        // Set the element width to match the pre-rendered width
+        chapter.element.style.width = chapter.width + 'px';
+        chapter.element.style.height = chapter.height + 'px';
+
+        // Also set the iframe width if present
+        const iframe = chapter.element.querySelector('iframe');
+        if (iframe) {
+          iframe.style.width = chapter.width + 'px';
+          iframe.style.height = chapter.height + 'px';
+        }
+
+        console.debug(
+          '[BookPreRenderer] set element dimensions to match pre-rendered size:',
+          chapter.width + 'x' + chapter.height,
+          'for',
+          sectionHref
+        );
+      }
+
+      // Mark as attached since it's ready to be used
+      chapter.attached = true;
+
+      // Reset any internal scroll positions in the attached element
+      if (chapter.element.scrollLeft !== undefined) {
+        chapter.element.scrollLeft = 0;
+      }
+      if (chapter.element.scrollTop !== undefined) {
+        chapter.element.scrollTop = 0;
+      }
+
+      // Check if it's an iframe and reset its internal scroll as well
+      const iframeElement = chapter.element.querySelector('iframe');
+      if (iframeElement && iframeElement.contentWindow) {
+        try {
+          iframeElement.contentWindow.scrollTo(0, 0);
+        } catch (e) {
+          // Ignore cross-origin errors
+          console.debug(
+            '[BookPreRenderer] could not reset iframe scroll:',
+            (e as Error).message
+          );
+        }
+      }
+
+      // Debug: Log element positioning after attachment
+      console.log('[BookPreRenderer] element attached - debug info:');
+      console.log('  href:', sectionHref);
+      console.log('  elementWidth:', chapter.element.offsetWidth);
+      console.log('  elementHeight:', chapter.element.offsetHeight);
+      console.log('  elementScrollWidth:', chapter.element.scrollWidth);
+      console.log('  elementScrollHeight:', chapter.element.scrollHeight);
+      console.log('  elementScrollLeft:', chapter.element.scrollLeft);
+      console.log('  elementScrollTop:', chapter.element.scrollTop);
+      console.log('  chapterWidth:', chapter.width);
+      console.log('  chapterHeight:', chapter.height);
+      console.log('  pageCount:', chapter.pageCount);
+
+      // Also check iframe content if available (reuse the iframe element)
+      if (
+        iframeElement &&
+        iframeElement.contentWindow &&
+        iframeElement.contentDocument
+      ) {
+        try {
+          const doc = iframeElement.contentDocument;
+          const body = doc.body;
+          console.log('  iframe body scrollLeft:', body?.scrollLeft || 'N/A');
+          console.log('  iframe body scrollTop:', body?.scrollTop || 'N/A');
+          console.log(
+            '  iframe window scrollX:',
+            iframeElement.contentWindow.scrollX || 'N/A'
+          );
+          console.log(
+            '  iframe window scrollY:',
+            iframeElement.contentWindow.scrollY || 'N/A'
+          );
+        } catch (e) {
+          console.log('  iframe content access blocked:', (e as Error).message);
+        }
+      }
+
+      console.log(
+        '[BookPreRenderer] successfully attached chapter to DOM:',
+        sectionHref
+      );
+
+      // Verify attachment worked - the element should not be in the pre-renderer container
+      // It should be ready to be attached to the views system instead
+      if (chapter.element.parentNode === this.container) {
+        console.warn(
+          '[BookPreRenderer] element still attached to pre-renderer container - this is not expected:',
+          sectionHref
+        );
+      }
+
+      this.emit(EVENTS.VIEWS.DISPLAYED, chapter.view);
+      return chapter;
+    } catch (error) {
+      console.error(
+        '[BookPreRenderer] failed to attach chapter:',
+        sectionHref,
+        error
+      );
+      chapter.attached = false;
+      return null;
+    }
   }
 
   detachChapter(sectionHref: string): PreRenderedChapter | null {

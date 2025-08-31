@@ -748,7 +748,9 @@ class IframeView implements View, EventEmitterMethods {
   hide() {
     // this.iframe.style.display = "none";
     this.element.style.visibility = 'hidden';
-    this.iframe!.style.visibility = 'hidden';
+    if (this.iframe) {
+      this.iframe.style.visibility = 'hidden';
+    }
 
     this.stopExpanding = true;
     this.emit(EVENTS.VIEWS.HIDDEN, this);
@@ -1137,7 +1139,9 @@ class IframeView implements View, EventEmitterMethods {
       this.contents?.destroy();
 
       this.stopExpanding = true;
-      this.element.removeChild(this.iframe!);
+      if (this.iframe && this.element && this.element.contains(this.iframe)) {
+        this.element.removeChild(this.iframe);
+      }
 
       if (this.pane) {
         this.pane = undefined;
