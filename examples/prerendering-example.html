@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EPUB.js Pre-Rendering Example</title>
+
+  <script src="../dist/epub.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="examples.css">
+
+  <style type="text/css">
+    ::selection {
+      background: yellow;
+    }
+
+    #extras {
+      width: 800px;
+      margin: 40px auto;
+    }
+
+    #debug-panel {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    #debug-panel h3 {
+      margin-top: 0;
+      color: #333;
+      font-family: Arial, sans-serif;
+    }
+
+    #debug-info {
+      background: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    #chapter-status {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .chapter-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      padding: 8px;
+      font-size: 11px;
+    }
+
+    .chapter-card.rendered {
+      border-color: #28a745;
+      background-color: #d4edda;
+    }
+
+    .chapter-card.attached {
+      border-color: #007bff;
+      background-color: #cce5ff;
+    }
+
+    .chapter-card.failed {
+      border-color: #dc3545;
+      background-color: #f8d7da;
+    }
+
+    #status-bar {
+      background: #007bff;
+      color: white;
+      padding: 10px;
+      border-radius: 3px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    #progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #e9ecef;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    #progress-fill {
+      height: 100%;
+      background: #28a745;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    #controls {
+      margin-bottom: 20px;
+    }
+
+    #controls button {
+      margin-right: 10px;
+      padding: 8px 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    #controls button:hover {
+      background: #0056b3;
+    }
+
+    #controls button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    #viewer.spreads {
+      top: 0;
+      margin-top: 50px;
+      background-color: transparent;
+    }
+
+    .highlight {
+      background: rgba(255, 255, 0, 0.3);
+      cursor: pointer;
+    }
+
+    #highlights {
+      list-style: none;
+      margin-left: 0;
+      padding: 0;
+    }
+
+    #highlights li {
+      list-style: none;
+      margin-bottom: 10px;
+      border-top: 1px solid #E2E2E2;
+      padding: 10px;
+      background: white;
+      border-radius: 3px;
+    }
+
+    #highlights a {
+      display: inline-block;
+      margin-right: 10px;
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    #highlights a:hover {
+      text-decoration: underline;
+    }
+
+    .log-entry {
+      margin: 2px 0;
+      padding: 2px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .log-entry.info {
+      color: #007bff;
+    }
+
+    .log-entry.success {
+      color: #28a745;
+    }
+
+    .log-entry.warning {
+      color: #ffc107;
+    }
+
+    .log-entry.error {
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div id="frame">
+    <div id="viewer" class="spreads"></div>
+    <a id="prev" href="#prev" class="arrow">‹</a>
+    <a id="next" href="#next" class="arrow">›</a>
+  </div>
+
+  <div id="extras">
+    <!-- Pre-rendering Status Panel -->
+    <div id="debug-panel">
+      <h3>📚 Pre-Rendering System Status</h3>
+      
+      <div id="status-bar">
+        <div id="status-text">Initializing pre-rendering system...</div>
+        <div id="progress-bar">
+          <div id="progress-fill"></div>
+        </div>
+      </div>
+
+      <div id="controls">
+        <button id="toggle-prerendering">Toggle Pre-rendering</button>
+        <button id="refresh-debug">Refresh Debug Info</button>
+        <button id="jump-to-chapter">Jump to Chapter</button>
+        <button id="clear-logs">Clear Logs</button>
+      </div>
+
+      <div id="chapter-status"></div>
+      
+      <details>
+        <summary><strong>Debug Information</strong></summary>
+        <div id="debug-info"></div>
+      </details>
+
+      <details>
+        <summary><strong>System Logs</strong></summary>
+        <div id="system-logs"></div>
+      </details>
+    </div>
+
+    <!-- Highlights Section -->
+    <div id="highlights-section">
+      <h3>📝 Highlights</h3>
+      <ul id="highlights"></ul>
+    </div>
+  </div>
+
+  <script>
+    let book, rendition;
+    let preRenderingEnabled = true;
+    let systemLogs = [];
+
+    // Logging function
+    function addLog(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      systemLogs.push({ timestamp, message, type });
+      
+      // Keep only last 100 logs
+      if (systemLogs.length > 100) {
+        systemLogs = systemLogs.slice(-100);
+      }
+      
+      updateSystemLogs();
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+
+    function updateSystemLogs() {
+      const logsContainer = document.getElementById('system-logs');
+      logsContainer.innerHTML = systemLogs.map(log => 
+        `<div class="log-entry ${log.type}">[${log.timestamp}] ${log.message}</div>`
+      ).join('');
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    // Initialize the book
+    function initializeBook() {
+      addLog("Loading EPUB book...", "info");
+      
+      book = window.ePub("https://s3.amazonaws.com/moby-dick/OPS/package.opf", {
+        keepAbsoluteUrl: true
+      });
+      
+      rendition = book.renderTo("viewer", {
+        width: "100%",
+        height: 600,
+        ignoreClass: 'annotator-hl',
+        manager: "default",
+        flow: "paginated",
+        spread: "auto", 
+        transparency: true,
+        usePreRendering: preRenderingEnabled // 🎉 Enable pre-rendering!
+      });
+
+      addLog(`Rendition created with usePreRendering: ${preRenderingEnabled}`, "info");
+
+      setupEventListeners();
+      
+      // Display the first chapter
+      rendition.display().then(() => {
+        addLog("Initial chapter displayed", "success");
+        updateStatus();
+      }).catch(err => {
+        addLog(`Error displaying initial chapter: ${err.message}`, "error");
+      });
+    }
+
+    function setupEventListeners() {
+      // Book and rendition events
+      book.ready.then(() => {
+        addLog(`Book loaded: ${book.packaging.metadata.title}`, "success");
+        addLog(`Total sections: ${book.spine.length}`, "info");
+      });
+
+      rendition.on("started", function() {
+        addLog("Rendition started", "success");
+        addLog(`Layout: ${rendition.manager.layout.name}`, "info");
+        // Note: Don't check pre-renderer here - it's not initialized yet
+      });
+
+      // Check pre-renderer after attachment is complete
+      rendition.on("attached", function() {
+        addLog("Rendition attached - checking pre-renderer...", "info");
+        addLog(`Pre-rendering enabled: ${!!rendition.manager.preRenderer}`, "info");
+        addLog(`Manager usePreRendering: ${rendition.manager.usePreRendering}`, "info");
+        addLog(`Manager type: ${rendition.manager.constructor.name}`, "info");
+        addLog(`Manager name: ${rendition.manager.name}`, "info");
+        addLog(`Manager settings: ${JSON.stringify(rendition.manager.settings)}`, "info");
+        updateStatus();
+      });
+
+      // Wait for book to be ready AND rendition to be attached before starting pre-rendering
+      Promise.all([book.ready, new Promise(resolve => rendition.on("attached", resolve))]).then(() => {
+        addLog(`Book ready: ${book.packaging.metadata.title}`, "success");
+        addLog(`Total sections: ${book.spine.length}`, "info");
+        
+        // Start pre-rendering now that the book is fully loaded and rendition is attached
+        if (rendition.manager && rendition.manager.preRenderer) {
+          const sections = book.spine.spineItems;
+          addLog(`Starting pre-rendering of ${sections.length} chapters...`, "info");
+          
+          rendition.manager.startPreRendering(sections).then(() => {
+            addLog("Pre-rendering completed successfully", "success");
+            updateStatus();
+          }).catch(err => {
+            addLog(`Pre-rendering failed: ${err.message}`, "error");
+          });
+        } else {
+          addLog("Pre-renderer not available", "warning");
+        }
+      });
+
+      rendition.on("rendered", function(section, view) {
+        addLog(`Chapter rendered: ${section.href}`, "success");
+        updateStatus();
+      });
+
+      rendition.on("relocated", function(location) {
+        addLog(`Navigated to: ${location.start.cfi}`, "info");
+        updateStatus();
+      });
+
+      // Pre-renderer specific events
+      if (rendition.manager && rendition.manager.preRenderer) {
+        rendition.manager.on("added", function(data) {
+          // Handle different types of added events
+          if (data && typeof data === 'object' && data.total && data.rendered) {
+            // This is a pre-rendering status update
+            addLog(`Pre-rendering progress: ${data.rendered}/${data.total} chapters`, "success");
+          } else if (data && data.section) {
+            // This is a view being added
+            addLog(`Chapter view added: ${data.section.href}`, "info");
+          }
+          updateStatus();
+        });
+      }
+
+      // Navigation
+      document.getElementById("next").addEventListener("click", function(e) {
+        e.preventDefault();
+        addLog("Next button clicked", "info");
+        rendition.next();
+      });
+
+      document.getElementById("prev").addEventListener("click", function(e) {
+        e.preventDefault();
+        addLog("Previous button clicked", "info");
+        rendition.prev();
+      });
+
+      // Keyboard navigation
+      document.addEventListener("keyup", function(e) {
+        if (e.keyCode === 37) { // Left arrow
+          addLog("Left arrow pressed", "info");
+          rendition.prev();
+        } else if (e.keyCode === 39) { // Right arrow
+          addLog("Right arrow pressed", "info");
+          rendition.next();
+        }
+      });
+
+      // Text selection and highlighting
+      rendition.on("selected", function(cfiRange, contents) {
+        addLog(`Text selected: ${cfiRange}`, "info");
+        
+        // Add highlight
+        rendition.annotations.highlight(cfiRange, {}, (e) => {
+          addLog("Highlight clicked", "info");
+        });
+        
+        contents.window.getSelection().removeAllRanges();
+        addHighlightToList(cfiRange);
+      });
+
+      // Control buttons
+      document.getElementById("toggle-prerendering").addEventListener("click", function() {
+        preRenderingEnabled = !preRenderingEnabled;
+        addLog(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}`, "info");
+        // Note: This would require reinitializing the rendition to take effect
+        alert(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}. Reload page to take effect.`);
+      });
+
+      document.getElementById("refresh-debug").addEventListener("click", function() {
+        addLog("Refreshing debug information", "info");
+        updateStatus();
+      });
+
+      document.getElementById("jump-to-chapter").addEventListener("click", function() {
+        const chapterNum = prompt("Enter chapter number (0-based):");
+        if (chapterNum !== null && !isNaN(chapterNum)) {
+          const chapterIndex = parseInt(chapterNum);
+          addLog(`Jumping to chapter ${chapterIndex}`, "info");
+          rendition.display(chapterIndex);
+        }
+      });
+
+      document.getElementById("clear-logs").addEventListener("click", function() {
+        systemLogs = [];
+        updateSystemLogs();
+        addLog("Logs cleared", "info");
+      });
+    }
+
+    function addHighlightToList(cfiRange) {
+      book.getRange(cfiRange).then(function(range) {
+        if (range) {
+          const text = range.toString();
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          const remove = document.createElement('a');
+          const textSpan = document.createElement('span');
+
+          a.textContent = `📍 ${cfiRange}`;
+          a.href = "#" + cfiRange;
+          a.onclick = function(e) {
+            e.preventDefault();
+            addLog(`Navigating to highlight: ${cfiRange}`, "info");
+            rendition.display(cfiRange);
+          };
+
+          remove.textContent = "🗑️ Remove";
+          remove.href = "#" + cfiRange;
+          remove.onclick = function(e) {
+            e.preventDefault();
+            addLog(`Removing highlight: ${cfiRange}`, "info");
+            rendition.annotations.remove(cfiRange);
+            li.remove();
+            return false;
+          };
+
+          textSpan.textContent = text;
+          textSpan.style.fontStyle = 'italic';
+
+          li.appendChild(a);
+          li.appendChild(textSpan);
+          li.appendChild(remove);
+          document.getElementById('highlights').appendChild(li);
+        }
+      });
+    }
+
+    function updateStatus() {
+      const statusText = document.getElementById('status-text');
+      const progressFill = document.getElementById('progress-fill');
+      const chapterStatus = document.getElementById('chapter-status');
+      const debugInfo = document.getElementById('debug-info');
+
+      if (!rendition || !rendition.manager) {
+        statusText.textContent = "Rendition not ready";
+        return;
+      }
+
+      const preRenderer = rendition.manager.preRenderer;
+      
+      if (preRenderer) {
+        const status = preRenderer.getStatus();
+        const percentage = status.total > 0 ? (status.rendered / status.total) * 100 : 0;
+        
+        statusText.innerHTML = `
+          <strong>Pre-rendering Status:</strong> ${status.rendered}/${status.total} chapters rendered 
+          (${status.failed} failed) - ${percentage.toFixed(1)}%
+        `;
+        progressFill.style.width = percentage + '%';
+
+        // Update chapter status cards
+        updateChapterStatusCards(preRenderer);
+        
+        // Update debug info
+        const debugData = preRenderer.getDebugInfo();
+        debugInfo.innerHTML = `<pre>${JSON.stringify(debugData, null, 2)}</pre>`;
+      } else {
+        statusText.innerHTML = "<strong>Pre-rendering:</strong> Disabled";
+        progressFill.style.width = '0%';
+        chapterStatus.innerHTML = '<div>Pre-rendering is disabled</div>';
+        debugInfo.innerHTML = '<div>No pre-renderer available</div>';
+      }
+    }
+
+    function updateChapterStatusCards(preRenderer) {
+      const chapterStatus = document.getElementById('chapter-status');
+      const chapters = preRenderer.getAllChapters();
+      
+      chapterStatus.innerHTML = chapters.map(chapter => {
+        let statusClass = '';
+        let statusText = 'Pending';
+        
+        if (chapter.attached) {
+          statusClass = 'attached';
+          statusText = 'Displayed';
+        } else if (chapter.rendered.promise) {
+          // Check if promise is resolved
+          statusClass = 'rendered';
+          statusText = 'Pre-rendered';
+        }
+
+        const fileName = chapter.section.href.split('/').pop();
+        
+        return `
+          <div class="chapter-card ${statusClass}">
+            <div><strong>${fileName}</strong></div>
+            <div>Index: ${chapter.section.index}</div>
+            <div>Status: ${statusText}</div>
+            <div>Size: ${chapter.width}×${chapter.height}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Apply custom styling
+    function applyCustomStyling() {
+      if (rendition && rendition.themes) {
+        rendition.themes.default({
+          '::selection': {
+            'background': 'rgba(255,255,0, 0.3)'
+          },
+          '.highlight': {
+            'background': 'rgba(255,255,0, 0.3)',
+            'cursor': 'pointer'
+          }
+        });
+      }
+    }
+
+    // Initialize everything when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      addLog("Page loaded, initializing...", "info");
+      initializeBook();
+      applyCustomStyling();
+      
+      // Update status every 2 seconds
+      setInterval(updateStatus, 2000);
+    });
+
+    // Expose some functions to global scope for debugging
+    window.epubDebug = {
+      addLog,
+      updateStatus,
+      getPreRenderer: () => rendition?.manager?.preRenderer,
+      getDebugInfo: () => rendition?.manager?.preRenderer?.getDebugInfo(),
+      book,
+      rendition
+    };
+
+    addLog("Pre-rendering example initialized", "success");
+  </script>
+
+</body>
+</html>

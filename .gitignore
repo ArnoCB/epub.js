@@ -13,3 +13,7 @@ src/utils/*.js
 src/utils/*.d.ts
 # Ignore test specs for linting, but allow .spec.ts for commit
 src/**/*.spec.js
+
+# Playwright test results
+test-results/
+playwright-report/

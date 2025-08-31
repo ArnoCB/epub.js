@@ -56,6 +56,7 @@ export interface RenditionOptions {
   transparency?: boolean;
   direction?: string;
   orientation?: string;
+  usePreRendering?: boolean;
   globalLayoutProperties?: {
     flow?: Flow;
     [key: string]: unknown;
@@ -142,6 +143,7 @@ export class Rendition implements EventEmitterMethods {
       defaultDirection: 'ltr',
       allowScriptedContent: false,
       allowPopups: false,
+      usePreRendering: false,
       ...options,
     };
 
@@ -398,14 +400,26 @@ export class Rendition implements EventEmitterMethods {
    * @return {Promise}
    */
   attachTo(element: HTMLElement | string): Promise<unknown> {
+    console.log('[Rendition] *** attachTo METHOD CALLED ***');
+    console.log('[Rendition] attachTo called with element:', element);
+    console.log('[Rendition] Manager type:', this.manager.constructor.name);
+    console.log('[Rendition] Manager settings:', this.manager.settings);
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return this.q.enqueue(() => {
+      console.log('[Rendition] *** IN ENQUEUED FUNCTION ***');
+      console.log(
+        '[Rendition] In enqueued function, about to call manager.render'
+      );
+
       // Start rendering with the request function
       if (typeof element === 'string') {
         console.log('[Rendition] received a string as element:', element);
       }
 
+      console.log('[Rendition] Calling manager.render with element:', element);
       this.manager.render(element as HTMLElement);
+      console.log('[Rendition] manager.render call completed');
 
       /**
        * Emit that rendering has attached to an element

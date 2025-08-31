@@ -24,6 +24,10 @@ import Layout, { Axis, Flow } from 'src/layout';
 import { Section } from 'src/section';
 import { Contents } from 'src/epub';
 import IframeView from '../views/iframe';
+import BookPreRenderer, {
+  PreRenderedChapter,
+  ViewSettings,
+} from '../prerenderer';
 
 export type DefaultViewManagerSettings = {
   layout: Layout;
@@ -38,6 +42,7 @@ export type DefaultViewManagerSettings = {
   offset?: number;
   overflow?: string;
   afterScrolledTimeout: number;
+  usePreRendering?: boolean;
   [key: string]: unknown;
 };
 
@@ -97,6 +102,10 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   scrolled!: boolean;
   targetScrollLeft?: number;
 
+  // Pre-renderer for managing off-screen chapters
+  preRenderer?: BookPreRenderer;
+  usePreRendering: boolean = true;
+
   constructor(options: {
     settings: DefaultViewManagerSettings;
     view?: View | undefined;
@@ -109,6 +118,18 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     this.request = options.request;
     this.renditionQueue = options.queue;
     this.q = new Queue(this);
+
+    // Set usePreRendering from settings (default false for safety)
+    this.usePreRendering = options.settings.usePreRendering === true;
+
+    console.log(
+      '[DefaultViewManager] constructor - usePreRendering setting:',
+      this.usePreRendering
+    );
+    console.log(
+      '[DefaultViewManager] constructor - settings:',
+      options.settings
+    );
 
     this.settings = {
       infinite: true,
@@ -145,6 +166,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   render(element: HTMLElement, size?: { width: number; height: number }): void {
+    console.log('[DefaultViewManager] render() method called');
+    console.log(
+      '[DefaultViewManager] render() usePreRendering:',
+      this.usePreRendering
+    );
+
     const tag = element.tagName;
 
     if (
@@ -207,6 +234,121 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     }
 
     this.rendered = true;
+
+    // Debug the pre-rendering state before attempting initialization
+    console.log(
+      '[DefaultViewManager] render() completed, checking pre-rendering...'
+    );
+    console.log(
+      '[DefaultViewManager] this.usePreRendering:',
+      this.usePreRendering
+    );
+    console.log(
+      '[DefaultViewManager] typeof this.usePreRendering:',
+      typeof this.usePreRendering
+    );
+
+    // Initialize pre-rendering if enabled
+    if (this.usePreRendering) {
+      console.log(
+        '[DefaultViewManager] attempting to initialize pre-rendering...'
+      );
+      try {
+        this.initializePreRendering();
+      } catch (error) {
+        console.error(
+          '[DefaultViewManager] failed to initialize pre-rendering:',
+          error
+        );
+        this.usePreRendering = false;
+      }
+    } else {
+      console.log(
+        '[DefaultViewManager] pre-rendering not enabled, skipping initialization'
+      );
+    }
+  }
+
+  private initializePreRendering(): void {
+    console.debug('[DefaultViewManager] initializePreRendering called');
+    console.debug('[DefaultViewManager] container exists:', !!this.container);
+
+    if (!this.container) {
+      console.warn(
+        '[DefaultViewManager] no container available for pre-rendering'
+      );
+      return;
+    }
+
+    console.debug('[DefaultViewManager] viewSettings:', this.viewSettings);
+
+    // Create proper ViewSettings from viewSettings
+    const preRenderSettings: ViewSettings = {
+      ignoreClass: (this.viewSettings.ignoreClass as string) || '',
+      axis: this.viewSettings.axis as Axis,
+      direction: this.viewSettings.direction as string,
+      width: (this.viewSettings.width as number) || 800,
+      height: (this.viewSettings.height as number) || 600,
+      layout: this.viewSettings.layout as Layout,
+      method: this.viewSettings.method as string,
+      forceRight: (this.viewSettings.forceRight as boolean) || false,
+      allowScriptedContent:
+        (this.viewSettings.allowScriptedContent as boolean) || false,
+      allowPopups: (this.viewSettings.allowPopups as boolean) || false,
+      transparency: (this.viewSettings.transparency as boolean) || false,
+      forceEvenPages: (this.viewSettings.forceEvenPages as boolean) || false,
+      flow: this.viewSettings.flow as Flow,
+    };
+
+    console.debug(
+      '[DefaultViewManager] creating BookPreRenderer with settings:',
+      preRenderSettings
+    );
+
+    this.preRenderer = new BookPreRenderer(
+      this.container,
+      preRenderSettings,
+      this.request
+    );
+
+    console.debug(
+      '[DefaultViewManager] pre-renderer created successfully:',
+      !!this.preRenderer
+    );
+  }
+
+  /**
+   * Start pre-rendering all sections from a spine
+   */
+  async startPreRendering(sections: Section[]): Promise<void> {
+    if (!this.preRenderer) {
+      console.warn('[DefaultViewManager] preRenderer not initialized');
+      return;
+    }
+
+    console.debug(
+      '[DefaultViewManager] starting pre-render of',
+      sections.length,
+      'sections'
+    );
+    const status = await this.preRenderer.preRenderBook(sections);
+    console.debug('[DefaultViewManager] pre-rendering complete:', status);
+
+    this.emit(EVENTS.MANAGERS.ADDED, status);
+  }
+
+  /**
+   * Get pre-rendered chapter for debugging
+   */
+  getPreRenderedChapter(sectionHref: string): PreRenderedChapter | undefined {
+    return this.preRenderer?.getChapter(sectionHref);
+  }
+
+  /**
+   * Check if a chapter is pre-rendered and ready
+   */
+  hasPreRenderedChapter(sectionHref: string): boolean {
+    return !!this.preRenderer?.getChapter(sectionHref);
   }
 
   addEventListeners() {
@@ -249,6 +391,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     this.removeEventListeners();
 
     this.stage.destroy();
+
+    // Clean up pre-renderer
+    if (this.preRenderer) {
+      this.preRenderer.destroy();
+      this.preRenderer = undefined;
+    }
 
     this.rendered = false;
   }
@@ -337,17 +485,22 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     section: Section,
     action: (section: Section) => Promise<View>
   ) {
-    let next;
+    const isPrePaginated = this.layout.name === 'pre-paginated';
+    const hasMultiplePages = this.layout.divisor > 1;
 
-    if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
-      if (forceRight || section.index === 0) {
-        // First page (cover) should stand alone for pre-paginated books
-        return;
-      }
-      next = section.next();
-      if (next && !next.properties.includes('page-spread-left')) {
-        return action.call(this, next);
-      }
+    if (!isPrePaginated || !hasMultiplePages) {
+      return;
+    }
+
+    // First page (cover) should stand alone
+    if (forceRight || section.index === 0) {
+      return;
+    }
+
+    const next = section.next();
+
+    if (next && !next.properties.includes('page-spread-left')) {
+      return action.call(this, next);
     }
   }
 
@@ -359,6 +512,137 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     if (target === section.href || isNumber(target)) {
       target = undefined;
     }
+
+    // Try to use pre-rendered chapter first
+    if (this.usePreRendering && this.preRenderer) {
+      const preRenderedChapter = this.preRenderer.getChapter(section.href);
+      if (preRenderedChapter) {
+        console.debug(
+          '[DefaultViewManager] using pre-rendered chapter:',
+          section.href
+        );
+        return this.displayPreRendered(preRenderedChapter, target, displaying);
+      } else {
+        console.debug(
+          '[DefaultViewManager] no pre-rendered chapter found for:',
+          section.href,
+          'falling back to normal rendering'
+        );
+      }
+    }
+
+    // Fallback to normal rendering
+    this.displaySection(section, target, displaying);
+    return displayed;
+  }
+
+  /**
+   * Display a pre-rendered chapter
+   */
+  private displayPreRendered(
+    chapter: PreRenderedChapter,
+    target?: HTMLElement | string,
+    displaying?: defer<unknown>
+  ): Promise<unknown> {
+    const deferred = displaying || new defer();
+
+    console.debug(
+      '[DefaultViewManager] displaying pre-rendered chapter:',
+      chapter.section.href
+    );
+
+    // Wait for chapter to be fully rendered
+    chapter.rendered.promise
+      .then(() => {
+        // Clear current views first
+        this.clear();
+
+        // Attach the pre-rendered chapter to the main DOM
+        const attachedChapter = this.preRenderer!.attachChapter(
+          chapter.section.href
+        );
+
+        if (!attachedChapter) {
+          throw new Error('Failed to attach pre-rendered chapter');
+        }
+
+        // Add the view to the views system
+        // Note: We don't call display() again since it's already rendered
+        this.views.append(attachedChapter.view);
+
+        // Set up event handlers (same as in add() method)
+        attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
+        attachedChapter.view.onResize = this.afterResized.bind(this);
+
+        attachedChapter.view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
+          this.updateAxis(axis);
+        });
+
+        attachedChapter.view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
+          this.updateWritingMode(mode);
+        });
+
+        // Mark as displayed in the views system
+        attachedChapter.view.displayed = true;
+
+        // Handle target positioning if specified
+        if (target) {
+          const offset = attachedChapter.view.locationOf(target);
+          const width = attachedChapter.view.width();
+          this.moveTo(offset, width);
+        }
+
+        // Show the views
+        this.views.show();
+
+        // Emit the displayed event
+        this.emit(EVENTS.MANAGERS.ADDED, attachedChapter.view);
+
+        console.debug(
+          '[DefaultViewManager] pre-rendered chapter displayed successfully:',
+          chapter.section.href
+        );
+
+        deferred.resolve(undefined);
+      })
+      .catch((error: Error) => {
+        console.error(
+          '[DefaultViewManager] failed to display pre-rendered chapter:',
+          chapter.section.href,
+          error
+        );
+
+        // Fallback to normal rendering on error
+        console.debug('[DefaultViewManager] falling back to normal rendering');
+        this.displayNormally(chapter.section, target, deferred);
+      });
+
+    return deferred.promise;
+  }
+
+  /**
+   * Fallback to normal rendering when pre-rendered fails
+   */
+  private displayNormally(
+    section: Section,
+    target?: HTMLElement | string,
+    displaying?: defer<unknown>
+  ): void {
+    const deferred = displaying || new defer();
+
+    // Use the original display logic
+    this.displaySection(section, target, deferred);
+  }
+
+  /**
+   * Original display logic extracted for reuse
+   */
+  private displaySection(
+    section: Section,
+    target?: HTMLElement | string,
+    displaying?: defer<unknown>
+  ): void {
+    const deferred = displaying || new defer();
 
     // Check to make sure the section we want isn't already shown
     const visible = this.views.find(section);
@@ -380,8 +664,8 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         this.moveTo(offset, width);
       }
 
-      displaying.resolve(undefined);
-      return displayed;
+      deferred.resolve(undefined);
+      return;
     }
 
     // Hide all current views
@@ -408,7 +692,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
           }
         },
         (err: Error) => {
-          displaying.reject(err);
+          deferred.reject(err);
         }
       )
       .then(() => {
@@ -416,10 +700,11 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       })
       .then(() => {
         this.views.show();
-        displaying.resolve(undefined);
+        deferred.resolve(undefined);
+      })
+      .catch((err) => {
+        deferred.reject(err);
       });
-
-    return displayed;
   }
 
   afterDisplayed(view: View) {
@@ -462,35 +747,55 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
           this.container.appendChild(phantomElement);
         }
 
-        // Always update phantom width to match current chapter
-        phantomElement.style.width = contentWidth + 'px';
+        // Fix: Ensure phantom width is set correctly and consistently
+        const safeContentWidth = Math.max(contentWidth, this.layout.width);
+        phantomElement.style.width = safeContentWidth + 'px';
+
+        // Force a reflow to ensure the phantom element takes effect
+        void phantomElement.offsetWidth;
 
         console.debug(
           '[DefaultViewManager] afterDisplayed container now scrollWidth:',
-          this.container.scrollWidth
+          this.container.scrollWidth,
+          'phantom width:',
+          phantomElement.offsetWidth
         );
 
-        // Always resize view and iframe to match content width
-        console.debug(
-          '[DefaultViewManager] resizing view/iframe to content width:',
-          contentWidth
-        );
-
-        // Position content at left: 0 for proper scrolling
+        // Fix: Ensure view and iframe dimensions are consistent
         const element = view.element as HTMLElement;
         if (element) {
-          element.style.width = contentWidth + 'px';
+          element.style.width = safeContentWidth + 'px';
           element.style.left = '0px';
 
           // Fix: Also resize the iframe inside the view element
           const iframe = element.querySelector('iframe') as HTMLIFrameElement;
           if (iframe) {
-            iframe.style.width = contentWidth + 'px';
+            iframe.style.width = safeContentWidth + 'px';
+
+            // Fix: Ensure iframe positioning is correct for the content
+            iframe.style.left = '0px';
+            iframe.style.position = 'absolute';
+
             console.debug(
               '[DefaultViewManager] resized iframe to match content width:',
-              contentWidth
+              safeContentWidth
             );
           }
+        }
+
+        // Fix: Validate that scroll calculations are correct
+        const maxScrollLeft = Math.max(
+          0,
+          this.container.scrollWidth - this.container.offsetWidth
+        );
+        if (this.container.scrollLeft > maxScrollLeft) {
+          console.warn(
+            '[DefaultViewManager] afterDisplayed: scroll position exceeds content bounds, adjusting:',
+            this.container.scrollLeft,
+            '->',
+            maxScrollLeft
+          );
+          this.container.scrollLeft = maxScrollLeft;
         }
       }
     }
@@ -606,332 +911,311 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     }
   }
 
-  next(): Promise<void> {
-    let next;
-    let left;
-    const dir = this.settings.direction;
+  async next(): Promise<void> {
+    if (!this.hasViews()) return;
 
-    if (this.views === undefined || !this.views.length) {
-      return Promise.resolve();
+    const section = this.handleScrollForward();
+
+    if (section) {
+      await this.loadNextSection(section);
     }
-
-    if (
-      this.isPaginated &&
-      this.settings.axis === 'horizontal' &&
-      (!dir || dir === 'ltr')
-    ) {
-      this.scrollLeft = this.container.scrollLeft;
-
-      // Container scrollWidth expansion is now handled in afterDisplayed()
-      // This ensures totalPages calculations are correct from the start
-
-      // Calculate scroll position for next page
-      left =
-        this.container.scrollLeft +
-        this.container.offsetWidth +
-        this.layout.delta;
-
-      console.debug(
-        '[DefaultViewManager] next() scroll calculation:',
-        'scrollLeft=',
-        this.container.scrollLeft,
-        'offsetWidth=',
-        this.container.offsetWidth,
-        'delta=',
-        this.layout.delta,
-        'calculated left=',
-        left,
-        'scrollWidth=',
-        this.container.scrollWidth
-      );
-
-      if (left <= this.container.scrollWidth) {
-        console.debug(
-          '[DefaultViewManager] scrolling by delta:',
-          this.layout.delta
-        );
-        this.scrollBy(this.layout.delta, 0, true);
-
-        // Debug: Check scroll position after scrollBy
-        console.debug(
-          '[DefaultViewManager] after scrollBy - scrollLeft:',
-          this.container.scrollLeft,
-          'container position should show content now'
-        );
-
-        // Debug: Check actual DOM state
-        const currentView = this.views.last();
-        if (currentView && currentView.element) {
-          const element = currentView.element as HTMLElement;
-          console.debug(
-            '[DefaultViewManager] DOM state check:',
-            'container.scrollLeft=',
-            this.container.scrollLeft,
-            'container.scrollWidth=',
-            this.container.scrollWidth,
-            'element.style.left=',
-            element.style.left,
-            'element.style.width=',
-            element.style.width,
-            'element.offsetLeft=',
-            element.offsetLeft,
-            'element.offsetWidth=',
-            element.offsetWidth
-          );
-        }
-
-        // Fix: Prevent immediate scroll resets by temporarily storing expected position
-        this.targetScrollLeft = this.container.scrollLeft;
-
-        // Add a timeout to check if scroll position gets reset
-        setTimeout(() => {
-          console.debug(
-            '[DefaultViewManager] scroll position check after 100ms:',
-            'expected=',
-            this.targetScrollLeft,
-            'actual=',
-            this.container.scrollLeft
-          );
-          if (this.container.scrollLeft !== this.targetScrollLeft) {
-            console.warn(
-              '[DefaultViewManager] SCROLL RESET DETECTED!',
-              'Something reset scrollLeft from',
-              this.targetScrollLeft,
-              'to',
-              this.container.scrollLeft
-            );
-          }
-        }, 100);
-
-        setTimeout(() => {
-          console.debug(
-            '[DefaultViewManager] scroll position check after 500ms:',
-            'expected=',
-            this.targetScrollLeft,
-            'actual=',
-            this.container.scrollLeft
-          );
-        }, 500);
-      } else {
-        console.debug(
-          '[DefaultViewManager] reached end of chapter, looking for next section'
-        );
-        const lastView = this.views.last();
-        if (lastView && lastView.section) {
-          next = lastView.section.next();
-        }
-      }
-    } else if (
-      this.isPaginated &&
-      this.settings.axis === 'horizontal' &&
-      dir === 'rtl'
-    ) {
-      this.scrollLeft = this.container.scrollLeft;
-      if (this.settings.rtlScrollType === 'default') {
-        left = this.container.scrollLeft;
-        if (left > 0) {
-          this.scrollBy(this.layout.delta, 0, true);
-        } else {
-          const lastView = this.views.last();
-          if (lastView && lastView.section) {
-            next = lastView.section.next();
-          }
-        }
-      } else {
-        left = this.container.scrollLeft + this.layout.delta * -1;
-        if (left > this.container.scrollWidth * -1) {
-          this.scrollBy(this.layout.delta, 0, true);
-        } else {
-          const lastView = this.views.last();
-          if (lastView && lastView.section) {
-            next = lastView.section.next();
-          }
-        }
-      }
-    } else if (this.isPaginated && this.settings.axis === 'vertical') {
-      this.scrollTop = this.container.scrollTop;
-      const top = this.container.scrollTop + this.container.offsetHeight;
-      if (top < this.container.scrollHeight) {
-        this.scrollBy(0, this.layout.height, true);
-      } else {
-        const lastView = this.views.last();
-        if (lastView && lastView.section) {
-          next = lastView.section.next();
-        }
-      }
-    } else {
-      const lastView = this.views.last();
-      if (lastView && lastView.section) {
-        next = lastView.section.next();
-      }
-    }
-
-    if (next) {
-      this.clear();
-      // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
-      this.updateLayout();
-      let forceRight = false;
-      if (
-        this.layout.name === 'pre-paginated' &&
-        this.layout.divisor === 2 &&
-        next.properties.includes('page-spread-right')
-      ) {
-        forceRight = true;
-      }
-      return this.append(next, forceRight)
-        .then(
-          () => {
-            return this.handleNextPrePaginated(forceRight, next, this.append);
-          },
-          (err: Error) => {
-            return err;
-          }
-        )
-        .then(() => {
-          // Reset position to start for scrolled-doc vertical-rl in default mode
-          if (
-            !this.isPaginated &&
-            this.settings.axis === 'horizontal' &&
-            this.settings.direction === 'rtl' &&
-            this.settings.rtlScrollType === 'default'
-          ) {
-            this.scrollTo(this.container.scrollWidth, 0, true);
-          }
-          this.views.show();
-        });
-    }
-
-    // Return resolved promise when no next section is available
-    return Promise.resolve();
   }
 
-  prev(): Promise<void> {
-    let prev;
-    let left;
-    const dir = this.settings.direction;
+  async prev(): Promise<void> {
+    if (!this.hasViews()) return;
 
-    if (this.views === undefined || !this.views.length) {
-      return Promise.resolve();
+    const section = this.handleScrollBackward();
+
+    // Fix: Check if section exists before trying to load it
+    // This prevents white pages when navigating beyond book boundaries
+    if (section && section.href) {
+      await this.loadPrevSection(section);
+    } else {
+      console.debug(
+        '[DefaultViewManager] prev() reached beginning of book, no more sections to load'
+      );
+      // Don't clear views or reset scroll position if we're at the boundary
+      return;
+    }
+  }
+
+  /* ---------- Helpers ---------- */
+
+  private hasViews(): boolean {
+    return this.views && this.views.length > 0;
+  }
+
+  private handleScrollForward(): Section | undefined {
+    const { axis, direction, rtlScrollType } = this.settings;
+
+    if (!this.isPaginated) {
+      return this.views.last()?.section?.next();
     }
 
-    if (
-      this.isPaginated &&
-      this.settings.axis === 'horizontal' &&
-      (!dir || dir === 'ltr')
-    ) {
-      this.scrollLeft = this.container.scrollLeft;
+    if (axis === 'horizontal') {
+      return direction === 'rtl'
+        ? this.scrollForwardRTL(rtlScrollType as string)
+        : this.scrollForwardLTR();
+    }
+
+    if (axis === 'vertical') {
+      return this.scrollForwardVertical();
+    }
+
+    return;
+  }
+
+  private handleScrollBackward(): Section | undefined {
+    const { axis, direction, rtlScrollType } = this.settings;
+
+    if (!this.isPaginated) {
+      return this.views.first()?.section?.prev();
+    }
+
+    if (axis === 'horizontal') {
+      return direction === 'rtl'
+        ? this.scrollBackwardRTL(rtlScrollType as string)
+        : this.scrollBackwardLTR();
+    }
+
+    if (axis === 'vertical') {
+      return this.scrollBackwardVertical();
+    }
+
+    return;
+  }
+
+  /* ---------- Directional scroll strategies ---------- */
+
+  private scrollForwardLTR(): Section | undefined {
+    const left =
+      this.container.scrollLeft +
+      this.container.offsetWidth +
+      this.layout.delta;
+    if (left <= this.container.scrollWidth) {
+      this.scrollBy(this.layout.delta, 0, true);
+      this.rememberScrollPosition();
+      return;
+    }
+    return this.views.last()?.section?.next();
+  }
+
+  private scrollForwardRTL(rtlScrollType: string): Section | undefined {
+    let left;
+    if (rtlScrollType === 'default') {
       left = this.container.scrollLeft;
       if (left > 0) {
-        this.scrollBy(-this.layout.delta, 0, true);
-      } else {
-        const firstView = this.views.first();
-        if (firstView && firstView.section) {
-          prev = firstView.section.prev();
-        }
-      }
-    } else if (
-      this.isPaginated &&
-      this.settings.axis === 'horizontal' &&
-      dir === 'rtl'
-    ) {
-      this.scrollLeft = this.container.scrollLeft;
-      if (this.settings.rtlScrollType === 'default') {
-        left = this.container.scrollLeft + this.container.offsetWidth;
-        if (left < this.container.scrollWidth) {
-          this.scrollBy(-this.layout.delta, 0, true);
-        } else {
-          const firstView = this.views.first();
-          if (firstView && firstView.section) {
-            prev = firstView.section.prev();
-          }
-        }
-      } else {
-        left = this.container.scrollLeft;
-        if (left < 0) {
-          this.scrollBy(-this.layout.delta, 0, true);
-        } else {
-          const firstView = this.views.first();
-          if (firstView && firstView.section) {
-            prev = firstView.section.prev();
-          }
-        }
-      }
-    } else if (this.isPaginated && this.settings.axis === 'vertical') {
-      this.scrollTop = this.container.scrollTop;
-      const top = this.container.scrollTop;
-      if (top > 0) {
-        this.scrollBy(0, -this.layout.height, true);
-      } else {
-        const firstView = this.views.first();
-        if (firstView && firstView.section) {
-          prev = firstView.section.prev();
-        }
+        this.scrollBy(this.layout.delta, 0, true);
+        return;
       }
     } else {
-      const firstView = this.views.first();
-      if (firstView && firstView.section) {
-        prev = firstView.section.prev();
+      left = this.container.scrollLeft - this.layout.delta;
+      if (left > this.container.scrollWidth * -1) {
+        this.scrollBy(this.layout.delta, 0, true);
+        return;
       }
     }
-
-    if (prev) {
-      this.clear();
-      // The new section may have a different writing-mode from the old section. Thus, we need to update layout.
-      this.updateLayout();
-      let forceRight = false;
-      if (
-        this.layout.name === 'pre-paginated' &&
-        this.layout.divisor === 2 &&
-        typeof prev.prev() !== 'object'
-      ) {
-        forceRight = true;
-      }
-      return this.prepend(prev, forceRight)
-        .then(
-          () => {
-            let left;
-            if (
-              this.layout.name === 'pre-paginated' &&
-              this.layout.divisor > 1
-            ) {
-              left = prev.prev();
-              if (left) {
-                return this.prepend(left);
-              }
-            }
-          },
-          (err) => {
-            return err;
-          }
-        )
-        .then(() => {
-          if (this.isPaginated && this.settings.axis === 'horizontal') {
-            if (this.settings.direction === 'rtl') {
-              if (this.settings.rtlScrollType === 'default') {
-                this.scrollTo(0, 0, true);
-              } else {
-                this.scrollTo(
-                  this.container.scrollWidth * -1 + this.layout.delta,
-                  0,
-                  true
-                );
-              }
-            } else {
-              this.scrollTo(
-                this.container.scrollWidth - this.layout.delta,
-                0,
-                true
-              );
-            }
-          }
-          this.views.show();
-        });
-    }
-
-    // Return resolved promise when no prev section is available
-    return Promise.resolve();
+    return this.views.last()?.section?.next();
   }
 
+  private scrollForwardVertical(): Section | undefined {
+    const top = this.container.scrollTop + this.container.offsetHeight;
+    if (top < this.container.scrollHeight) {
+      this.scrollBy(0, this.layout.height, true);
+      return;
+    }
+    return this.views.last()?.section?.next();
+  }
+
+  private scrollBackwardLTR(): Section | undefined {
+    if (this.container.scrollLeft > 0) {
+      this.scrollBy(-this.layout.delta, 0, true);
+      return;
+    }
+
+    // Fix: When scrollLeft is 0, we should move to the previous section
+    // But first check if we're already at the beginning of the book
+    const firstSection = this.views.first()?.section;
+    if (!firstSection) {
+      console.debug(
+        '[DefaultViewManager] scrollBackwardLTR: no first section available'
+      );
+      return;
+    }
+
+    const prevSection = firstSection.prev();
+    if (!prevSection) {
+      console.debug(
+        '[DefaultViewManager] scrollBackwardLTR: reached beginning of book, no more previous sections'
+      );
+      return;
+    }
+
+    console.debug(
+      '[DefaultViewManager] scrollBackwardLTR: moving from',
+      firstSection.href,
+      'to',
+      prevSection.href
+    );
+
+    return prevSection;
+  }
+
+  private scrollBackwardRTL(rtlScrollType: string): Section | undefined {
+    if (rtlScrollType === 'default') {
+      if (
+        this.container.scrollLeft + this.container.offsetWidth <
+        this.container.scrollWidth
+      ) {
+        this.scrollBy(-this.layout.delta, 0, true);
+        return;
+      }
+    } else {
+      if (this.container.scrollLeft < 0) {
+        this.scrollBy(-this.layout.delta, 0, true);
+        return;
+      }
+    }
+    return this.views.first()?.section?.prev();
+  }
+
+  private scrollBackwardVertical(): Section | undefined {
+    if (this.container.scrollTop > 0) {
+      this.scrollBy(0, -this.layout.height, true);
+      return;
+    }
+    return this.views.first()?.section?.prev();
+  }
+
+  /* ---------- Section loading ---------- */
+
+  private async loadNextSection(next: Section): Promise<void> {
+    this.clear();
+    this.updateLayout();
+
+    const forceRight =
+      this.layout.name === 'pre-paginated' &&
+      this.layout.divisor === 2 &&
+      next.properties.includes('page-spread-right');
+
+    await this.append(next, forceRight).then(
+      () => this.handleNextPrePaginated(forceRight, next, this.append),
+      (err) => err
+    );
+
+    if (
+      !this.isPaginated &&
+      this.settings.axis === 'horizontal' &&
+      this.settings.direction === 'rtl' &&
+      this.settings.rtlScrollType === 'default'
+    ) {
+      this.scrollTo(this.container.scrollWidth, 0, true);
+    }
+
+    this.views.show();
+  }
+
+  private async loadPrevSection(prev: Section): Promise<void> {
+    // Fix: Validate section before proceeding
+    if (!prev || !prev.href) {
+      console.warn(
+        '[DefaultViewManager] loadPrevSection called with invalid section:',
+        prev
+      );
+      return;
+    }
+
+    this.clear();
+    this.updateLayout();
+
+    const forceRight =
+      this.layout.name === 'pre-paginated' &&
+      this.layout.divisor === 2 &&
+      typeof prev.prev() !== 'object';
+
+    await this.prepend(prev, forceRight).then(
+      async () => {
+        if (this.layout.name === 'pre-paginated' && this.layout.divisor > 1) {
+          const left = prev.prev();
+          if (left) await this.prepend(left);
+        }
+      },
+      (err) => {
+        console.error(
+          '[DefaultViewManager] Error in loadPrevSection prepend:',
+          err
+        );
+        return err;
+      }
+    );
+
+    this.adjustScrollAfterPrepend();
+    this.views.show();
+  }
+
+  /* ---------- Scroll adjustments ---------- */
+
+  private adjustScrollAfterPrepend(): void {
+    if (!this.isPaginated || this.settings.axis !== 'horizontal') return;
+
+    const { rtlScrollType, direction } = this.settings;
+
+    // Fix: Add validation to prevent scrolling beyond bounds
+    const containerScrollWidth = this.container.scrollWidth;
+    const containerOffsetWidth = this.container.offsetWidth;
+    const maxScrollLeft = Math.max(
+      0,
+      containerScrollWidth - containerOffsetWidth
+    );
+
+    console.debug(
+      '[DefaultViewManager] adjustScrollAfterPrepend:',
+      'scrollWidth=',
+      containerScrollWidth,
+      'offsetWidth=',
+      containerOffsetWidth,
+      'maxScrollLeft=',
+      maxScrollLeft
+    );
+
+    if (direction === 'rtl') {
+      if (rtlScrollType === 'default') {
+        this.scrollTo(0, 0, true);
+      } else {
+        const targetScrollLeft = containerScrollWidth * -1 + this.layout.delta;
+        this.scrollTo(targetScrollLeft, 0, true);
+      }
+    } else {
+      // Fix: Ensure we don't scroll beyond available content
+      const targetScrollLeft = Math.min(
+        maxScrollLeft,
+        containerScrollWidth - this.layout.delta
+      );
+
+      console.debug(
+        '[DefaultViewManager] adjustScrollAfterPrepend LTR: setting scrollLeft to',
+        targetScrollLeft
+      );
+
+      this.scrollTo(targetScrollLeft, 0, true);
+    }
+  }
+
+  private rememberScrollPosition(): void {
+    this.targetScrollLeft = this.container.scrollLeft;
+
+    setTimeout(() => {
+      if (this.container.scrollLeft !== this.targetScrollLeft) {
+        console.warn(
+          '[DefaultViewManager] SCROLL RESET DETECTED!',
+          'expected=',
+          this.targetScrollLeft,
+          'actual=',
+          this.container.scrollLeft
+        );
+      }
+    }, 100);
+  }
   current() {
     const visible = this.visible();
     if (visible.length) {
@@ -946,7 +1230,22 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     if (this.views) {
       this.views.hide();
-      this.scrollTo(0, 0, true);
+
+      // Fix: Don't reset scroll position during clear if we're in the middle of navigation
+      // This prevents white pages during rapid backward navigation
+      const hasValidScrollPosition = this.container.scrollLeft > 0;
+      const isNavigating = this.views.length > 0; // If we have views, we're likely navigating
+
+      // Only reset scroll if we're truly clearing everything (like initial load)
+      if (!hasValidScrollPosition || !isNavigating) {
+        this.scrollTo(0, 0, true);
+      } else {
+        console.debug(
+          '[DefaultViewManager] clear() preserving scroll position during navigation:',
+          this.container.scrollLeft
+        );
+      }
+
       this.views.clear();
     }
 
