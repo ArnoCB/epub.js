@@ -117,6 +117,7 @@ const canScrollBackward = currentScrollLeft > 10;
 
 1. **Consolidate duplicate tests** into focused test files
 2. **Add spine item verification tests**:
+
    ```typescript
    test('navigation reaches correct spine items', async ({ page }) => {
      // Verify we reach the expected spine item, not just any previous item

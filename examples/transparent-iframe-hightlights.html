@@ -56,18 +56,18 @@
   </div>
 
   <script>
-
     // Load the opf
     var book = window.ePub("https://s3.amazonaws.com/moby-dick/OPS/package.opf", {
       keepAbsoluteUrl: true
     });
+    
     var rendition = book.renderTo("viewer", {
       width: "100%",
       height: 600,
       ignoreClass: 'annotator-hl',
       manager: "default",
       flow: "paginated",
-      spread: "auto",  // Explicitly enable spread mode
+      spread: "auto", 
       transparency: true
     });
 
