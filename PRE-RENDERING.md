@@ -16,10 +16,10 @@ The pre-rendering system works by:
 
 ```javascript
 // Enable pre-rendering when creating a rendition
-const rendition = book.renderTo("viewer", {
+const rendition = book.renderTo('viewer', {
   width: 800,
   height: 600,
-  usePreRendering: true // Enable pre-rendering
+  usePreRendering: true, // Enable pre-rendering
 });
 
 // Pre-rendering will automatically start after the rendition is rendered
@@ -39,13 +39,13 @@ if (viewManager.preRenderer) {
   // Check pre-rendering status
   const status = viewManager.preRenderer.status;
   console.log(`Pre-rendered: ${status.rendered}/${status.total} chapters`);
-  
+
   // Get specific chapter
   const chapter = viewManager.preRenderer.getChapter('chapter1.html');
   if (chapter) {
     console.log('Chapter ready:', chapter.rendered.promise);
   }
-  
+
   // Get debugging information
   const debugInfo = viewManager.preRenderer.getDebugInfo();
   console.log('Pre-renderer state:', debugInfo);
@@ -90,6 +90,7 @@ if (viewManager.preRenderer) {
 ### Off-Screen Rendering
 
 Pre-rendered chapters are created in an off-screen container with these properties:
+
 - Positioned absolutely outside the viewport (`left: -10000px`)
 - Hidden from user interaction (`pointer-events: none; visibility: hidden`)
 - Maintains proper dimensions for accurate rendering
@@ -97,6 +98,7 @@ Pre-rendered chapters are created in an off-screen container with these properti
 ### DOM Management
 
 The system manages two containers:
+
 - **Off-screen container**: Holds pre-rendered chapters not currently displayed
 - **Main container**: Holds the currently displayed chapter(s)
 
@@ -113,19 +115,19 @@ Chapters are moved between containers as needed for navigation.
 The pre-rendering system can be configured through the rendition options:
 
 ```javascript
-const rendition = book.renderTo("viewer", {
+const rendition = book.renderTo('viewer', {
   // Standard options
   width: 800,
   height: 600,
-  flow: "paginated",
-  
+  flow: 'paginated',
+
   // Pre-rendering options
   usePreRendering: true,
-  
+
   // These affect pre-rendered chapters
   allowScriptedContent: false,
   allowPopups: false,
-  transparency: true
+  transparency: true,
 });
 ```
 
@@ -134,6 +136,7 @@ const rendition = book.renderTo("viewer", {
 ### Console Logging
 
 The pre-renderer provides detailed console logging:
+
 - Chapter rendering progress
 - DOM attachment/detachment events
 - Error states and recoveries
@@ -149,6 +152,7 @@ console.table(debugInfo.chapters);
 ```
 
 This includes:
+
 - Rendering status for each chapter
 - DOM attachment state
 - Calculated dimensions
@@ -165,6 +169,7 @@ This includes:
 ## Compatibility
 
 The pre-rendering system is designed to be backwards compatible:
+
 - Works with existing epub.js configurations
 - Falls back gracefully to normal rendering if disabled
 - Maintains the same public API for navigation methods

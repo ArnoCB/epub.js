@@ -54,6 +54,7 @@ export interface RenditionOptions {
     transparency?: boolean;
     direction?: string;
     orientation?: string;
+    usePreRendering?: boolean;
     globalLayoutProperties?: {
         flow?: Flow;
         [key: string]: unknown;

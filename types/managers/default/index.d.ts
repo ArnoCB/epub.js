@@ -18,6 +18,7 @@ import Layout, { Axis, Flow } from 'src/layout';
 import { Section } from 'src/section';
 import { Contents } from 'src/epub';
 import IframeView from '../views/iframe';
+import BookPreRenderer, { PreRenderedChapter } from '../prerenderer';
 export type DefaultViewManagerSettings = {
     layout: Layout;
     infinite?: boolean;
@@ -31,6 +32,7 @@ export type DefaultViewManagerSettings = {
     offset?: number;
     overflow?: string;
     afterScrolledTimeout: number;
+    usePreRendering?: boolean;
     [key: string]: unknown;
 };
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
@@ -85,6 +87,8 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
     ignore: boolean;
     scrolled: boolean;
     targetScrollLeft?: number;
+    preRenderer?: BookPreRenderer;
+    usePreRendering: boolean;
     constructor(options: {
         settings: DefaultViewManagerSettings;
         view?: View | undefined;
@@ -96,6 +100,19 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
         width: number;
         height: number;
     }): void;
+    private initializePreRendering;
+    /**
+     * Start pre-rendering all sections from a spine
+     */
+    startPreRendering(sections: Section[]): Promise<void>;
+    /**
+     * Get pre-rendered chapter for debugging
+     */
+    getPreRenderedChapter(sectionHref: string): PreRenderedChapter | undefined;
+    /**
+     * Check if a chapter is pre-rendered and ready
+     */
+    hasPreRenderedChapter(sectionHref: string): boolean;
     addEventListeners(): void;
     removeEventListeners(): void;
     destroy(): void;
@@ -105,6 +122,18 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
     createView(section: Section, forceRight?: boolean): IframeView;
     handleNextPrePaginated(forceRight: boolean, section: Section, action: (section: Section) => Promise<View>): Promise<View> | undefined;
     display(section: Section, target?: HTMLElement | string): Promise<unknown>;
+    /**
+     * Display a pre-rendered chapter
+     */
+    private displayPreRendered;
+    /**
+     * Fallback to normal rendering when pre-rendered fails
+     */
+    private displayNormally;
+    /**
+     * Original display logic extracted for reuse
+     */
+    private displaySection;
     afterDisplayed(view: View): void;
     afterResized(view: View): void;
     add(section: Section, forceRight?: boolean): Promise<View>;

@@ -1,17 +1,17 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "build:lib",
-			"type": "shell",
-			"command": "npm run build:lib",
-			"group": "build"
-		},
-		{
-			"label": "build:rollup",
-			"type": "shell",
-			"command": "npm run build:rollup",
-			"group": "build"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build:lib",
+      "type": "shell",
+      "command": "npm run build:lib",
+      "group": "build"
+    },
+    {
+      "label": "build:rollup",
+      "type": "shell",
+      "command": "npm run build:rollup",
+      "group": "build"
+    }
+  ]
 }

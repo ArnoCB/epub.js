@@ -1,173 +1,231 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Pre-rendered Object Inspection</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        .error { background: #ffebee; color: #c62828; }
-        .success { background: #e8f5e8; color: #2e7d32; }
-        .warning { background: #fff3e0; color: #ef6c00; }
-        pre { background: white; padding: 10px; border: 1px solid #ddd; overflow-x: auto; }
-        .chapter-info { border: 1px solid #ccc; margin: 10px 0; padding: 15px; }
-        .chapter-info h3 { margin-top: 0; }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .debug {
+        background: #f0f0f0;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .error {
+        background: #ffebee;
+        color: #c62828;
+      }
+      .success {
+        background: #e8f5e8;
+        color: #2e7d32;
+      }
+      .warning {
+        background: #fff3e0;
+        color: #ef6c00;
+      }
+      pre {
+        background: white;
+        padding: 10px;
+        border: 1px solid #ddd;
+        overflow-x: auto;
+      }
+      .chapter-info {
+        border: 1px solid #ccc;
+        margin: 10px 0;
+        padding: 15px;
+      }
+      .chapter-info h3 {
+        margin-top: 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Pre-rendered Object Inspection</h1>
     <div id="output"></div>
-    
+
     <script src="dist/epub.js"></script>
     <script>
-        const output = document.getElementById('output');
-        
-        function log(message, type = 'debug') {
-            const div = document.createElement('div');
-            div.className = `debug ${type}`;
-            div.innerHTML = message;
-            output.appendChild(div);
-        }
-        
-        function logObject(title, obj) {
-            const div = document.createElement('div');
-            div.className = 'debug';
-            div.innerHTML = `<strong>${title}:</strong><pre>${JSON.stringify(obj, null, 2)}</pre>`;
-            output.appendChild(div);
-        }
-        
-        async function inspectPreRenderedObjects() {
-            try {
-                log('🔧 Starting pre-rendered object inspection...', 'success');
-                
-                // Initialize the book
-                const book = ePub('https://s3.amazonaws.com/moby-dick/OPS/package.opf', {
-                    openAs: 'epub',
-                    requestMethod: 'fetch'
-                });
-                
-                await book.ready;
-                log(`✅ Book loaded with ${book.spine.length} sections`, 'success');
-                
-                // Create rendition
-                const viewer = document.createElement('div');
-                viewer.style.width = '900px';
-                viewer.style.height = '600px';
-                viewer.style.border = '1px solid #ccc';
-                viewer.style.margin = '20px 0';
-                document.body.appendChild(viewer);
-                
-                const rendition = book.renderTo(viewer, {
-                    manager: 'default',
-                    width: 900,
-                    height: 600,
-                    flow: 'paginated',
-                    spread: 'none'
-                });
-                
-                log('✅ Rendition created', 'success');
-                
-                // Enable pre-rendering
-                if (rendition.manager && typeof rendition.manager.enablePreRendering === 'function') {
-                    const preRenderStatus = await rendition.manager.enablePreRendering();
-                    log(`✅ Pre-rendering enabled: ${preRenderStatus.rendered}/${preRenderStatus.total} chapters rendered`, 'success');
-                    
-                    // Wait a bit for pre-rendering to complete
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                    
-                    // Get the pre-renderer
-                    const preRenderer = rendition.manager.preRenderer;
-                    if (!preRenderer) {
-                        log('❌ Pre-renderer not found', 'error');
-                        return;
-                    }
-                    
-                    log('🔍 Inspecting pre-renderer state...', 'success');
-                    
-                    // Get debug info
-                    const debugInfo = preRenderer.getDebugInfo();
-                    logObject('Pre-renderer Debug Info', debugInfo);
-                    
-                    // Inspect first few chapters in detail
-                    const chaptersToInspect = ['cover.xhtml', 'chapter_001.xhtml', 'chapter_002.xhtml', 'chapter_003.xhtml'];
-                    
-                    for (const href of chaptersToInspect) {
-                        const chapter = preRenderer.getChapter(href);
-                        if (chapter) {
-                            const chapterDiv = document.createElement('div');
-                            chapterDiv.className = 'chapter-info';
-                            
-                            const title = document.createElement('h3');
-                            title.textContent = `Chapter: ${href}`;
-                            chapterDiv.appendChild(title);
-                            
-                            const info = {
-                                attached: chapter.attached,
-                                width: chapter.width,
-                                height: chapter.height,
-                                pageCount: chapter.pageCount,
-                                hasWhitePages: chapter.hasWhitePages,
-                                whitePageIndices: chapter.whitePageIndices,
-                                elementInfo: {
-                                    tagName: chapter.element?.tagName,
-                                    offsetWidth: chapter.element?.offsetWidth,
-                                    offsetHeight: chapter.element?.offsetHeight,
-                                    scrollWidth: chapter.element?.scrollWidth,
-                                    scrollHeight: chapter.element?.scrollHeight,
-                                    hasIframe: !!chapter.element?.querySelector('iframe'),
-                                    childElementCount: chapter.element?.childElementCount,
-                                    innerHTML: chapter.element?.innerHTML?.substring(0, 200) + '...'
-                                },
-                                viewInfo: chapter.view ? {
-                                    displayed: chapter.view.displayed,
-                                    elementInfo: {
-                                        tagName: chapter.view.element?.tagName,
-                                        offsetWidth: chapter.view.element?.offsetWidth,
-                                        offsetHeight: chapter.view.element?.offsetHeight,
-                                        scrollWidth: chapter.view.element?.scrollWidth,
-                                        scrollHeight: chapter.view.element?.scrollHeight,
-                                        childElementCount: chapter.view.element?.childElementCount
-                                    }
-                                } : 'No view'
-                            };
-                            
-                            const pre = document.createElement('pre');
-                            pre.textContent = JSON.stringify(info, null, 2);
-                            chapterDiv.appendChild(pre);
-                            
-                            output.appendChild(chapterDiv);
-                        } else {
-                            log(`❌ Chapter not found: ${href}`, 'error');
-                        }
-                    }
-                    
-                    // Test attachment
-                    log('🔧 Testing chapter attachment...', 'success');
-                    const testChapter = preRenderer.getChapter('chapter_001.xhtml');
-                    if (testChapter) {
-                        log(`Before attachment - attached: ${testChapter.attached}`, 'debug');
-                        
-                        const attachedChapter = preRenderer.attachChapter('chapter_001.xhtml');
-                        if (attachedChapter) {
-                            log(`After attachment - attached: ${attachedChapter.attached}`, 'success');
-                            log(`Element parent: ${attachedChapter.element?.parentNode?.tagName}`, 'debug');
-                            log(`Element dimensions: ${attachedChapter.element?.offsetWidth}x${attachedChapter.element?.offsetHeight}`, 'debug');
-                        } else {
-                            log('❌ Failed to attach chapter', 'error');
-                        }
-                    }
-                    
-                } else {
-                    log('❌ Pre-rendering not available', 'error');
-                }
-                
-            } catch (error) {
-                log(`❌ Error during inspection: ${error.message}`, 'error');
-                console.error('Full error:', error);
+      const output = document.getElementById('output');
+
+      function log(message, type = 'debug') {
+        const div = document.createElement('div');
+        div.className = `debug ${type}`;
+        div.innerHTML = message;
+        output.appendChild(div);
+      }
+
+      function logObject(title, obj) {
+        const div = document.createElement('div');
+        div.className = 'debug';
+        div.innerHTML = `<strong>${title}:</strong><pre>${JSON.stringify(obj, null, 2)}</pre>`;
+        output.appendChild(div);
+      }
+
+      async function inspectPreRenderedObjects() {
+        try {
+          log('🔧 Starting pre-rendered object inspection...', 'success');
+
+          // Initialize the book
+          const book = ePub(
+            'https://s3.amazonaws.com/moby-dick/OPS/package.opf',
+            {
+              openAs: 'epub',
+              requestMethod: 'fetch',
             }
+          );
+
+          await book.ready;
+          log(`✅ Book loaded with ${book.spine.length} sections`, 'success');
+
+          // Create rendition
+          const viewer = document.createElement('div');
+          viewer.style.width = '900px';
+          viewer.style.height = '600px';
+          viewer.style.border = '1px solid #ccc';
+          viewer.style.margin = '20px 0';
+          document.body.appendChild(viewer);
+
+          const rendition = book.renderTo(viewer, {
+            manager: 'default',
+            width: 900,
+            height: 600,
+            flow: 'paginated',
+            spread: 'none',
+          });
+
+          log('✅ Rendition created', 'success');
+
+          // Enable pre-rendering
+          if (
+            rendition.manager &&
+            typeof rendition.manager.enablePreRendering === 'function'
+          ) {
+            const preRenderStatus =
+              await rendition.manager.enablePreRendering();
+            log(
+              `✅ Pre-rendering enabled: ${preRenderStatus.rendered}/${preRenderStatus.total} chapters rendered`,
+              'success'
+            );
+
+            // Wait a bit for pre-rendering to complete
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+
+            // Get the pre-renderer
+            const preRenderer = rendition.manager.preRenderer;
+            if (!preRenderer) {
+              log('❌ Pre-renderer not found', 'error');
+              return;
+            }
+
+            log('🔍 Inspecting pre-renderer state...', 'success');
+
+            // Get debug info
+            const debugInfo = preRenderer.getDebugInfo();
+            logObject('Pre-renderer Debug Info', debugInfo);
+
+            // Inspect first few chapters in detail
+            const chaptersToInspect = [
+              'cover.xhtml',
+              'chapter_001.xhtml',
+              'chapter_002.xhtml',
+              'chapter_003.xhtml',
+            ];
+
+            for (const href of chaptersToInspect) {
+              const chapter = preRenderer.getChapter(href);
+              if (chapter) {
+                const chapterDiv = document.createElement('div');
+                chapterDiv.className = 'chapter-info';
+
+                const title = document.createElement('h3');
+                title.textContent = `Chapter: ${href}`;
+                chapterDiv.appendChild(title);
+
+                const info = {
+                  attached: chapter.attached,
+                  width: chapter.width,
+                  height: chapter.height,
+                  pageCount: chapter.pageCount,
+                  hasWhitePages: chapter.hasWhitePages,
+                  whitePageIndices: chapter.whitePageIndices,
+                  elementInfo: {
+                    tagName: chapter.element?.tagName,
+                    offsetWidth: chapter.element?.offsetWidth,
+                    offsetHeight: chapter.element?.offsetHeight,
+                    scrollWidth: chapter.element?.scrollWidth,
+                    scrollHeight: chapter.element?.scrollHeight,
+                    hasIframe: !!chapter.element?.querySelector('iframe'),
+                    childElementCount: chapter.element?.childElementCount,
+                    innerHTML:
+                      chapter.element?.innerHTML?.substring(0, 200) + '...',
+                  },
+                  viewInfo: chapter.view
+                    ? {
+                        displayed: chapter.view.displayed,
+                        elementInfo: {
+                          tagName: chapter.view.element?.tagName,
+                          offsetWidth: chapter.view.element?.offsetWidth,
+                          offsetHeight: chapter.view.element?.offsetHeight,
+                          scrollWidth: chapter.view.element?.scrollWidth,
+                          scrollHeight: chapter.view.element?.scrollHeight,
+                          childElementCount:
+                            chapter.view.element?.childElementCount,
+                        },
+                      }
+                    : 'No view',
+                };
+
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(info, null, 2);
+                chapterDiv.appendChild(pre);
+
+                output.appendChild(chapterDiv);
+              } else {
+                log(`❌ Chapter not found: ${href}`, 'error');
+              }
+            }
+
+            // Test attachment
+            log('🔧 Testing chapter attachment...', 'success');
+            const testChapter = preRenderer.getChapter('chapter_001.xhtml');
+            if (testChapter) {
+              log(
+                `Before attachment - attached: ${testChapter.attached}`,
+                'debug'
+              );
+
+              const attachedChapter =
+                preRenderer.attachChapter('chapter_001.xhtml');
+              if (attachedChapter) {
+                log(
+                  `After attachment - attached: ${attachedChapter.attached}`,
+                  'success'
+                );
+                log(
+                  `Element parent: ${attachedChapter.element?.parentNode?.tagName}`,
+                  'debug'
+                );
+                log(
+                  `Element dimensions: ${attachedChapter.element?.offsetWidth}x${attachedChapter.element?.offsetHeight}`,
+                  'debug'
+                );
+              } else {
+                log('❌ Failed to attach chapter', 'error');
+              }
+            }
+          } else {
+            log('❌ Pre-rendering not available', 'error');
+          }
+        } catch (error) {
+          log(`❌ Error during inspection: ${error.message}`, 'error');
+          console.error('Full error:', error);
         }
-        
-        // Start inspection
-        inspectPreRenderedObjects();
+      }
+
+      // Start inspection
+      inspectPreRenderedObjects();
     </script>
-</body>
+  </body>
 </html>

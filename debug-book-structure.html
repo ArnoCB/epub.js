@@ -1,57 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Debug Book Structure</title>
-  <script src="dist/epub.umd.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-</head>
-<body>
-  <h1>Book Structure Debug</h1>
-  <div id="output"></div>
+  <head>
+    <meta charset="utf-8" />
+    <title>Debug Book Structure</title>
+    <script src="dist/epub.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+  </head>
+  <body>
+    <h1>Book Structure Debug</h1>
+    <div id="output"></div>
 
-  <script>
-    // Load the same book as in the examples
-    var book = window.ePub("https://s3.amazonaws.com/moby-dick/OPS/package.opf", {
-      keepAbsoluteUrl: true
-    });
-
-    book.ready.then(function() {
-      console.log("Book loaded successfully");
-      
-      // Get all sections from the spine
-      const sections = book.spine.spineItems;
-      const output = document.getElementById('output');
-      
-      let html = '<h2>All Sections in Spine:</h2><ul>';
-      
-      sections.forEach((section, index) => {
-        html += `<li><strong>Index ${index}:</strong> ${section.href} - ${section.properties || 'no properties'}</li>`;
-        console.log(`Section ${index}: ${section.href}`, section);
-      });
-      
-      html += '</ul>';
-      
-      // Also show which section is chapter 1
-      const chapter1Section = sections.find(s => s.href.includes('chapter_001'));
-      if (chapter1Section) {
-        const chapter1Index = sections.indexOf(chapter1Section);
-        html += `<h3>Chapter 1 is at index: ${chapter1Index}</h3>`;
-        
-        // Show previous sections
-        html += '<h3>Sections before Chapter 1:</h3><ul>';
-        for (let i = 0; i < chapter1Index; i++) {
-          const section = sections[i];
-          html += `<li><strong>Index ${i}:</strong> ${section.href}</li>`;
+    <script>
+      // Load the same book as in the examples
+      var book = window.ePub(
+        'https://s3.amazonaws.com/moby-dick/OPS/package.opf',
+        {
+          keepAbsoluteUrl: true,
         }
-        html += '</ul>';
-      }
-      
-      output.innerHTML = html;
-    }).catch(function(error) {
-      console.error("Error loading book:", error);
-      document.getElementById('output').innerHTML = '<p style="color: red;">Error loading book: ' + error.message + '</p>';
-    });
-  </script>
-</body>
+      );
+
+      book.ready
+        .then(function () {
+          console.log('Book loaded successfully');
+
+          // Get all sections from the spine
+          const sections = book.spine.spineItems;
+          const output = document.getElementById('output');
+
+          let html = '<h2>All Sections in Spine:</h2><ul>';
+
+          sections.forEach((section, index) => {
+            html += `<li><strong>Index ${index}:</strong> ${section.href} - ${section.properties || 'no properties'}</li>`;
+            console.log(`Section ${index}: ${section.href}`, section);
+          });
+
+          html += '</ul>';
+
+          // Also show which section is chapter 1
+          const chapter1Section = sections.find((s) =>
+            s.href.includes('chapter_001')
+          );
+          if (chapter1Section) {
+            const chapter1Index = sections.indexOf(chapter1Section);
+            html += `<h3>Chapter 1 is at index: ${chapter1Index}</h3>`;
+
+            // Show previous sections
+            html += '<h3>Sections before Chapter 1:</h3><ul>';
+            for (let i = 0; i < chapter1Index; i++) {
+              const section = sections[i];
+              html += `<li><strong>Index ${i}:</strong> ${section.href}</li>`;
+            }
+            html += '</ul>';
+          }
+
+          output.innerHTML = html;
+        })
+        .catch(function (error) {
+          console.error('Error loading book:', error);
+          document.getElementById('output').innerHTML =
+            '<p style="color: red;">Error loading book: ' +
+            error.message +
+            '</p>';
+        });
+    </script>
+  </body>
 </html>

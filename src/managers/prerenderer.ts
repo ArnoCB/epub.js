@@ -66,7 +66,7 @@ export class BookPreRenderer {
   constructor(
     container: HTMLElement,
     viewSettings: ViewSettings,
-  request: (url: string) => Promise<Document>
+    request: (url: string) => Promise<Document>
   ) {
     this.container = container;
     this.viewSettings = viewSettings;
