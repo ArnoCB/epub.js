@@ -438,7 +438,7 @@ export class Rendition implements EventEmitterMethods {
    * @param  {string} target Url or EpubCFI
    * @return {Promise}
    */
-  display(target: string): Promise<unknown> {
+  display(target: string | number): Promise<unknown> {
     if (this.displaying) {
       this.displaying.resolve(true);
     }
@@ -452,7 +452,7 @@ export class Rendition implements EventEmitterMethods {
    * @param  {string} target Url or EpubCFI
    * @return {Promise}
    */
-  private _display(target: string) {
+  private _display(target: string | number) {
     if (!this.book) {
       console.error('[Rendition] display called without a book');
       return Promise.resolve(false);
@@ -464,12 +464,15 @@ export class Rendition implements EventEmitterMethods {
     this.displaying = displaying;
 
     // Check if this is a book percentage
+    // Coerce non-string targets to strings for string-based checks below
+    const targetStr = typeof target === 'string' ? target : String(target);
+
     if (
       this.book.locations &&
       this.book.locations.length() &&
-      isFloat(target)
+      isFloat(targetStr)
     ) {
-      target = this.book.locations.cfiFromPercentage(parseFloat(target));
+      target = this.book.locations.cfiFromPercentage(parseFloat(targetStr));
     }
 
     if (!this.book.spine) {
@@ -486,15 +489,15 @@ export class Rendition implements EventEmitterMethods {
 
     // Extract the CFI fragment for positioning within the section
     let cfiTarget: string | undefined;
-    if (target && target.startsWith('epubcfi(')) {
-      cfiTarget = target;
+    if (targetStr && targetStr.startsWith('epubcfi(')) {
+      cfiTarget = targetStr;
       console.debug('[Rendition] CFI target extracted:', cfiTarget);
     } else {
       console.debug(
         '[Rendition] No CFI target found, target type:',
         typeof target,
         'value:',
-        target
+        targetStr
       );
     }
 

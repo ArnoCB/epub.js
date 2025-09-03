@@ -11651,8 +11651,10 @@
 	      const displayed = displaying.promise;
 	      this.displaying = displaying;
 	      // Check if this is a book percentage
-	      if (this.book.locations && this.book.locations.length() && (0, core_1.isFloat)(target)) {
-	        target = this.book.locations.cfiFromPercentage(parseFloat(target));
+	      // Coerce non-string targets to strings for string-based checks below
+	      const targetStr = typeof target === 'string' ? target : String(target);
+	      if (this.book.locations && this.book.locations.length() && (0, core_1.isFloat)(targetStr)) {
+	        target = this.book.locations.cfiFromPercentage(parseFloat(targetStr));
 	      }
 	      if (!this.book.spine) {
 	        console.error('[Rendition] display called without a book spine');
@@ -11665,11 +11667,11 @@
 	      }
 	      // Extract the CFI fragment for positioning within the section
 	      let cfiTarget;
-	      if (target && target.startsWith('epubcfi(')) {
-	        cfiTarget = target;
+	      if (targetStr && targetStr.startsWith('epubcfi(')) {
+	        cfiTarget = targetStr;
 	        console.debug('[Rendition] CFI target extracted:', cfiTarget);
 	      } else {
-	        console.debug('[Rendition] No CFI target found, target type:', typeof target, 'value:', target);
+	        console.debug('[Rendition] No CFI target found, target type:', typeof target, 'value:', targetStr);
 	      }
 	      console.debug('[Rendition] calling manager.display with section:', section.href, 'cfiTarget:', cfiTarget);
 	      this.manager.display(section, cfiTarget).then(() => {
