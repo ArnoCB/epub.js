@@ -600,33 +600,44 @@ class ContinuousViewManager
         ? this.layout.pageWidth
         : delta;
 
-    // Prefer advancing within the current section if more pages exist
+    // Prefer advancing within the current section if there is scrollable content
     try {
-      const loc = this.currentLocation();
-      console.debug('[ContinuousViewManager] next() currentLocation:', loc);
-      if (loc && loc.length) {
-        const lastLoc = loc[loc.length - 1];
-        const lastDisplayed =
-          lastLoc.pages && lastLoc.pages.length
-            ? lastLoc.pages[lastLoc.pages.length - 1]
-            : 0;
-        console.debug(
-          '[ContinuousViewManager] next() lastDisplayed/total:',
-          lastDisplayed,
-          lastLoc.totalPages,
-          'pageStep:',
-          pageStep
+      if (this.isPaginated && this.settings.axis === 'horizontal') {
+        const currentScrollLeft = this.container.scrollLeft;
+        const maxScrollLeft = Math.max(
+          0,
+          this.container.scrollWidth - this.container.offsetWidth
         );
-        if (lastDisplayed < (lastLoc.totalPages || 0)) {
-          console.debug(
-            '[ContinuousViewManager] next() advancing within section'
-          );
-          // There are more pages in the current section; advance by one page
-          if (this.isPaginated && this.settings.axis === 'horizontal') {
-            this.scrollBy(pageStep, 0, true);
-          } else {
-            this.scrollBy(0, this.layout.height, true);
+        const tolerance = 10;
+        const canScrollForward = currentScrollLeft < maxScrollLeft - tolerance;
+        console.debug('[ContinuousViewManager] next() scroll-based check:', {
+          currentScrollLeft,
+          maxScrollLeft,
+          canScrollForward,
+          pageStep,
+        });
+        if (canScrollForward) {
+          this.scrollBy(pageStep, 0, true);
+          return Promise.resolve();
+        }
+      } else if (!this.isPaginated || this.settings.axis !== 'horizontal') {
+        const currentScrollTop = this.container.scrollTop;
+        const maxScrollTop = Math.max(
+          0,
+          this.container.scrollHeight - this.container.offsetHeight
+        );
+        const tolerance = 10;
+        const canScrollForward = currentScrollTop < maxScrollTop - tolerance;
+        console.debug(
+          '[ContinuousViewManager] next() scroll-based check vertical:',
+          {
+            currentScrollTop,
+            maxScrollTop,
+            canScrollForward,
           }
+        );
+        if (canScrollForward) {
+          this.scrollBy(0, this.layout.height, true);
           return Promise.resolve();
         }
       }
@@ -655,32 +666,38 @@ class ContinuousViewManager
 
     if (!this.views.length) return Promise.resolve();
 
-    // Prefer moving within the current section if earlier pages exist
+    // Prefer moving within the current section if there's scrollable content backward
     try {
-      const loc = this.currentLocation();
-      console.debug('[ContinuousViewManager] prev() currentLocation:', loc);
-      if (loc && loc.length) {
-        const firstLoc = loc[0];
-        const firstDisplayed =
-          firstLoc.pages && firstLoc.pages.length ? firstLoc.pages[0] : 1;
-        const pageStep =
-          this.layout.pageWidth && this.layout.pageWidth > 0
-            ? this.layout.pageWidth
-            : delta;
+      if (this.isPaginated && this.settings.axis === 'horizontal') {
+        const currentScrollLeft = this.container.scrollLeft;
+        const tolerance = 10;
+        const canScrollBackward = currentScrollLeft > tolerance;
+        console.debug('[ContinuousViewManager] prev() scroll-based check:', {
+          currentScrollLeft,
+          canScrollBackward,
+          delta,
+        });
+        if (canScrollBackward) {
+          const pageStep =
+            this.layout.pageWidth && this.layout.pageWidth > 0
+              ? this.layout.pageWidth
+              : delta;
+          this.scrollBy(-pageStep, 0, true);
+          return Promise.resolve();
+        }
+      } else {
+        const currentScrollTop = this.container.scrollTop;
+        const tolerance = 10;
+        const canScrollBackward = currentScrollTop > tolerance;
         console.debug(
-          '[ContinuousViewManager] prev() firstDisplayed/total:',
-          firstDisplayed,
-          firstLoc.totalPages,
-          'pageStep:',
-          pageStep
-        );
-        if (firstDisplayed > 1) {
-          console.debug('[ContinuousViewManager] prev() moving within section');
-          if (this.isPaginated && this.settings.axis === 'horizontal') {
-            this.scrollBy(-pageStep, 0, true);
-          } else {
-            this.scrollBy(0, -this.layout.height, true);
+          '[ContinuousViewManager] prev() scroll-based check vertical:',
+          {
+            currentScrollTop,
+            canScrollBackward,
           }
+        );
+        if (canScrollBackward) {
+          this.scrollBy(0, -this.layout.height, true);
           return Promise.resolve();
         }
       }

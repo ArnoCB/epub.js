@@ -6,7 +6,7 @@
   <title>EPUB.js Spreads Example</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-  <script src="../dist/epub.js"></script>
+  <script src="../dist/epub.umd.js"></script>
 
   <link rel="stylesheet" type="text/css" href="examples.css">
 
@@ -28,7 +28,9 @@
     var rendition = book.renderTo("viewer", {
       width: "100%",
       height: 600,
-      spread: "always"
+      spread: "always",
+      // Allow scripts inside iframe content (needed for srcdoc/write modes)
+      allowScriptedContent: true
     });
 
     rendition.display(currentSectionIndex);
@@ -38,13 +40,24 @@
       var next = document.getElementById("next");
 
       next.addEventListener("click", function(e){
-        book.package.metadata.direction === "rtl" ? rendition.prev() : rendition.next();
+        // Defensive: book.package or metadata may not be available yet
+        var isRTL = book && book.package && book.package.metadata && book.package.metadata.direction === "rtl";
+        if (isRTL) {
+          rendition.prev();
+        } else {
+          rendition.next();
+        }
         e.preventDefault();
       }, false);
 
       var prev = document.getElementById("prev");
       prev.addEventListener("click", function(e){
-        book.package.metadata.direction === "rtl" ? rendition.next() : rendition.prev();
+        var isRTL = book && book.package && book.package.metadata && book.package.metadata.direction === "rtl";
+        if (isRTL) {
+          rendition.next();
+        } else {
+          rendition.prev();
+        }
         e.preventDefault();
       }, false);
 
@@ -120,9 +133,15 @@
       }
     });
 
-    window.addEventListener("unload", function () {
-      console.log("unloading");
-      this.book.destroy();
+    // Use pagehide to avoid Permissions-Policy unload restrictions in modern browsers
+    window.addEventListener("pagehide", function () {
+      try {
+        if (book && typeof book.destroy === 'function') {
+          book.destroy();
+        }
+      } catch (e) {
+        console.debug('Error during book.destroy:', e);
+      }
     });
 
     book.loaded.navigation.then(function(toc){

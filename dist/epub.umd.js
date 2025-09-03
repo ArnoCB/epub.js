@@ -9796,14 +9796,42 @@
 	      }
 	      if (chapter.attached) {
 	        console.debug('[BookPreRenderer] chapter already attached:', sectionHref);
-	        return chapter;
+	        // Validate that the iframe still has content - sometimes iframe content gets cleared
+	        // especially with sandboxing or when elements are moved between containers
+	        try {
+	          const iframe = chapter.element.querySelector('iframe');
+	          if (iframe && iframe.contentDocument) {
+	            const body = iframe.contentDocument.body;
+	            const hasContent = body && (body.textContent || '').trim().length > 0;
+	            if (!hasContent) {
+	              console.warn('[BookPreRenderer] attached chapter has empty iframe content, will attempt refresh:', sectionHref);
+	              // Don't return early - let it go through attachment process to refresh content
+	            } else {
+	              return chapter;
+	            }
+	          } else {
+	            console.warn('[BookPreRenderer] attached chapter iframe not accessible:', sectionHref);
+	            // Don't return early - let it go through attachment process
+	          }
+	        } catch (e) {
+	          console.warn('[BookPreRenderer] error validating attached chapter content:', sectionHref, e);
+	          // Don't return early - let it go through attachment process
+	        }
 	      }
 	      try {
-	        // Ensure only one chapter is marked as attached at a time
-	        // Detach any other previously attached chapters in our registry
-	        for (const [href, ch] of this.chapters.entries()) {
-	          if (href !== sectionHref && ch.attached) {
-	            ch.attached = false;
+	        // In spread/pre-paginated mode, we can have up to 2 chapters attached (left + right pages)
+	        // For non-spread mode, ensure only one chapter is attached at a time
+	        const attachedChapters = Array.from(this.chapters.values()).filter(ch => ch.attached);
+	        const isSpreadMode = this.viewSettings.layout && (this.viewSettings.layout.name === 'pre-paginated' || this.viewSettings.layout.spread);
+	        const maxAttachedChapters = isSpreadMode ? 2 : 1;
+	        if (attachedChapters.length >= maxAttachedChapters) {
+	          // If we're at capacity, detach the oldest attached chapter(s)
+	          for (let i = 0; i < attachedChapters.length - (maxAttachedChapters - 1); i++) {
+	            const toDetach = attachedChapters[i];
+	            if (toDetach.section.href !== sectionHref) {
+	              console.debug('[BookPreRenderer] detaching chapter to make room for new attachment:', toDetach.section.href);
+	              this.detachChapter(toDetach.section.href);
+	            }
 	          }
 	        }
 	        // Verify element exists and is properly rendered
@@ -9813,8 +9841,39 @@
 	        }
 	        // Remove from offscreen container if needed
 	        if (chapter.element.parentNode === this.offscreenContainer) {
+	          // Before moving, preserve iframe content since DOM manipulation can clear it
+	          const iframe = chapter.element.querySelector('iframe');
+	          let preservedSrcdoc;
+	          let preservedContent;
+	          if (iframe) {
+	            preservedSrcdoc = iframe.srcdoc;
+	            try {
+	              preservedContent = iframe.contentDocument?.documentElement?.outerHTML;
+	            } catch (e) {
+	              console.debug('[BookPreRenderer] could not preserve iframe content:', e);
+	            }
+	          }
 	          this.offscreenContainer.removeChild(chapter.element);
 	          console.debug('[BookPreRenderer] removed from offscreen container:', sectionHref);
+	          // After DOM move, restore content if iframe was cleared
+	          if (iframe && (preservedSrcdoc || preservedContent)) {
+	            try {
+	              const hasContent = (iframe.contentDocument?.body?.textContent?.trim().length ?? 0) > 0;
+	              if (!hasContent) {
+	                console.debug('[BookPreRenderer] iframe content lost during DOM move, restoring for:', sectionHref);
+	                if (preservedSrcdoc) {
+	                  iframe.srcdoc = preservedSrcdoc;
+	                } else if (preservedContent) {
+	                  // Fallback: use document.write method
+	                  iframe.contentDocument?.open();
+	                  iframe.contentDocument?.write(preservedContent);
+	                  iframe.contentDocument?.close();
+	                }
+	              }
+	            } catch (e) {
+	              console.warn('[BookPreRenderer] error restoring iframe content for:', sectionHref, e);
+	            }
+	          }
 	        }
 	        // Ensure the chapter element maintains its pre-rendered dimensions
 	        if (chapter.element) {
@@ -9892,8 +9951,9 @@
 	      if (!chapter || !chapter.attached) {
 	        return null;
 	      }
-	      if (chapter.element.parentNode === this.container) {
-	        this.container.removeChild(chapter.element);
+	      // Remove from whatever container it's currently in
+	      if (chapter.element.parentNode) {
+	        chapter.element.parentNode.removeChild(chapter.element);
 	      }
 	      this.offscreenContainer.appendChild(chapter.element);
 	      chapter.attached = false;
@@ -10786,18 +10846,9 @@
 	        console.error('[DefaultViewManager] Error in loadPrevSection prepend:', err);
 	        return err;
 	      });
-	      // After prepending the previous section, move scroll to the end of content so the last page is visible
+	      // After prepending the previous section, adjust the scroll position
+	      // Let adjustScrollAfterPrepend handle all scroll positioning for consistency
 	      this.adjustScrollAfterPrepend();
-	      if (this.settings.axis === 'horizontal') {
-	        if (this.settings.direction === 'rtl' && this.settings.rtlScrollType === 'default') {
-	          // In RTL default, the start is at scrollLeft 0
-	          this.scrollTo(0, 0, true);
-	        } else {
-	          // In LTR, go to the far right (end of the section)
-	          const maxScrollLeft = Math.max(0, this.container.scrollWidth - this.container.offsetWidth);
-	          this.scrollTo(maxScrollLeft, 0, true);
-	        }
-	      }
 	      this.views.show();
 	    }
 	    /* ---------- Scroll adjustments ---------- */
@@ -10812,6 +10863,8 @@
 	      const containerOffsetWidth = this.container.offsetWidth;
 	      const maxScrollLeft = Math.max(0, containerScrollWidth - containerOffsetWidth);
 	      console.debug('[DefaultViewManager] adjustScrollAfterPrepend:', 'scrollWidth=', containerScrollWidth, 'offsetWidth=', containerOffsetWidth, 'maxScrollLeft=', maxScrollLeft);
+	      // Handle scrolling based on direction and whether we're navigating forward or backward
+	      // For backward navigation (prev), we need to show the start of the newly added content
 	      if (direction === 'rtl') {
 	        if (rtlScrollType === 'default') {
 	          this.scrollTo(0, 0, true);
@@ -10820,8 +10873,9 @@
 	          this.scrollTo(targetScrollLeft, 0, true);
 	        }
 	      } else {
-	        // Fix: Ensure we don't scroll beyond available content
-	        const targetScrollLeft = Math.min(maxScrollLeft, containerScrollWidth - this.layout.delta);
+	        // For LTR navigation when going backward (prev)
+	        // We want to show the beginning of the content (the first page)
+	        const targetScrollLeft = 0;
 	        console.debug('[DefaultViewManager] adjustScrollAfterPrepend LTR: setting scrollLeft to', targetScrollLeft);
 	        this.scrollTo(targetScrollLeft, 0, true);
 	      }
@@ -11800,7 +11854,11 @@
 	     * Go to the previous "page" in the rendition
 	     */
 	    prev() {
-	      return this.q.enqueue(this.manager.prev.bind(this.manager)).then(this.reportLocation.bind(this));
+	      console.error('[DEBUGGING] Rendition.prev() called - enqueuing manager.prev');
+	      return this.q.enqueue(this.manager.prev.bind(this.manager)).then(this.reportLocation.bind(this)).catch(error => {
+	        console.error('[DEBUGGING] Rendition.prev() failed:', error);
+	        throw error;
+	      });
 	    }
 	    //-- http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
 	    /**

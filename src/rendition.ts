@@ -661,9 +661,16 @@ export class Rendition implements EventEmitterMethods {
    * Go to the previous "page" in the rendition
    */
   prev() {
+    console.error(
+      '[DEBUGGING] Rendition.prev() called - enqueuing manager.prev'
+    );
     return this.q
       .enqueue(this.manager.prev.bind(this.manager))
-      .then(this.reportLocation.bind(this));
+      .then(this.reportLocation.bind(this))
+      .catch((error: Error) => {
+        console.error('[DEBUGGING] Rendition.prev() failed:', error);
+        throw error;
+      });
   }
 
   //-- http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering

@@ -95,6 +95,27 @@ test.describe('EPUB Navigation - Master Test Suite', () => {
     await page.waitForTimeout(timeout);
   };
 
+  const getCurrentSpineHref = async (page: any) => {
+    return await page.evaluate(() => {
+      const rendition = (window as any).rendition;
+      try {
+        const loc = rendition.currentLocation();
+        if (Array.isArray(loc) && loc.length > 0) return loc[0].href;
+      } catch (e) {
+        // fallback
+      }
+      // Best-effort: try manager views
+      try {
+        const manager = rendition.manager;
+        const last =
+          manager.views && manager.views.last && manager.views.last();
+        return last && last.section ? last.section.href : undefined;
+      } catch (e) {
+        return undefined;
+      }
+    });
+  };
+
   const setupEpub = async (page: any) => {
     await page.goto(
       'http://localhost:8080/examples/transparent-iframe-hightlights.html'
@@ -480,6 +501,29 @@ test.describe('EPUB Navigation - Master Test Suite', () => {
       expect(afterNextAgain.content).toBe(true);
 
       console.log('✅ Asymmetric navigation bug prevention completed');
+    });
+
+    test('navigation reaches correct spine items', async ({ page }) => {
+      await setupEpub(page);
+      await waitForStableNavigation(page, 2000);
+
+      const starting = await getCurrentSpineHref(page);
+      console.log('Starting spine href:', starting);
+
+      await clickNext(page);
+      await waitForStableNavigation(page, 1500);
+
+      const afterNext = await getCurrentSpineHref(page);
+      console.log('After next spine href:', afterNext);
+
+      await clickPrev(page);
+      await waitForStableNavigation(page, 1500);
+
+      const afterPrev = await getCurrentSpineHref(page);
+      console.log('After prev spine href:', afterPrev);
+
+      // Should return to original spine item
+      expect(afterPrev).toBe(starting);
     });
   });
 

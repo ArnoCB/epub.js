@@ -137,7 +137,7 @@ export declare class Rendition implements EventEmitterMethods {
      * @param  {string} target Url or EpubCFI
      * @return {Promise}
      */
-    display(target: string): Promise<unknown>;
+    display(target: string | number): Promise<unknown>;
     /**
      * Tells the manager what to display immediately
      *

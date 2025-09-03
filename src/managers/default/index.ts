@@ -1381,24 +1381,9 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       }
     );
 
-    // After prepending the previous section, move scroll to the end of content so the last page is visible
+    // After prepending the previous section, adjust the scroll position
+    // Let adjustScrollAfterPrepend handle all scroll positioning for consistency
     this.adjustScrollAfterPrepend();
-    if (this.settings.axis === 'horizontal') {
-      if (
-        this.settings.direction === 'rtl' &&
-        this.settings.rtlScrollType === 'default'
-      ) {
-        // In RTL default, the start is at scrollLeft 0
-        this.scrollTo(0, 0, true);
-      } else {
-        // In LTR, go to the far right (end of the section)
-        const maxScrollLeft = Math.max(
-          0,
-          this.container.scrollWidth - this.container.offsetWidth
-        );
-        this.scrollTo(maxScrollLeft, 0, true);
-      }
-    }
     this.views.show();
   }
 
@@ -1427,6 +1412,8 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       maxScrollLeft
     );
 
+    // Handle scrolling based on direction and whether we're navigating forward or backward
+    // For backward navigation (prev), we need to show the start of the newly added content
     if (direction === 'rtl') {
       if (rtlScrollType === 'default') {
         this.scrollTo(0, 0, true);
@@ -1435,11 +1422,9 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         this.scrollTo(targetScrollLeft, 0, true);
       }
     } else {
-      // Fix: Ensure we don't scroll beyond available content
-      const targetScrollLeft = Math.min(
-        maxScrollLeft,
-        containerScrollWidth - this.layout.delta
-      );
+      // For LTR navigation when going backward (prev)
+      // We want to show the beginning of the content (the first page)
+      const targetScrollLeft = 0;
 
       console.debug(
         '[DefaultViewManager] adjustScrollAfterPrepend LTR: setting scrollLeft to',

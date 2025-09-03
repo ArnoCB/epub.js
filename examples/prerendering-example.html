@@ -294,6 +294,7 @@
         flow: "paginated",
         spread: "auto", 
         transparency: true,
+        allowScriptedContent: true, // Enable scripts for proper pre-rendered content display
         usePreRendering: preRenderingEnabled // 🎉 Enable pre-rendering!
       });
 
@@ -367,6 +368,12 @@
         const pageInfo = location?.start?.displayed
           ? `page ${location.start.displayed.page} / ${location.start.displayed.total}`
           : '';
+        // Expose last relocated location for automated tests to observe
+        try {
+          window.__lastRelocated = location;
+        } catch (e) {
+          // ignore in browsers that restrict assigning to window properties in strict contexts
+        }
         addLog(`Navigated to href: ${href} ${pageInfo}`, "info");
         updateStatus();
       });
