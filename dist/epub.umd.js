@@ -7364,6 +7364,17 @@
 	    append(view) {
 	      this._views.push(view);
 	      if (this.container) {
+	        /*
+	         * WARNING: DOM MOVE MAY DESTROY IFRAME CONTENT
+	         *
+	         * If the view.element contains iframes (as with prerendered content),
+	         * this appendChild() operation will cause those iframes to lose their
+	         * content completely. This is standard browser behavior when moving
+	         * iframes between DOM containers.
+	         *
+	         * For prerendered content, the BookPreRenderer should have already
+	         * handled content preservation/restoration before this point.
+	         */
 	        this.container.appendChild(view.element);
 	      }
 	      this.length++;
@@ -9541,6 +9552,42 @@
 	  const event_emitter_1 = __importDefault(requireEventEmitter());
 	  const constants_1 = requireConstants();
 	  class BookPreRenderer {
+	    /*
+	     * CRITICAL BROWSER BEHAVIOR WARNING - IFRAME CONTENT LOSS ON DOM MOVES:
+	     *
+	     * When an iframe element is moved between different DOM containers using methods like:
+	     * - appendChild()
+	     * - insertBefore()
+	     * - removeChild() followed by appendChild()
+	     *
+	     * The browser will COMPLETELY RESET the iframe's content document, causing:
+	     * - iframe.contentDocument to become a fresh, empty document
+	     * - All rendered content (HTML, CSS, JavaScript state) to be lost
+	     * - iframe.srcdoc content to be cleared
+	     * - Any event listeners attached to the iframe content to be removed
+	     *
+	     * This behavior is consistent across all major browsers (Chrome, Firefox, Safari, Edge)
+	     * and is part of the HTML specification for iframe security and lifecycle management.
+	     *
+	     * IMPACT ON PRERENDERING:
+	     * Our prerendering system creates iframes with fully rendered EPUB content, but when
+	     * these need to be displayed, they must be moved from offscreen containers to the
+	     * main viewing container. Each DOM move causes complete content loss, requiring:
+	     *
+	     * 1. Content preservation before DOM moves (saving srcdoc/innerHTML)
+	     * 2. Content restoration after DOM moves (re-setting srcdoc or using document.write)
+	     * 3. Fallback mechanisms when restoration fails
+	     *
+	     * ARCHITECTURAL ALTERNATIVES TO CONSIDER:
+	     * - Keep iframes in fixed containers and use CSS positioning/visibility for display
+	     * - Clone iframe content into new iframes instead of moving existing ones
+	     * - Use a different rendering approach that doesn't rely on moving iframes
+	     * - Implement a "virtual DOM" style system for iframe content management
+	     *
+	     * The current implementation attempts to work around this limitation through content
+	     * preservation and restoration, but this is inherently fragile and can fail in
+	     * edge cases, leading to white/empty pages that users may experience.
+	     */
 	    constructor(container, viewSettings, request) {
 	      this.container = container;
 	      this.viewSettings = viewSettings;
@@ -9581,7 +9628,6 @@
 	          try {
 	            await this.preRenderSection(section);
 	            this.currentStatus.rendered++;
-	            console.log('[BookPreRenderer] successfully pre-rendered:', section.href);
 	            this.emit('added', this.currentStatus);
 	          } catch (error) {
 	            this.currentStatus.failed++;
@@ -9602,7 +9648,6 @@
 	        await this.renderingPromises.get(href);
 	        return this.chapters.get(href);
 	      }
-	      console.log('[BookPreRenderer] pre-rendering section:', href);
 	      const rendering = new core_1.defer();
 	      const view = this.createView(section);
 	      const chapter = {
@@ -9645,12 +9690,8 @@
 	          console.warn('[BookPreRenderer] EventEmitter methods still not available on view for:', section.href);
 	        }
 	      }, 0);
-	      view.onDisplayed = () => {
-	        console.log('[BookPreRenderer] view displayed for:', section.href);
-	      };
-	      view.onResize = () => {
-	        console.log('[BookPreRenderer] view resized for:', section.href);
-	      };
+	      view.onDisplayed = () => {};
+	      view.onResize = () => {};
 	      return view;
 	    }
 	    async renderView(view, chapter) {
@@ -9860,7 +9901,17 @@
 	        // HYBRID APPROACH: Move from unattached storage through brief off-screen to final attachment
 	        // Step 1: Remove from current location (could be unattached storage, offscreen, or main container)
 	        if (chapter.element.parentNode) {
-	          // Before moving, preserve iframe content since DOM manipulation can clear it
+	          /*
+	           * CRITICAL: DOM MOVE WILL DESTROY IFRAME CONTENT
+	           *
+	           * The following DOM operations will cause the iframe to lose all its content:
+	           * 1. removeChild() - Removes iframe from current container
+	           * 2. appendChild() - Adds iframe to new container
+	           *
+	           * Between these operations, the iframe's contentDocument becomes empty.
+	           * We must preserve the content before the move and restore it after.
+	           */
+	          // Before moving, preserve iframe content since DOM manipulation will clear it
 	          const iframe = chapter.element.querySelector('iframe');
 	          let preservedSrcdoc;
 	          let preservedContent;
@@ -9886,11 +9937,26 @@
 	                console.debug('[BookPreRenderer] iframe content lost during DOM move, restoring for:', sectionHref, 'readyState:', iframe.contentDocument?.readyState, 'textLength:', textContent.length, 'htmlLength:', htmlContent.length);
 	                if (preservedSrcdoc) {
 	                  iframe.srcdoc = preservedSrcdoc;
+	                  // Force a reload by briefly setting src to about:blank then back to srcdoc
+	                  iframe.src = 'about:blank';
+	                  setTimeout(() => {
+	                    iframe.removeAttribute('src');
+	                    iframe.srcdoc = preservedSrcdoc;
+	                  }, 0);
 	                } else if (preservedContent) {
 	                  // Fallback: use document.write method
-	                  iframe.contentDocument?.open();
-	                  iframe.contentDocument?.write(preservedContent);
-	                  iframe.contentDocument?.close();
+	                  try {
+	                    if (iframe.contentDocument) {
+	                      iframe.contentDocument.open();
+	                      iframe.contentDocument.write(preservedContent);
+	                      iframe.contentDocument.close();
+	                    }
+	                  } catch (e) {
+	                    console.warn('[BookPreRenderer] document.write failed for:', sectionHref, e);
+	                    // If document.write fails, try srcdoc approach with data URL
+	                    const encodedContent = encodeURIComponent(preservedContent);
+	                    iframe.src = `data:text/html;charset=utf-8,${encodedContent}`;
+	                  }
 	                }
 	              }
 	            } catch (e) {
@@ -9940,32 +10006,6 @@
 	            console.debug('[BookPreRenderer] could not reset iframe scroll:', e.message);
 	          }
 	        }
-	        // Debug: Log element positioning after attachment
-	        console.log('[BookPreRenderer] element attached - debug info:');
-	        console.log('  href:', sectionHref);
-	        console.log('  elementWidth:', chapter.element.offsetWidth);
-	        console.log('  elementHeight:', chapter.element.offsetHeight);
-	        console.log('  elementScrollWidth:', chapter.element.scrollWidth);
-	        console.log('  elementScrollHeight:', chapter.element.scrollHeight);
-	        console.log('  elementScrollLeft:', chapter.element.scrollLeft);
-	        console.log('  elementScrollTop:', chapter.element.scrollTop);
-	        console.log('  chapterWidth:', chapter.width);
-	        console.log('  chapterHeight:', chapter.height);
-	        console.log('  pageCount:', chapter.pageCount);
-	        // Also check iframe content if available (reuse the iframe element)
-	        if (iframeElement && iframeElement.contentWindow && iframeElement.contentDocument) {
-	          try {
-	            const doc = iframeElement.contentDocument;
-	            const body = doc.body;
-	            console.log('  iframe body scrollLeft:', body?.scrollLeft || 'N/A');
-	            console.log('  iframe body scrollTop:', body?.scrollTop || 'N/A');
-	            console.log('  iframe window scrollX:', iframeElement.contentWindow.scrollX || 'N/A');
-	            console.log('  iframe window scrollY:', iframeElement.contentWindow.scrollY || 'N/A');
-	          } catch (e) {
-	            console.log('  iframe content access blocked:', e.message);
-	          }
-	        }
-	        console.log('[BookPreRenderer] successfully attached chapter to DOM:', sectionHref);
 	        // Verify attachment worked - the element should not be in the pre-renderer container
 	        // It should be ready to be attached to the views system instead
 	        if (chapter.element.parentNode === this.container) {

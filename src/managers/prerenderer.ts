@@ -17,13 +17,14 @@ export interface PreRenderedChapter {
   pageCount: number;
   hasWhitePages: boolean;
   whitePageIndices: number[];
-  // Optional per-page map for fast CFI->page lookup and offsets
+  // CFI-based page mapping for precise navigation and fixing "page off" issues
+  // This enables accurate bookmarking, progress tracking, and smooth navigation
   pageMap?: Array<{
     index: number; // 1-based page index within the chapter
-    startCfi?: string;
-    endCfi?: string;
-    xOffset?: number; // for horizontal/paginated
-    yOffset?: number; // for vertical/scrolled
+    startCfi?: string; // CFI at the start of this page for precise positioning
+    endCfi?: string; // CFI at the end of this page for range calculations
+    xOffset?: number; // horizontal offset for paginated flow
+    yOffset?: number; // vertical offset for scrolled flow
   }>;
 }
 
@@ -63,6 +64,92 @@ export class BookPreRenderer {
   private renderingPromises: Map<string, Promise<PreRenderedChapter>>;
   private request: (url: string) => Promise<Document>;
   private currentStatus: PreRenderingStatus;
+
+  /*
+   * CRITICAL BROWSER BEHAVIOR WARNING - IFRAME CONTENT LOSS ON DOM MOVES:
+   *
+   * WHY WE MUST USE IFRAMES (SECURITY REQUIREMENT):
+   * EPUBs are untrusted content that can contain arbitrary JavaScript, CSS, and HTML.
+   * Without iframe sandboxing, malicious EPUB content could:
+   * - Execute scripts in the main document context and steal user data
+   * - Access or modify the reader application's DOM and functionality
+   * - Perform XSS attacks or redirect users to malicious sites
+   * - Override global JavaScript objects and break the reader
+   * - Access localStorage, cookies, and other sensitive browser APIs
+   *
+   * Iframes with sandbox attributes provide ESSENTIAL security isolation by:
+   * - Running EPUB content in a separate, restricted browsing context
+   * - Preventing access to the parent document's DOM and globals
+   * - Limiting script execution and API access via sandbox policies
+   * - Blocking potentially dangerous operations like form submission and popups
+   *
+   * HOWEVER, this security necessity creates a technical challenge because:
+   *
+   * When an iframe element is moved between different DOM containers using methods like:
+   * - appendChild()
+   * - insertBefore()
+   * - removeChild() followed by appendChild()
+   *
+   * The browser will COMPLETELY RESET the iframe's content document, causing:
+   * - iframe.contentDocument to become a fresh, empty document
+   * - All rendered content (HTML, CSS, JavaScript state) to be lost
+   * - iframe.srcdoc content to be cleared
+   * - Any event listeners attached to the iframe content to be removed
+   *
+   * This behavior is consistent across all major browsers (Chrome, Firefox, Safari, Edge)
+   * and is part of the HTML specification for iframe security and lifecycle management.
+   *
+   * IMPACT ON PRERENDERING:
+   * Our prerendering system creates iframes with fully rendered EPUB content to provide:
+   * - Instant page display (no loading delays)
+   * - Accurate page counts for pagination and navigation
+   * - Pre-calculated layout metrics and content dimensions
+   * - Ability to inspect and analyze content before display
+   * - Smooth navigation between chapters without rendering delays
+   * - Precise CFI (Canonical Fragment Identifier) calculation for page boundaries
+   *   to enable accurate navigation and fix "page off" jump issues
+   *
+   * However, when prerendered content needs to be displayed, it must be moved from
+   * offscreen containers to the main viewing container. Each DOM move causes complete
+   * content loss, requiring:
+   *
+   * 1. Content preservation before DOM moves (saving srcdoc/innerHTML)
+   * 2. Content restoration after DOM moves (re-setting srcdoc or using document.write)
+   * 3. Fallback mechanisms when restoration fails
+   *
+   * THIS APPROACH DEFEATS THE PURPOSE OF PRERENDERING because:
+   * - Content must be re-rendered/reloaded, eliminating performance benefits
+   * - Page layout calculations may need to be repeated
+   * - CFI calculations become unreliable or need to be recalculated
+   * - Loading delays are reintroduced during content restoration
+   * - The "instant display" benefit is lost
+   * - Restoration can fail, causing white pages or missing content
+   *
+   * ARCHITECTURAL ALTERNATIVES TO CONSIDER:
+   * The current approach is fundamentally flawed. Better solutions would:
+   *
+   * 1. **CSS Positioning Approach**: Keep iframes in fixed containers and use CSS
+   *    positioning/visibility for display (preserves all prerendering benefits)
+   * 2. **Stable Container Strategy**: Never move iframes, only show/hide them in place
+   * 3. **Content Cloning**: Create new iframes with cloned content instead of moving
+   * 4. **Virtual Container System**: Use a container management system that doesn't
+   *    require physical DOM moves
+   * 5. **Layered Rendering**: Use CSS transforms/layers to bring content into view
+   *    without DOM manipulation
+   *
+   * Any solution that avoids moving iframe elements would:
+   * - Preserve the instant display benefits of prerendering
+   * - Maintain accurate page counts and layout calculations
+   * - Keep CFI calculations valid and enable precise page navigation
+   * - Eliminate content restoration complexity and failure points
+   * - Provide truly smooth navigation between chapters
+   * - Keep the performance advantages that justify prerendering
+   * - Enable advanced features like accurate bookmarking and progress tracking
+   *
+   * The current implementation attempts to work around this limitation through content
+   * preservation and restoration, but this is inherently fragile and can fail in
+   * edge cases, leading to white/empty pages that users may experience.
+   */
 
   constructor(
     container: HTMLElement,
@@ -121,10 +208,6 @@ export class BookPreRenderer {
           try {
             await this.preRenderSection(section);
             this.currentStatus.rendered++;
-            console.log(
-              '[BookPreRenderer] successfully pre-rendered:',
-              section.href
-            );
             this.emit('added', this.currentStatus);
           } catch (error) {
             this.currentStatus.failed++;
@@ -159,8 +242,6 @@ export class BookPreRenderer {
       await this.renderingPromises.get(href)!;
       return this.chapters.get(href)!;
     }
-
-    console.log('[BookPreRenderer] pre-rendering section:', href);
 
     const rendering = new defer<View>();
     const view = this.createView(section);
@@ -217,12 +298,8 @@ export class BookPreRenderer {
       }
     }, 0);
 
-    view.onDisplayed = () => {
-      console.log('[BookPreRenderer] view displayed for:', section.href);
-    };
-    view.onResize = () => {
-      console.log('[BookPreRenderer] view resized for:', section.href);
-    };
+    view.onDisplayed = () => {};
+    view.onResize = () => {};
     return view;
   }
 
@@ -542,7 +619,18 @@ export class BookPreRenderer {
       // HYBRID APPROACH: Move from unattached storage through brief off-screen to final attachment
       // Step 1: Remove from current location (could be unattached storage, offscreen, or main container)
       if (chapter.element.parentNode) {
-        // Before moving, preserve iframe content since DOM manipulation can clear it
+        /*
+         * CRITICAL: DOM MOVE WILL DESTROY IFRAME CONTENT
+         *
+         * The following DOM operations will cause the iframe to lose all its content:
+         * 1. removeChild() - Removes iframe from current container
+         * 2. appendChild() - Adds iframe to new container
+         *
+         * Between these operations, the iframe's contentDocument becomes empty.
+         * We must preserve the content before the move and restore it after.
+         */
+
+        // Before moving, preserve iframe content since DOM manipulation will clear it
         const iframe = chapter.element.querySelector(
           'iframe'
         ) as HTMLIFrameElement;
@@ -592,11 +680,31 @@ export class BookPreRenderer {
 
               if (preservedSrcdoc) {
                 iframe.srcdoc = preservedSrcdoc;
+
+                // Force a reload by briefly setting src to about:blank then back to srcdoc
+                iframe.src = 'about:blank';
+                setTimeout(() => {
+                  iframe.removeAttribute('src');
+                  iframe.srcdoc = preservedSrcdoc;
+                }, 0);
               } else if (preservedContent) {
                 // Fallback: use document.write method
-                iframe.contentDocument?.open();
-                iframe.contentDocument?.write(preservedContent);
-                iframe.contentDocument?.close();
+                try {
+                  if (iframe.contentDocument) {
+                    iframe.contentDocument.open();
+                    iframe.contentDocument.write(preservedContent);
+                    iframe.contentDocument.close();
+                  }
+                } catch (e) {
+                  console.warn(
+                    '[BookPreRenderer] document.write failed for:',
+                    sectionHref,
+                    e
+                  );
+                  // If document.write fails, try srcdoc approach with data URL
+                  const encodedContent = encodeURIComponent(preservedContent);
+                  iframe.src = `data:text/html;charset=utf-8,${encodedContent}`;
+                }
               }
             }
           } catch (e) {
@@ -667,48 +775,6 @@ export class BookPreRenderer {
           );
         }
       }
-
-      // Debug: Log element positioning after attachment
-      console.log('[BookPreRenderer] element attached - debug info:');
-      console.log('  href:', sectionHref);
-      console.log('  elementWidth:', chapter.element.offsetWidth);
-      console.log('  elementHeight:', chapter.element.offsetHeight);
-      console.log('  elementScrollWidth:', chapter.element.scrollWidth);
-      console.log('  elementScrollHeight:', chapter.element.scrollHeight);
-      console.log('  elementScrollLeft:', chapter.element.scrollLeft);
-      console.log('  elementScrollTop:', chapter.element.scrollTop);
-      console.log('  chapterWidth:', chapter.width);
-      console.log('  chapterHeight:', chapter.height);
-      console.log('  pageCount:', chapter.pageCount);
-
-      // Also check iframe content if available (reuse the iframe element)
-      if (
-        iframeElement &&
-        iframeElement.contentWindow &&
-        iframeElement.contentDocument
-      ) {
-        try {
-          const doc = iframeElement.contentDocument;
-          const body = doc.body;
-          console.log('  iframe body scrollLeft:', body?.scrollLeft || 'N/A');
-          console.log('  iframe body scrollTop:', body?.scrollTop || 'N/A');
-          console.log(
-            '  iframe window scrollX:',
-            iframeElement.contentWindow.scrollX || 'N/A'
-          );
-          console.log(
-            '  iframe window scrollY:',
-            iframeElement.contentWindow.scrollY || 'N/A'
-          );
-        } catch (e) {
-          console.log('  iframe content access blocked:', (e as Error).message);
-        }
-      }
-
-      console.log(
-        '[BookPreRenderer] successfully attached chapter to DOM:',
-        sectionHref
-      );
 
       // Verify attachment worked - the element should not be in the pre-renderer container
       // It should be ready to be attached to the views system instead

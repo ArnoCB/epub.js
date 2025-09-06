@@ -23,7 +23,7 @@
     "docs:md": "documentation build src/index.ts -f md -o documentation/md/API.md",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
-    "precommit": "npm run lint && npm run format && npm run build:utils && npm run test && npm run build:rollup",
+    "precommit": "npm run lint && npm run format && npm run build:utils && npm run build:rollup && npm run test",
     "start": "webpack-dev-server --inline --d",
     "build": "NODE_ENV=production webpack --progress",
     "minify": "NODE_ENV=production MINIMIZE=true webpack --progress",

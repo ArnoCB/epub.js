@@ -112,6 +112,11 @@ class Views {
   append(view: View) {
     this._views.push(view);
     if (this.container) {
+      // WARNING: appendChild() with iframe elements causes content loss!
+      // For prerendered content, this DOM move will clear iframe content.
+      // The prerenderer should handle content preservation/restoration.
+      // We CANNOT avoid iframes due to security requirements - EPUBs contain
+      // untrusted JavaScript that must be sandboxed for user safety.
       this.container.appendChild(view.element);
     }
     this.length++;

@@ -17,7 +17,9 @@ test.describe('Alice in Wonderland EPUB', () => {
     }) => {
       test.setTimeout(60_000);
 
-      await page.goto(`${baseURL}/examples/prerendering-example.html`);
+      // Fallback for baseURL if undefined
+      const testBaseURL = baseURL || 'http://127.0.0.1:9876';
+      await page.goto(`${testBaseURL}/examples/prerendering-example.html`);
 
       // Wait for the library to load
       await page.waitForFunction(
@@ -61,7 +63,9 @@ test.describe('Alice in Wonderland EPUB', () => {
     }) => {
       test.setTimeout(60_000);
 
-      await page.goto(`${baseURL}/e2e/fixtures/epub-test-page.html`);
+      // Fallback for baseURL if undefined
+      const testBaseURL = baseURL || 'http://127.0.0.1:9876';
+      await page.goto(`${testBaseURL}/e2e/fixtures/epub-test-page.html`);
 
       // Wait for the library to load
       await page.waitForFunction(
@@ -101,7 +105,9 @@ test.describe('Alice in Wonderland EPUB', () => {
     }) => {
       test.setTimeout(60_000);
 
-      await page.goto(`${baseURL}/examples/prerendering-example.html`);
+      // Fallback for baseURL if undefined
+      const testBaseURL = baseURL || 'http://127.0.0.1:9876';
+      await page.goto(`${testBaseURL}/examples/prerendering-example.html`);
 
       // Wait for the library to load
       await page.waitForFunction(
@@ -140,7 +146,9 @@ test.describe('Alice in Wonderland EPUB', () => {
     }) => {
       test.setTimeout(60_000);
 
-      await page.goto(`${baseURL}/e2e/fixtures/epub-test-page.html`);
+      // Fallback for baseURL if undefined
+      const testBaseURL = baseURL || 'http://127.0.0.1:9876';
+      await page.goto(`${testBaseURL}/e2e/fixtures/epub-test-page.html`);
 
       // Wait for the library to load
       await page.waitForFunction(
