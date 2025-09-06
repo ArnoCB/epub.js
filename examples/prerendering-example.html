@@ -603,6 +603,46 @@
       
       // Update status every 2 seconds
       setInterval(updateStatus, 2000);
+      
+      // Add window resize debugging
+      let resizeTimeout;
+      window.addEventListener('resize', function() {
+        addLog("Window resize detected", "info");
+        
+        // Clear any existing timeout
+        clearTimeout(resizeTimeout);
+        
+        // Debounce the resize handling
+        resizeTimeout = setTimeout(() => {
+          addLog("Processing resize...", "info");
+          
+          if (rendition) {
+            // Log current state before resize
+            const beforeIframes = document.querySelectorAll('#viewer iframe').length;
+            addLog(`Before resize: ${beforeIframes} iframes visible`, "info");
+            
+            // Trigger the resize
+            rendition.resize();
+            
+            // Check state after resize
+            setTimeout(() => {
+              const afterIframes = document.querySelectorAll('#viewer iframe').length;
+              addLog(`After resize: ${afterIframes} iframes visible`, "info");
+              
+              if (afterIframes === 0) {
+                addLog("WARNING: All iframes disappeared after resize!", "error");
+                
+                // Try to get debug info from prerenderer
+                const preRenderer = rendition.manager?.preRenderer;
+                if (preRenderer) {
+                  const debugInfo = preRenderer.getDebugInfo();
+                  addLog(`PreRenderer debug: ${JSON.stringify(debugInfo)}`, "info");
+                }
+              }
+            }, 100);
+          }
+        }, 250);
+      });
     });
 
     // Expose some functions to global scope for debugging
@@ -612,7 +652,11 @@
       getPreRenderer: () => rendition?.manager?.preRenderer,
       getDebugInfo: () => rendition?.manager?.preRenderer?.getDebugInfo(),
       book,
-      rendition
+      rendition,
+      triggerResize: () => {
+        addLog("Manual resize triggered", "info");
+        if (rendition) rendition.resize();
+      }
     };
 
     addLog("Pre-rendering example initialized", "success");

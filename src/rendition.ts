@@ -604,8 +604,19 @@ export class Rendition implements EventEmitterMethods {
       epubcfi
     );
 
-    if (this.location && this.location.start) {
+    // Check if we have a pre-rendering enabled manager that can handle resize natively
+    // If so, skip the automatic display call to avoid clearing views that were just attached
+    const hasPreRendering =
+      this.manager &&
+      (this.manager as DefaultViewManager).usePreRendering &&
+      (this.manager as DefaultViewManager).preRenderer;
+
+    if (this.location && this.location.start && !hasPreRendering) {
       this.display(epubcfi || this.location.start.cfi);
+    } else if (hasPreRendering) {
+      console.debug(
+        '[Rendition] skipping automatic display after resize - pre-rendering manager will handle it'
+      );
     }
   }
 

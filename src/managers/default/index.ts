@@ -459,14 +459,108 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     this._bounds = this.bounds();
 
-    // Clear current views
-    this.clear();
+    // Store current chapter before clearing views for redisplay after resize
+    let currentChapter: string | undefined;
+    if (this.views.length > 0) {
+      // Use the first visible view if available, otherwise fall back to first view
+      const visibleViews = this.views.displayed();
+      const currentView =
+        visibleViews.length > 0 ? visibleViews[0] : this.views.first();
+      if (currentView && currentView.section) {
+        currentChapter = currentView.section.href;
+        console.debug(
+          '[DefaultViewManager] resize detected current chapter:',
+          currentChapter,
+          'from',
+          visibleViews.length > 0 ? 'visible view' : 'first view'
+        );
+      }
+    }
 
     // Update for new views
     this.viewSettings.width = this._stageSize.width;
     this.viewSettings.height = this._stageSize.height;
 
     this.updateLayout();
+
+    // For pre-rendered content, refresh the current chapter directly without clearing
+    if (currentChapter && this.preRenderer) {
+      const preRenderedChapter = this.preRenderer.getChapter(currentChapter);
+      if (preRenderedChapter) {
+        console.debug(
+          '[DefaultViewManager] redisplaying chapter after resize:',
+          currentChapter
+        );
+
+        // Use synchronous approach to ensure completion before resize event finishes
+        try {
+          const attachedChapter =
+            this.preRenderer.attachChapter(currentChapter);
+          if (attachedChapter && attachedChapter.view) {
+            // Check if this view is already in our views system
+            const existingViewIndex = this.views.indexOf(attachedChapter.view);
+
+            if (existingViewIndex === -1) {
+              // View is not in the system, need to clear and add it
+              this.clear();
+              this.views.append(attachedChapter.view);
+            } else {
+              // View is already in the system, just make sure it's properly configured
+              console.debug(
+                '[DefaultViewManager] reusing existing view for resize'
+              );
+            }
+
+            // Set up event handlers
+            attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
+            attachedChapter.view.onResize = this.afterResized.bind(this);
+
+            if (typeof attachedChapter.view.on === 'function') {
+              attachedChapter.view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
+                this.updateAxis(axis);
+              });
+              attachedChapter.view.on(
+                EVENTS.VIEWS.WRITING_MODE,
+                (mode: string) => {
+                  this.updateWritingMode(mode);
+                }
+              );
+            }
+
+            // Mark as displayed and show
+            attachedChapter.view.displayed = true;
+            this.views.show();
+
+            // Ensure the view is properly sized to the new dimensions
+            if (typeof attachedChapter.view.size === 'function') {
+              attachedChapter.view.size(
+                parseInt(String(this.settings.width || '900')),
+                parseInt(String(this.settings.height || '600'))
+              );
+            }
+
+            // Reset scroll position
+            this.scrollTo(0, 0, true);
+
+            console.debug(
+              '[DefaultViewManager] chapter redisplayed successfully after resize'
+            );
+          } else {
+            console.warn(
+              '[DefaultViewManager] failed to attach chapter after resize, clearing views'
+            );
+          }
+        } catch (error) {
+          console.error(
+            '[DefaultViewManager] error redisplaying chapter after resize:',
+            error
+          );
+        }
+      }
+    } else {
+      // Clear views only if we don't have a pre-rendered chapter to display
+      this.clear();
+    }
 
     this.emit(
       EVENTS.MANAGERS.RESIZED,
@@ -544,7 +638,8 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   private displayPreRendered(
     chapter: PreRenderedChapter,
     target?: HTMLElement | string,
-    displaying?: defer<unknown>
+    displaying?: defer<unknown>,
+    skipClear?: boolean
   ): Promise<unknown> {
     const deferred = displaying || new defer();
 
@@ -552,7 +647,9 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       '[DefaultViewManager] displaying pre-rendered chapter:',
       chapter.section.href,
       'with target:',
-      target
+      target,
+      'skipClear:',
+      skipClear
     );
 
     // Wait for chapter to be fully rendered
@@ -561,11 +658,18 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         try {
           // Save current scroll position, but only preserve it if staying in the same chapter
           const currentScrollLeft = this.scrollLeft || 0;
-          const isNewChapter = !this.views.find(chapter.section);
+
+          // Check if this chapter is already attached to avoid unnecessary clearing
+          const existingView = this.views.find(chapter.section);
+          const isAlreadyAttached =
+            existingView &&
+            this.preRenderer?.getChapter(chapter.section.href)?.attached;
 
           console.debug(
             '[DefaultViewManager] chapter switch - isNewChapter:',
-            isNewChapter,
+            !existingView,
+            'isAlreadyAttached:',
+            isAlreadyAttached,
             'currentScroll:',
             currentScrollLeft,
             'chapter:',
@@ -574,8 +678,16 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
             this.views.length
           );
 
-          // Clear current views first
-          this.clear();
+          // Clear current views first, unless caller requested to skip it (e.g., during resize)
+          // or if the chapter is already attached (avoid clearing already attached content)
+          if (!skipClear && !isAlreadyAttached) {
+            this.clear();
+          } else if (isAlreadyAttached) {
+            console.debug(
+              '[DefaultViewManager] skipping clear - chapter already attached:',
+              chapter.section.href
+            );
+          }
 
           // Verify the pre-renderer is still available
           if (!this.preRenderer) {
@@ -588,9 +700,14 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
           );
 
           if (!attachedChapter) {
-            throw new Error(
-              `Failed to attach pre-rendered chapter: ${chapter.section.href}`
+            // Chapter may still be rendering, wait briefly and try fallback to normal display
+            console.debug(
+              '[DefaultViewManager] pre-rendered chapter not ready, falling back to normal display after brief delay'
             );
+            setTimeout(() => {
+              this.displayNormally(chapter.section, target, displaying);
+            }, 100);
+            return deferred.promise;
           }
 
           // Verify the view is in a good state

@@ -57,6 +57,7 @@ export class BookPreRenderer {
 
   private container: HTMLElement;
   private offscreenContainer: HTMLElement;
+  private unattachedStorage: DocumentFragment; // New: for long-term storage
   private viewSettings: ViewSettings;
   private chapters: Map<string, PreRenderedChapter>;
   private renderingPromises: Map<string, Promise<PreRenderedChapter>>;
@@ -73,6 +74,10 @@ export class BookPreRenderer {
     this.chapters = new Map();
     this.renderingPromises = new Map();
     this.request = request;
+
+    // Create unattached storage for long-term prerendered content
+    this.unattachedStorage = document.createDocumentFragment();
+
     this.currentStatus = {
       total: 0,
       rendered: 0,
@@ -226,6 +231,7 @@ export class BookPreRenderer {
     chapter: PreRenderedChapter
   ): Promise<View> {
     try {
+      // Temporarily attach to offscreen container for rendering
       this.offscreenContainer.appendChild(chapter.element);
       const renderedView = await view.display(this.request);
 
@@ -238,8 +244,14 @@ export class BookPreRenderer {
 
       this.analyzeContent(chapter);
 
+      // Move to unattached storage for long-term storage (hybrid approach)
+      if (chapter.element.parentNode === this.offscreenContainer) {
+        this.offscreenContainer.removeChild(chapter.element);
+      }
+      this.unattachedStorage.appendChild(chapter.element);
+
       console.log(
-        '[BookPreRenderer] rendered:',
+        '[BookPreRenderer] rendered and stored unattached:',
         chapter.section.href,
         'pages:',
         chapter.pageCount,
@@ -430,6 +442,15 @@ export class BookPreRenderer {
       return null;
     }
 
+    // If chapter is still being rendered, return null (let caller retry)
+    if (this.renderingPromises.has(sectionHref)) {
+      console.debug(
+        '[BookPreRenderer] chapter still rendering, caller should retry:',
+        sectionHref
+      );
+      return null;
+    }
+
     if (chapter.attached) {
       console.debug('[BookPreRenderer] chapter already attached:', sectionHref);
 
@@ -441,12 +462,31 @@ export class BookPreRenderer {
         ) as HTMLIFrameElement;
         if (iframe && iframe.contentDocument) {
           const body = iframe.contentDocument.body;
-          const hasContent = body && (body.textContent || '').trim().length > 0;
+          const hasTextContent =
+            body && (body.textContent || '').trim().length > 0;
+          const hasHtmlStructure =
+            body && (body.innerHTML || '').trim().length > 0;
+          const isReady = iframe.contentDocument.readyState === 'complete';
 
-          if (!hasContent) {
+          // Accept content if it has either text content OR HTML structure AND is ready
+          // For white pages, be more lenient as they naturally have minimal content
+          const isWhitePage = chapter.hasWhitePages;
+          const hasValidContent =
+            isReady &&
+            (hasTextContent || hasHtmlStructure || (isWhitePage && body));
+
+          if (!hasValidContent) {
             console.warn(
-              '[BookPreRenderer] attached chapter has empty iframe content, will attempt refresh:',
-              sectionHref
+              '[BookPreRenderer] attached chapter has insufficient content, will attempt refresh:',
+              sectionHref,
+              'readyState:',
+              iframe.contentDocument.readyState,
+              'hasText:',
+              hasTextContent,
+              'hasHtml:',
+              hasHtmlStructure,
+              'isWhitePage:',
+              isWhitePage
             );
             // Don't return early - let it go through attachment process to refresh content
           } else {
@@ -508,8 +548,9 @@ export class BookPreRenderer {
         return null;
       }
 
-      // Remove from offscreen container if needed
-      if (chapter.element.parentNode === this.offscreenContainer) {
+      // HYBRID APPROACH: Move from unattached storage through brief off-screen to final attachment
+      // Step 1: Remove from current location (could be unattached storage, offscreen, or main container)
+      if (chapter.element.parentNode) {
         // Before moving, preserve iframe content since DOM manipulation can clear it
         const iframe = chapter.element.querySelector(
           'iframe'
@@ -530,22 +571,32 @@ export class BookPreRenderer {
           }
         }
 
-        this.offscreenContainer.removeChild(chapter.element);
-        console.debug(
-          '[BookPreRenderer] removed from offscreen container:',
-          sectionHref
-        );
+        chapter.element.parentNode.removeChild(chapter.element);
+        console.debug('[BookPreRenderer] removed from container:', sectionHref);
 
         // After DOM move, restore content if iframe was cleared
         if (iframe && (preservedSrcdoc || preservedContent)) {
           try {
-            const hasContent =
-              (iframe.contentDocument?.body?.textContent?.trim().length ?? 0) >
-              0;
-            if (!hasContent) {
+            const textContent =
+              iframe.contentDocument?.body?.textContent?.trim() || '';
+            const htmlContent =
+              iframe.contentDocument?.body?.innerHTML?.trim() || '';
+            const isReady = iframe.contentDocument?.readyState === 'complete';
+
+            // Check if content is missing (for both regular and white pages)
+            const hasValidContent =
+              isReady && (textContent.length > 0 || htmlContent.length > 0);
+
+            if (!hasValidContent) {
               console.debug(
                 '[BookPreRenderer] iframe content lost during DOM move, restoring for:',
-                sectionHref
+                sectionHref,
+                'readyState:',
+                iframe.contentDocument?.readyState,
+                'textLength:',
+                textContent.length,
+                'htmlLength:',
+                htmlContent.length
               );
 
               if (preservedSrcdoc) {
@@ -567,11 +618,20 @@ export class BookPreRenderer {
         }
       }
 
-      // Ensure the chapter element maintains its pre-rendered dimensions
+      // Step 2: Brief off-screen positioning for transition stability
+      this.offscreenContainer.appendChild(chapter.element);
+
+      // Step 3: Ensure proper dimensions and clear any problematic positioning
       if (chapter.element) {
         // Set the element width to match the pre-rendered width
         chapter.element.style.width = chapter.width + 'px';
         chapter.element.style.height = chapter.height + 'px';
+
+        // Clear any problematic positioning that might persist
+        chapter.element.style.position = 'static';
+        chapter.element.style.left = '0px';
+        chapter.element.style.top = '0px';
+        chapter.element.style.visibility = 'visible';
 
         // Also set the iframe width if present
         const iframe = chapter.element.querySelector('iframe');
@@ -581,12 +641,16 @@ export class BookPreRenderer {
         }
 
         console.debug(
-          '[BookPreRenderer] set element dimensions to match pre-rendered size:',
+          '[BookPreRenderer] prepared element for attachment:',
           chapter.width + 'x' + chapter.height,
           'for',
           sectionHref
         );
       }
+
+      // Step 4: Keep in offscreen container until views system moves it
+      // DO NOT remove from offscreen - let views.append() handle the DOM move
+      // this.offscreenContainer.removeChild(chapter.element);
 
       // Mark as attached since it's ready to be used
       chapter.attached = true;
@@ -688,10 +752,14 @@ export class BookPreRenderer {
       chapter.element.parentNode.removeChild(chapter.element);
     }
 
-    this.offscreenContainer.appendChild(chapter.element);
+    // HYBRID APPROACH: Store in unattached storage instead of offscreen container
+    this.unattachedStorage.appendChild(chapter.element);
     chapter.attached = false;
 
-    console.log('[BookPreRenderer] detached chapter from DOM:', sectionHref);
+    console.log(
+      '[BookPreRenderer] detached chapter and moved to unattached storage:',
+      sectionHref
+    );
     this.emit(EVENTS.VIEWS.HIDDEN, chapter.view);
     return chapter;
   }

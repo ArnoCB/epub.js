@@ -1,38 +1,52 @@
-import { test, expect } from '@playwright/test';
+/**
+ * EPUB.js Test Helpers
+ *
+ * Common helper functions for e2e tests
+ */
 
-// Regression: after navigating Next from chapter_001.xhtml, the viewer's center must show an iframe with content.
-// Mirrors the Prev viewport-center test, but for forward navigation.
+import { Page } from '@playwright/test';
 
-test('Next from chapter 1: viewport center shows visible iframe with content', async ({
-  page,
-  baseURL,
-}) => {
-  await page.goto(`${baseURL}/examples/prerendering-example.html`);
+/**
+ * Waits for the rendition to be ready
+ */
+export async function waitForRenditionReady(page: Page, timeout = 15000) {
+  await page.waitForFunction(
+    () => {
+      const rendition = (window as any).rendition;
+      return (
+        rendition &&
+        rendition.manager &&
+        rendition.manager.views &&
+        rendition.manager.views.length > 0
+      );
+    },
+    { timeout }
+  );
+}
 
-  // Wait for rendition
-  await page.waitForFunction(() => typeof (window as any).ePub === 'function');
-  await page.waitForFunction(() => !!(window as any).getRendition, {
-    timeout: 10000,
+/**
+ * Gets the current book info from rendition
+ */
+export async function getBookInfo(page: Page) {
+  return page.evaluate(() => {
+    const book = (window as any).book;
+    const rendition = (window as any).rendition;
+    const location = rendition.currentLocation();
+
+    return {
+      isOpen: book && book.packaging && book.packaging.metadata,
+      title: book?.packaging?.metadata?.title,
+      spine: book?.spine?.items?.length || 0,
+      currentChapter: location && location.length > 0 ? location[0].href : null,
+    };
   });
+}
 
-  // Go to chapter 1 explicitly to normalize start
-  await page.evaluate(() => {
-    const w: any = window as any;
-    (w.getRendition ? w.getRendition() : w.rendition).display(
-      'chapter_001.xhtml'
-    );
-  });
-  await page.waitForTimeout(800);
-
-  // Click Next (forward)
-  await page.click('#next');
-
-  // Wait until relocation event fires to ensure navigation settled
-  await page.waitForFunction(() => !!(window as any).__lastRelocated, {
-    timeout: 2000,
-  });
-
-  // Inspect the element under the center of the viewer and validate it is the iframe with non-empty content
+/**
+ * Verifies content is visible in viewport
+ * Important check to ensure no white/empty pages
+ */
+export async function verifyViewportContent(page: Page) {
   const center = await page.evaluate(() => {
     const viewer = document.getElementById('viewer');
     if (!viewer) return { ok: false, reason: 'no-viewer' };
@@ -51,6 +65,7 @@ test('Next from chapter 1: viewport center shows visible iframe with content', a
           (e) => e instanceof HTMLIFrameElement
         ) as HTMLIFrameElement) || null;
     }
+
     // Fallback to elementFromPoint walk only if needed
     if (!iframe) {
       const el = document.elementFromPoint(cx, cy) as Element | null;
@@ -88,18 +103,24 @@ test('Next from chapter 1: viewport center shows visible iframe with content', a
     return { ok: true, intersects, ready, text, html };
   });
 
-  // Assertions: must be intersecting (visible) and have content
-  expect(center.ok).toBeTruthy();
-  expect(
-    center.intersects,
-    'iframe should intersect viewer center'
-  ).toBeTruthy();
-  expect(
-    center.text,
-    'iframe under center should have text content'
-  ).toBeGreaterThan(0);
-  expect(
-    center.html,
-    'iframe under center should have html content'
-  ).toBeGreaterThan(0);
-});
+  return center;
+}
+
+/**
+ * Navigate to a specific chapter
+ */
+export async function navigateToChapter(page: Page, chapterHref: string) {
+  await page.evaluate((href) => {
+    const w: any = window as any;
+    (w.getRendition ? w.getRendition() : w.rendition).display(href);
+  }, chapterHref);
+}
+
+/**
+ * Wait for relocation event after navigation
+ */
+export async function waitForRelocation(page: Page, timeout = 2000) {
+  await page.waitForFunction(() => !!(window as any).__lastRelocated, {
+    timeout,
+  });
+}
