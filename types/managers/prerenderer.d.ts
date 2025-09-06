@@ -49,6 +49,7 @@ export declare class BookPreRenderer {
     emit: EventEmitter['emit'];
     private container;
     private offscreenContainer;
+    private unattachedStorage;
     private viewSettings;
     private chapters;
     private renderingPromises;

@@ -3,20 +3,22 @@ import {
   waitForRenditionReady,
   navigateToChapter,
   waitForRelocation,
-} from './test-helpers';
+} from '../../test-helpers';
 
 // Check if viewport contains visible iframe content
 const checkVisibleContent = async (page: any) => {
   return await page.evaluate(() => {
     const viewer = document.getElementById('viewer');
     if (!viewer) return false;
-    
+
     const viewerRect = viewer.getBoundingClientRect();
-    const iframes = Array.from(document.querySelectorAll('iframe')) as HTMLIFrameElement[];
-    
+    const iframes = Array.from(
+      document.querySelectorAll('iframe')
+    ) as HTMLIFrameElement[];
+
     for (const iframe of iframes) {
       const iframeRect = iframe.getBoundingClientRect();
-      
+
       // Check if iframe intersects with viewer
       const intersects = !(
         iframeRect.right <= viewerRect.left ||
@@ -24,9 +26,9 @@ const checkVisibleContent = async (page: any) => {
         iframeRect.bottom <= viewerRect.top ||
         iframeRect.top >= viewerRect.bottom
       );
-      
+
       if (!intersects) continue;
-      
+
       // Check if iframe has content
       try {
         const doc = iframe.contentDocument;
@@ -52,9 +54,7 @@ test('Resize: viewport still shows iframe content after window resize', async ({
   await page.goto(`${baseURL}/examples/prerendering-example.html`);
 
   // Wait for ePub objects to be available
-  await page.waitForFunction(
-    () => typeof (window as any).ePub === 'function'
-  );
+  await page.waitForFunction(() => typeof (window as any).ePub === 'function');
   await page.waitForFunction(() => !!(window as any).getRendition, {
     timeout: 10000,
   });
@@ -79,18 +79,20 @@ test('Resize: viewport still shows iframe content after window resize', async ({
   // Resize viewport and trigger rendition resize
   await page.setViewportSize({ width: 600, height: 800 });
   await page.waitForTimeout(500);
-  
-  await page.evaluate(() => {
-    const w: any = window as any;
-    const r = w.getRendition ? w.getRendition() : w.rendition;
-    if (r && typeof r.resize === 'function') {
-      r.resize(window.innerWidth, window.innerHeight);
-    }
-    if (r && typeof r.display === 'function') {
-      r.display('chapter_001.xhtml');
-    }
-  }).catch(() => {});
-  
+
+  await page
+    .evaluate(() => {
+      const w: any = window as any;
+      const r = w.getRendition ? w.getRendition() : w.rendition;
+      if (r && typeof r.resize === 'function') {
+        r.resize(window.innerWidth, window.innerHeight);
+      }
+      if (r && typeof r.display === 'function') {
+        r.display('chapter_001.xhtml');
+      }
+    })
+    .catch(() => {});
+
   await page.waitForTimeout(2000);
 
   // Verify content is still visible after resize
@@ -105,9 +107,7 @@ test('Resize: title page (white page) still shows content after window resize', 
   await page.goto(`${baseURL}/examples/prerendering-example.html`);
 
   // Wait for ePub objects to be available
-  await page.waitForFunction(
-    () => typeof (window as any).ePub === 'function'
-  );
+  await page.waitForFunction(() => typeof (window as any).ePub === 'function');
   await page.waitForFunction(() => !!(window as any).getRendition, {
     timeout: 10000,
   });
@@ -132,18 +132,20 @@ test('Resize: title page (white page) still shows content after window resize', 
   // Resize viewport and trigger rendition resize
   await page.setViewportSize({ width: 600, height: 800 });
   await page.waitForTimeout(500);
-  
-  await page.evaluate(() => {
-    const w: any = window as any;
-    const r = w.getRendition ? w.getRendition() : w.rendition;
-    if (r && typeof r.resize === 'function') {
-      r.resize(window.innerWidth, window.innerHeight);
-    }
-    if (r && typeof r.display === 'function') {
-      r.display('titlepage.xhtml');
-    }
-  }).catch(() => {});
-  
+
+  await page
+    .evaluate(() => {
+      const w: any = window as any;
+      const r = w.getRendition ? w.getRendition() : w.rendition;
+      if (r && typeof r.resize === 'function') {
+        r.resize(window.innerWidth, window.innerHeight);
+      }
+      if (r && typeof r.display === 'function') {
+        r.display('titlepage.xhtml');
+      }
+    })
+    .catch(() => {});
+
   await page.waitForTimeout(2000);
 
   // Verify content is still visible after resize (for white pages, check iframe readiness)
@@ -151,8 +153,10 @@ test('Resize: title page (white page) still shows content after window resize', 
     const viewer = document.getElementById('viewer');
     if (!viewer) return false;
     const rect = viewer.getBoundingClientRect();
-    const iframes = Array.from(document.querySelectorAll('iframe')) as HTMLIFrameElement[];
-    
+    const iframes = Array.from(
+      document.querySelectorAll('iframe')
+    ) as HTMLIFrameElement[];
+
     for (const iframe of iframes) {
       const ifr = iframe.getBoundingClientRect();
       const intersects = !(
@@ -162,7 +166,7 @@ test('Resize: title page (white page) still shows content after window resize', 
         ifr.top >= rect.bottom
       );
       if (!intersects) continue;
-      
+
       try {
         const doc = iframe.contentDocument;
         const ready = doc?.readyState === 'complete';
@@ -173,6 +177,6 @@ test('Resize: title page (white page) still shows content after window resize', 
     }
     return false;
   });
-  
+
   expect(afterResize).toBeTruthy();
 });

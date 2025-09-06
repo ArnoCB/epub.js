@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { EPUB_TEST_DATASET, RENDERING_MODES } from '../test-dataset';
+import { EPUB_TEST_DATASET, RENDERING_MODES } from '../../test-dataset';
 
 /**
  * Core Rendering Mode Tests

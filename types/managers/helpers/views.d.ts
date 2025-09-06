@@ -28,6 +28,7 @@ export type View = CanonicalViewInstance & {
     position(): DOMRect;
     width(): number;
     height(): number;
+    size(width?: number, height?: number): void;
     setLayout(layout: Layout): void;
     onResize?(view: View, size?: {
         width: number;

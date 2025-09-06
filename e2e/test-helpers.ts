@@ -98,7 +98,9 @@ export async function verifyViewportContent(page: Page) {
       ready = doc?.readyState || 'unknown';
       text = (body?.textContent || '').trim().length;
       html = (body?.innerHTML || '').trim().length;
-    } catch {}
+    } catch {
+      // Ignore cross-origin access errors
+    }
 
     return { ok: true, intersects, ready, text, html };
   });
