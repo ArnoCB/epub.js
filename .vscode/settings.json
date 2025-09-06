@@ -9,5 +9,27 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "editor.formatOnSave": false
+  "editor.formatOnSave": false,
+
+  // AI Context Configuration
+  "ai.context.primaryFiles": [
+    ".ai-notes/README.md",
+    ".ai-notes/findings/spread-mode-limitations.md",
+    ".ai-notes/findings/test-suite-analysis.md",
+    ".ai-notes/prompts/context-templates.md"
+  ],
+  "ai.context.projectType": "epub-js-library",
+  "ai.context.description": "EPUB.js - JavaScript library for rendering EPUB files in browsers",
+
+  // File watching and search
+  "files.watcherExclude": {
+    "**/.ai-notes/**": false
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/lib": true,
+    "**/test-results": true,
+    "**/playwright-report": true
+  }
 }

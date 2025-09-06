@@ -9667,7 +9667,6 @@
 	          this.offscreenContainer.removeChild(chapter.element);
 	        }
 	        this.unattachedStorage.appendChild(chapter.element);
-	        console.log('[BookPreRenderer] rendered and stored unattached:', chapter.section.href, 'pages:', chapter.pageCount, 'white pages:', chapter.hasWhitePages ? chapter.whitePageIndices.join(',') : 'none');
 	        return renderedView;
 	      } catch (error) {
 	        if (chapter.element.parentNode === this.offscreenContainer) {

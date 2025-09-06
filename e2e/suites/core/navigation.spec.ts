@@ -233,7 +233,7 @@ test.describe('Core Navigation', () => {
       await page.waitForTimeout(1000); // Allow navigation to settle
 
       // Check for visible content
-      const contentCheck = await page.evaluate(() => {
+      const contentCheck = await page.evaluate((currentAction) => {
         const container =
           document.getElementById('viewer') ||
           document.querySelector('[data-epub-viewer]');
@@ -263,9 +263,9 @@ test.describe('Core Navigation', () => {
           hasIframe: true,
           isVisible,
           hasContent,
-          action,
+          action: currentAction,
         };
-      });
+      }, action);
 
       expect(contentCheck.hasContainer).toBe(true);
       expect(contentCheck.hasIframe).toBe(true);

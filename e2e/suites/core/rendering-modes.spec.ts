@@ -30,16 +30,16 @@ test.describe('Core Rendering Modes', () => {
       timeout: 10000,
     });
 
+    // Set viewport size for single page
+    await page.setViewportSize({
+      width: 900,
+      height: 600,
+    });
+
     // Configure single page mode and display content
     const renderResult = await page.evaluate(async (config) => {
       const win: any = window as any;
       const rendition = win.getRendition ? win.getRendition() : win.rendition;
-
-      // Set viewport size for single page
-      await page.setViewportSize({
-        width: config.width,
-        height: config.height,
-      });
 
       // Display first chapter
       await rendition.display('chapter_001.xhtml');
@@ -87,16 +87,16 @@ test.describe('Core Rendering Modes', () => {
       timeout: 10000,
     });
 
+    // Set viewport size for spread
+    await page.setViewportSize({
+      width: 1800,
+      height: 600,
+    });
+
     // Configure spread mode
     const renderResult = await page.evaluate(async (config) => {
       const win: any = window as any;
       const rendition = win.getRendition ? win.getRendition() : win.rendition;
-
-      // Set viewport size for spread
-      await page.setViewportSize({
-        width: config.width,
-        height: config.height,
-      });
 
       // Configure for spread mode (if supported)
       if (rendition.manager && rendition.manager.settings) {

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Alice EPUB Test</title>
+
+  <script src="../dist/epub.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="examples.css">
+
+</head>
+<body>
+  <div id="viewer" class="scrolled"></div>
+  
+  <div style="margin-top: 20px; padding: 10px; background: #f0f0f0;">
+    <h3>Book URL Debug Info:</h3>
+    <p id="url-info">Loading...</p>
+    <button onclick="checkBookUrl()">Check book.url</button>
+  </div>
+
+  <script>
+    var book, rendition;
+    
+    function checkBookUrl() {
+      if (book) {
+        console.log('book.url:', book.url);
+        console.log('book.url.toString():', book.url?.toString());
+        console.log('typeof book.url:', typeof book.url);
+        
+        document.getElementById('url-info').innerHTML = `
+          <strong>book.url:</strong> ${book.url}<br>
+          <strong>book.url.toString():</strong> ${book.url?.toString()}<br>
+          <strong>typeof:</strong> ${typeof book.url}<br>
+          <strong>book.isOpen:</strong> ${book.isOpen}<br>
+          <strong>book.hasArchive:</strong> ${!!book.archive}
+        `;
+      }
+    }
+
+    // Load local Alice EPUB
+    book = ePub("/e2e/fixtures/alice.epub");
+    
+    book.opened.then(function() {
+      console.log("Book opened successfully");
+      checkBookUrl();
+      
+      rendition = book.renderTo("viewer", {
+        flow: "scrolled-doc", 
+        width: "100%",
+        fullsize: true
+      });
+
+      rendition.display();
+    }).catch(function(error) {
+      console.error("Error opening book:", error);
+      document.getElementById('url-info').innerHTML = "Error: " + error.message;
+    });
+  </script>
+</body>
+</html>

@@ -17,3 +17,9 @@ src/**/*.spec.js
 # Playwright test results
 test-results/
 playwright-report/
+
+# E2E debug/temporary tests
+e2e/temp/
+
+# AI assistant notes and context (not committed)
+.ai-notes/
