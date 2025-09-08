@@ -5,8 +5,9 @@
 **EPUBs are untrusted content** that can contain arbitrary JavaScript, CSS, and HTML. This creates significant security risks for EPUB reader applications:
 
 ### Security Threats from EPUB Content:
+
 - **Script Injection**: Malicious JavaScript could execute in the main document context
-- **DOM Manipulation**: Unauthorized access to the reader's UI and functionality  
+- **DOM Manipulation**: Unauthorized access to the reader's UI and functionality
 - **Data Theft**: Access to localStorage, cookies, user data, and browser APIs
 - **XSS Attacks**: Cross-site scripting via malicious HTML/CSS
 - **Global Pollution**: Overriding JavaScript objects and breaking the reader
@@ -14,7 +15,9 @@
 - **Resource Access**: Unauthorized network requests and API calls
 
 ### Iframe Security Benefits:
+
 Iframes with proper sandbox attributes provide **essential security isolation**:
+
 - **Separate Browsing Context**: EPUB content runs isolated from the main document
 - **Limited API Access**: Sandbox restrictions prevent dangerous operations
 - **DOM Isolation**: No access to parent document's DOM or global objects
@@ -28,9 +31,11 @@ Iframes with proper sandbox attributes provide **essential security isolation**:
 However, this security requirement creates a **fundamental performance problem** because of how browsers handle iframe DOM manipulation.
 
 ### Core Benefits of Prerendering
+
 Prerendering EPUB content provides critical performance and user experience benefits:
+
 - **Instant Page Display**: No loading delays when navigating between chapters
-- **Accurate Page Counts**: Pre-calculated pagination for proper navigation controls  
+- **Accurate Page Counts**: Pre-calculated pagination for proper navigation controls
 - **Layout Metrics**: Pre-computed content dimensions and positioning
 - **Content Inspection**: Ability to analyze content structure before display
 - **Smooth Navigation**: Seamless transitions without rendering delays
@@ -50,6 +55,7 @@ This document explains a critical browser behavior that significantly impacts th
 ### Affected Operations
 
 Any DOM operation that moves an iframe element:
+
 - `parentNode.removeChild(iframe)` followed by `newParent.appendChild(iframe)`
 - `newParent.appendChild(iframe)` when iframe is already in another container
 - `container.insertBefore(iframe, ...)`
@@ -58,6 +64,7 @@ Any DOM operation that moves an iframe element:
 ### What Gets Lost
 
 When an iframe is moved:
+
 - ✗ `iframe.contentDocument` becomes a fresh, empty document
 - ✗ All rendered HTML content is lost
 - ✗ All CSS styles and layout are lost
@@ -68,6 +75,7 @@ When an iframe is moved:
 ### Browser Consistency
 
 This behavior is **consistent across all major browsers**:
+
 - Chrome/Chromium
 - Firefox
 - Safari/WebKit
@@ -111,6 +119,7 @@ The system attempts to work around this limitation through:
 The current approach of content preservation and restoration **fundamentally undermines** the purpose of prerendering:
 
 ### Lost Performance Benefits:
+
 - **Re-rendering Required**: Content must be reloaded, eliminating instant display
 - **Layout Recalculation**: Page dimensions may need to be recalculated
 - **CFI Invalidation**: Page boundary calculations become unreliable
@@ -119,6 +128,7 @@ The current approach of content preservation and restoration **fundamentally und
 - **Failed Restorations**: White pages when preservation/restoration fails
 
 ### Broken User Experience:
+
 - **No Instant Navigation**: The primary benefit of prerendering is lost
 - **Visible Loading States**: Users see empty content while restoration happens
 - **Unreliable Pagination**: Page counts may be inaccurate if restoration fails
@@ -127,6 +137,7 @@ The current approach of content preservation and restoration **fundamentally und
 - **Broken Bookmarks**: Saved positions may not work reliably
 
 ### Development Complexity:
+
 - **Fragile Workarounds**: Multiple fallback mechanisms required
 - **Hard to Debug**: Content loss issues are difficult to reproduce and fix
 - **Maintenance Burden**: Complex preservation logic needs constant updating
@@ -164,6 +175,7 @@ container.appendChild(newIframe); // ✅ Fresh iframe, no move
 ### Option 3: Virtual DOM for Iframes
 
 Implement a management system that:
+
 - Keeps iframe content in memory
 - Creates/destroys iframes as needed
 - Never moves existing iframes
@@ -171,6 +183,7 @@ Implement a management system that:
 ### Option 4: Alternative Rendering
 
 Consider non-iframe rendering approaches:
+
 - Direct DOM manipulation
 - Canvas-based rendering
 - WebComponent encapsulation
@@ -194,12 +207,12 @@ document.body.appendChild(iframe);
 
 setTimeout(() => {
   console.log('Before move:', iframe.contentDocument.body.innerHTML); // "Hello World"
-  
+
   // Move iframe to different container
   const newContainer = document.createElement('div');
   document.body.appendChild(newContainer);
   newContainer.appendChild(iframe); // This destroys content
-  
+
   console.log('After move:', iframe.contentDocument.body.innerHTML); // "" (empty)
 }, 100);
 ```
@@ -220,4 +233,4 @@ setTimeout(() => {
 
 ---
 
-*This behavior is often not well-documented in typical web development resources, making it a common source of bugs in iframe-heavy applications.*
+_This behavior is often not well-documented in typical web development resources, making it a common source of bugs in iframe-heavy applications._

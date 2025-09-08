@@ -1,16 +1,3 @@
-export interface PageLocation {
-  index: number;
-  href: string;
-  pages: number[];
-  totalPages: number;
-  mapping:
-    | {
-        start: string;
-        end: string;
-      }
-    | undefined;
-}
-
 import EventEmitter from 'event-emitter';
 import { extend, defer, windowBounds, isNumber } from '../../utils/core';
 import scrollType from '../../utils/scrolltype';
@@ -23,11 +10,7 @@ import { ViewManager } from '../helpers/snap';
 import Layout, { Axis, Flow } from 'src/layout';
 import { Section } from 'src/section';
 import { Contents } from 'src/epub';
-import IframeView from '../views/iframe';
-import BookPreRenderer, {
-  PreRenderedChapter,
-  ViewSettings,
-} from '../prerenderer';
+import { ViewRenderer } from '../helpers/view-renderer';
 
 export type DefaultViewManagerSettings = {
   layout: Layout;
@@ -42,9 +25,21 @@ export type DefaultViewManagerSettings = {
   offset?: number;
   overflow?: string;
   afterScrolledTimeout: number;
-  usePreRendering?: boolean;
   [key: string]: unknown;
 };
+
+export interface PageLocation {
+  index: number;
+  href: string;
+  pages: number[];
+  totalPages: number;
+  mapping:
+    | {
+        start: string;
+        end: string;
+      }
+    | undefined;
+}
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 
@@ -68,6 +63,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   views!: Views;
   container!: HTMLElement;
   overflow!: string;
+  protected viewRenderer!: ViewRenderer;
   _onScroll?: () => void;
   scrollLeft?: number;
   _stageSize?: { width: number; height: number };
@@ -102,10 +98,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   scrolled!: boolean;
   targetScrollLeft?: number;
 
-  // Pre-renderer for managing off-screen chapters
-  preRenderer?: BookPreRenderer;
-  usePreRendering: boolean = true;
-
   constructor(options: {
     settings: DefaultViewManagerSettings;
     view?: View | undefined;
@@ -118,18 +110,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     this.request = options.request;
     this.renditionQueue = options.queue;
     this.q = new Queue(this);
-
-    // Set usePreRendering from settings (default false for safety)
-    this.usePreRendering = options.settings.usePreRendering === true;
-
-    console.log(
-      '[DefaultViewManager] constructor - usePreRendering setting:',
-      this.usePreRendering
-    );
-    console.log(
-      '[DefaultViewManager] constructor - settings:',
-      options.settings
-    );
 
     this.settings = {
       infinite: true,
@@ -163,14 +143,31 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     };
 
     this.rendered = false;
+
+    // Initialize ViewRenderer with consistent settings
+    // Use the actual viewSettings with proper type conversion
+    this.viewRenderer = new ViewRenderer(
+      {
+        ignoreClass: this.viewSettings.ignoreClass as string,
+        axis: this.viewSettings.axis as Axis,
+        direction: this.settings.direction,
+        width: this.viewSettings.width as number,
+        height: this.viewSettings.height as number,
+        layout: this.viewSettings.layout as Layout,
+        method: this.viewSettings.method as string,
+        forceRight: false,
+        allowScriptedContent: this.viewSettings.allowScriptedContent as boolean,
+        allowPopups: this.viewSettings.allowPopups as boolean,
+        transparency: this.viewSettings.transparency as boolean,
+        forceEvenPages: this.viewSettings.forceEvenPages as boolean,
+        flow: this.viewSettings.flow as Flow,
+      },
+      this.request
+    );
   }
 
   render(element: HTMLElement, size?: { width: number; height: number }): void {
     console.log('[DefaultViewManager] render() method called');
-    console.log(
-      '[DefaultViewManager] render() usePreRendering:',
-      this.usePreRendering
-    );
 
     const tag = element.tagName;
 
@@ -234,125 +231,11 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     }
 
     this.rendered = true;
-
-    // Debug the pre-rendering state before attempting initialization
-    console.log(
-      '[DefaultViewManager] render() completed, checking pre-rendering...'
-    );
-    console.log(
-      '[DefaultViewManager] this.usePreRendering:',
-      this.usePreRendering
-    );
-    console.log(
-      '[DefaultViewManager] typeof this.usePreRendering:',
-      typeof this.usePreRendering
-    );
-
-    // Initialize pre-rendering if enabled
-    if (this.usePreRendering) {
-      console.log(
-        '[DefaultViewManager] attempting to initialize pre-rendering...'
-      );
-      try {
-        this.initializePreRendering();
-      } catch (error) {
-        console.error(
-          '[DefaultViewManager] failed to initialize pre-rendering:',
-          error
-        );
-        this.usePreRendering = false;
-      }
-    } else {
-      console.log(
-        '[DefaultViewManager] pre-rendering not enabled, skipping initialization'
-      );
-    }
-  }
-
-  private initializePreRendering(): void {
-    console.debug('[DefaultViewManager] initializePreRendering called');
-    console.debug('[DefaultViewManager] container exists:', !!this.container);
-
-    if (!this.container) {
-      console.warn(
-        '[DefaultViewManager] no container available for pre-rendering'
-      );
-      return;
-    }
-
-    console.debug('[DefaultViewManager] viewSettings:', this.viewSettings);
-
-    // Create proper ViewSettings from viewSettings
-    const preRenderSettings: ViewSettings = {
-      ignoreClass: (this.viewSettings.ignoreClass as string) || '',
-      axis: this.viewSettings.axis as Axis,
-      direction: this.viewSettings.direction as string,
-      width: (this.viewSettings.width as number) || 800,
-      height: (this.viewSettings.height as number) || 600,
-      layout: this.viewSettings.layout as Layout,
-      method: this.viewSettings.method as string,
-      forceRight: (this.viewSettings.forceRight as boolean) || false,
-      allowScriptedContent:
-        (this.viewSettings.allowScriptedContent as boolean) || false,
-      allowPopups: (this.viewSettings.allowPopups as boolean) || false,
-      transparency: (this.viewSettings.transparency as boolean) || false,
-      forceEvenPages: (this.viewSettings.forceEvenPages as boolean) || false,
-      flow: this.viewSettings.flow as Flow,
-    };
-
-    console.debug(
-      '[DefaultViewManager] creating BookPreRenderer with settings:',
-      preRenderSettings
-    );
-
-    const requestFn: (url: string) => Promise<Document> =
-      this.request || (() => Promise.reject(new Error('No request')));
-    this.preRenderer = new BookPreRenderer(
-      this.container,
-      preRenderSettings,
-      requestFn
-    );
-
-    console.debug(
-      '[DefaultViewManager] pre-renderer created successfully:',
-      !!this.preRenderer
-    );
   }
 
   /**
    * Start pre-rendering all sections from a spine
    */
-  async startPreRendering(sections: Section[]): Promise<void> {
-    if (!this.preRenderer) {
-      console.warn('[DefaultViewManager] preRenderer not initialized');
-      return;
-    }
-
-    console.debug(
-      '[DefaultViewManager] starting pre-render of',
-      sections.length,
-      'sections'
-    );
-    const status = await this.preRenderer.preRenderBook(sections);
-    console.debug('[DefaultViewManager] pre-rendering complete:', status);
-
-    this.emit(EVENTS.MANAGERS.ADDED, status);
-  }
-
-  /**
-   * Get pre-rendered chapter for debugging
-   */
-  getPreRenderedChapter(sectionHref: string): PreRenderedChapter | undefined {
-    return this.preRenderer?.getChapter(sectionHref);
-  }
-
-  /**
-   * Check if a chapter is pre-rendered and ready
-   */
-  hasPreRenderedChapter(sectionHref: string): boolean {
-    return !!this.preRenderer?.getChapter(sectionHref);
-  }
-
   addEventListeners() {
     let scroller;
 
@@ -393,12 +276,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     this.removeEventListeners();
 
     this.stage.destroy();
-
-    // Clean up pre-renderer
-    if (this.preRenderer) {
-      this.preRenderer.destroy();
-      this.preRenderer = undefined;
-    }
 
     this.rendered = false;
   }
@@ -483,84 +360,8 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     this.updateLayout();
 
-    // For pre-rendered content, refresh the current chapter directly without clearing
-    if (currentChapter && this.preRenderer) {
-      const preRenderedChapter = this.preRenderer.getChapter(currentChapter);
-      if (preRenderedChapter) {
-        console.debug(
-          '[DefaultViewManager] redisplaying chapter after resize:',
-          currentChapter
-        );
-
-        // Use synchronous approach to ensure completion before resize event finishes
-        try {
-          const attachedChapter =
-            this.preRenderer.attachChapter(currentChapter);
-          if (attachedChapter && attachedChapter.view) {
-            // Check if this view is already in our views system
-            const existingViewIndex = this.views.indexOf(attachedChapter.view);
-
-            if (existingViewIndex === -1) {
-              // View is not in the system, need to clear and add it
-              this.clear();
-              this.views.append(attachedChapter.view);
-            } else {
-              // View is already in the system, just make sure it's properly configured
-              console.debug(
-                '[DefaultViewManager] reusing existing view for resize'
-              );
-            }
-
-            // Set up event handlers
-            attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
-            attachedChapter.view.onResize = this.afterResized.bind(this);
-
-            if (typeof attachedChapter.view.on === 'function') {
-              attachedChapter.view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-                this.updateAxis(axis);
-              });
-              attachedChapter.view.on(
-                EVENTS.VIEWS.WRITING_MODE,
-                (mode: string) => {
-                  this.updateWritingMode(mode);
-                }
-              );
-            }
-
-            // Mark as displayed and show
-            attachedChapter.view.displayed = true;
-            this.views.show();
-
-            // Ensure the view is properly sized to the new dimensions
-            if (typeof attachedChapter.view.size === 'function') {
-              attachedChapter.view.size(
-                parseInt(String(this.settings.width || '900')),
-                parseInt(String(this.settings.height || '600'))
-              );
-            }
-
-            // Reset scroll position
-            this.scrollTo(0, 0, true);
-
-            console.debug(
-              '[DefaultViewManager] chapter redisplayed successfully after resize'
-            );
-          } else {
-            console.warn(
-              '[DefaultViewManager] failed to attach chapter after resize, clearing views'
-            );
-          }
-        } catch (error) {
-          console.error(
-            '[DefaultViewManager] error redisplaying chapter after resize:',
-            error
-          );
-        }
-      }
-    } else {
-      // Clear views only if we don't have a pre-rendered chapter to display
-      this.clear();
-    }
+    // Clear views
+    this.clear();
 
     this.emit(
       EVENTS.MANAGERS.RESIZED,
@@ -573,7 +374,15 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   createView(section: Section, forceRight: boolean = false) {
-    return new IframeView(section, extend(this.viewSettings, { forceRight }));
+    // Update the ViewRenderer settings with current dimensions and settings
+    this.viewRenderer.updateSettings({
+      width: this.viewSettings.width as number,
+      height: this.viewSettings.height as number,
+      axis: this.viewSettings.axis as Axis,
+      layout: this.viewSettings.layout as Layout,
+    });
+
+    return this.viewRenderer.createView(section, { forceRight });
   }
 
   handleNextPrePaginated(
@@ -604,325 +413,20 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     const displaying = new defer();
     const displayed = displaying.promise;
 
+    console.log(`[DefaultViewManager] DISPLAY called for: ${section.href}`);
+
     // Check if moving to target is needed
     if (target === section.href || isNumber(target)) {
       target = undefined;
     }
 
-    // Try to use pre-rendered chapter first
-    if (this.usePreRendering && this.preRenderer) {
-      const preRenderedChapter = this.preRenderer.getChapter(section.href);
-      if (preRenderedChapter) {
-        console.debug(
-          '[DefaultViewManager] using pre-rendered chapter:',
-          section.href
-        );
-        return this.displayPreRendered(preRenderedChapter, target, displaying);
-      } else {
-        console.debug(
-          '[DefaultViewManager] no pre-rendered chapter found for:',
-          section.href,
-          'falling back to normal rendering'
-        );
-      }
-    }
-
-    // Fallback to normal rendering
+    // Use normal rendering
+    console.log(
+      '[DefaultViewManager] Using normal rendering for:',
+      section.href
+    );
     this.displaySection(section, target, displaying);
     return displayed;
-  }
-
-  /**
-   * Display a pre-rendered chapter
-   */
-  private displayPreRendered(
-    chapter: PreRenderedChapter,
-    target?: HTMLElement | string,
-    displaying?: defer<unknown>,
-    skipClear?: boolean
-  ): Promise<unknown> {
-    const deferred = displaying || new defer();
-
-    console.debug(
-      '[DefaultViewManager] displaying pre-rendered chapter:',
-      chapter.section.href,
-      'with target:',
-      target,
-      'skipClear:',
-      skipClear
-    );
-
-    // Wait for chapter to be fully rendered
-    chapter.rendered.promise
-      .then(() => {
-        try {
-          // Save current scroll position, but only preserve it if staying in the same chapter
-          const currentScrollLeft = this.scrollLeft || 0;
-
-          // Check if this chapter is already attached to avoid unnecessary clearing
-          const existingView = this.views.find(chapter.section);
-          const isAlreadyAttached =
-            existingView &&
-            this.preRenderer?.getChapter(chapter.section.href)?.attached;
-
-          console.debug(
-            '[DefaultViewManager] chapter switch - isNewChapter:',
-            !existingView,
-            'isAlreadyAttached:',
-            isAlreadyAttached,
-            'currentScroll:',
-            currentScrollLeft,
-            'chapter:',
-            chapter.section.href,
-            'existing views:',
-            this.views.length
-          );
-
-          // Clear current views first, unless caller requested to skip it (e.g., during resize)
-          // or if the chapter is already attached (avoid clearing already attached content)
-          if (!skipClear && !isAlreadyAttached) {
-            this.clear();
-          } else if (isAlreadyAttached) {
-            console.debug(
-              '[DefaultViewManager] skipping clear - chapter already attached:',
-              chapter.section.href
-            );
-          }
-
-          // Verify the pre-renderer is still available
-          if (!this.preRenderer) {
-            throw new Error('Pre-renderer is no longer available');
-          }
-
-          // Attach the pre-rendered chapter to the main DOM
-          const attachedChapter = this.preRenderer.attachChapter(
-            chapter.section.href
-          );
-
-          if (!attachedChapter) {
-            // Chapter may still be rendering, wait briefly and try fallback to normal display
-            console.debug(
-              '[DefaultViewManager] pre-rendered chapter not ready, falling back to normal display after brief delay'
-            );
-            setTimeout(() => {
-              this.displayNormally(chapter.section, target, displaying);
-            }, 100);
-            return deferred.promise;
-          }
-
-          // Verify the view is in a good state
-          if (!attachedChapter.view || !attachedChapter.element) {
-            throw new Error(
-              `Pre-rendered chapter view is invalid: ${chapter.section.href}`
-            );
-          }
-
-          // Add the view to the views system
-          // Note: We don't call display() again since it's already rendered
-          this.views.append(attachedChapter.view);
-
-          // Set up event handlers (same as in add() method)
-          attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
-          attachedChapter.view.onResize = this.afterResized.bind(this);
-
-          // Check if view has event methods before using them
-          if (typeof attachedChapter.view.on === 'function') {
-            attachedChapter.view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-              this.updateAxis(axis);
-            });
-
-            attachedChapter.view.on(
-              EVENTS.VIEWS.WRITING_MODE,
-              (mode: string) => {
-                this.updateWritingMode(mode);
-              }
-            );
-          } else {
-            console.warn(
-              '[DefaultViewManager] view does not have event methods:',
-              typeof attachedChapter.view.on
-            );
-          }
-
-          // Mark as displayed in the views system
-          attachedChapter.view.displayed = true;
-
-          // Show the views first
-          this.views.show();
-
-          // Respect target CFI if provided; otherwise start at the beginning
-          try {
-            if (target) {
-              console.debug(
-                '[DefaultViewManager] pre-rendered chapter - positioning to target:',
-                target
-              );
-              const offset = attachedChapter.view.locationOf(target);
-              const width = attachedChapter.view.width();
-              this.moveTo(offset, width);
-            } else {
-              this.scrollTo(0, 0, true);
-            }
-          } catch (e) {
-            console.warn(
-              '[DefaultViewManager] failed to position to target for pre-rendered chapter, defaulting to start:',
-              (e as Error).message
-            );
-            this.scrollTo(0, 0, true);
-          }
-
-          // Enhanced debugging for element attachment and iframe scroll state
-          try {
-            console.debug(
-              '[DefaultViewManager] Element attachment debug info:',
-              {
-                href: chapter.section.href,
-                elementScrollLeft: attachedChapter.element.scrollLeft,
-                elementScrollTop: attachedChapter.element.scrollTop,
-                elementClientWidth: attachedChapter.element.clientWidth,
-                elementScrollWidth: attachedChapter.element.scrollWidth,
-              }
-            );
-
-            // Check iframe content scroll state
-            const iframe = attachedChapter.element.querySelector('iframe');
-            if (iframe && iframe.contentWindow) {
-              console.debug('Iframe scroll debug info:', {
-                href: chapter.section.href,
-                iframeScrollX: iframe.contentWindow.scrollX,
-                iframeScrollY: iframe.contentWindow.scrollY,
-                iframeInnerWidth: iframe.contentWindow.innerWidth,
-                iframeInnerHeight: iframe.contentWindow.innerHeight,
-                iframeSrc: iframe.src,
-                contentReady: iframe.contentDocument?.readyState,
-              });
-
-              // Check body scroll state in iframe
-              const iframeBody = iframe.contentDocument?.body;
-              if (iframeBody) {
-                console.debug(
-                  '[DefaultViewManager] Iframe body scroll debug info:',
-                  {
-                    href: chapter.section.href,
-                    bodyScrollLeft: iframeBody.scrollLeft,
-                    bodyScrollTop: iframeBody.scrollTop,
-                    bodyScrollWidth: iframeBody.scrollWidth,
-                    bodyScrollHeight: iframeBody.scrollHeight,
-                    bodyClientWidth: iframeBody.clientWidth,
-                    bodyClientHeight: iframeBody.clientHeight,
-                  }
-                );
-              }
-            }
-          } catch (debugError) {
-            console.warn(
-              '[DefaultViewManager] Debug info collection failed:',
-              debugError
-            );
-          }
-
-          // Emit the displayed event
-          this.emit(EVENTS.MANAGERS.ADDED, attachedChapter.view);
-
-          console.debug(
-            '[DefaultViewManager] pre-rendered chapter displayed successfully:',
-            chapter.section.href
-          );
-
-          // If in pre-paginated spread mode, try to attach the neighbor (right page)
-          try {
-            const isPrePaginated = this.layout.name === 'pre-paginated';
-            const hasMultiplePages = this.layout.divisor > 1;
-
-            if (isPrePaginated && hasMultiplePages) {
-              const currentSection = attachedChapter.section;
-              const forceRight =
-                currentSection.properties.includes('page-spread-right');
-
-              // Mirror handleNextPrePaginated: skip if forced-right or first section
-              if (!forceRight && currentSection.index !== 0) {
-                const next = currentSection.next();
-                if (next && !next.properties.includes('page-spread-left')) {
-                  let neighborAdded = false;
-                  if (this.preRenderer) {
-                    const preNext = this.preRenderer.getChapter(next.href);
-                    if (preNext) {
-                      const attachedNext = this.preRenderer.attachChapter(
-                        next.href
-                      );
-                      if (attachedNext && attachedNext.view) {
-                        // Add to views without re-rendering
-                        this.views.append(attachedNext.view);
-
-                        // Wire events like the main view
-                        attachedNext.view.onDisplayed =
-                          this.afterDisplayed.bind(this);
-                        attachedNext.view.onResize =
-                          this.afterResized.bind(this);
-
-                        if (typeof attachedNext.view.on === 'function') {
-                          attachedNext.view.on(
-                            EVENTS.VIEWS.AXIS,
-                            (axis: Axis) => this.updateAxis(axis)
-                          );
-                          attachedNext.view.on(
-                            EVENTS.VIEWS.WRITING_MODE,
-                            (mode: string) => this.updateWritingMode(mode)
-                          );
-                        }
-
-                        attachedNext.view.displayed = true;
-                        neighborAdded = true;
-                      }
-                    }
-                  }
-
-                  // Fallback: load normally if not pre-rendered
-                  if (!neighborAdded) {
-                    this.append(next).catch((e: unknown) => {
-                      console.warn(
-                        '[DefaultViewManager] failed to append neighbor section normally:',
-                        next.href,
-                        e
-                      );
-                    });
-                  }
-
-                  // Ensure both are visible
-                  this.views.show();
-                }
-              }
-            }
-          } catch (neighborError) {
-            console.warn(
-              '[DefaultViewManager] spread neighbor attachment failed:',
-              neighborError
-            );
-          }
-
-          deferred.resolve(undefined);
-        } catch (displayError) {
-          console.error(
-            '[DefaultViewManager] error during pre-rendered chapter display:',
-            chapter.section.href,
-            displayError
-          );
-          throw displayError;
-        }
-      })
-      .catch((error: Error) => {
-        console.error(
-          '[DefaultViewManager] failed to display pre-rendered chapter:',
-          chapter.section.href,
-          error
-        );
-
-        // Fallback to normal rendering on error
-        console.debug('[DefaultViewManager] falling back to normal rendering');
-        this.displayNormally(chapter.section, target, deferred);
-      });
-
-    return deferred.promise;
   }
 
   /**
@@ -1105,6 +609,56 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       }
     }
 
+    // Delayed re-check: sometimes the iframe/content layout completes slightly
+    // after the view is displayed (especially with spreads). Recompute the
+    // content width shortly after to ensure the phantom element and iframe
+    // sizing reflect the final layout.
+    setTimeout(() => {
+      try {
+        if (!view || !view.contents) return;
+        const newContentWidth = view.contents.textWidth();
+        const phantomElement = this.container.querySelector(
+          '.epub-scroll-phantom'
+        ) as HTMLElement;
+        const desiredWidth = Math.max(newContentWidth, this.layout.width);
+
+        if (phantomElement && phantomElement.offsetWidth !== desiredWidth) {
+          phantomElement.style.width = desiredWidth + 'px';
+          // Force reflow
+          void phantomElement.offsetWidth;
+
+          const element = view.element as HTMLElement;
+          if (element) {
+            element.style.width = desiredWidth + 'px';
+            const iframe = element.querySelector('iframe') as HTMLIFrameElement;
+            if (iframe) {
+              iframe.style.width = desiredWidth + 'px';
+            }
+          }
+
+          // Ensure scrollLeft is within bounds after resizing
+          const maxLeft = Math.max(
+            0,
+            this.container.scrollWidth - this.container.offsetWidth
+          );
+          if (this.container.scrollLeft > maxLeft) {
+            this.container.scrollLeft = maxLeft;
+          }
+          console.debug(
+            '[DefaultViewManager] afterDisplayed (delayed) adjusted phantom/iframe to width:',
+            desiredWidth,
+            'container.scrollWidth:',
+            this.container.scrollWidth
+          );
+        }
+      } catch (e) {
+        console.warn(
+          '[DefaultViewManager] delayed afterDisplayed check failed',
+          e
+        );
+      }
+    }, 50);
+
     this.emit(EVENTS.MANAGERS.ADDED, view);
   }
 
@@ -1172,6 +726,10 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   async append(section: Section, forceRight: boolean = false): Promise<View> {
+    console.log('[DefaultViewManager] APPEND called for:', section.href);
+
+    // Create new view
+    console.log('[DefaultViewManager] APPEND CREATING NEW VIEW:', section.href);
     const view = this.createView(section, forceRight);
 
     this.views.append(view);
@@ -1199,6 +757,13 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   async prepend(section: Section, forceRight: boolean = false) {
+    console.log('[DefaultViewManager] PREPEND called for:', section.href);
+
+    // Create new view
+    console.log(
+      '[DefaultViewManager] PREPEND CREATING NEW VIEW:',
+      section.href
+    );
     const view = this.createView(section, forceRight);
 
     // Check if view has event methods before using them
@@ -1241,47 +806,137 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   async next(): Promise<void> {
-    if (!this.hasViews()) return;
-    // If we're already at the last page of the last visible section, jump to next section
-    try {
-      const loc = this.currentLocation();
-      if (loc && loc.length) {
-        const lastLoc = loc[loc.length - 1];
-        const lastDisplayed =
-          lastLoc.pages && lastLoc.pages.length
-            ? lastLoc.pages[lastLoc.pages.length - 1]
-            : 1;
-        if (lastDisplayed >= lastLoc.totalPages) {
-          const next = this.views.last()?.section?.next();
-          if (next) {
-            await this.loadNextSection(next);
-            return;
-          }
-        }
-      }
-    } catch {
-      // fall through to normal forward handling
+    console.log('[DefaultViewManager] next() called - START');
+    if (!this.hasViews()) {
+      console.log('[DefaultViewManager] next() - no views, returning');
+      return;
     }
 
+    console.log('[DefaultViewManager] next() called - checking scroll state');
+
+    // Simple check: if there's no more scrollable content in the current section,
+    // jump to the next section immediately
+    const maxScrollLeft =
+      this.container.scrollWidth - this.container.offsetWidth;
+    const canScrollMore = this.container.scrollLeft < maxScrollLeft;
+
+    console.log('[DefaultViewManager] scroll check:', {
+      scrollLeft: this.container.scrollLeft,
+      scrollWidth: this.container.scrollWidth,
+      offsetWidth: this.container.offsetWidth,
+      maxScrollLeft,
+      canScrollMore,
+    });
+
+    if (!canScrollMore) {
+      // No more content to scroll in current section, go to next section
+      //
+      // IMPORTANT NOTE: Cover pages and other non-linear sections may not have proper
+      // navigation links. The cover page typically has `linear: false` and its
+      // `section.next()` method returns `undefined`. This is correct EPUB behavior -
+      // covers are often standalone and not meant to be part of the sequential
+      // reading experience.
+      //
+      // If you're testing navigation and it seems broken, check if you're starting
+      // from a cover page or other non-linear section. Linear chapters (with
+      // `linear: true`) should have proper navigation links between them.
+      //
+      console.log('[DefaultViewManager] views collection:', this.views);
+      console.log('[DefaultViewManager] last view:', this.views.last());
+      console.log(
+        '[DefaultViewManager] last view section:',
+        this.views.last()?.section
+      );
+      console.log(
+        '[DefaultViewManager] section href:',
+        this.views.last()?.section?.href
+      );
+      console.log(
+        '[DefaultViewManager] section index:',
+        this.views.last()?.section?.index
+      );
+
+      const currentSection = this.views.last()?.section;
+      console.log(
+        '[DefaultViewManager] current section has next method:',
+        typeof currentSection?.next === 'function'
+      );
+
+      const nextSection = currentSection?.next();
+      console.log(
+        '[DefaultViewManager] no more scroll space, next section:',
+        nextSection?.href
+      );
+      console.log(
+        '[DefaultViewManager] current section:',
+        this.views.last()?.section?.href
+      );
+
+      if (nextSection) {
+        await this.loadNextSection(nextSection);
+        return;
+      } else {
+        console.log('[DefaultViewManager] reached end of book');
+        return;
+      }
+    }
+
+    // There is scrollable content, use normal forward scrolling
+    console.log(
+      '[DefaultViewManager] content available to scroll, using handleScrollForward'
+    );
     const section = this.handleScrollForward();
+    console.log(
+      '[DefaultViewManager] handleScrollForward returned section:',
+      section?.href
+    );
+
     if (section) await this.loadNextSection(section);
   }
 
   async prev(): Promise<void> {
     if (!this.hasViews()) return;
 
+    console.debug('[DefaultViewManager] prev() called');
+
+    // Simple check: if we're already at the start of scrollable content,
+    // jump to the previous section immediately
+    const canScrollBack = this.container.scrollLeft > 0;
+
+    console.debug('[DefaultViewManager] prev scroll check:', {
+      scrollLeft: this.container.scrollLeft,
+      canScrollBack,
+    });
+
+    if (!canScrollBack) {
+      // Already at start of current section, go to previous section
+      const prevSection = this.views.first()?.section?.prev();
+      console.debug(
+        '[DefaultViewManager] at start of scroll, prev section:',
+        prevSection?.href
+      );
+
+      if (prevSection) {
+        await this.loadPrevSection(prevSection);
+        return;
+      } else {
+        console.debug(
+          '[DefaultViewManager] prev() reached beginning of book, no more sections to load'
+        );
+        return;
+      }
+    }
+
+    // There is content to scroll back through
     const section = this.handleScrollBackward();
 
-    // Fix: Check if section exists before trying to load it
-    // This prevents white pages when navigating beyond book boundaries
+    // Check if section exists before trying to load it
     if (section && section.href) {
       await this.loadPrevSection(section);
     } else {
       console.debug(
-        '[DefaultViewManager] prev() reached beginning of book, no more sections to load'
+        '[DefaultViewManager] handleScrollBackward returned no section'
       );
-      // Don't clear views or reset scroll position if we're at the boundary
-      return;
     }
   }
 
@@ -1336,27 +991,69 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   private scrollForwardLTR(): Section | undefined {
     const maxScrollLeft =
       this.container.scrollWidth - this.container.offsetWidth;
+    // Determine a sensible step: prefer layout.pageWidth, fall back to container offsetWidth or layout.delta
+    const step =
+      this.layout.pageWidth && this.layout.pageWidth > 0
+        ? this.layout.pageWidth
+        : this.container.offsetWidth || this.layout.delta;
+
+    console.debug('[DefaultViewManager] scrollForwardLTR debug:', {
+      scrollLeft: this.container.scrollLeft,
+      maxScrollLeft,
+      scrollWidth: this.container.scrollWidth,
+      offsetWidth: this.container.offsetWidth,
+      step,
+    });
+
     // If we can still scroll within the current section, do so; otherwise move to next section
     if (this.container.scrollLeft < maxScrollLeft) {
-      this.scrollBy(this.layout.delta, 0, true);
-      this.rememberScrollPosition();
-      return;
+      // Don't overshoot the maximum scrollLeft
+      const remaining = Math.max(0, maxScrollLeft - this.container.scrollLeft);
+      const move = Math.min(step, remaining);
+      console.debug(
+        '[DefaultViewManager] scrolling within section, move:',
+        move
+      );
+
+      if (move > 0) {
+        this.scrollBy(move, 0, true);
+        this.rememberScrollPosition();
+        return;
+      }
     }
-    return this.views.last()?.section?.next();
+
+    const nextSection = this.views.last()?.section?.next();
+    console.debug(
+      '[DefaultViewManager] moving to next section:',
+      nextSection?.href
+    );
+    return nextSection;
   }
 
   private scrollForwardRTL(rtlScrollType: string): Section | undefined {
     let left;
+    // Use page-sized steps for RTL as well
+    const step =
+      this.layout.pageWidth && this.layout.pageWidth > 0
+        ? this.layout.pageWidth
+        : this.container.offsetWidth || this.layout.delta;
+
     if (rtlScrollType === 'default') {
       left = this.container.scrollLeft;
       if (left > 0) {
-        this.scrollBy(this.layout.delta, 0, true);
-        return;
+        const move = Math.min(step, left);
+        if (move > 0) {
+          this.scrollBy(move, 0, true);
+          return;
+        }
       }
     } else {
-      left = this.container.scrollLeft - this.layout.delta;
-      if (left > this.container.scrollWidth * -1) {
-        this.scrollBy(this.layout.delta, 0, true);
+      // non-default RTL (negative scrollLeft) - compute remaining distance
+      left = this.container.scrollLeft - step;
+      const minLeft = this.container.scrollWidth * -1;
+      if (this.container.scrollLeft > minLeft) {
+        // Don't overshoot
+        this.scrollBy(step, 0, true);
         return;
       }
     }
@@ -1374,7 +1071,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
   private scrollBackwardLTR(): Section | undefined {
     if (this.container.scrollLeft > 0) {
-      this.scrollBy(-this.layout.delta, 0, true);
+      const step =
+        this.layout.pageWidth && this.layout.pageWidth > 0
+          ? this.layout.pageWidth
+          : this.container.offsetWidth || this.layout.delta;
+      const move = Math.min(step, this.container.scrollLeft);
+      this.scrollBy(-move, 0, true);
       return;
     }
 
@@ -1406,17 +1108,30 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   private scrollBackwardRTL(rtlScrollType: string): Section | undefined {
+    const step =
+      this.layout.pageWidth && this.layout.pageWidth > 0
+        ? this.layout.pageWidth
+        : this.container.offsetWidth || this.layout.delta;
+
     if (rtlScrollType === 'default') {
       if (
         this.container.scrollLeft + this.container.offsetWidth <
         this.container.scrollWidth
       ) {
-        this.scrollBy(-this.layout.delta, 0, true);
+        // Move left by one pagewise step but don't overshoot
+        const remaining = Math.max(
+          0,
+          this.container.scrollWidth -
+            (this.container.scrollLeft + this.container.offsetWidth)
+        );
+        const move = Math.min(step, remaining);
+        this.scrollBy(-move, 0, true);
         return;
       }
     } else {
       if (this.container.scrollLeft < 0) {
-        this.scrollBy(-this.layout.delta, 0, true);
+        const move = Math.min(step, Math.abs(this.container.scrollLeft));
+        this.scrollBy(-move, 0, true);
         return;
       }
     }
@@ -1601,26 +1316,17 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         }
       }
 
-      // Fix: For pre-rendered content, don't automatically reset scroll position
-      // Pre-rendered chapters should maintain their positioning
-      if (this.settings.usePreRendering) {
+      // Reset scroll position
+      const hasValidScrollPosition = this.container.scrollLeft > 0;
+      const isNavigating = this.views.length > 0;
+
+      if (!hasValidScrollPosition || !isNavigating) {
+        this.scrollTo(0, 0, true);
+      } else {
         console.debug(
-          '[DefaultViewManager] clear() with pre-rendering - preserving scroll position:',
+          '[DefaultViewManager] clear() preserving scroll position during navigation:',
           this.container.scrollLeft
         );
-      } else {
-        // Original logic for non-pre-rendered content
-        const hasValidScrollPosition = this.container.scrollLeft > 0;
-        const isNavigating = this.views.length > 0;
-
-        if (!hasValidScrollPosition || !isNavigating) {
-          this.scrollTo(0, 0, true);
-        } else {
-          console.debug(
-            '[DefaultViewManager] clear() preserving scroll position during navigation:',
-            this.container.scrollLeft
-          );
-        }
       }
 
       this.views.clear();
@@ -1771,25 +1477,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       }
       used += pageWidth;
 
-      // Fix: Limit the end position for non-pre-rendered content only
-      // Pre-rendered content should use its full width
-      let shouldLimitEnd = true;
-      if (this.preRenderer) {
-        const preRenderedChapter = this.preRenderer.getChapter(href);
-        if (preRenderedChapter && preRenderedChapter.attached) {
-          shouldLimitEnd = false;
-          console.debug(
-            '[DefaultViewManager] not limiting end position for pre-rendered chapter:',
-            href
-          );
-        }
-      }
-
-      if (
-        shouldLimitEnd &&
-        this.layout.pageWidth &&
-        this.layout.pageWidth > 0
-      ) {
+      if (this.layout.pageWidth && this.layout.pageWidth > 0) {
         const maxEnd = start + this.layout.pageWidth;
         if (end > maxEnd) {
           console.debug(
@@ -1819,37 +1507,17 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         layoutWidth: this.layout.width,
       });
 
-      let mapping;
-      if (this.preRenderer) {
-        const pre = this.preRenderer.getChapter(href);
-        if (pre && pre.pageMap && pre.pageMap.length) {
-          // Clamp to page boundaries using the map for stability
-          const pageWidth = this.layout.pageWidth || this.layout.width;
-          const startPage = Math.max(1, Math.floor(start / pageWidth) + 1);
-          const endPage = Math.max(startPage, Math.floor(end / pageWidth) + 1);
-          const startEntry =
-            pre.pageMap[Math.min(startPage - 1, pre.pageMap.length - 1)];
-          const endEntry =
-            pre.pageMap[Math.min(endPage - 1, pre.pageMap.length - 1)];
-          mapping = {
-            start: startEntry?.startCfi || '',
-            end: endEntry?.startCfi || '',
-          };
-        }
+      if (this.mapping === undefined) {
+        throw new Error('Mapping is not defined');
       }
-      if (!mapping) {
-        if (this.mapping === undefined) {
-          throw new Error('Mapping is not defined');
-        }
-        mapping = this.mapping.page(
-          view.contents!,
-          view.section!.cfiBase!,
-          start,
-          end
-        );
-      }
+      const mapping = this.mapping.page(
+        view.contents!,
+        view.section!.cfiBase!,
+        start,
+        end
+      );
 
-      // Fix: Use actual content width for pagination calculation if available
+      // Fix: Use actual scrollable content width for pagination calculation
       let actualWidth = width;
       if (view.contents && view.contents.textWidth) {
         const contentWidth = view.contents.textWidth();
@@ -1858,36 +1526,32 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         }
       }
 
-      // Calculate total pages - use pre-rendered count if available
-      let totalPages;
-      if (this.preRenderer) {
-        const preRenderedChapter = this.preRenderer.getChapter(href);
-        if (preRenderedChapter && preRenderedChapter.pageCount > 0) {
-          totalPages = preRenderedChapter.pageCount;
-          console.debug(
-            '[DefaultViewManager] using pre-rendered page count:',
-            totalPages,
-            'for chapter:',
-            href
-          );
-        } else {
-          totalPages = this.layout.count(actualWidth).pages;
-          console.debug(
-            '[DefaultViewManager] using layout-calculated page count:',
-            totalPages,
-            'for chapter:',
-            href
-          );
-        }
+      // Calculate total pages using the actual scrollable width
+      // For correct navigation, totalPages should reflect what's actually scrollable
+      let totalPages: number;
+      const layoutPageWidth = this.layout.pageWidth || this.layout.width;
+      const scrollableWidth = Math.max(
+        this.container.scrollWidth -
+          this.container.offsetWidth +
+          layoutPageWidth,
+        layoutPageWidth
+      );
+
+      if (this.layout.pageWidth && this.layout.pageWidth > 0) {
+        // Use scrollable width instead of theoretical content width for page calculation
+        totalPages = Math.max(
+          1,
+          Math.ceil(scrollableWidth / this.layout.pageWidth)
+        );
       } else {
         totalPages = this.layout.count(actualWidth).pages;
-        console.debug(
-          '[DefaultViewManager] no pre-renderer, using layout-calculated page count:',
-          totalPages,
-          'for chapter:',
-          href
-        );
       }
+      console.debug(
+        '[DefaultViewManager] using layout-calculated page count:',
+        totalPages,
+        'for chapter:',
+        href
+      );
       let startPage = 0;
       let endPage = 0;
       const pages: number[] = [];

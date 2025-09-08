@@ -1,10 +1,11 @@
 import { defer } from '../utils/core';
 import { Section } from '../section';
-import IframeView from './views/iframe';
 import { View } from './helpers/views';
 import Layout, { Axis, Flow } from '../layout';
 import EventEmitter from 'event-emitter';
 import { EVENTS } from '../utils/constants';
+import { ViewRenderer } from './helpers/view-renderer';
+import Contents from '../contents';
 
 export interface PreRenderedChapter {
   section: Section;
@@ -26,6 +27,9 @@ export interface PreRenderedChapter {
     xOffset?: number; // horizontal offset for paginated flow
     yOffset?: number; // vertical offset for scrolled flow
   }>;
+  // Enhanced content preservation for reliable iframe restoration
+  preservedSrcdoc?: string; // Preserved srcdoc attribute
+  preservedContent?: string; // Preserved full document HTML
 }
 
 export interface ViewSettings {
@@ -60,10 +64,12 @@ export class BookPreRenderer {
   private offscreenContainer: HTMLElement;
   private unattachedStorage: DocumentFragment; // New: for long-term storage
   private viewSettings: ViewSettings;
+  private viewRenderer: ViewRenderer;
   private chapters: Map<string, PreRenderedChapter>;
   private renderingPromises: Map<string, Promise<PreRenderedChapter>>;
   private request: (url: string) => Promise<Document>;
   private currentStatus: PreRenderingStatus;
+  private _completeEmitted: boolean = false;
 
   /*
    * CRITICAL BROWSER BEHAVIOR WARNING - IFRAME CONTENT LOSS ON DOM MOVES:
@@ -162,6 +168,26 @@ export class BookPreRenderer {
     this.renderingPromises = new Map();
     this.request = request;
 
+    // Initialize ViewRenderer with the same settings
+    this.viewRenderer = new ViewRenderer(
+      {
+        ignoreClass: viewSettings.ignoreClass || '',
+        axis: viewSettings.axis,
+        direction: viewSettings.direction,
+        width: viewSettings.width,
+        height: viewSettings.height,
+        layout: viewSettings.layout,
+        method: viewSettings.method,
+        forceRight: viewSettings.forceRight || false,
+        allowScriptedContent: viewSettings.allowScriptedContent || false,
+        allowPopups: viewSettings.allowPopups || false,
+        transparency: viewSettings.transparency,
+        forceEvenPages: viewSettings.forceEvenPages,
+        flow: viewSettings.flow,
+      },
+      request
+    );
+
     // Create unattached storage for long-term prerendered content
     this.unattachedStorage = document.createDocumentFragment();
 
@@ -225,7 +251,14 @@ export class BookPreRenderer {
       '[BookPreRenderer] pre-rendering complete:',
       this.currentStatus
     );
-    this.emit('complete', this.currentStatus);
+    if (!this._completeEmitted) {
+      this._completeEmitted = true;
+      this.emit('complete', this.currentStatus);
+    } else {
+      console.debug(
+        '[BookPreRenderer] complete event already emitted, skipping'
+      );
+    }
     return this.currentStatus;
   }
 
@@ -233,18 +266,22 @@ export class BookPreRenderer {
     section: Section
   ): Promise<PreRenderedChapter> {
     const href = section.href;
+    console.debug('[BookPreRenderer] preRenderSection started for:', href);
 
     if (this.chapters.has(href)) {
+      console.debug('[BookPreRenderer] chapter already exists:', href);
       return this.chapters.get(href)!;
     }
 
     if (this.renderingPromises.has(href)) {
+      console.debug('[BookPreRenderer] already rendering, waiting for:', href);
       await this.renderingPromises.get(href)!;
       return this.chapters.get(href)!;
     }
 
     const rendering = new defer<View>();
     const view = this.createView(section);
+    console.debug('[BookPreRenderer] view created for:', href);
 
     const chapter: PreRenderedChapter = {
       section,
@@ -259,14 +296,21 @@ export class BookPreRenderer {
       whitePageIndices: [],
     };
 
+    console.debug('[BookPreRenderer] storing chapter in map:', href);
     this.chapters.set(href, chapter);
+    console.debug(
+      '[BookPreRenderer] chapters map size now:',
+      this.chapters.size
+    );
 
     const renderPromise = this.renderView(view, chapter)
       .then((renderedView) => {
+        console.debug('[BookPreRenderer] renderView completed for:', href);
         rendering.resolve(renderedView);
         return chapter;
       })
       .catch((error) => {
+        console.error('[BookPreRenderer] renderView failed for:', href, error);
         rendering.reject(error);
         throw error;
       });
@@ -274,10 +318,17 @@ export class BookPreRenderer {
     this.renderingPromises.set(href, renderPromise);
 
     try {
+      console.debug('[BookPreRenderer] waiting for render promise:', href);
       await renderPromise;
+      console.debug('[BookPreRenderer] render promise completed for:', href);
       this.renderingPromises.delete(href);
       return chapter;
     } catch (error) {
+      console.error(
+        '[BookPreRenderer] preRenderSection failed for:',
+        href,
+        error
+      );
       this.renderingPromises.delete(href);
       this.chapters.delete(href);
       throw error;
@@ -285,21 +336,16 @@ export class BookPreRenderer {
   }
 
   private createView(section: Section): View {
-    const view = new IframeView(section, this.viewSettings);
+    const view = this.viewRenderer.createView(section);
 
-    // Add a small delay to ensure EventEmitter mixin is applied
-    // This is a workaround for timing issues with the mixin
-    setTimeout(() => {
-      if (typeof view.on !== 'function') {
-        console.warn(
-          '[BookPreRenderer] EventEmitter methods still not available on view for:',
-          section.href
-        );
-      }
-    }, 0);
-
+    // Set up minimal event handlers
     view.onDisplayed = () => {};
     view.onResize = () => {};
+
+    // Ensure the view is sized to match the target container dimensions
+    // This is critical for consistent layout between pre-rendering and display
+    view.size(this.viewSettings.width, this.viewSettings.height);
+
     return view;
   }
 
@@ -307,28 +353,148 @@ export class BookPreRenderer {
     view: View,
     chapter: PreRenderedChapter
   ): Promise<View> {
+    const href = chapter.section.href;
+    console.debug('[BookPreRenderer] renderView started for:', href);
+
     try {
       // Temporarily attach to offscreen container for rendering
+      console.debug(
+        '[BookPreRenderer] attaching to offscreen container:',
+        href
+      );
       this.offscreenContainer.appendChild(chapter.element);
-      const renderedView = await view.display(this.request);
 
-      if (view.contents && view.contents.textWidth) {
-        chapter.width = Math.max(
-          view.contents.textWidth(),
-          this.viewSettings.width
-        );
+      console.debug('[BookPreRenderer] calling view.display for:', href);
+      const renderedView = await view.display(this.request);
+      console.debug('[BookPreRenderer] view.display completed for:', href);
+
+      // If layout information is present, format the contents for the column size
+      const layout: Layout | undefined = (this.viewSettings as any).layout;
+      if (layout && layout._flow === 'paginated') {
+        try {
+          console.debug(
+            '[BookPreRenderer] formatting contents for layout columns:',
+            layout.columnWidth,
+            'x',
+            layout.height
+          );
+          console.debug('[BookPreRenderer] layout details:', {
+            width: layout.width,
+            height: layout.height,
+            columnWidth: layout.columnWidth,
+            gap: layout.gap,
+            flow: layout._flow,
+            viewSettingsWidth: this.viewSettings.width,
+            viewSettingsHeight: this.viewSettings.height,
+          });
+
+          // Use columns to size content using layout's calculated dimensions for proper pagination
+          if (view.contents && typeof view.contents.columns === 'function') {
+            // Use the layout's calculated columnWidth for proper pagination
+            const columnWidth =
+              this.viewSettings.layout?.columnWidth || this.viewSettings.width;
+            const gap = this.viewSettings.layout?.gap || 0;
+
+            console.log(
+              '[BookPreRenderer] applying contents.columns formatting with layout dimensions',
+              'containerWidth:',
+              this.viewSettings.width,
+              'columnWidth:',
+              columnWidth,
+              'gap:',
+              gap
+            );
+            view.contents.columns(
+              this.viewSettings.width,
+              this.viewSettings.height,
+              columnWidth, // Use layout's calculated column width for proper pagination
+              gap, // Use layout's calculated gap
+              layout.settings?.direction || 'ltr'
+            );
+          } else if (view.contents && typeof view.contents.fit === 'function') {
+            console.debug('[BookPreRenderer] applying contents.fit formatting');
+            view.contents.fit(
+              layout.columnWidth,
+              layout.height,
+              chapter.section
+            );
+          } else {
+            console.debug(
+              '[BookPreRenderer] no contents formatting method available'
+            );
+          }
+          // After formatting, try to measure the full content width (textWidth)
+          let contentWidth: number | undefined;
+          try {
+            if (view.contents && (view.contents as any).textWidth) {
+              contentWidth = (view.contents as any).textWidth();
+            }
+          } catch (e) {
+            console.debug('[BookPreRenderer] could not get textWidth:', e);
+          }
+
+          chapter.width = contentWidth || layout.columnWidth;
+          chapter.height = layout.height;
+          console.debug(
+            '[BookPreRenderer] measured content width after formatting:',
+            chapter.width
+          );
+        } catch (e) {
+          console.debug(
+            '[BookPreRenderer] could not format contents with layout:',
+            e
+          );
+        }
+      } else {
+        console.debug('[BookPreRenderer] checking textWidth for:', href);
+        if (view.contents && (view.contents as any).textWidth) {
+          chapter.width = Math.max(
+            (view.contents as any).textWidth(),
+            this.viewSettings.width
+          );
+          console.debug(
+            '[BookPreRenderer] textWidth calculated for:',
+            href,
+            'width:',
+            chapter.width
+          );
+        } else {
+          console.debug('[BookPreRenderer] no textWidth available for:', href);
+        }
       }
 
+      console.debug('[BookPreRenderer] calling analyzeContent for:', href);
       this.analyzeContent(chapter);
+      console.debug('[BookPreRenderer] analyzeContent completed for:', href);
+
+      // Preserve initial content after successful rendering
+      console.debug('[BookPreRenderer] preserving content for:', href);
+      this.preserveChapterContent(chapter);
+      console.debug(
+        '[BookPreRenderer] content preservation completed for:',
+        href
+      );
 
       // Move to unattached storage for long-term storage (hybrid approach)
       if (chapter.element.parentNode === this.offscreenContainer) {
+        console.debug(
+          '[BookPreRenderer] removing from offscreen container:',
+          href
+        );
         this.offscreenContainer.removeChild(chapter.element);
       }
+      console.debug('[BookPreRenderer] moving to unattached storage:', href);
       this.unattachedStorage.appendChild(chapter.element);
 
+      console.debug('[BookPreRenderer] renderView SUCCESS for:', href);
       return renderedView as View;
     } catch (error) {
+      console.error(
+        '[BookPreRenderer] renderView FAILED for:',
+        href,
+        'error:',
+        error
+      );
       if (chapter.element.parentNode === this.offscreenContainer) {
         this.offscreenContainer.removeChild(chapter.element);
       }
@@ -355,19 +521,54 @@ export class BookPreRenderer {
               this.viewSettings.layout._flow === 'paginated');
 
           if (isPaginated) {
-            // For paginated/horizontal flow: use content width vs viewport width
-            const contentWidth = chapter.width; // Already calculated from textWidth()
-            const viewportWidth = this.viewSettings.width;
+            // For paginated/horizontal flow: use content scrollWidth vs viewport (column) width
+            let contentWidth = chapter.width;
+            try {
+              if (
+                view.contents &&
+                typeof view.contents.scrollWidth === 'function'
+              ) {
+                contentWidth = view.contents.scrollWidth();
+              }
+            } catch (e) {
+              console.debug(
+                '[BookPreRenderer] could not get scrollWidth, falling back to chapter.width',
+                e
+              );
+            }
+
+            // Use the column width for pagination calculations if available,
+            // otherwise fall back to container width
+            const layoutColumnWidth = this.viewSettings.layout?.columnWidth;
+            const viewportWidth = layoutColumnWidth || this.viewSettings.width;
 
             console.log(
               '[BookPreRenderer] paginated flow - contentWidth:',
               contentWidth,
               'viewportWidth:',
-              viewportWidth
+              viewportWidth,
+              'layout.columnWidth:',
+              layoutColumnWidth,
+              'viewSettings.width:',
+              this.viewSettings.width,
+              'viewSettings.height:',
+              this.viewSettings.height
             );
 
-            if (contentWidth > viewportWidth * 1.1) {
-              chapter.pageCount = Math.ceil(contentWidth / viewportWidth);
+            // Use a fixed tolerance instead of percentage-based
+            const tolerance = 10; // Fixed 10px tolerance for measurement inaccuracies
+
+            if (contentWidth > viewportWidth + tolerance) {
+              chapter.pageCount = Math.max(
+                1,
+                Math.ceil(contentWidth / viewportWidth)
+              );
+            } else {
+              // Content fits in one page
+              chapter.pageCount = 1;
+              console.log(
+                `[BookPreRenderer] Content fits in one page: contentWidth=${contentWidth} <= viewportWidth=${viewportWidth} + tolerance=${tolerance}`
+              );
             }
 
             // Build a simple page map with xOffsets and best-effort CFIs for page starts
@@ -407,8 +608,23 @@ export class BookPreRenderer {
             }
           } else {
             // For scrolled/vertical flow: use content height vs viewport height
-            const contentHeight = body.scrollHeight;
-            const viewportHeight = this.viewSettings.height;
+            let contentHeight = body.scrollHeight;
+            try {
+              if (
+                view.contents &&
+                typeof view.contents.scrollHeight === 'function'
+              ) {
+                contentHeight = view.contents.scrollHeight();
+              }
+            } catch (e) {
+              console.debug(
+                '[BookPreRenderer] could not get contents.scrollHeight(), using body.scrollHeight',
+                e
+              );
+            }
+
+            const viewportHeight =
+              this.viewSettings.layout?.height ?? this.viewSettings.height;
 
             console.log(
               '[BookPreRenderer] scrolled flow - contentHeight:',
@@ -418,7 +634,10 @@ export class BookPreRenderer {
             );
 
             if (contentHeight > viewportHeight * 0.8) {
-              chapter.pageCount = Math.ceil(contentHeight / viewportHeight);
+              chapter.pageCount = Math.max(
+                1,
+                Math.ceil(contentHeight / viewportHeight)
+              );
             }
 
             // Build a simple page map with yOffsets for vertical flow
@@ -469,7 +688,23 @@ export class BookPreRenderer {
   }
 
   getChapter(sectionHref: string): PreRenderedChapter | undefined {
-    return this.chapters.get(sectionHref);
+    console.debug('[BookPreRenderer] getChapter called with:', sectionHref);
+    console.debug(
+      '[BookPreRenderer] available chapters:',
+      Array.from(this.chapters.keys())
+    );
+    console.debug(
+      '[BookPreRenderer] total chapters stored:',
+      this.chapters.size
+    );
+
+    const result = this.chapters.get(sectionHref);
+    console.debug(
+      '[BookPreRenderer] getChapter result:',
+      result ? 'FOUND' : 'NOT FOUND'
+    );
+
+    return result;
   }
 
   getAllChapters(): PreRenderedChapter[] {
@@ -498,6 +733,140 @@ export class BookPreRenderer {
       renderingInProgress: this.renderingPromises.size,
       chapters,
     };
+  }
+
+  /**
+   * Preserve iframe content to prevent loss during DOM moves
+   */
+  private preserveChapterContent(chapter: PreRenderedChapter): void {
+    const iframe = chapter.element.querySelector('iframe') as HTMLIFrameElement;
+    if (!iframe) return;
+
+    try {
+      // Preserve srcdoc attribute
+      chapter.preservedSrcdoc = iframe.srcdoc;
+
+      // Preserve full document content
+      if (iframe.contentDocument?.documentElement) {
+        chapter.preservedContent =
+          iframe.contentDocument.documentElement.outerHTML;
+      }
+    } catch (e) {
+      console.debug('[BookPreRenderer] could not preserve iframe content:', e);
+    }
+  }
+
+  /**
+   * Restore iframe content after DOM moves
+   */
+  private restoreChapterContent(chapter: PreRenderedChapter): boolean {
+    const iframe = chapter.element.querySelector('iframe') as HTMLIFrameElement;
+    if (!iframe) return false;
+
+    try {
+      const textContent =
+        iframe.contentDocument?.body?.textContent?.trim() || '';
+      const htmlContent = iframe.contentDocument?.body?.innerHTML?.trim() || '';
+      const isReady = iframe.contentDocument?.readyState === 'complete';
+
+      // Check if content is missing
+      const hasValidContent =
+        isReady && (textContent.length > 0 || htmlContent.length > 0);
+
+      if (
+        !hasValidContent &&
+        (chapter.preservedSrcdoc || chapter.preservedContent)
+      ) {
+        console.debug(
+          '[BookPreRenderer] restoring iframe content for:',
+          chapter.section.href
+        );
+
+        if (chapter.preservedSrcdoc) {
+          iframe.srcdoc = chapter.preservedSrcdoc;
+
+          // Force reload to ensure content is properly set
+          iframe.src = 'about:blank';
+          setTimeout(() => {
+            iframe.removeAttribute('src');
+            iframe.srcdoc = chapter.preservedSrcdoc!;
+          }, 0);
+        } else if (chapter.preservedContent) {
+          // Fallback: use document.write method
+          if (iframe.contentDocument) {
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(chapter.preservedContent);
+            iframe.contentDocument.close();
+          }
+        }
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      console.warn('[BookPreRenderer] error restoring iframe content:', e);
+      return false;
+    }
+  }
+
+  /**
+   * Public helper to attempt restore for a chapter by href and validate result
+   * Returns true if content is present after restore, false otherwise
+   */
+  public tryRestoreContent(sectionHref: string): boolean {
+    const chapter = this.chapters.get(sectionHref);
+    if (!chapter) {
+      console.debug(
+        '[BookPreRenderer] tryRestoreContent: chapter not found',
+        sectionHref
+      );
+      return false;
+    }
+
+    try {
+      console.debug(
+        '[BookPreRenderer] tryRestoreContent: attempting restore for',
+        sectionHref
+      );
+      const restored = this.restoreChapterContent(chapter);
+
+      // Validate iframe content
+      const iframe = chapter.element.querySelector(
+        'iframe'
+      ) as HTMLIFrameElement | null;
+      let hasValidContent = false;
+      try {
+        if (iframe && iframe.contentDocument) {
+          const body = iframe.contentDocument.body;
+          const txt = body ? (body.textContent || '').trim() : '';
+          const html = body ? (body.innerHTML || '').trim() : '';
+          const ready = iframe.contentDocument.readyState === 'complete';
+          hasValidContent =
+            ready &&
+            (txt.length > 0 || html.length > 0 || chapter.hasWhitePages);
+        }
+      } catch (e) {
+        console.debug(
+          '[BookPreRenderer] tryRestoreContent: cannot access iframe content due to cross-origin or other error',
+          e
+        );
+        hasValidContent = false;
+      }
+      console.debug(
+        '[BookPreRenderer] tryRestoreContent result for',
+        sectionHref,
+        { restored, hasValidContent }
+      );
+
+      return hasValidContent || restored;
+    } catch (e) {
+      console.warn(
+        '[BookPreRenderer] tryRestoreContent failed for',
+        sectionHref,
+        e
+      );
+      return false;
+    }
   }
 
   attachChapter(sectionHref: string): PreRenderedChapter | null {
@@ -616,177 +985,237 @@ export class BookPreRenderer {
         return null;
       }
 
-      // HYBRID APPROACH: Move from unattached storage through brief off-screen to final attachment
-      // Step 1: Remove from current location (could be unattached storage, offscreen, or main container)
-      if (chapter.element.parentNode) {
-        /*
-         * CRITICAL: DOM MOVE WILL DESTROY IFRAME CONTENT
-         *
-         * The following DOM operations will cause the iframe to lose all its content:
-         * 1. removeChild() - Removes iframe from current container
-         * 2. appendChild() - Adds iframe to new container
-         *
-         * Between these operations, the iframe's contentDocument becomes empty.
-         * We must preserve the content before the move and restore it after.
-         */
+      // CLONE-ON-ATTACH: Create a fresh wrapper and iframe from preserved content
+      // to avoid moving the original prerendered iframe (which loses content on DOM moves).
+      const displayWrapper = document.createElement('div');
+      displayWrapper.classList.add('epub-view');
 
-        // Before moving, preserve iframe content since DOM manipulation will clear it
-        const iframe = chapter.element.querySelector(
-          'iframe'
-        ) as HTMLIFrameElement;
-        let preservedSrcdoc: string | undefined;
-        let preservedContent: string | undefined;
+      // For paginated content, set wrapper to full width so container can detect scrollable content
+      const isPaginated = this.viewSettings.layout?._flow === 'paginated';
+      if (isPaginated) {
+        // Set wrapper to full paginated width so container scrollWidth reflects actual content
+        displayWrapper.style.width = chapter.width + 'px';
+        displayWrapper.style.height = chapter.height + 'px';
+        displayWrapper.style.overflow = 'hidden'; // Hide content outside viewport like DefaultViewManager
+        console.log(
+          `[BookPreRenderer] Setting up paginated wrapper for ${sectionHref} - width: ${chapter.width}px (full paginated width)`
+        );
+      } else {
+        // For scrolled content, use container dimensions
+        displayWrapper.style.width = chapter.width + 'px';
+        displayWrapper.style.height = chapter.height + 'px';
+        displayWrapper.style.overflow = 'hidden';
+        console.log(
+          `[BookPreRenderer] Setting up scrolled wrapper for ${sectionHref} - width: ${chapter.width}px`
+        );
+      }
+      displayWrapper.style.position = 'relative';
+      displayWrapper.style.display = 'block';
 
-        if (iframe) {
-          preservedSrcdoc = iframe.srcdoc;
-          try {
-            preservedContent =
-              iframe.contentDocument?.documentElement?.outerHTML;
-          } catch (e) {
-            console.debug(
-              '[BookPreRenderer] could not preserve iframe content:',
-              e
-            );
-          }
-        }
+      // Create a new iframe for display
+      const newIframe = document.createElement('iframe') as HTMLIFrameElement;
+      newIframe.scrolling = 'no';
+      newIframe.style.border = 'none';
+      if (isPaginated) {
+        // For paginated content, set iframe to full width to show all pages
+        newIframe.style.width = chapter.width + 'px';
+        newIframe.style.height = chapter.height + 'px';
+        console.log(
+          `[BookPreRenderer] Setting up paginated iframe for ${sectionHref} - width: ${chapter.width}px (full paginated width)`
+        );
+      } else {
+        // For scrolled content, use container dimensions
+        newIframe.style.width = chapter.width + 'px';
+        newIframe.style.height = chapter.height + 'px';
+        console.log(
+          `[BookPreRenderer] Setting up scrolled iframe for ${sectionHref} - width: ${chapter.width}px`
+        );
+      }
+      newIframe.sandbox = 'allow-same-origin';
+      if ((this.viewSettings as ViewSettings).allowScriptedContent) {
+        newIframe.sandbox += ' allow-scripts';
+      }
+      if ((this.viewSettings as ViewSettings).allowPopups) {
+        newIframe.sandbox += ' allow-popups';
+      }
 
-        chapter.element.parentNode.removeChild(chapter.element);
-        console.debug('[BookPreRenderer] removed from container:', sectionHref);
-
-        // After DOM move, restore content if iframe was cleared
-        if (iframe && (preservedSrcdoc || preservedContent)) {
-          try {
-            const textContent =
-              iframe.contentDocument?.body?.textContent?.trim() || '';
-            const htmlContent =
-              iframe.contentDocument?.body?.innerHTML?.trim() || '';
-            const isReady = iframe.contentDocument?.readyState === 'complete';
-
-            // Check if content is missing (for both regular and white pages)
-            const hasValidContent =
-              isReady && (textContent.length > 0 || htmlContent.length > 0);
-
-            if (!hasValidContent) {
-              console.debug(
-                '[BookPreRenderer] iframe content lost during DOM move, restoring for:',
-                sectionHref,
-                'readyState:',
-                iframe.contentDocument?.readyState,
-                'textLength:',
-                textContent.length,
-                'htmlLength:',
-                htmlContent.length
-              );
-
-              if (preservedSrcdoc) {
-                iframe.srcdoc = preservedSrcdoc;
-
-                // Force a reload by briefly setting src to about:blank then back to srcdoc
-                iframe.src = 'about:blank';
-                setTimeout(() => {
-                  iframe.removeAttribute('src');
-                  iframe.srcdoc = preservedSrcdoc;
-                }, 0);
-              } else if (preservedContent) {
-                // Fallback: use document.write method
-                try {
-                  if (iframe.contentDocument) {
-                    iframe.contentDocument.open();
-                    iframe.contentDocument.write(preservedContent);
-                    iframe.contentDocument.close();
-                  }
-                } catch (e) {
-                  console.warn(
-                    '[BookPreRenderer] document.write failed for:',
-                    sectionHref,
-                    e
-                  );
-                  // If document.write fails, try srcdoc approach with data URL
-                  const encodedContent = encodeURIComponent(preservedContent);
-                  iframe.src = `data:text/html;charset=utf-8,${encodedContent}`;
-                }
+      // Populate iframe from preservedSrcdoc or preservedContent
+      try {
+        if (chapter.preservedSrcdoc) {
+          newIframe.srcdoc = chapter.preservedSrcdoc;
+        } else if (chapter.preservedContent) {
+          // write will run after iframe is added to DOM; we add a load listener
+          newIframe.src = 'about:blank';
+          newIframe.addEventListener('load', () => {
+            try {
+              const doc = newIframe.contentDocument;
+              if (doc) {
+                doc.open();
+                doc.write(chapter.preservedContent!);
+                doc.close();
               }
+            } catch (e) {
+              console.warn(
+                '[BookPreRenderer] clone-on-attach: could not write preserved content to iframe',
+                e
+              );
             }
-          } catch (e) {
-            console.warn(
-              '[BookPreRenderer] error restoring iframe content for:',
-              sectionHref,
-              e
-            );
-          }
+          });
         }
-      }
-
-      // Step 2: Brief off-screen positioning for transition stability
-      this.offscreenContainer.appendChild(chapter.element);
-
-      // Step 3: Ensure proper dimensions and clear any problematic positioning
-      if (chapter.element) {
-        // Set the element width to match the pre-rendered width
-        chapter.element.style.width = chapter.width + 'px';
-        chapter.element.style.height = chapter.height + 'px';
-
-        // Clear any problematic positioning that might persist
-        chapter.element.style.position = 'static';
-        chapter.element.style.left = '0px';
-        chapter.element.style.top = '0px';
-        chapter.element.style.visibility = 'visible';
-
-        // Also set the iframe width if present
-        const iframe = chapter.element.querySelector('iframe');
-        if (iframe) {
-          iframe.style.width = chapter.width + 'px';
-          iframe.style.height = chapter.height + 'px';
-        }
-
-        console.debug(
-          '[BookPreRenderer] prepared element for attachment:',
-          chapter.width + 'x' + chapter.height,
-          'for',
-          sectionHref
-        );
-      }
-
-      // Step 4: Keep in offscreen container until views system moves it
-      // DO NOT remove from offscreen - let views.append() handle the DOM move
-      // this.offscreenContainer.removeChild(chapter.element);
-
-      // Mark as attached since it's ready to be used
-      chapter.attached = true;
-
-      // Reset any internal scroll positions in the attached element
-      if (chapter.element.scrollLeft !== undefined) {
-        chapter.element.scrollLeft = 0;
-      }
-      if (chapter.element.scrollTop !== undefined) {
-        chapter.element.scrollTop = 0;
-      }
-
-      // Check if it's an iframe and reset its internal scroll as well
-      const iframeElement = chapter.element.querySelector('iframe');
-      if (iframeElement && iframeElement.contentWindow) {
-        try {
-          iframeElement.contentWindow.scrollTo(0, 0);
-        } catch (e) {
-          // Ignore cross-origin errors
-          console.debug(
-            '[BookPreRenderer] could not reset iframe scroll:',
-            (e as Error).message
-          );
-        }
-      }
-
-      // Verify attachment worked - the element should not be in the pre-renderer container
-      // It should be ready to be attached to the views system instead
-      if (chapter.element.parentNode === this.container) {
+      } catch (e) {
         console.warn(
-          '[BookPreRenderer] element still attached to pre-renderer container - this is not expected:',
-          sectionHref
+          '[BookPreRenderer] clone-on-attach: failed to set iframe content',
+          e
         );
       }
 
-      this.emit(EVENTS.VIEWS.DISPLAYED, chapter.view);
-      return chapter;
+      displayWrapper.appendChild(newIframe);
+
+      // Do NOT mutate the original prerendered chapter or its view/element - keep it in unattachedStorage
+      console.log(
+        `[BookPreRenderer] clone created for attach (preserved original left intact): ${sectionHref}`
+      );
+
+      // Create a proper IframeView instance for the cloned element
+      // This ensures all IframeView methods like setLayout() are available
+      const clonedView = this.viewRenderer.createView(chapter.section);
+
+      // Replace the IframeView's element with our cloned element
+      clonedView.element = displayWrapper;
+
+      // Update the view's internal iframe reference to point to our new iframe
+      // We need to access internal properties to properly initialize the cloned view
+      const iframeView = clonedView as unknown as {
+        iframe?: HTMLIFrameElement;
+        frame?: HTMLIFrameElement;
+        _width: number;
+        _height: number;
+        displayed: boolean;
+        rendered: boolean;
+        lockedWidth?: number;
+        lockedHeight?: number;
+        fixedWidth?: number;
+        fixedHeight?: number;
+        contents?: Contents;
+      };
+
+      iframeView.iframe = newIframe;
+      iframeView.frame = newIframe;
+
+      // Set the display state since content is already rendered
+      iframeView.displayed = true;
+      iframeView.rendered = true;
+
+      // Set the dimensions to match the pre-rendered content
+      // Since we're now pre-rendering with correct target dimensions, use those dimensions
+      iframeView._width = this.viewSettings.width;
+      iframeView._height = this.viewSettings.height;
+      iframeView.lockedWidth = this.viewSettings.width;
+      iframeView.lockedHeight = this.viewSettings.height;
+      iframeView.fixedWidth = this.viewSettings.width;
+      iframeView.fixedHeight = this.viewSettings.height;
+
+      // Update the wrapper and iframe to use the same dimensions as pre-rendering
+      displayWrapper.style.width = this.viewSettings.width + 'px';
+      displayWrapper.style.height = this.viewSettings.height + 'px';
+      newIframe.style.width = this.viewSettings.width + 'px';
+      newIframe.style.height = this.viewSettings.height + 'px';
+
+      // The pre-rendered content should already be formatted correctly for the container dimensions
+      // No need for additional formatting since we fixed the pre-rendering phase
+
+      // Add essential IframeView methods to the cloned view for proper layout support
+      const originalExpand = clonedView.expand?.bind(clonedView);
+      clonedView.expand = () => {
+        // For cloned views, maintain the container dimensions since content is pre-rendered correctly
+        if (originalExpand) {
+          originalExpand();
+        }
+        // Ensure dimensions remain as container dimensions
+        if (newIframe) {
+          newIframe.style.width = this.viewSettings.width + 'px';
+          newIframe.style.height = this.viewSettings.height + 'px';
+        }
+      };
+
+      const originalSize = clonedView.size?.bind(clonedView);
+      clonedView.size = (width?: number, height?: number) => {
+        // Use container dimensions unless explicitly overridden
+        const finalWidth = width ?? this.viewSettings.width;
+        const finalHeight = height ?? this.viewSettings.height;
+
+        if (originalSize) {
+          originalSize(finalWidth, finalHeight);
+        }
+
+        // Update internal dimensions
+        iframeView._width = finalWidth;
+        iframeView._height = finalHeight;
+        iframeView.lockedWidth = finalWidth;
+        iframeView.lockedHeight = finalHeight;
+
+        // Update iframe dimensions
+        if (newIframe) {
+          newIframe.style.width = finalWidth + 'px';
+          newIframe.style.height = finalHeight + 'px';
+        }
+      };
+
+      // Add width/height methods that return the current dimensions
+      clonedView.width = () => iframeView._width;
+      clonedView.height = () => iframeView._height;
+
+      const attachedChapter: PreRenderedChapter = {
+        section: chapter.section,
+        view: clonedView, // Now a proper IframeView with all methods
+        element: displayWrapper,
+        rendered: chapter.rendered,
+        attached: false,
+        width: chapter.width,
+        height: chapter.height,
+        pageCount: chapter.pageCount,
+        hasWhitePages: chapter.hasWhitePages,
+        whitePageIndices: chapter.whitePageIndices,
+        preservedSrcdoc: chapter.preservedSrcdoc,
+        preservedContent: chapter.preservedContent,
+        pageMap: chapter.pageMap,
+      };
+
+      // Conservative validation: check readyState and lengths if possible and log
+      try {
+        const ready = newIframe.contentDocument?.readyState;
+        const bodyTextLen =
+          newIframe.contentDocument?.body?.textContent?.trim()?.length || 0;
+        const bodyHtmlLen =
+          newIframe.contentDocument?.body?.innerHTML?.trim()?.length || 0;
+        console.debug(
+          `[BookPreRenderer] clone post-create diagnostics for ${sectionHref}: ready=${ready} textLen=${bodyTextLen} htmlLen=${bodyHtmlLen}`
+        );
+      } catch (e) {
+        console.debug(
+          `[BookPreRenderer] cannot inspect clone iframe post-create: ${e}`
+        );
+      }
+
+      // Log when srcdoc was used
+      if (chapter.preservedSrcdoc) {
+        console.log(`[BookPreRenderer] clone srcdoc set for ${sectionHref}`);
+      } else if (chapter.preservedContent) {
+        console.log(
+          `[BookPreRenderer] clone preservedContent writer scheduled for ${sectionHref}`
+        );
+      }
+
+      // Notify listeners about the cloned view being available (non-destructive)
+      try {
+        this.emit(EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
+      } catch (e) {
+        console.debug(
+          `[BookPreRenderer] error emitting DISPLAYED for clone: ${e}`
+        );
+      }
+
+      return attachedChapter;
     } catch (error) {
       console.error(
         '[BookPreRenderer] failed to attach chapter:',

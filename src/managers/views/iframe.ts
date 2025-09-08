@@ -299,62 +299,53 @@ class IframeView implements View, EventEmitterMethods {
       .then((contents: string) => {
         return this.load(contents);
       })
-      .then(
-        () => {
-          // find and report the writingMode axis
-          const writingMode = this.contents!.writingMode();
-
-          // Set the axis based on the flow and writing mode
-          let axis: Axis;
-          if (this.settings.flow === 'scrolled') {
-            axis =
-              writingMode!.indexOf('vertical') === 0
-                ? 'horizontal'
-                : 'vertical';
-          } else {
-            axis =
-              writingMode!.indexOf('vertical') === 0
-                ? 'vertical'
-                : 'horizontal';
-          }
-
-          if (
-            writingMode!.indexOf('vertical') === 0 &&
-            this.settings.flow === 'paginated'
-          ) {
-            this.layout.delta = this.layout.height;
-          }
-
-          this.setAxis(axis);
-          this.emit(EVENTS.VIEWS.AXIS, axis);
-
-          this.setWritingMode(writingMode!);
-          this.emit(EVENTS.VIEWS.WRITING_MODE, writingMode!);
-
-          // apply the layout function to the contents
-          this.layout.format(this.contents!, this.section, this.axis);
-
-          // Listen for events that require an expansion of the iframe
-          this.addListeners();
-
-          return new Promise<void>((resolve) => {
-            // Expand the iframe to the full size of the content
-            this.expand();
-            if (this.settings.forceRight) {
-              this.element.style.marginLeft = this.width() + 'px';
-            }
-            resolve();
-          });
-        },
-        (e: Event) => {
-          this.emit(EVENTS.VIEWS.LOAD_ERROR, e);
-          return new Promise((resolve, reject) => {
-            reject(e);
-          });
-        }
-      )
       .then(() => {
+        // find and report the writingMode axis
+        const writingMode = this.contents!.writingMode();
+
+        // Set the axis based on the flow and writing mode
+        let axis: Axis;
+        if (this.settings.flow === 'scrolled') {
+          axis =
+            writingMode!.indexOf('vertical') === 0 ? 'horizontal' : 'vertical';
+        } else {
+          axis =
+            writingMode!.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
+        }
+
+        if (
+          writingMode!.indexOf('vertical') === 0 &&
+          this.settings.flow === 'paginated'
+        ) {
+          this.layout.delta = this.layout.height;
+        }
+
+        this.setAxis(axis);
+        this.emit(EVENTS.VIEWS.AXIS, axis);
+
+        this.setWritingMode(writingMode!);
+        this.emit(EVENTS.VIEWS.WRITING_MODE, writingMode!);
+
+        // apply the layout function to the contents
+        this.layout.format(this.contents!, this.section, this.axis);
+
+        // Listen for events that require an expansion of the iframe
+        this.addListeners();
+
+        // Expand the iframe to the full size of the content
+        this.expand();
+        if (this.settings.forceRight) {
+          this.element.style.marginLeft = this.width() + 'px';
+        }
+      })
+      .then(() => {
+        // Mark as rendered for external checks
+        this.rendered = true;
         this.emit(EVENTS.VIEWS.RENDERED, this.section);
+      })
+      .catch((e: Event) => {
+        this.emit(EVENTS.VIEWS.LOAD_ERROR, e);
+        return Promise.reject(e);
       });
   }
 

@@ -78,6 +78,7 @@ import Contents from './contents';
 import { ViewManager } from './managers/helpers/snap';
 import { ViewManagerConstructor } from './managers/helpers/snap';
 import DefaultViewManager from './managers/default';
+import { PreRenderingViewManager } from './managers/prerendering';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 
@@ -147,65 +148,8 @@ export class Rendition implements EventEmitterMethods {
       ...options,
     };
 
-    if (typeof this.settings.manager === 'object') {
-      this.manager = this.settings.manager;
-    } else {
-      const layoutInstance = new Layout({
-        layout: this.settings.layout || 'reflowable',
-        spread: this.settings.spread || 'auto',
-        minSpreadWidth:
-          typeof this.settings.minSpreadWidth === 'number'
-            ? this.settings.minSpreadWidth
-            : 400,
-        direction: this.settings.direction || 'ltr',
-        flow: this.settings.flow || 'auto',
-      });
-      // Ensure width and height are numbers or undefined
-      const width =
-        typeof this.settings.width === 'number'
-          ? this.settings.width
-          : undefined;
-      const height =
-        typeof this.settings.height === 'number'
-          ? this.settings.height
-          : undefined;
-      this.manager = new DefaultViewManager({
-        view: this.settings.view,
-        queue: this.q,
-        request: this.book.load.bind(this.book),
-        settings: {
-          ...this.settings,
-          layout: layoutInstance,
-          width,
-          height,
-          afterScrolledTimeout: 10,
-        },
-      });
-    }
-
-    this.manager.on(EVENTS.MANAGERS.ADDED, (...args: unknown[]) => {
-      const view = args[0] as View;
-      this.afterDisplayed(view);
-    });
-
-    this.manager.on(EVENTS.MANAGERS.REMOVED, (...args: unknown[]) => {
-      const view = args[0] as View;
-      this.afterRemoved(view);
-    });
-
-    this.manager.on(EVENTS.MANAGERS.RESIZED, (...args: unknown[]) => {
-      const size = args[0] as { width: number; height: number };
-      const epubcfi = args[1] as string;
-      this.onResized(size, epubcfi);
-    });
-
-    this.manager.on(
-      EVENTS.MANAGERS.ORIENTATION_CHANGE,
-      (...args: unknown[]) => {
-        const orientation = args[0] as string;
-        this.onOrientationChange(orientation);
-      }
-    );
+    // Manager creation moved to start() method - no conditional creation here!
+    // Event listeners will be set up in start() after manager is created
 
     this.hooks = {
       display: new Hook(this),
@@ -329,19 +273,101 @@ export class Rendition implements EventEmitterMethods {
         break;
     }
 
-    if (!this.manager) {
-      this.ViewManager = this.settings.manager as ViewManagerConstructor;
-      this.View = this.settings.view!;
+    // Create manager in ONE place - always create here, no conditions
+    console.log(
+      `[Rendition] Creating manager in start() - usePreRendering: ${this.settings.usePreRendering}`
+    );
 
-      if (typeof this.ViewManager === 'function') {
-        this.manager = new this.ViewManager({
-          view: this.View,
-          queue: this.q,
-          request: this.book.load.bind(this.book),
-          settings: this.settings,
-        });
+    if (typeof this.settings.manager === 'object') {
+      console.log('[Rendition] Using provided manager object');
+      this.manager = this.settings.manager;
+    } else {
+      const layoutInstance = new Layout({
+        layout: this.settings.layout || 'reflowable',
+        spread: this.settings.spread || 'auto',
+        minSpreadWidth:
+          typeof this.settings.minSpreadWidth === 'number'
+            ? this.settings.minSpreadWidth
+            : 400,
+        direction: this.settings.direction || 'ltr',
+        flow: this.settings.flow || 'auto',
+      });
+
+      // Ensure width and height are numbers or undefined
+      const width =
+        typeof this.settings.width === 'number'
+          ? this.settings.width
+          : undefined;
+      const height =
+        typeof this.settings.height === 'number'
+          ? this.settings.height
+          : undefined;
+
+      // Choose the appropriate view manager based on usePreRendering setting
+      const ManagerClass = this.settings.usePreRendering
+        ? PreRenderingViewManager
+        : DefaultViewManager;
+
+      console.log(`[Rendition] Using manager class: ${ManagerClass.name}`);
+
+      const baseManagerOptions = {
+        view: this.settings.view,
+        queue: this.q,
+        request: this.book.load.bind(this.book),
+        settings: {
+          ...this.settings,
+          layout: layoutInstance,
+          width,
+          height,
+          afterScrolledTimeout: 10,
+        },
+      };
+
+      // Add spine to manager options if using PreRenderingViewManager
+      if (this.settings.usePreRendering) {
+        const spineItems = this.book.spine?.spineItems || [];
+        console.log(
+          '[Rendition] Passing spine to PreRenderingViewManager:',
+          spineItems.length,
+          'sections'
+        );
+        const preRenderingOptions = {
+          ...baseManagerOptions,
+          spine: spineItems,
+        };
+        this.manager = new ManagerClass(preRenderingOptions);
+      } else {
+        this.manager = new ManagerClass(baseManagerOptions);
       }
+
+      this.ViewManager = ManagerClass as unknown as ViewManagerConstructor;
+      this.View = this.settings.view!;
     }
+
+    // Set up manager event listeners now that manager is created
+    this.manager.on(EVENTS.MANAGERS.ADDED, (...args: unknown[]) => {
+      const view = args[0] as View;
+      this.afterDisplayed(view);
+    });
+
+    this.manager.on(EVENTS.MANAGERS.REMOVED, (...args: unknown[]) => {
+      const view = args[0] as View;
+      this.afterRemoved(view);
+    });
+
+    this.manager.on(EVENTS.MANAGERS.RESIZED, (...args: unknown[]) => {
+      const size = args[0] as { width: number; height: number };
+      const epubcfi = args[1] as string;
+      this.onResized(size, epubcfi);
+    });
+
+    this.manager.on(
+      EVENTS.MANAGERS.ORIENTATION_CHANGE,
+      (...args: unknown[]) => {
+        const orientation = args[0] as string;
+        this.onOrientationChange(orientation);
+      }
+    );
 
     this.direction(
       (this.book.packaging.metadata.direction ||
@@ -357,28 +383,7 @@ export class Rendition implements EventEmitterMethods {
 
     this.layout(this.settings.globalLayoutProperties);
 
-    // Listen for displayed views
-    this.manager.on(
-      EVENTS.MANAGERS.ADDED,
-      this.afterDisplayed.bind(this) as (...args: unknown[]) => void
-    );
-
-    this.manager.on(
-      EVENTS.MANAGERS.REMOVED,
-      this.afterRemoved.bind(this) as (...args: unknown[]) => void
-    );
-
-    // Listen for resizing
-    this.manager.on(
-      EVENTS.MANAGERS.RESIZED,
-      this.onResized.bind(this) as (...args: unknown[]) => void
-    );
-
-    // Listen for rotation
-    this.manager.on(
-      EVENTS.MANAGERS.ORIENTATION_CHANGE,
-      this.onOrientationChange.bind(this) as (...args: unknown[]) => void
-    );
+    // Manager event listeners are already set up above after manager creation
 
     // Listen for scroll changes
     this.manager.on(EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
@@ -402,8 +407,16 @@ export class Rendition implements EventEmitterMethods {
   attachTo(element: HTMLElement | string): Promise<unknown> {
     console.log('[Rendition] *** attachTo METHOD CALLED ***');
     console.log('[Rendition] attachTo called with element:', element);
-    console.log('[Rendition] Manager type:', this.manager.constructor.name);
-    console.log('[Rendition] Manager settings:', this.manager.settings);
+
+    // Manager might not be created yet if start() hasn't been called
+    if (this.manager) {
+      console.log('[Rendition] Manager type:', this.manager.constructor.name);
+      console.log('[Rendition] Manager settings:', this.manager.settings);
+    } else {
+      console.log(
+        '[Rendition] Manager not yet created (will be created in start())'
+      );
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return this.q.enqueue(() => {
@@ -420,6 +433,48 @@ export class Rendition implements EventEmitterMethods {
       console.log('[Rendition] Calling manager.render with element:', element);
       this.manager.render(element as HTMLElement);
       console.log('[Rendition] manager.render call completed');
+
+      // If pre-rendering is enabled and we're using the PreRenderingViewManager,
+      // start pre-rendering automatically for all spine sections.
+      try {
+        const hasPreRendering =
+          this.settings.usePreRendering &&
+          this.manager instanceof PreRenderingViewManager;
+
+        if (hasPreRendering && this.book.spine) {
+          const sections = this.book.spine.spineItems || [];
+          console.log(
+            `[Rendition] Auto-starting pre-rendering for ${sections.length} sections`
+          );
+
+          // Start pre-rendering in the background (don't block attachTo)
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          (this.manager as PreRenderingViewManager)
+            .startPreRendering(sections)
+            .catch((err: Error) => {
+              console.warn('[Rendition] Pre-rendering failed to start:', err);
+            });
+        }
+      } catch (e) {
+        console.debug('[Rendition] Auto pre-rendering start check failed', e);
+      }
+
+      // Ensure the first page is shown after attachment. Use the rendition's display
+      // method which will enqueue the request and wait for any pending startup tasks.
+      try {
+        if (this.book.spine && this.book.spine.length) {
+          console.log(
+            '[Rendition] Displaying first section (index 0) after attach'
+          );
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          this.display(0);
+        }
+      } catch (e) {
+        console.debug(
+          '[Rendition] Failed to display first section after attach',
+          e
+        );
+      }
 
       /**
        * Emit that rendering has attached to an element
@@ -507,6 +562,7 @@ export class Rendition implements EventEmitterMethods {
       'cfiTarget:',
       cfiTarget
     );
+
     this.manager.display(section, cfiTarget).then(
       () => {
         displaying.resolve(true);
@@ -543,11 +599,21 @@ export class Rendition implements EventEmitterMethods {
    * Report what section has been displayed
    */
   private afterDisplayed(view: View) {
-    view.on(
-      EVENTS.VIEWS.MARK_CLICKED,
-      (cfiRange: string, data: Record<string, unknown>) =>
-        this.triggerMarkEvent(cfiRange, data, view.contents!)
-    );
+    // Some views (pre-rendered/offscreen) may not implement the EventEmitter
+    // style `on` method. Guard before wiring event handlers to avoid runtime
+    // TypeErrors (see prerendered views created by BookPreRenderer).
+    if (typeof (view as any).on === 'function') {
+      view.on(
+        EVENTS.VIEWS.MARK_CLICKED,
+        (cfiRange: string, data: Record<string, unknown>) =>
+          this.triggerMarkEvent(cfiRange, data, view.contents!)
+      );
+    } else {
+      console.debug(
+        '[Rendition] view does not implement .on, skipping MARK_CLICKED wiring for',
+        view.section?.href
+      );
+    }
 
     this.hooks.render.trigger(view, this).then(() => {
       if (view.contents) {
@@ -607,9 +673,7 @@ export class Rendition implements EventEmitterMethods {
     // Check if we have a pre-rendering enabled manager that can handle resize natively
     // If so, skip the automatic display call to avoid clearing views that were just attached
     const hasPreRendering =
-      this.manager &&
-      (this.manager as DefaultViewManager).usePreRendering &&
-      (this.manager as DefaultViewManager).preRenderer;
+      this.manager && this.manager instanceof PreRenderingViewManager;
 
     if (this.location && this.location.start && !hasPreRendering) {
       this.display(epubcfi || this.location.start.cfi);
@@ -663,9 +727,14 @@ export class Rendition implements EventEmitterMethods {
    * Go to the next "page" in the rendition
    */
   next() {
-    return this.q
-      .enqueue(this.manager.next.bind(this.manager))
-      .then(this.reportLocation.bind(this));
+    console.log('[DEBUGGING] Rendition.next() called - enqueuing manager.next');
+    const queuePromise = this.q.enqueue(this.manager.next.bind(this.manager));
+    console.log('[DEBUGGING] Queue promise created:', queuePromise);
+    return queuePromise.then((result) => {
+      console.log('[DEBUGGING] Manager.next completed, result:', result);
+      this.reportLocation();
+      return result;
+    });
   }
 
   /**

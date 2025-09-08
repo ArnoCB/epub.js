@@ -7358,17 +7358,11 @@ function requireViews() {
     append(view) {
       this._views.push(view);
       if (this.container) {
-        /*
-         * WARNING: DOM MOVE MAY DESTROY IFRAME CONTENT
-         *
-         * If the view.element contains iframes (as with prerendered content),
-         * this appendChild() operation will cause those iframes to lose their
-         * content completely. This is standard browser behavior when moving
-         * iframes between DOM containers.
-         *
-         * For prerendered content, the BookPreRenderer should have already
-         * handled content preservation/restoration before this point.
-         */
+        // WARNING: appendChild() with iframe elements causes content loss!
+        // For prerendered content, this DOM move will clear iframe content.
+        // The prerenderer should handle content preservation/restoration.
+        // We CANNOT avoid iframes due to security requirements - EPUBs contain
+        // untrusted JavaScript that must be sandboxed for user safety.
         this.container.appendChild(view.element);
       }
       this.length++;
@@ -7474,6 +7468,8 @@ function requireViews() {
   views.default = Views;
   return views;
 }
+
+var viewRenderer = {};
 
 var iframe = {};
 
@@ -8921,21 +8917,18 @@ function requireIframe() {
         this.layout.format(this.contents, this.section, this.axis);
         // Listen for events that require an expansion of the iframe
         this.addListeners();
-        return new Promise(resolve => {
-          // Expand the iframe to the full size of the content
-          this.expand();
-          if (this.settings.forceRight) {
-            this.element.style.marginLeft = this.width() + 'px';
-          }
-          resolve();
-        });
-      }, e => {
-        this.emit(constants_1.EVENTS.VIEWS.LOAD_ERROR, e);
-        return new Promise((resolve, reject) => {
-          reject(e);
-        });
+        // Expand the iframe to the full size of the content
+        this.expand();
+        if (this.settings.forceRight) {
+          this.element.style.marginLeft = this.width() + 'px';
+        }
       }).then(() => {
+        // Mark as rendered for external checks
+        this.rendered = true;
         this.emit(constants_1.EVENTS.VIEWS.RENDERED, this.section);
+      }).catch(e => {
+        this.emit(constants_1.EVENTS.VIEWS.LOAD_ERROR, e);
+        return Promise.reject(e);
       });
     }
     reset() {
@@ -9526,527 +9519,172 @@ function requireIframe() {
   return iframe;
 }
 
-var prerenderer = {};
-
-var hasRequiredPrerenderer;
-function requirePrerenderer() {
-  if (hasRequiredPrerenderer) return prerenderer;
-  hasRequiredPrerenderer = 1;
-  var __importDefault = prerenderer && prerenderer.__importDefault || function (mod) {
+var hasRequiredViewRenderer;
+function requireViewRenderer() {
+  if (hasRequiredViewRenderer) return viewRenderer;
+  hasRequiredViewRenderer = 1;
+  var __importDefault = viewRenderer && viewRenderer.__importDefault || function (mod) {
     return mod && mod.__esModule ? mod : {
       "default": mod
     };
   };
-  Object.defineProperty(prerenderer, "__esModule", {
+  Object.defineProperty(viewRenderer, "__esModule", {
     value: true
   });
-  prerenderer.BookPreRenderer = void 0;
-  const core_1 = requireCore();
+  viewRenderer.ViewRenderer = void 0;
   const iframe_1 = __importDefault(requireIframe());
-  const event_emitter_1 = __importDefault(requireEventEmitter());
-  const constants_1 = requireConstants();
-  class BookPreRenderer {
-    /*
-     * CRITICAL BROWSER BEHAVIOR WARNING - IFRAME CONTENT LOSS ON DOM MOVES:
-     *
-     * When an iframe element is moved between different DOM containers using methods like:
-     * - appendChild()
-     * - insertBefore()
-     * - removeChild() followed by appendChild()
-     *
-     * The browser will COMPLETELY RESET the iframe's content document, causing:
-     * - iframe.contentDocument to become a fresh, empty document
-     * - All rendered content (HTML, CSS, JavaScript state) to be lost
-     * - iframe.srcdoc content to be cleared
-     * - Any event listeners attached to the iframe content to be removed
-     *
-     * This behavior is consistent across all major browsers (Chrome, Firefox, Safari, Edge)
-     * and is part of the HTML specification for iframe security and lifecycle management.
-     *
-     * IMPACT ON PRERENDERING:
-     * Our prerendering system creates iframes with fully rendered EPUB content, but when
-     * these need to be displayed, they must be moved from offscreen containers to the
-     * main viewing container. Each DOM move causes complete content loss, requiring:
-     *
-     * 1. Content preservation before DOM moves (saving srcdoc/innerHTML)
-     * 2. Content restoration after DOM moves (re-setting srcdoc or using document.write)
-     * 3. Fallback mechanisms when restoration fails
-     *
-     * ARCHITECTURAL ALTERNATIVES TO CONSIDER:
-     * - Keep iframes in fixed containers and use CSS positioning/visibility for display
-     * - Clone iframe content into new iframes instead of moving existing ones
-     * - Use a different rendering approach that doesn't rely on moving iframes
-     * - Implement a "virtual DOM" style system for iframe content management
-     *
-     * The current implementation attempts to work around this limitation through content
-     * preservation and restoration, but this is inherently fragile and can fail in
-     * edge cases, leading to white/empty pages that users may experience.
-     */
-    constructor(container, viewSettings, request) {
-      this.container = container;
-      this.viewSettings = viewSettings;
-      this.chapters = new Map();
-      this.renderingPromises = new Map();
+  const core_1 = requireCore();
+  /**
+   * ViewRenderer - Centralized view creation and rendering logic
+   *
+   * This class abstracts the common view creation and rendering logic that was
+   * previously duplicated between DefaultViewManager and PreRenderer.
+   * It provides consistent rendering behavior across all contexts and supports
+   * different rendering strategies (immediate vs. offscreen).
+   */
+  class ViewRenderer {
+    constructor(settings, request) {
+      this.settings = settings;
       this.request = request;
-      // Create unattached storage for long-term prerendered content
-      this.unattachedStorage = document.createDocumentFragment();
-      this.currentStatus = {
-        total: 0,
-        rendered: 0,
-        failed: 0,
-        chapters: this.chapters
-      };
-      this.offscreenContainer = document.createElement('div');
-      this.offscreenContainer.style.position = 'absolute';
-      this.offscreenContainer.style.top = '-9999px';
-      this.offscreenContainer.style.left = '-9999px';
-      this.offscreenContainer.style.width = viewSettings.width + 'px';
-      this.offscreenContainer.style.height = viewSettings.height + 'px';
-      this.offscreenContainer.style.overflow = 'hidden';
-      this.offscreenContainer.style.visibility = 'hidden';
-      document.body.appendChild(this.offscreenContainer);
-      console.log('[BookPreRenderer] initialized with container:', container);
     }
-    async preRenderBook(sections) {
-      console.log('[BookPreRenderer] starting pre-render of', sections.length, 'sections');
-      this.currentStatus = {
-        total: sections.length,
-        rendered: 0,
-        failed: 0,
-        chapters: this.chapters
-      };
-      const BATCH_SIZE = 3;
-      for (let i = 0; i < sections.length; i += BATCH_SIZE) {
-        const batch = sections.slice(i, i + BATCH_SIZE);
-        await Promise.allSettled(batch.map(async section => {
-          try {
-            await this.preRenderSection(section);
-            this.currentStatus.rendered++;
-            this.emit('added', this.currentStatus);
-          } catch (error) {
-            this.currentStatus.failed++;
-            console.error('[BookPreRenderer] failed to pre-render:', section.href, error);
-          }
-        }));
-      }
-      console.log('[BookPreRenderer] pre-rendering complete:', this.currentStatus);
-      this.emit('complete', this.currentStatus);
-      return this.currentStatus;
-    }
-    async preRenderSection(section) {
-      const href = section.href;
-      if (this.chapters.has(href)) {
-        return this.chapters.get(href);
-      }
-      if (this.renderingPromises.has(href)) {
-        await this.renderingPromises.get(href);
-        return this.chapters.get(href);
-      }
-      const rendering = new core_1.defer();
-      const view = this.createView(section);
-      const chapter = {
-        section,
-        view,
-        element: view.element,
-        rendered: rendering,
-        attached: false,
-        width: this.viewSettings.width,
-        height: this.viewSettings.height,
-        pageCount: 0,
-        hasWhitePages: false,
-        whitePageIndices: []
-      };
-      this.chapters.set(href, chapter);
-      const renderPromise = this.renderView(view, chapter).then(renderedView => {
-        rendering.resolve(renderedView);
-        return chapter;
-      }).catch(error => {
-        rendering.reject(error);
-        throw error;
+    /**
+     * Create a new view for a section with optional rendering options
+     */
+    createView(section, options = {}) {
+      const viewSettings = (0, core_1.extend)(this.settings, {
+        forceRight: options.forceRight || false
       });
-      this.renderingPromises.set(href, renderPromise);
-      try {
-        await renderPromise;
-        this.renderingPromises.delete(href);
-        return chapter;
-      } catch (error) {
-        this.renderingPromises.delete(href);
-        this.chapters.delete(href);
-        throw error;
+      const view = new iframe_1.default(section, viewSettings);
+      // Ensure EventEmitter methods are available
+      // If they're not, add minimal stubs to prevent errors
+      if (typeof view.on !== 'function') {
+        console.warn('[ViewRenderer] EventEmitter methods not available on view for:', section.href, 'adding stubs');
+        // Add robust EventEmitter stubs to prevent errors
+        view.on = function (...args) {
+          console.debug('[ViewRenderer] view.on stub called with:', args);
+          return view;
+        };
+        view.off = function (...args) {
+          console.debug('[ViewRenderer] view.off stub called with:', args);
+          return view;
+        };
+        view.emit = function (...args) {
+          console.debug('[ViewRenderer] view.emit stub called with:', args);
+          return view;
+        };
+        view.once = function (...args) {
+          console.debug('[ViewRenderer] view.once stub called with:', args);
+          return view;
+        };
       }
-    }
-    createView(section) {
-      const view = new iframe_1.default(section, this.viewSettings);
-      // Add a small delay to ensure EventEmitter mixin is applied
-      // This is a workaround for timing issues with the mixin
-      setTimeout(() => {
-        if (typeof view.on !== 'function') {
-          console.warn('[BookPreRenderer] EventEmitter methods still not available on view for:', section.href);
-        }
-      }, 0);
-      view.onDisplayed = () => {};
-      view.onResize = () => {};
       return view;
     }
-    async renderView(view, chapter) {
+    /**
+     * Render a view and optionally attach it to a container
+     * Supports both immediate rendering and offscreen rendering
+     */
+    async renderView(view, options = {}) {
       try {
-        // Temporarily attach to offscreen container for rendering
-        this.offscreenContainer.appendChild(chapter.element);
-        const renderedView = await view.display(this.request);
-        if (view.contents && view.contents.textWidth) {
-          chapter.width = Math.max(view.contents.textWidth(), this.viewSettings.width);
+        // Set dimensions if specified
+        if (this.settings.width || this.settings.height) {
+          view.size(this.settings.width, this.settings.height);
         }
-        this.analyzeContent(chapter);
-        // Move to unattached storage for long-term storage (hybrid approach)
-        if (chapter.element.parentNode === this.offscreenContainer) {
-          this.offscreenContainer.removeChild(chapter.element);
+        // Handle offscreen rendering
+        if (options.offscreen && options.container) {
+          // For offscreen rendering, we need to append the view element to the container
+          options.container.appendChild(view.element);
+          // Load and render the content
+          await view.display(this.request);
+          // Preserve content if requested (for pre-rendering scenarios)
+          if (options.preserveContent) {
+            this.preserveViewContent(view);
+          }
+          return view;
         }
-        this.unattachedStorage.appendChild(chapter.element);
-        return renderedView;
+        // For regular rendering, the view should be appended to Views collection
+        // by the caller (manager), then display() is called
+        // Load and render the content
+        await view.display(this.request);
+        return view;
       } catch (error) {
-        if (chapter.element.parentNode === this.offscreenContainer) {
-          this.offscreenContainer.removeChild(chapter.element);
-        }
+        console.error('[ViewRenderer] Failed to render view for:', view.section?.href || 'unknown section', error);
         throw error;
       }
     }
-    analyzeContent(chapter) {
+    /**
+     * Preserve view content for later restoration (used in pre-rendering)
+     */
+    preserveViewContent(view) {
       try {
-        const view = chapter.view;
-        chapter.pageCount = 1;
-        chapter.pageMap = undefined;
-        if (view.contents && view.contents.document) {
-          const doc = view.contents.document;
-          const body = doc.body;
-          if (body) {
-            // Detect flow direction from viewSettings or layout
-            const isPaginated = this.viewSettings.flow === 'paginated' || this.viewSettings.axis === 'horizontal' || this.viewSettings.layout && this.viewSettings.layout._flow === 'paginated';
-            if (isPaginated) {
-              // For paginated/horizontal flow: use content width vs viewport width
-              const contentWidth = chapter.width; // Already calculated from textWidth()
-              const viewportWidth = this.viewSettings.width;
-              console.log('[BookPreRenderer] paginated flow - contentWidth:', contentWidth, 'viewportWidth:', viewportWidth);
-              if (contentWidth > viewportWidth * 1.1) {
-                chapter.pageCount = Math.ceil(contentWidth / viewportWidth);
-              }
-              // Build a simple page map with xOffsets and best-effort CFIs for page starts
-              if (chapter.pageCount && chapter.pageCount > 0) {
-                const pageMap = [];
-                for (let i = 0; i < chapter.pageCount; i++) {
-                  const xOffset = i * viewportWidth;
-                  let startCfi;
-                  try {
-                    // Try to compute CFI at page start using elementFromPoint
-                    const rect = {
-                      x: Math.min(xOffset + 1, contentWidth - 1),
-                      y: 1
-                    };
-                    // Translate to iframe coordinates if needed
-                    const target = body.ownerDocument.elementFromPoint(Math.max(0, rect.x), Math.max(0, rect.y));
-                    if (target) {
-                      const range = doc.createRange();
-                      range.selectNode(target);
-                      // Prefer section.cfiFromRange
-                      if (typeof chapter.section.cfiFromRange === 'function') {
-                        startCfi = chapter.section.cfiFromRange(range);
-                      }
-                    }
-                  } catch {
-                    // ignore CFI failures
-                  }
-                  pageMap.push({
-                    index: i + 1,
-                    startCfi,
-                    xOffset
-                  });
-                }
-                chapter.pageMap = pageMap;
-              }
-            } else {
-              // For scrolled/vertical flow: use content height vs viewport height
-              const contentHeight = body.scrollHeight;
-              const viewportHeight = this.viewSettings.height;
-              console.log('[BookPreRenderer] scrolled flow - contentHeight:', contentHeight, 'viewportHeight:', viewportHeight);
-              if (contentHeight > viewportHeight * 0.8) {
-                chapter.pageCount = Math.ceil(contentHeight / viewportHeight);
-              }
-              // Build a simple page map with yOffsets for vertical flow
-              if (chapter.pageCount && chapter.pageCount > 0) {
-                const pageMap = [];
-                for (let i = 0; i < chapter.pageCount; i++) {
-                  const yOffset = i * viewportHeight;
-                  pageMap.push({
-                    index: i + 1,
-                    yOffset
-                  });
-                }
-                chapter.pageMap = pageMap;
-              }
-            }
-            // White page detection
-            const textContent = body.textContent || '';
-            const trimmedText = textContent.trim();
-            if (trimmedText.length < 50) {
-              const visibleElements = Array.from(body.querySelectorAll('*')).filter(el => {
-                const style = doc.defaultView?.getComputedStyle(el);
-                return style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-              });
-              if (visibleElements.length < 5 && trimmedText.length < 20) {
-                chapter.whitePageIndices = [0];
-                chapter.hasWhitePages = true;
-              }
-            }
+        if (view.element && view.element.querySelector('iframe')) {
+          const iframe = view.element.querySelector('iframe');
+          // Store srcdoc attribute if available
+          if (iframe.srcdoc) {
+            view.preservedSrcdoc = iframe.srcdoc;
+          }
+          // Store full document HTML if accessible
+          if (iframe.contentDocument) {
+            view.preservedContent = iframe.contentDocument.documentElement.outerHTML;
           }
         }
       } catch (error) {
-        console.warn('[BookPreRenderer] content analysis failed for:', chapter.section.href, error);
-        chapter.pageCount = 1;
-        chapter.hasWhitePages = false;
-        chapter.whitePageIndices = [];
+        console.debug('[ViewRenderer] Content preservation failed:', error);
       }
     }
-    getChapter(sectionHref) {
-      return this.chapters.get(sectionHref);
+    /**
+     * Update renderer settings
+     */
+    updateSettings(newSettings) {
+      this.settings = (0, core_1.extend)(this.settings, newSettings);
     }
-    getAllChapters() {
-      return Array.from(this.chapters.values());
-    }
-    getStatus() {
-      return this.currentStatus;
-    }
-    getDebugInfo() {
-      const chapters = Array.from(this.chapters.entries()).map(([href, chapter]) => ({
-        href,
-        attached: chapter.attached,
-        width: chapter.width,
-        height: chapter.height,
-        pageCount: chapter.pageCount,
-        hasWhitePages: chapter.hasWhitePages,
-        whitePageIndices: chapter.whitePageIndices
-      }));
+    /**
+     * Get current settings
+     */
+    getSettings() {
       return {
-        totalChapters: this.chapters.size,
-        renderingInProgress: this.renderingPromises.size,
-        chapters
+        ...this.settings
       };
     }
-    attachChapter(sectionHref) {
-      const chapter = this.chapters.get(sectionHref);
-      if (!chapter) {
-        console.warn('[BookPreRenderer] chapter not found for attachment:', sectionHref);
-        return null;
-      }
-      // If chapter is still being rendered, return null (let caller retry)
-      if (this.renderingPromises.has(sectionHref)) {
-        console.debug('[BookPreRenderer] chapter still rendering, caller should retry:', sectionHref);
-        return null;
-      }
-      if (chapter.attached) {
-        console.debug('[BookPreRenderer] chapter already attached:', sectionHref);
-        // Validate that the iframe still has content - sometimes iframe content gets cleared
-        // especially with sandboxing or when elements are moved between containers
-        try {
-          const iframe = chapter.element.querySelector('iframe');
-          if (iframe && iframe.contentDocument) {
-            const body = iframe.contentDocument.body;
-            const hasTextContent = body && (body.textContent || '').trim().length > 0;
-            const hasHtmlStructure = body && (body.innerHTML || '').trim().length > 0;
-            const isReady = iframe.contentDocument.readyState === 'complete';
-            // Accept content if it has either text content OR HTML structure AND is ready
-            // For white pages, be more lenient as they naturally have minimal content
-            const isWhitePage = chapter.hasWhitePages;
-            const hasValidContent = isReady && (hasTextContent || hasHtmlStructure || isWhitePage && body);
-            if (!hasValidContent) {
-              console.warn('[BookPreRenderer] attached chapter has insufficient content, will attempt refresh:', sectionHref, 'readyState:', iframe.contentDocument.readyState, 'hasText:', hasTextContent, 'hasHtml:', hasHtmlStructure, 'isWhitePage:', isWhitePage);
-              // Don't return early - let it go through attachment process to refresh content
-            } else {
-              return chapter;
-            }
-          } else {
-            console.warn('[BookPreRenderer] attached chapter iframe not accessible:', sectionHref);
-            // Don't return early - let it go through attachment process
-          }
-        } catch (e) {
-          console.warn('[BookPreRenderer] error validating attached chapter content:', sectionHref, e);
-          // Don't return early - let it go through attachment process
-        }
-      }
+    /**
+     * Create and render a view in one step (for offscreen use)
+     */
+    async createAndRenderView(section, options = {}) {
+      const view = this.createView(section, options);
+      return this.renderView(view, options);
+    }
+    /**
+     * Restore preserved content to a view (for pre-rendered content)
+     */
+    restoreViewContent(view) {
       try {
-        // In spread/pre-paginated mode, we can have up to 2 chapters attached (left + right pages)
-        // For non-spread mode, ensure only one chapter is attached at a time
-        const attachedChapters = Array.from(this.chapters.values()).filter(ch => ch.attached);
-        const isSpreadMode = this.viewSettings.layout && (this.viewSettings.layout.name === 'pre-paginated' || this.viewSettings.layout.spread);
-        const maxAttachedChapters = isSpreadMode ? 2 : 1;
-        if (attachedChapters.length >= maxAttachedChapters) {
-          // If we're at capacity, detach the oldest attached chapter(s)
-          for (let i = 0; i < attachedChapters.length - (maxAttachedChapters - 1); i++) {
-            const toDetach = attachedChapters[i];
-            if (toDetach.section.href !== sectionHref) {
-              console.debug('[BookPreRenderer] detaching chapter to make room for new attachment:', toDetach.section.href);
-              this.detachChapter(toDetach.section.href);
-            }
-          }
+        const iframe = view.element?.querySelector('iframe');
+        if (!iframe) {
+          return false;
         }
-        // Verify element exists and is properly rendered
-        if (!chapter.element) {
-          console.error('[BookPreRenderer] chapter element is null:', sectionHref);
-          return null;
+        // Try to restore from preserved srcdoc
+        const preservedSrcdoc = view.preservedSrcdoc;
+        if (preservedSrcdoc && !iframe.srcdoc) {
+          iframe.srcdoc = preservedSrcdoc;
+          return true;
         }
-        // HYBRID APPROACH: Move from unattached storage through brief off-screen to final attachment
-        // Step 1: Remove from current location (could be unattached storage, offscreen, or main container)
-        if (chapter.element.parentNode) {
-          /*
-           * CRITICAL: DOM MOVE WILL DESTROY IFRAME CONTENT
-           *
-           * The following DOM operations will cause the iframe to lose all its content:
-           * 1. removeChild() - Removes iframe from current container
-           * 2. appendChild() - Adds iframe to new container
-           *
-           * Between these operations, the iframe's contentDocument becomes empty.
-           * We must preserve the content before the move and restore it after.
-           */
-          // Before moving, preserve iframe content since DOM manipulation will clear it
-          const iframe = chapter.element.querySelector('iframe');
-          let preservedSrcdoc;
-          let preservedContent;
-          if (iframe) {
-            preservedSrcdoc = iframe.srcdoc;
-            try {
-              preservedContent = iframe.contentDocument?.documentElement?.outerHTML;
-            } catch (e) {
-              console.debug('[BookPreRenderer] could not preserve iframe content:', e);
-            }
-          }
-          chapter.element.parentNode.removeChild(chapter.element);
-          console.debug('[BookPreRenderer] removed from container:', sectionHref);
-          // After DOM move, restore content if iframe was cleared
-          if (iframe && (preservedSrcdoc || preservedContent)) {
-            try {
-              const textContent = iframe.contentDocument?.body?.textContent?.trim() || '';
-              const htmlContent = iframe.contentDocument?.body?.innerHTML?.trim() || '';
-              const isReady = iframe.contentDocument?.readyState === 'complete';
-              // Check if content is missing (for both regular and white pages)
-              const hasValidContent = isReady && (textContent.length > 0 || htmlContent.length > 0);
-              if (!hasValidContent) {
-                console.debug('[BookPreRenderer] iframe content lost during DOM move, restoring for:', sectionHref, 'readyState:', iframe.contentDocument?.readyState, 'textLength:', textContent.length, 'htmlLength:', htmlContent.length);
-                if (preservedSrcdoc) {
-                  iframe.srcdoc = preservedSrcdoc;
-                  // Force a reload by briefly setting src to about:blank then back to srcdoc
-                  iframe.src = 'about:blank';
-                  setTimeout(() => {
-                    iframe.removeAttribute('src');
-                    iframe.srcdoc = preservedSrcdoc;
-                  }, 0);
-                } else if (preservedContent) {
-                  // Fallback: use document.write method
-                  try {
-                    if (iframe.contentDocument) {
-                      iframe.contentDocument.open();
-                      iframe.contentDocument.write(preservedContent);
-                      iframe.contentDocument.close();
-                    }
-                  } catch (e) {
-                    console.warn('[BookPreRenderer] document.write failed for:', sectionHref, e);
-                    // If document.write fails, try srcdoc approach with data URL
-                    const encodedContent = encodeURIComponent(preservedContent);
-                    iframe.src = `data:text/html;charset=utf-8,${encodedContent}`;
-                  }
-                }
-              }
-            } catch (e) {
-              console.warn('[BookPreRenderer] error restoring iframe content for:', sectionHref, e);
-            }
-          }
+        // Try to restore from preserved full content
+        const preservedContent = view.preservedContent;
+        if (preservedContent && iframe.contentDocument) {
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(preservedContent);
+          iframe.contentDocument.close();
+          return true;
         }
-        // Step 2: Brief off-screen positioning for transition stability
-        this.offscreenContainer.appendChild(chapter.element);
-        // Step 3: Ensure proper dimensions and clear any problematic positioning
-        if (chapter.element) {
-          // Set the element width to match the pre-rendered width
-          chapter.element.style.width = chapter.width + 'px';
-          chapter.element.style.height = chapter.height + 'px';
-          // Clear any problematic positioning that might persist
-          chapter.element.style.position = 'static';
-          chapter.element.style.left = '0px';
-          chapter.element.style.top = '0px';
-          chapter.element.style.visibility = 'visible';
-          // Also set the iframe width if present
-          const iframe = chapter.element.querySelector('iframe');
-          if (iframe) {
-            iframe.style.width = chapter.width + 'px';
-            iframe.style.height = chapter.height + 'px';
-          }
-          console.debug('[BookPreRenderer] prepared element for attachment:', chapter.width + 'x' + chapter.height, 'for', sectionHref);
-        }
-        // Step 4: Keep in offscreen container until views system moves it
-        // DO NOT remove from offscreen - let views.append() handle the DOM move
-        // this.offscreenContainer.removeChild(chapter.element);
-        // Mark as attached since it's ready to be used
-        chapter.attached = true;
-        // Reset any internal scroll positions in the attached element
-        if (chapter.element.scrollLeft !== undefined) {
-          chapter.element.scrollLeft = 0;
-        }
-        if (chapter.element.scrollTop !== undefined) {
-          chapter.element.scrollTop = 0;
-        }
-        // Check if it's an iframe and reset its internal scroll as well
-        const iframeElement = chapter.element.querySelector('iframe');
-        if (iframeElement && iframeElement.contentWindow) {
-          try {
-            iframeElement.contentWindow.scrollTo(0, 0);
-          } catch (e) {
-            // Ignore cross-origin errors
-            console.debug('[BookPreRenderer] could not reset iframe scroll:', e.message);
-          }
-        }
-        // Verify attachment worked - the element should not be in the pre-renderer container
-        // It should be ready to be attached to the views system instead
-        if (chapter.element.parentNode === this.container) {
-          console.warn('[BookPreRenderer] element still attached to pre-renderer container - this is not expected:', sectionHref);
-        }
-        this.emit(constants_1.EVENTS.VIEWS.DISPLAYED, chapter.view);
-        return chapter;
+        return false;
       } catch (error) {
-        console.error('[BookPreRenderer] failed to attach chapter:', sectionHref, error);
-        chapter.attached = false;
-        return null;
+        console.debug('[ViewRenderer] Content restoration failed:', error);
+        return false;
       }
-    }
-    detachChapter(sectionHref) {
-      const chapter = this.chapters.get(sectionHref);
-      if (!chapter || !chapter.attached) {
-        return null;
-      }
-      // Remove from whatever container it's currently in
-      if (chapter.element.parentNode) {
-        chapter.element.parentNode.removeChild(chapter.element);
-      }
-      // HYBRID APPROACH: Store in unattached storage instead of offscreen container
-      this.unattachedStorage.appendChild(chapter.element);
-      chapter.attached = false;
-      console.log('[BookPreRenderer] detached chapter and moved to unattached storage:', sectionHref);
-      this.emit(constants_1.EVENTS.VIEWS.HIDDEN, chapter.view);
-      return chapter;
-    }
-    destroy() {
-      console.log('[BookPreRenderer] destroying pre-renderer');
-      this.chapters.forEach(chapter => {
-        if (chapter.element.parentNode) {
-          chapter.element.parentNode.removeChild(chapter.element);
-        }
-      });
-      if (this.offscreenContainer.parentNode) {
-        this.offscreenContainer.parentNode.removeChild(this.offscreenContainer);
-      }
-      this.chapters.clear();
-      this.renderingPromises.clear();
     }
   }
-  prerenderer.BookPreRenderer = BookPreRenderer;
-  (0, event_emitter_1.default)(BookPreRenderer.prototype);
-  prerenderer.default = BookPreRenderer;
-  return prerenderer;
+  viewRenderer.ViewRenderer = ViewRenderer;
+  viewRenderer.default = ViewRenderer;
+  return viewRenderer;
 }
 
 var hasRequired_default;
@@ -10069,22 +9707,16 @@ function require_default() {
   const stage_1 = __importDefault(requireStage());
   const views_1 = __importDefault(requireViews());
   const constants_1 = requireConstants();
-  const iframe_1 = __importDefault(requireIframe());
-  const prerenderer_1 = __importDefault(requirePrerenderer());
+  const view_renderer_1 = requireViewRenderer();
   class DefaultViewManager {
     constructor(options) {
       this.name = 'default';
       this.rendered = false;
-      this.usePreRendering = true;
       this.optsSettings = options.settings;
       this.View = options.view;
       this.request = options.request;
       this.renditionQueue = options.queue;
       this.q = new queue_1.default(this);
-      // Set usePreRendering from settings (default false for safety)
-      this.usePreRendering = options.settings.usePreRendering === true;
-      console.log('[DefaultViewManager] constructor - usePreRendering setting:', this.usePreRendering);
-      console.log('[DefaultViewManager] constructor - settings:', options.settings);
       this.settings = {
         infinite: true,
         hidden: false,
@@ -10115,10 +9747,26 @@ function require_default() {
         allowPopups: this.settings.allowPopups
       };
       this.rendered = false;
+      // Initialize ViewRenderer with consistent settings
+      // Use the actual viewSettings with proper type conversion
+      this.viewRenderer = new view_renderer_1.ViewRenderer({
+        ignoreClass: this.viewSettings.ignoreClass,
+        axis: this.viewSettings.axis,
+        direction: this.settings.direction,
+        width: this.viewSettings.width,
+        height: this.viewSettings.height,
+        layout: this.viewSettings.layout,
+        method: this.viewSettings.method,
+        forceRight: false,
+        allowScriptedContent: this.viewSettings.allowScriptedContent,
+        allowPopups: this.viewSettings.allowPopups,
+        transparency: this.viewSettings.transparency,
+        forceEvenPages: this.viewSettings.forceEvenPages,
+        flow: this.viewSettings.flow
+      }, this.request);
     }
     render(element, size) {
       console.log('[DefaultViewManager] render() method called');
-      console.log('[DefaultViewManager] render() usePreRendering:', this.usePreRendering);
       const tag = element.tagName;
       if (typeof this.settings.fullsize === 'undefined' && tag && (tag.toLowerCase() == 'body' || tag.toLowerCase() == 'html')) {
         this.settings.fullsize = true;
@@ -10162,77 +9810,10 @@ function require_default() {
         this.updateLayout();
       }
       this.rendered = true;
-      // Debug the pre-rendering state before attempting initialization
-      console.log('[DefaultViewManager] render() completed, checking pre-rendering...');
-      console.log('[DefaultViewManager] this.usePreRendering:', this.usePreRendering);
-      console.log('[DefaultViewManager] typeof this.usePreRendering:', typeof this.usePreRendering);
-      // Initialize pre-rendering if enabled
-      if (this.usePreRendering) {
-        console.log('[DefaultViewManager] attempting to initialize pre-rendering...');
-        try {
-          this.initializePreRendering();
-        } catch (error) {
-          console.error('[DefaultViewManager] failed to initialize pre-rendering:', error);
-          this.usePreRendering = false;
-        }
-      } else {
-        console.log('[DefaultViewManager] pre-rendering not enabled, skipping initialization');
-      }
-    }
-    initializePreRendering() {
-      console.debug('[DefaultViewManager] initializePreRendering called');
-      console.debug('[DefaultViewManager] container exists:', !!this.container);
-      if (!this.container) {
-        console.warn('[DefaultViewManager] no container available for pre-rendering');
-        return;
-      }
-      console.debug('[DefaultViewManager] viewSettings:', this.viewSettings);
-      // Create proper ViewSettings from viewSettings
-      const preRenderSettings = {
-        ignoreClass: this.viewSettings.ignoreClass || '',
-        axis: this.viewSettings.axis,
-        direction: this.viewSettings.direction,
-        width: this.viewSettings.width || 800,
-        height: this.viewSettings.height || 600,
-        layout: this.viewSettings.layout,
-        method: this.viewSettings.method,
-        forceRight: this.viewSettings.forceRight || false,
-        allowScriptedContent: this.viewSettings.allowScriptedContent || false,
-        allowPopups: this.viewSettings.allowPopups || false,
-        transparency: this.viewSettings.transparency || false,
-        forceEvenPages: this.viewSettings.forceEvenPages || false,
-        flow: this.viewSettings.flow
-      };
-      console.debug('[DefaultViewManager] creating BookPreRenderer with settings:', preRenderSettings);
-      const requestFn = this.request || (() => Promise.reject(new Error('No request')));
-      this.preRenderer = new prerenderer_1.default(this.container, preRenderSettings, requestFn);
-      console.debug('[DefaultViewManager] pre-renderer created successfully:', !!this.preRenderer);
     }
     /**
      * Start pre-rendering all sections from a spine
      */
-    async startPreRendering(sections) {
-      if (!this.preRenderer) {
-        console.warn('[DefaultViewManager] preRenderer not initialized');
-        return;
-      }
-      console.debug('[DefaultViewManager] starting pre-render of', sections.length, 'sections');
-      const status = await this.preRenderer.preRenderBook(sections);
-      console.debug('[DefaultViewManager] pre-rendering complete:', status);
-      this.emit(constants_1.EVENTS.MANAGERS.ADDED, status);
-    }
-    /**
-     * Get pre-rendered chapter for debugging
-     */
-    getPreRenderedChapter(sectionHref) {
-      return this.preRenderer?.getChapter(sectionHref);
-    }
-    /**
-     * Check if a chapter is pre-rendered and ready
-     */
-    hasPreRenderedChapter(sectionHref) {
-      return !!this.preRenderer?.getChapter(sectionHref);
-    }
     addEventListeners() {
       let scroller;
       window.addEventListener('unload', () => {
@@ -10263,11 +9844,6 @@ function require_default() {
       this.clear();
       this.removeEventListeners();
       this.stage.destroy();
-      // Clean up pre-renderer
-      if (this.preRenderer) {
-        this.preRenderer.destroy();
-        this.preRenderer = undefined;
-      }
       this.rendered = false;
     }
     onOrientationChange() {
@@ -10325,66 +9901,24 @@ function require_default() {
       this.viewSettings.width = this._stageSize.width;
       this.viewSettings.height = this._stageSize.height;
       this.updateLayout();
-      // For pre-rendered content, refresh the current chapter directly without clearing
-      if (currentChapter && this.preRenderer) {
-        const preRenderedChapter = this.preRenderer.getChapter(currentChapter);
-        if (preRenderedChapter) {
-          console.debug('[DefaultViewManager] redisplaying chapter after resize:', currentChapter);
-          // Use synchronous approach to ensure completion before resize event finishes
-          try {
-            const attachedChapter = this.preRenderer.attachChapter(currentChapter);
-            if (attachedChapter && attachedChapter.view) {
-              // Check if this view is already in our views system
-              const existingViewIndex = this.views.indexOf(attachedChapter.view);
-              if (existingViewIndex === -1) {
-                // View is not in the system, need to clear and add it
-                this.clear();
-                this.views.append(attachedChapter.view);
-              } else {
-                // View is already in the system, just make sure it's properly configured
-                console.debug('[DefaultViewManager] reusing existing view for resize');
-              }
-              // Set up event handlers
-              attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
-              attachedChapter.view.onResize = this.afterResized.bind(this);
-              if (typeof attachedChapter.view.on === 'function') {
-                attachedChapter.view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
-                  this.updateAxis(axis);
-                });
-                attachedChapter.view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
-                  this.updateWritingMode(mode);
-                });
-              }
-              // Mark as displayed and show
-              attachedChapter.view.displayed = true;
-              this.views.show();
-              // Ensure the view is properly sized to the new dimensions
-              if (typeof attachedChapter.view.size === 'function') {
-                attachedChapter.view.size(parseInt(String(this.settings.width || '900')), parseInt(String(this.settings.height || '600')));
-              }
-              // Reset scroll position
-              this.scrollTo(0, 0, true);
-              console.debug('[DefaultViewManager] chapter redisplayed successfully after resize');
-            } else {
-              console.warn('[DefaultViewManager] failed to attach chapter after resize, clearing views');
-            }
-          } catch (error) {
-            console.error('[DefaultViewManager] error redisplaying chapter after resize:', error);
-          }
-        }
-      } else {
-        // Clear views only if we don't have a pre-rendered chapter to display
-        this.clear();
-      }
+      // Clear views
+      this.clear();
       this.emit(constants_1.EVENTS.MANAGERS.RESIZED, {
         width: this._stageSize.width,
         height: this._stageSize.height
       }, epubcfi);
     }
     createView(section, forceRight = false) {
-      return new iframe_1.default(section, (0, core_1.extend)(this.viewSettings, {
+      // Update the ViewRenderer settings with current dimensions and settings
+      this.viewRenderer.updateSettings({
+        width: this.viewSettings.width,
+        height: this.viewSettings.height,
+        axis: this.viewSettings.axis,
+        layout: this.viewSettings.layout
+      });
+      return this.viewRenderer.createView(section, {
         forceRight
-      }));
+      });
     }
     handleNextPrePaginated(forceRight, section, action) {
       const isPrePaginated = this.layout.name === 'pre-paginated';
@@ -10404,197 +9938,15 @@ function require_default() {
     display(section, target) {
       const displaying = new core_1.defer();
       const displayed = displaying.promise;
+      console.log(`[DefaultViewManager] DISPLAY called for: ${section.href}`);
       // Check if moving to target is needed
       if (target === section.href || (0, core_1.isNumber)(target)) {
         target = undefined;
       }
-      // Try to use pre-rendered chapter first
-      if (this.usePreRendering && this.preRenderer) {
-        const preRenderedChapter = this.preRenderer.getChapter(section.href);
-        if (preRenderedChapter) {
-          console.debug('[DefaultViewManager] using pre-rendered chapter:', section.href);
-          return this.displayPreRendered(preRenderedChapter, target, displaying);
-        } else {
-          console.debug('[DefaultViewManager] no pre-rendered chapter found for:', section.href, 'falling back to normal rendering');
-        }
-      }
-      // Fallback to normal rendering
+      // Use normal rendering
+      console.log('[DefaultViewManager] Using normal rendering for:', section.href);
       this.displaySection(section, target, displaying);
       return displayed;
-    }
-    /**
-     * Display a pre-rendered chapter
-     */
-    displayPreRendered(chapter, target, displaying, skipClear) {
-      const deferred = displaying || new core_1.defer();
-      console.debug('[DefaultViewManager] displaying pre-rendered chapter:', chapter.section.href, 'with target:', target, 'skipClear:', skipClear);
-      // Wait for chapter to be fully rendered
-      chapter.rendered.promise.then(() => {
-        try {
-          // Save current scroll position, but only preserve it if staying in the same chapter
-          const currentScrollLeft = this.scrollLeft || 0;
-          // Check if this chapter is already attached to avoid unnecessary clearing
-          const existingView = this.views.find(chapter.section);
-          const isAlreadyAttached = existingView && this.preRenderer?.getChapter(chapter.section.href)?.attached;
-          console.debug('[DefaultViewManager] chapter switch - isNewChapter:', !existingView, 'isAlreadyAttached:', isAlreadyAttached, 'currentScroll:', currentScrollLeft, 'chapter:', chapter.section.href, 'existing views:', this.views.length);
-          // Clear current views first, unless caller requested to skip it (e.g., during resize)
-          // or if the chapter is already attached (avoid clearing already attached content)
-          if (!skipClear && !isAlreadyAttached) {
-            this.clear();
-          } else if (isAlreadyAttached) {
-            console.debug('[DefaultViewManager] skipping clear - chapter already attached:', chapter.section.href);
-          }
-          // Verify the pre-renderer is still available
-          if (!this.preRenderer) {
-            throw new Error('Pre-renderer is no longer available');
-          }
-          // Attach the pre-rendered chapter to the main DOM
-          const attachedChapter = this.preRenderer.attachChapter(chapter.section.href);
-          if (!attachedChapter) {
-            // Chapter may still be rendering, wait briefly and try fallback to normal display
-            console.debug('[DefaultViewManager] pre-rendered chapter not ready, falling back to normal display after brief delay');
-            setTimeout(() => {
-              this.displayNormally(chapter.section, target, displaying);
-            }, 100);
-            return deferred.promise;
-          }
-          // Verify the view is in a good state
-          if (!attachedChapter.view || !attachedChapter.element) {
-            throw new Error(`Pre-rendered chapter view is invalid: ${chapter.section.href}`);
-          }
-          // Add the view to the views system
-          // Note: We don't call display() again since it's already rendered
-          this.views.append(attachedChapter.view);
-          // Set up event handlers (same as in add() method)
-          attachedChapter.view.onDisplayed = this.afterDisplayed.bind(this);
-          attachedChapter.view.onResize = this.afterResized.bind(this);
-          // Check if view has event methods before using them
-          if (typeof attachedChapter.view.on === 'function') {
-            attachedChapter.view.on(constants_1.EVENTS.VIEWS.AXIS, axis => {
-              this.updateAxis(axis);
-            });
-            attachedChapter.view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => {
-              this.updateWritingMode(mode);
-            });
-          } else {
-            console.warn('[DefaultViewManager] view does not have event methods:', typeof attachedChapter.view.on);
-          }
-          // Mark as displayed in the views system
-          attachedChapter.view.displayed = true;
-          // Show the views first
-          this.views.show();
-          // Respect target CFI if provided; otherwise start at the beginning
-          try {
-            if (target) {
-              console.debug('[DefaultViewManager] pre-rendered chapter - positioning to target:', target);
-              const offset = attachedChapter.view.locationOf(target);
-              const width = attachedChapter.view.width();
-              this.moveTo(offset, width);
-            } else {
-              this.scrollTo(0, 0, true);
-            }
-          } catch (e) {
-            console.warn('[DefaultViewManager] failed to position to target for pre-rendered chapter, defaulting to start:', e.message);
-            this.scrollTo(0, 0, true);
-          }
-          // Enhanced debugging for element attachment and iframe scroll state
-          try {
-            console.debug('[DefaultViewManager] Element attachment debug info:', {
-              href: chapter.section.href,
-              elementScrollLeft: attachedChapter.element.scrollLeft,
-              elementScrollTop: attachedChapter.element.scrollTop,
-              elementClientWidth: attachedChapter.element.clientWidth,
-              elementScrollWidth: attachedChapter.element.scrollWidth
-            });
-            // Check iframe content scroll state
-            const iframe = attachedChapter.element.querySelector('iframe');
-            if (iframe && iframe.contentWindow) {
-              console.debug('Iframe scroll debug info:', {
-                href: chapter.section.href,
-                iframeScrollX: iframe.contentWindow.scrollX,
-                iframeScrollY: iframe.contentWindow.scrollY,
-                iframeInnerWidth: iframe.contentWindow.innerWidth,
-                iframeInnerHeight: iframe.contentWindow.innerHeight,
-                iframeSrc: iframe.src,
-                contentReady: iframe.contentDocument?.readyState
-              });
-              // Check body scroll state in iframe
-              const iframeBody = iframe.contentDocument?.body;
-              if (iframeBody) {
-                console.debug('[DefaultViewManager] Iframe body scroll debug info:', {
-                  href: chapter.section.href,
-                  bodyScrollLeft: iframeBody.scrollLeft,
-                  bodyScrollTop: iframeBody.scrollTop,
-                  bodyScrollWidth: iframeBody.scrollWidth,
-                  bodyScrollHeight: iframeBody.scrollHeight,
-                  bodyClientWidth: iframeBody.clientWidth,
-                  bodyClientHeight: iframeBody.clientHeight
-                });
-              }
-            }
-          } catch (debugError) {
-            console.warn('[DefaultViewManager] Debug info collection failed:', debugError);
-          }
-          // Emit the displayed event
-          this.emit(constants_1.EVENTS.MANAGERS.ADDED, attachedChapter.view);
-          console.debug('[DefaultViewManager] pre-rendered chapter displayed successfully:', chapter.section.href);
-          // If in pre-paginated spread mode, try to attach the neighbor (right page)
-          try {
-            const isPrePaginated = this.layout.name === 'pre-paginated';
-            const hasMultiplePages = this.layout.divisor > 1;
-            if (isPrePaginated && hasMultiplePages) {
-              const currentSection = attachedChapter.section;
-              const forceRight = currentSection.properties.includes('page-spread-right');
-              // Mirror handleNextPrePaginated: skip if forced-right or first section
-              if (!forceRight && currentSection.index !== 0) {
-                const next = currentSection.next();
-                if (next && !next.properties.includes('page-spread-left')) {
-                  let neighborAdded = false;
-                  if (this.preRenderer) {
-                    const preNext = this.preRenderer.getChapter(next.href);
-                    if (preNext) {
-                      const attachedNext = this.preRenderer.attachChapter(next.href);
-                      if (attachedNext && attachedNext.view) {
-                        // Add to views without re-rendering
-                        this.views.append(attachedNext.view);
-                        // Wire events like the main view
-                        attachedNext.view.onDisplayed = this.afterDisplayed.bind(this);
-                        attachedNext.view.onResize = this.afterResized.bind(this);
-                        if (typeof attachedNext.view.on === 'function') {
-                          attachedNext.view.on(constants_1.EVENTS.VIEWS.AXIS, axis => this.updateAxis(axis));
-                          attachedNext.view.on(constants_1.EVENTS.VIEWS.WRITING_MODE, mode => this.updateWritingMode(mode));
-                        }
-                        attachedNext.view.displayed = true;
-                        neighborAdded = true;
-                      }
-                    }
-                  }
-                  // Fallback: load normally if not pre-rendered
-                  if (!neighborAdded) {
-                    this.append(next).catch(e => {
-                      console.warn('[DefaultViewManager] failed to append neighbor section normally:', next.href, e);
-                    });
-                  }
-                  // Ensure both are visible
-                  this.views.show();
-                }
-              }
-            }
-          } catch (neighborError) {
-            console.warn('[DefaultViewManager] spread neighbor attachment failed:', neighborError);
-          }
-          deferred.resolve(undefined);
-        } catch (displayError) {
-          console.error('[DefaultViewManager] error during pre-rendered chapter display:', chapter.section.href, displayError);
-          throw displayError;
-        }
-      }).catch(error => {
-        console.error('[DefaultViewManager] failed to display pre-rendered chapter:', chapter.section.href, error);
-        // Fallback to normal rendering on error
-        console.debug('[DefaultViewManager] falling back to normal rendering');
-        this.displayNormally(chapter.section, target, deferred);
-      });
-      return deferred.promise;
     }
     /**
      * Fallback to normal rendering when pre-rendered fails
@@ -10705,6 +10057,39 @@ function require_default() {
           }
         }
       }
+      // Delayed re-check: sometimes the iframe/content layout completes slightly
+      // after the view is displayed (especially with spreads). Recompute the
+      // content width shortly after to ensure the phantom element and iframe
+      // sizing reflect the final layout.
+      setTimeout(() => {
+        try {
+          if (!view || !view.contents) return;
+          const newContentWidth = view.contents.textWidth();
+          const phantomElement = this.container.querySelector('.epub-scroll-phantom');
+          const desiredWidth = Math.max(newContentWidth, this.layout.width);
+          if (phantomElement && phantomElement.offsetWidth !== desiredWidth) {
+            phantomElement.style.width = desiredWidth + 'px';
+            // Force reflow
+            void phantomElement.offsetWidth;
+            const element = view.element;
+            if (element) {
+              element.style.width = desiredWidth + 'px';
+              const iframe = element.querySelector('iframe');
+              if (iframe) {
+                iframe.style.width = desiredWidth + 'px';
+              }
+            }
+            // Ensure scrollLeft is within bounds after resizing
+            const maxLeft = Math.max(0, this.container.scrollWidth - this.container.offsetWidth);
+            if (this.container.scrollLeft > maxLeft) {
+              this.container.scrollLeft = maxLeft;
+            }
+            console.debug('[DefaultViewManager] afterDisplayed (delayed) adjusted phantom/iframe to width:', desiredWidth, 'container.scrollWidth:', this.container.scrollWidth);
+          }
+        } catch (e) {
+          console.warn('[DefaultViewManager] delayed afterDisplayed check failed', e);
+        }
+      }, 50);
       this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
     }
     afterResized(view) {
@@ -10756,6 +10141,9 @@ function require_default() {
       this.scrollTo(distX, distY, true);
     }
     async append(section, forceRight = false) {
+      console.log('[DefaultViewManager] APPEND called for:', section.href);
+      // Create new view
+      console.log('[DefaultViewManager] APPEND CREATING NEW VIEW:', section.href);
       const view = this.createView(section, forceRight);
       this.views.append(view);
       view.onDisplayed = this.afterDisplayed.bind(this);
@@ -10774,6 +10162,9 @@ function require_default() {
       return view.display(this.request).then(() => view);
     }
     async prepend(section, forceRight = false) {
+      console.log('[DefaultViewManager] PREPEND called for:', section.href);
+      // Create new view
+      console.log('[DefaultViewManager] PREPEND CREATING NEW VIEW:', section.href);
       const view = this.createView(section, forceRight);
       // Check if view has event methods before using them
       if (typeof view.on === 'function') {
@@ -10802,38 +10193,89 @@ function require_default() {
       }
     }
     async next() {
-      if (!this.hasViews()) return;
-      // If we're already at the last page of the last visible section, jump to next section
-      try {
-        const loc = this.currentLocation();
-        if (loc && loc.length) {
-          const lastLoc = loc[loc.length - 1];
-          const lastDisplayed = lastLoc.pages && lastLoc.pages.length ? lastLoc.pages[lastLoc.pages.length - 1] : 1;
-          if (lastDisplayed >= lastLoc.totalPages) {
-            const next = this.views.last()?.section?.next();
-            if (next) {
-              await this.loadNextSection(next);
-              return;
-            }
-          }
-        }
-      } catch {
-        // fall through to normal forward handling
+      console.log('[DefaultViewManager] next() called - START');
+      if (!this.hasViews()) {
+        console.log('[DefaultViewManager] next() - no views, returning');
+        return;
       }
+      console.log('[DefaultViewManager] next() called - checking scroll state');
+      // Simple check: if there's no more scrollable content in the current section,
+      // jump to the next section immediately
+      const maxScrollLeft = this.container.scrollWidth - this.container.offsetWidth;
+      const canScrollMore = this.container.scrollLeft < maxScrollLeft;
+      console.log('[DefaultViewManager] scroll check:', {
+        scrollLeft: this.container.scrollLeft,
+        scrollWidth: this.container.scrollWidth,
+        offsetWidth: this.container.offsetWidth,
+        maxScrollLeft,
+        canScrollMore
+      });
+      if (!canScrollMore) {
+        // No more content to scroll in current section, go to next section
+        //
+        // IMPORTANT NOTE: Cover pages and other non-linear sections may not have proper
+        // navigation links. The cover page typically has `linear: false` and its
+        // `section.next()` method returns `undefined`. This is correct EPUB behavior -
+        // covers are often standalone and not meant to be part of the sequential
+        // reading experience.
+        //
+        // If you're testing navigation and it seems broken, check if you're starting
+        // from a cover page or other non-linear section. Linear chapters (with
+        // `linear: true`) should have proper navigation links between them.
+        //
+        console.log('[DefaultViewManager] views collection:', this.views);
+        console.log('[DefaultViewManager] last view:', this.views.last());
+        console.log('[DefaultViewManager] last view section:', this.views.last()?.section);
+        console.log('[DefaultViewManager] section href:', this.views.last()?.section?.href);
+        console.log('[DefaultViewManager] section index:', this.views.last()?.section?.index);
+        const currentSection = this.views.last()?.section;
+        console.log('[DefaultViewManager] current section has next method:', typeof currentSection?.next === 'function');
+        const nextSection = currentSection?.next();
+        console.log('[DefaultViewManager] no more scroll space, next section:', nextSection?.href);
+        console.log('[DefaultViewManager] current section:', this.views.last()?.section?.href);
+        if (nextSection) {
+          await this.loadNextSection(nextSection);
+          return;
+        } else {
+          console.log('[DefaultViewManager] reached end of book');
+          return;
+        }
+      }
+      // There is scrollable content, use normal forward scrolling
+      console.log('[DefaultViewManager] content available to scroll, using handleScrollForward');
       const section = this.handleScrollForward();
+      console.log('[DefaultViewManager] handleScrollForward returned section:', section?.href);
       if (section) await this.loadNextSection(section);
     }
     async prev() {
       if (!this.hasViews()) return;
+      console.debug('[DefaultViewManager] prev() called');
+      // Simple check: if we're already at the start of scrollable content,
+      // jump to the previous section immediately
+      const canScrollBack = this.container.scrollLeft > 0;
+      console.debug('[DefaultViewManager] prev scroll check:', {
+        scrollLeft: this.container.scrollLeft,
+        canScrollBack
+      });
+      if (!canScrollBack) {
+        // Already at start of current section, go to previous section
+        const prevSection = this.views.first()?.section?.prev();
+        console.debug('[DefaultViewManager] at start of scroll, prev section:', prevSection?.href);
+        if (prevSection) {
+          await this.loadPrevSection(prevSection);
+          return;
+        } else {
+          console.debug('[DefaultViewManager] prev() reached beginning of book, no more sections to load');
+          return;
+        }
+      }
+      // There is content to scroll back through
       const section = this.handleScrollBackward();
-      // Fix: Check if section exists before trying to load it
-      // This prevents white pages when navigating beyond book boundaries
+      // Check if section exists before trying to load it
       if (section && section.href) {
         await this.loadPrevSection(section);
       } else {
-        console.debug('[DefaultViewManager] prev() reached beginning of book, no more sections to load');
-        // Don't clear views or reset scroll position if we're at the boundary
-        return;
+        console.debug('[DefaultViewManager] handleScrollBackward returned no section');
       }
     }
     /* ---------- Helpers ---------- */
@@ -10877,26 +10319,51 @@ function require_default() {
     /* ---------- Directional scroll strategies ---------- */
     scrollForwardLTR() {
       const maxScrollLeft = this.container.scrollWidth - this.container.offsetWidth;
+      // Determine a sensible step: prefer layout.pageWidth, fall back to container offsetWidth or layout.delta
+      const step = this.layout.pageWidth && this.layout.pageWidth > 0 ? this.layout.pageWidth : this.container.offsetWidth || this.layout.delta;
+      console.debug('[DefaultViewManager] scrollForwardLTR debug:', {
+        scrollLeft: this.container.scrollLeft,
+        maxScrollLeft,
+        scrollWidth: this.container.scrollWidth,
+        offsetWidth: this.container.offsetWidth,
+        step
+      });
       // If we can still scroll within the current section, do so; otherwise move to next section
       if (this.container.scrollLeft < maxScrollLeft) {
-        this.scrollBy(this.layout.delta, 0, true);
-        this.rememberScrollPosition();
-        return;
+        // Don't overshoot the maximum scrollLeft
+        const remaining = Math.max(0, maxScrollLeft - this.container.scrollLeft);
+        const move = Math.min(step, remaining);
+        console.debug('[DefaultViewManager] scrolling within section, move:', move);
+        if (move > 0) {
+          this.scrollBy(move, 0, true);
+          this.rememberScrollPosition();
+          return;
+        }
       }
-      return this.views.last()?.section?.next();
+      const nextSection = this.views.last()?.section?.next();
+      console.debug('[DefaultViewManager] moving to next section:', nextSection?.href);
+      return nextSection;
     }
     scrollForwardRTL(rtlScrollType) {
       let left;
+      // Use page-sized steps for RTL as well
+      const step = this.layout.pageWidth && this.layout.pageWidth > 0 ? this.layout.pageWidth : this.container.offsetWidth || this.layout.delta;
       if (rtlScrollType === 'default') {
         left = this.container.scrollLeft;
         if (left > 0) {
-          this.scrollBy(this.layout.delta, 0, true);
-          return;
+          const move = Math.min(step, left);
+          if (move > 0) {
+            this.scrollBy(move, 0, true);
+            return;
+          }
         }
       } else {
-        left = this.container.scrollLeft - this.layout.delta;
-        if (left > this.container.scrollWidth * -1) {
-          this.scrollBy(this.layout.delta, 0, true);
+        // non-default RTL (negative scrollLeft) - compute remaining distance
+        left = this.container.scrollLeft - step;
+        const minLeft = this.container.scrollWidth * -1;
+        if (this.container.scrollLeft > minLeft) {
+          // Don't overshoot
+          this.scrollBy(step, 0, true);
           return;
         }
       }
@@ -10912,7 +10379,9 @@ function require_default() {
     }
     scrollBackwardLTR() {
       if (this.container.scrollLeft > 0) {
-        this.scrollBy(-this.layout.delta, 0, true);
+        const step = this.layout.pageWidth && this.layout.pageWidth > 0 ? this.layout.pageWidth : this.container.offsetWidth || this.layout.delta;
+        const move = Math.min(step, this.container.scrollLeft);
+        this.scrollBy(-move, 0, true);
         return;
       }
       // When at the beginning of the scroll area, move to the previous section if available
@@ -10930,14 +10399,19 @@ function require_default() {
       return prevSection;
     }
     scrollBackwardRTL(rtlScrollType) {
+      const step = this.layout.pageWidth && this.layout.pageWidth > 0 ? this.layout.pageWidth : this.container.offsetWidth || this.layout.delta;
       if (rtlScrollType === 'default') {
         if (this.container.scrollLeft + this.container.offsetWidth < this.container.scrollWidth) {
-          this.scrollBy(-this.layout.delta, 0, true);
+          // Move left by one pagewise step but don't overshoot
+          const remaining = Math.max(0, this.container.scrollWidth - (this.container.scrollLeft + this.container.offsetWidth));
+          const move = Math.min(step, remaining);
+          this.scrollBy(-move, 0, true);
           return;
         }
       } else {
         if (this.container.scrollLeft < 0) {
-          this.scrollBy(-this.layout.delta, 0, true);
+          const move = Math.min(step, Math.abs(this.container.scrollLeft));
+          this.scrollBy(-move, 0, true);
           return;
         }
       }
@@ -11056,19 +10530,13 @@ function require_default() {
             }
           }
         }
-        // Fix: For pre-rendered content, don't automatically reset scroll position
-        // Pre-rendered chapters should maintain their positioning
-        if (this.settings.usePreRendering) {
-          console.debug('[DefaultViewManager] clear() with pre-rendering - preserving scroll position:', this.container.scrollLeft);
+        // Reset scroll position
+        const hasValidScrollPosition = this.container.scrollLeft > 0;
+        const isNavigating = this.views.length > 0;
+        if (!hasValidScrollPosition || !isNavigating) {
+          this.scrollTo(0, 0, true);
         } else {
-          // Original logic for non-pre-rendered content
-          const hasValidScrollPosition = this.container.scrollLeft > 0;
-          const isNavigating = this.views.length > 0;
-          if (!hasValidScrollPosition || !isNavigating) {
-            this.scrollTo(0, 0, true);
-          } else {
-            console.debug('[DefaultViewManager] clear() preserving scroll position during navigation:', this.container.scrollLeft);
-          }
+          console.debug('[DefaultViewManager] clear() preserving scroll position during navigation:', this.container.scrollLeft);
         }
         this.views.clear();
       }
@@ -11189,17 +10657,7 @@ function require_default() {
           end = start + pageWidth;
         }
         used += pageWidth;
-        // Fix: Limit the end position for non-pre-rendered content only
-        // Pre-rendered content should use its full width
-        let shouldLimitEnd = true;
-        if (this.preRenderer) {
-          const preRenderedChapter = this.preRenderer.getChapter(href);
-          if (preRenderedChapter && preRenderedChapter.attached) {
-            shouldLimitEnd = false;
-            console.debug('[DefaultViewManager] not limiting end position for pre-rendered chapter:', href);
-          }
-        }
-        if (shouldLimitEnd && this.layout.pageWidth && this.layout.pageWidth > 0) {
+        if (this.layout.pageWidth && this.layout.pageWidth > 0) {
           const maxEnd = start + this.layout.pageWidth;
           if (end > maxEnd) {
             console.debug('[DefaultViewManager] limiting end position from', end, 'to', maxEnd);
@@ -11222,29 +10680,11 @@ function require_default() {
           containerScrollLeft: this.container.scrollLeft,
           layoutWidth: this.layout.width
         });
-        let mapping;
-        if (this.preRenderer) {
-          const pre = this.preRenderer.getChapter(href);
-          if (pre && pre.pageMap && pre.pageMap.length) {
-            // Clamp to page boundaries using the map for stability
-            const pageWidth = this.layout.pageWidth || this.layout.width;
-            const startPage = Math.max(1, Math.floor(start / pageWidth) + 1);
-            const endPage = Math.max(startPage, Math.floor(end / pageWidth) + 1);
-            const startEntry = pre.pageMap[Math.min(startPage - 1, pre.pageMap.length - 1)];
-            const endEntry = pre.pageMap[Math.min(endPage - 1, pre.pageMap.length - 1)];
-            mapping = {
-              start: startEntry?.startCfi || '',
-              end: endEntry?.startCfi || ''
-            };
-          }
+        if (this.mapping === undefined) {
+          throw new Error('Mapping is not defined');
         }
-        if (!mapping) {
-          if (this.mapping === undefined) {
-            throw new Error('Mapping is not defined');
-          }
-          mapping = this.mapping.page(view.contents, view.section.cfiBase, start, end);
-        }
-        // Fix: Use actual content width for pagination calculation if available
+        const mapping = this.mapping.page(view.contents, view.section.cfiBase, start, end);
+        // Fix: Use actual scrollable content width for pagination calculation
         let actualWidth = width;
         if (view.contents && view.contents.textWidth) {
           const contentWidth = view.contents.textWidth();
@@ -11252,21 +10692,18 @@ function require_default() {
             actualWidth = contentWidth;
           }
         }
-        // Calculate total pages - use pre-rendered count if available
+        // Calculate total pages using the actual scrollable width
+        // For correct navigation, totalPages should reflect what's actually scrollable
         let totalPages;
-        if (this.preRenderer) {
-          const preRenderedChapter = this.preRenderer.getChapter(href);
-          if (preRenderedChapter && preRenderedChapter.pageCount > 0) {
-            totalPages = preRenderedChapter.pageCount;
-            console.debug('[DefaultViewManager] using pre-rendered page count:', totalPages, 'for chapter:', href);
-          } else {
-            totalPages = this.layout.count(actualWidth).pages;
-            console.debug('[DefaultViewManager] using layout-calculated page count:', totalPages, 'for chapter:', href);
-          }
+        const layoutPageWidth = this.layout.pageWidth || this.layout.width;
+        const scrollableWidth = Math.max(this.container.scrollWidth - this.container.offsetWidth + layoutPageWidth, layoutPageWidth);
+        if (this.layout.pageWidth && this.layout.pageWidth > 0) {
+          // Use scrollable width instead of theoretical content width for page calculation
+          totalPages = Math.max(1, Math.ceil(scrollableWidth / this.layout.pageWidth));
         } else {
           totalPages = this.layout.count(actualWidth).pages;
-          console.debug('[DefaultViewManager] no pre-renderer, using layout-calculated page count:', totalPages, 'for chapter:', href);
         }
+        console.debug('[DefaultViewManager] using layout-calculated page count:', totalPages, 'for chapter:', href);
         let startPage = 0;
         let endPage = 0;
         const pages = [];
@@ -11541,6 +10978,1025 @@ function require_default() {
   return _default;
 }
 
+var prerendering = {};
+
+var prerenderer = {};
+
+var hasRequiredPrerenderer;
+function requirePrerenderer() {
+  if (hasRequiredPrerenderer) return prerenderer;
+  hasRequiredPrerenderer = 1;
+  var __importDefault = prerenderer && prerenderer.__importDefault || function (mod) {
+    return mod && mod.__esModule ? mod : {
+      "default": mod
+    };
+  };
+  Object.defineProperty(prerenderer, "__esModule", {
+    value: true
+  });
+  prerenderer.BookPreRenderer = void 0;
+  const core_1 = requireCore();
+  const event_emitter_1 = __importDefault(requireEventEmitter());
+  const constants_1 = requireConstants();
+  const view_renderer_1 = requireViewRenderer();
+  class BookPreRenderer {
+    /*
+     * CRITICAL BROWSER BEHAVIOR WARNING - IFRAME CONTENT LOSS ON DOM MOVES:
+     *
+     * WHY WE MUST USE IFRAMES (SECURITY REQUIREMENT):
+     * EPUBs are untrusted content that can contain arbitrary JavaScript, CSS, and HTML.
+     * Without iframe sandboxing, malicious EPUB content could:
+     * - Execute scripts in the main document context and steal user data
+     * - Access or modify the reader application's DOM and functionality
+     * - Perform XSS attacks or redirect users to malicious sites
+     * - Override global JavaScript objects and break the reader
+     * - Access localStorage, cookies, and other sensitive browser APIs
+     *
+     * Iframes with sandbox attributes provide ESSENTIAL security isolation by:
+     * - Running EPUB content in a separate, restricted browsing context
+     * - Preventing access to the parent document's DOM and globals
+     * - Limiting script execution and API access via sandbox policies
+     * - Blocking potentially dangerous operations like form submission and popups
+     *
+     * HOWEVER, this security necessity creates a technical challenge because:
+     *
+     * When an iframe element is moved between different DOM containers using methods like:
+     * - appendChild()
+     * - insertBefore()
+     * - removeChild() followed by appendChild()
+     *
+     * The browser will COMPLETELY RESET the iframe's content document, causing:
+     * - iframe.contentDocument to become a fresh, empty document
+     * - All rendered content (HTML, CSS, JavaScript state) to be lost
+     * - iframe.srcdoc content to be cleared
+     * - Any event listeners attached to the iframe content to be removed
+     *
+     * This behavior is consistent across all major browsers (Chrome, Firefox, Safari, Edge)
+     * and is part of the HTML specification for iframe security and lifecycle management.
+     *
+     * IMPACT ON PRERENDERING:
+     * Our prerendering system creates iframes with fully rendered EPUB content to provide:
+     * - Instant page display (no loading delays)
+     * - Accurate page counts for pagination and navigation
+     * - Pre-calculated layout metrics and content dimensions
+     * - Ability to inspect and analyze content before display
+     * - Smooth navigation between chapters without rendering delays
+     * - Precise CFI (Canonical Fragment Identifier) calculation for page boundaries
+     *   to enable accurate navigation and fix "page off" jump issues
+     *
+     * However, when prerendered content needs to be displayed, it must be moved from
+     * offscreen containers to the main viewing container. Each DOM move causes complete
+     * content loss, requiring:
+     *
+     * 1. Content preservation before DOM moves (saving srcdoc/innerHTML)
+     * 2. Content restoration after DOM moves (re-setting srcdoc or using document.write)
+     * 3. Fallback mechanisms when restoration fails
+     *
+     * THIS APPROACH DEFEATS THE PURPOSE OF PRERENDERING because:
+     * - Content must be re-rendered/reloaded, eliminating performance benefits
+     * - Page layout calculations may need to be repeated
+     * - CFI calculations become unreliable or need to be recalculated
+     * - Loading delays are reintroduced during content restoration
+     * - The "instant display" benefit is lost
+     * - Restoration can fail, causing white pages or missing content
+     *
+     * ARCHITECTURAL ALTERNATIVES TO CONSIDER:
+     * The current approach is fundamentally flawed. Better solutions would:
+     *
+     * 1. **CSS Positioning Approach**: Keep iframes in fixed containers and use CSS
+     *    positioning/visibility for display (preserves all prerendering benefits)
+     * 2. **Stable Container Strategy**: Never move iframes, only show/hide them in place
+     * 3. **Content Cloning**: Create new iframes with cloned content instead of moving
+     * 4. **Virtual Container System**: Use a container management system that doesn't
+     *    require physical DOM moves
+     * 5. **Layered Rendering**: Use CSS transforms/layers to bring content into view
+     *    without DOM manipulation
+     *
+     * Any solution that avoids moving iframe elements would:
+     * - Preserve the instant display benefits of prerendering
+     * - Maintain accurate page counts and layout calculations
+     * - Keep CFI calculations valid and enable precise page navigation
+     * - Eliminate content restoration complexity and failure points
+     * - Provide truly smooth navigation between chapters
+     * - Keep the performance advantages that justify prerendering
+     * - Enable advanced features like accurate bookmarking and progress tracking
+     *
+     * The current implementation attempts to work around this limitation through content
+     * preservation and restoration, but this is inherently fragile and can fail in
+     * edge cases, leading to white/empty pages that users may experience.
+     */
+    constructor(container, viewSettings, request) {
+      this._completeEmitted = false;
+      this.container = container;
+      this.viewSettings = viewSettings;
+      this.chapters = new Map();
+      this.renderingPromises = new Map();
+      this.request = request;
+      // Initialize ViewRenderer with the same settings
+      this.viewRenderer = new view_renderer_1.ViewRenderer({
+        ignoreClass: viewSettings.ignoreClass || '',
+        axis: viewSettings.axis,
+        direction: viewSettings.direction,
+        width: viewSettings.width,
+        height: viewSettings.height,
+        layout: viewSettings.layout,
+        method: viewSettings.method,
+        forceRight: viewSettings.forceRight || false,
+        allowScriptedContent: viewSettings.allowScriptedContent || false,
+        allowPopups: viewSettings.allowPopups || false,
+        transparency: viewSettings.transparency,
+        forceEvenPages: viewSettings.forceEvenPages,
+        flow: viewSettings.flow
+      }, request);
+      // Create unattached storage for long-term prerendered content
+      this.unattachedStorage = document.createDocumentFragment();
+      this.currentStatus = {
+        total: 0,
+        rendered: 0,
+        failed: 0,
+        chapters: this.chapters
+      };
+      this.offscreenContainer = document.createElement('div');
+      this.offscreenContainer.style.position = 'absolute';
+      this.offscreenContainer.style.top = '-9999px';
+      this.offscreenContainer.style.left = '-9999px';
+      this.offscreenContainer.style.width = viewSettings.width + 'px';
+      this.offscreenContainer.style.height = viewSettings.height + 'px';
+      this.offscreenContainer.style.overflow = 'hidden';
+      this.offscreenContainer.style.visibility = 'hidden';
+      document.body.appendChild(this.offscreenContainer);
+      console.log('[BookPreRenderer] initialized with container:', container);
+    }
+    async preRenderBook(sections) {
+      console.log('[BookPreRenderer] starting pre-render of', sections.length, 'sections');
+      this.currentStatus = {
+        total: sections.length,
+        rendered: 0,
+        failed: 0,
+        chapters: this.chapters
+      };
+      const BATCH_SIZE = 3;
+      for (let i = 0; i < sections.length; i += BATCH_SIZE) {
+        const batch = sections.slice(i, i + BATCH_SIZE);
+        await Promise.allSettled(batch.map(async section => {
+          try {
+            await this.preRenderSection(section);
+            this.currentStatus.rendered++;
+            this.emit('added', this.currentStatus);
+          } catch (error) {
+            this.currentStatus.failed++;
+            console.error('[BookPreRenderer] failed to pre-render:', section.href, error);
+          }
+        }));
+      }
+      console.log('[BookPreRenderer] pre-rendering complete:', this.currentStatus);
+      if (!this._completeEmitted) {
+        this._completeEmitted = true;
+        this.emit('complete', this.currentStatus);
+      } else {
+        console.debug('[BookPreRenderer] complete event already emitted, skipping');
+      }
+      return this.currentStatus;
+    }
+    async preRenderSection(section) {
+      const href = section.href;
+      console.debug('[BookPreRenderer] preRenderSection started for:', href);
+      if (this.chapters.has(href)) {
+        console.debug('[BookPreRenderer] chapter already exists:', href);
+        return this.chapters.get(href);
+      }
+      if (this.renderingPromises.has(href)) {
+        console.debug('[BookPreRenderer] already rendering, waiting for:', href);
+        await this.renderingPromises.get(href);
+        return this.chapters.get(href);
+      }
+      const rendering = new core_1.defer();
+      const view = this.createView(section);
+      console.debug('[BookPreRenderer] view created for:', href);
+      const chapter = {
+        section,
+        view,
+        element: view.element,
+        rendered: rendering,
+        attached: false,
+        width: this.viewSettings.width,
+        height: this.viewSettings.height,
+        pageCount: 0,
+        hasWhitePages: false,
+        whitePageIndices: []
+      };
+      console.debug('[BookPreRenderer] storing chapter in map:', href);
+      this.chapters.set(href, chapter);
+      console.debug('[BookPreRenderer] chapters map size now:', this.chapters.size);
+      const renderPromise = this.renderView(view, chapter).then(renderedView => {
+        console.debug('[BookPreRenderer] renderView completed for:', href);
+        rendering.resolve(renderedView);
+        return chapter;
+      }).catch(error => {
+        console.error('[BookPreRenderer] renderView failed for:', href, error);
+        rendering.reject(error);
+        throw error;
+      });
+      this.renderingPromises.set(href, renderPromise);
+      try {
+        console.debug('[BookPreRenderer] waiting for render promise:', href);
+        await renderPromise;
+        console.debug('[BookPreRenderer] render promise completed for:', href);
+        this.renderingPromises.delete(href);
+        return chapter;
+      } catch (error) {
+        console.error('[BookPreRenderer] preRenderSection failed for:', href, error);
+        this.renderingPromises.delete(href);
+        this.chapters.delete(href);
+        throw error;
+      }
+    }
+    createView(section) {
+      const view = this.viewRenderer.createView(section);
+      // Set up minimal event handlers
+      view.onDisplayed = () => {};
+      view.onResize = () => {};
+      // Ensure the view is sized to match the target container dimensions
+      // This is critical for consistent layout between pre-rendering and display
+      view.size(this.viewSettings.width, this.viewSettings.height);
+      return view;
+    }
+    async renderView(view, chapter) {
+      const href = chapter.section.href;
+      console.debug('[BookPreRenderer] renderView started for:', href);
+      try {
+        // Temporarily attach to offscreen container for rendering
+        console.debug('[BookPreRenderer] attaching to offscreen container:', href);
+        this.offscreenContainer.appendChild(chapter.element);
+        console.debug('[BookPreRenderer] calling view.display for:', href);
+        const renderedView = await view.display(this.request);
+        console.debug('[BookPreRenderer] view.display completed for:', href);
+        // If layout information is present, format the contents for the column size
+        const layout = this.viewSettings.layout;
+        if (layout && layout._flow === 'paginated') {
+          try {
+            console.debug('[BookPreRenderer] formatting contents for layout columns:', layout.columnWidth, 'x', layout.height);
+            console.debug('[BookPreRenderer] layout details:', {
+              width: layout.width,
+              height: layout.height,
+              columnWidth: layout.columnWidth,
+              gap: layout.gap,
+              flow: layout._flow,
+              viewSettingsWidth: this.viewSettings.width,
+              viewSettingsHeight: this.viewSettings.height
+            });
+            // Use columns to size content using layout's calculated dimensions for proper pagination
+            if (view.contents && typeof view.contents.columns === 'function') {
+              // Use the layout's calculated columnWidth for proper pagination
+              const columnWidth = this.viewSettings.layout?.columnWidth || this.viewSettings.width;
+              const gap = this.viewSettings.layout?.gap || 0;
+              console.log('[BookPreRenderer] applying contents.columns formatting with layout dimensions', 'containerWidth:', this.viewSettings.width, 'columnWidth:', columnWidth, 'gap:', gap);
+              view.contents.columns(this.viewSettings.width, this.viewSettings.height, columnWidth,
+              // Use layout's calculated column width for proper pagination
+              gap,
+              // Use layout's calculated gap
+              layout.settings?.direction || 'ltr');
+            } else if (view.contents && typeof view.contents.fit === 'function') {
+              console.debug('[BookPreRenderer] applying contents.fit formatting');
+              view.contents.fit(layout.columnWidth, layout.height, chapter.section);
+            } else {
+              console.debug('[BookPreRenderer] no contents formatting method available');
+            }
+            // After formatting, try to measure the full content width (textWidth)
+            let contentWidth;
+            try {
+              if (view.contents && view.contents.textWidth) {
+                contentWidth = view.contents.textWidth();
+              }
+            } catch (e) {
+              console.debug('[BookPreRenderer] could not get textWidth:', e);
+            }
+            chapter.width = contentWidth || layout.columnWidth;
+            chapter.height = layout.height;
+            console.debug('[BookPreRenderer] measured content width after formatting:', chapter.width);
+          } catch (e) {
+            console.debug('[BookPreRenderer] could not format contents with layout:', e);
+          }
+        } else {
+          console.debug('[BookPreRenderer] checking textWidth for:', href);
+          if (view.contents && view.contents.textWidth) {
+            chapter.width = Math.max(view.contents.textWidth(), this.viewSettings.width);
+            console.debug('[BookPreRenderer] textWidth calculated for:', href, 'width:', chapter.width);
+          } else {
+            console.debug('[BookPreRenderer] no textWidth available for:', href);
+          }
+        }
+        console.debug('[BookPreRenderer] calling analyzeContent for:', href);
+        this.analyzeContent(chapter);
+        console.debug('[BookPreRenderer] analyzeContent completed for:', href);
+        // Preserve initial content after successful rendering
+        console.debug('[BookPreRenderer] preserving content for:', href);
+        this.preserveChapterContent(chapter);
+        console.debug('[BookPreRenderer] content preservation completed for:', href);
+        // Move to unattached storage for long-term storage (hybrid approach)
+        if (chapter.element.parentNode === this.offscreenContainer) {
+          console.debug('[BookPreRenderer] removing from offscreen container:', href);
+          this.offscreenContainer.removeChild(chapter.element);
+        }
+        console.debug('[BookPreRenderer] moving to unattached storage:', href);
+        this.unattachedStorage.appendChild(chapter.element);
+        console.debug('[BookPreRenderer] renderView SUCCESS for:', href);
+        return renderedView;
+      } catch (error) {
+        console.error('[BookPreRenderer] renderView FAILED for:', href, 'error:', error);
+        if (chapter.element.parentNode === this.offscreenContainer) {
+          this.offscreenContainer.removeChild(chapter.element);
+        }
+        throw error;
+      }
+    }
+    analyzeContent(chapter) {
+      try {
+        const view = chapter.view;
+        chapter.pageCount = 1;
+        chapter.pageMap = undefined;
+        if (view.contents && view.contents.document) {
+          const doc = view.contents.document;
+          const body = doc.body;
+          if (body) {
+            // Detect flow direction from viewSettings or layout
+            const isPaginated = this.viewSettings.flow === 'paginated' || this.viewSettings.axis === 'horizontal' || this.viewSettings.layout && this.viewSettings.layout._flow === 'paginated';
+            if (isPaginated) {
+              // For paginated/horizontal flow: use content scrollWidth vs viewport (column) width
+              let contentWidth = chapter.width;
+              try {
+                if (view.contents && typeof view.contents.scrollWidth === 'function') {
+                  contentWidth = view.contents.scrollWidth();
+                }
+              } catch (e) {
+                console.debug('[BookPreRenderer] could not get scrollWidth, falling back to chapter.width', e);
+              }
+              // Use the column width for pagination calculations if available,
+              // otherwise fall back to container width
+              const layoutColumnWidth = this.viewSettings.layout?.columnWidth;
+              const viewportWidth = layoutColumnWidth || this.viewSettings.width;
+              console.log('[BookPreRenderer] paginated flow - contentWidth:', contentWidth, 'viewportWidth:', viewportWidth, 'layout.columnWidth:', layoutColumnWidth, 'viewSettings.width:', this.viewSettings.width, 'viewSettings.height:', this.viewSettings.height);
+              // Use a fixed tolerance instead of percentage-based
+              const tolerance = 10; // Fixed 10px tolerance for measurement inaccuracies
+              if (contentWidth > viewportWidth + tolerance) {
+                chapter.pageCount = Math.max(1, Math.ceil(contentWidth / viewportWidth));
+              } else {
+                // Content fits in one page
+                chapter.pageCount = 1;
+                console.log(`[BookPreRenderer] Content fits in one page: contentWidth=${contentWidth} <= viewportWidth=${viewportWidth} + tolerance=${tolerance}`);
+              }
+              // Build a simple page map with xOffsets and best-effort CFIs for page starts
+              if (chapter.pageCount && chapter.pageCount > 0) {
+                const pageMap = [];
+                for (let i = 0; i < chapter.pageCount; i++) {
+                  const xOffset = i * viewportWidth;
+                  let startCfi;
+                  try {
+                    // Try to compute CFI at page start using elementFromPoint
+                    const rect = {
+                      x: Math.min(xOffset + 1, contentWidth - 1),
+                      y: 1
+                    };
+                    // Translate to iframe coordinates if needed
+                    const target = body.ownerDocument.elementFromPoint(Math.max(0, rect.x), Math.max(0, rect.y));
+                    if (target) {
+                      const range = doc.createRange();
+                      range.selectNode(target);
+                      // Prefer section.cfiFromRange
+                      if (typeof chapter.section.cfiFromRange === 'function') {
+                        startCfi = chapter.section.cfiFromRange(range);
+                      }
+                    }
+                  } catch {
+                    // ignore CFI failures
+                  }
+                  pageMap.push({
+                    index: i + 1,
+                    startCfi,
+                    xOffset
+                  });
+                }
+                chapter.pageMap = pageMap;
+              }
+            } else {
+              // For scrolled/vertical flow: use content height vs viewport height
+              let contentHeight = body.scrollHeight;
+              try {
+                if (view.contents && typeof view.contents.scrollHeight === 'function') {
+                  contentHeight = view.contents.scrollHeight();
+                }
+              } catch (e) {
+                console.debug('[BookPreRenderer] could not get contents.scrollHeight(), using body.scrollHeight', e);
+              }
+              const viewportHeight = this.viewSettings.layout?.height ?? this.viewSettings.height;
+              console.log('[BookPreRenderer] scrolled flow - contentHeight:', contentHeight, 'viewportHeight:', viewportHeight);
+              if (contentHeight > viewportHeight * 0.8) {
+                chapter.pageCount = Math.max(1, Math.ceil(contentHeight / viewportHeight));
+              }
+              // Build a simple page map with yOffsets for vertical flow
+              if (chapter.pageCount && chapter.pageCount > 0) {
+                const pageMap = [];
+                for (let i = 0; i < chapter.pageCount; i++) {
+                  const yOffset = i * viewportHeight;
+                  pageMap.push({
+                    index: i + 1,
+                    yOffset
+                  });
+                }
+                chapter.pageMap = pageMap;
+              }
+            }
+            // White page detection
+            const textContent = body.textContent || '';
+            const trimmedText = textContent.trim();
+            if (trimmedText.length < 50) {
+              const visibleElements = Array.from(body.querySelectorAll('*')).filter(el => {
+                const style = doc.defaultView?.getComputedStyle(el);
+                return style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+              });
+              if (visibleElements.length < 5 && trimmedText.length < 20) {
+                chapter.whitePageIndices = [0];
+                chapter.hasWhitePages = true;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('[BookPreRenderer] content analysis failed for:', chapter.section.href, error);
+        chapter.pageCount = 1;
+        chapter.hasWhitePages = false;
+        chapter.whitePageIndices = [];
+      }
+    }
+    getChapter(sectionHref) {
+      console.debug('[BookPreRenderer] getChapter called with:', sectionHref);
+      console.debug('[BookPreRenderer] available chapters:', Array.from(this.chapters.keys()));
+      console.debug('[BookPreRenderer] total chapters stored:', this.chapters.size);
+      const result = this.chapters.get(sectionHref);
+      console.debug('[BookPreRenderer] getChapter result:', result ? 'FOUND' : 'NOT FOUND');
+      return result;
+    }
+    getAllChapters() {
+      return Array.from(this.chapters.values());
+    }
+    getStatus() {
+      return this.currentStatus;
+    }
+    getDebugInfo() {
+      const chapters = Array.from(this.chapters.entries()).map(([href, chapter]) => ({
+        href,
+        attached: chapter.attached,
+        width: chapter.width,
+        height: chapter.height,
+        pageCount: chapter.pageCount,
+        hasWhitePages: chapter.hasWhitePages,
+        whitePageIndices: chapter.whitePageIndices
+      }));
+      return {
+        totalChapters: this.chapters.size,
+        renderingInProgress: this.renderingPromises.size,
+        chapters
+      };
+    }
+    /**
+     * Preserve iframe content to prevent loss during DOM moves
+     */
+    preserveChapterContent(chapter) {
+      const iframe = chapter.element.querySelector('iframe');
+      if (!iframe) return;
+      try {
+        // Preserve srcdoc attribute
+        chapter.preservedSrcdoc = iframe.srcdoc;
+        // Preserve full document content
+        if (iframe.contentDocument?.documentElement) {
+          chapter.preservedContent = iframe.contentDocument.documentElement.outerHTML;
+        }
+      } catch (e) {
+        console.debug('[BookPreRenderer] could not preserve iframe content:', e);
+      }
+    }
+    /**
+     * Restore iframe content after DOM moves
+     */
+    restoreChapterContent(chapter) {
+      const iframe = chapter.element.querySelector('iframe');
+      if (!iframe) return false;
+      try {
+        const textContent = iframe.contentDocument?.body?.textContent?.trim() || '';
+        const htmlContent = iframe.contentDocument?.body?.innerHTML?.trim() || '';
+        const isReady = iframe.contentDocument?.readyState === 'complete';
+        // Check if content is missing
+        const hasValidContent = isReady && (textContent.length > 0 || htmlContent.length > 0);
+        if (!hasValidContent && (chapter.preservedSrcdoc || chapter.preservedContent)) {
+          console.debug('[BookPreRenderer] restoring iframe content for:', chapter.section.href);
+          if (chapter.preservedSrcdoc) {
+            iframe.srcdoc = chapter.preservedSrcdoc;
+            // Force reload to ensure content is properly set
+            iframe.src = 'about:blank';
+            setTimeout(() => {
+              iframe.removeAttribute('src');
+              iframe.srcdoc = chapter.preservedSrcdoc;
+            }, 0);
+          } else if (chapter.preservedContent) {
+            // Fallback: use document.write method
+            if (iframe.contentDocument) {
+              iframe.contentDocument.open();
+              iframe.contentDocument.write(chapter.preservedContent);
+              iframe.contentDocument.close();
+            }
+          }
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.warn('[BookPreRenderer] error restoring iframe content:', e);
+        return false;
+      }
+    }
+    /**
+     * Public helper to attempt restore for a chapter by href and validate result
+     * Returns true if content is present after restore, false otherwise
+     */
+    tryRestoreContent(sectionHref) {
+      const chapter = this.chapters.get(sectionHref);
+      if (!chapter) {
+        console.debug('[BookPreRenderer] tryRestoreContent: chapter not found', sectionHref);
+        return false;
+      }
+      try {
+        console.debug('[BookPreRenderer] tryRestoreContent: attempting restore for', sectionHref);
+        const restored = this.restoreChapterContent(chapter);
+        // Validate iframe content
+        const iframe = chapter.element.querySelector('iframe');
+        let hasValidContent = false;
+        try {
+          if (iframe && iframe.contentDocument) {
+            const body = iframe.contentDocument.body;
+            const txt = body ? (body.textContent || '').trim() : '';
+            const html = body ? (body.innerHTML || '').trim() : '';
+            const ready = iframe.contentDocument.readyState === 'complete';
+            hasValidContent = ready && (txt.length > 0 || html.length > 0 || chapter.hasWhitePages);
+          }
+        } catch (e) {
+          console.debug('[BookPreRenderer] tryRestoreContent: cannot access iframe content due to cross-origin or other error', e);
+          hasValidContent = false;
+        }
+        console.debug('[BookPreRenderer] tryRestoreContent result for', sectionHref, {
+          restored,
+          hasValidContent
+        });
+        return hasValidContent || restored;
+      } catch (e) {
+        console.warn('[BookPreRenderer] tryRestoreContent failed for', sectionHref, e);
+        return false;
+      }
+    }
+    attachChapter(sectionHref) {
+      const chapter = this.chapters.get(sectionHref);
+      if (!chapter) {
+        console.warn('[BookPreRenderer] chapter not found for attachment:', sectionHref);
+        return null;
+      }
+      // If chapter is still being rendered, return null (let caller retry)
+      if (this.renderingPromises.has(sectionHref)) {
+        console.debug('[BookPreRenderer] chapter still rendering, caller should retry:', sectionHref);
+        return null;
+      }
+      if (chapter.attached) {
+        console.debug('[BookPreRenderer] chapter already attached:', sectionHref);
+        // Validate that the iframe still has content - sometimes iframe content gets cleared
+        // especially with sandboxing or when elements are moved between containers
+        try {
+          const iframe = chapter.element.querySelector('iframe');
+          if (iframe && iframe.contentDocument) {
+            const body = iframe.contentDocument.body;
+            const hasTextContent = body && (body.textContent || '').trim().length > 0;
+            const hasHtmlStructure = body && (body.innerHTML || '').trim().length > 0;
+            const isReady = iframe.contentDocument.readyState === 'complete';
+            // Accept content if it has either text content OR HTML structure AND is ready
+            // For white pages, be more lenient as they naturally have minimal content
+            const isWhitePage = chapter.hasWhitePages;
+            const hasValidContent = isReady && (hasTextContent || hasHtmlStructure || isWhitePage && body);
+            if (!hasValidContent) {
+              console.warn('[BookPreRenderer] attached chapter has insufficient content, will attempt refresh:', sectionHref, 'readyState:', iframe.contentDocument.readyState, 'hasText:', hasTextContent, 'hasHtml:', hasHtmlStructure, 'isWhitePage:', isWhitePage);
+              // Don't return early - let it go through attachment process to refresh content
+            } else {
+              return chapter;
+            }
+          } else {
+            console.warn('[BookPreRenderer] attached chapter iframe not accessible:', sectionHref);
+            // Don't return early - let it go through attachment process
+          }
+        } catch (e) {
+          console.warn('[BookPreRenderer] error validating attached chapter content:', sectionHref, e);
+          // Don't return early - let it go through attachment process
+        }
+      }
+      try {
+        // In spread/pre-paginated mode, we can have up to 2 chapters attached (left + right pages)
+        // For non-spread mode, ensure only one chapter is attached at a time
+        const attachedChapters = Array.from(this.chapters.values()).filter(ch => ch.attached);
+        const isSpreadMode = this.viewSettings.layout && (this.viewSettings.layout.name === 'pre-paginated' || this.viewSettings.layout.spread);
+        const maxAttachedChapters = isSpreadMode ? 2 : 1;
+        if (attachedChapters.length >= maxAttachedChapters) {
+          // If we're at capacity, detach the oldest attached chapter(s)
+          for (let i = 0; i < attachedChapters.length - (maxAttachedChapters - 1); i++) {
+            const toDetach = attachedChapters[i];
+            if (toDetach.section.href !== sectionHref) {
+              console.debug('[BookPreRenderer] detaching chapter to make room for new attachment:', toDetach.section.href);
+              this.detachChapter(toDetach.section.href);
+            }
+          }
+        }
+        // Verify element exists and is properly rendered
+        if (!chapter.element) {
+          console.error('[BookPreRenderer] chapter element is null:', sectionHref);
+          return null;
+        }
+        // CLONE-ON-ATTACH: Create a fresh wrapper and iframe from preserved content
+        // to avoid moving the original prerendered iframe (which loses content on DOM moves).
+        const displayWrapper = document.createElement('div');
+        displayWrapper.classList.add('epub-view');
+        // For paginated content, set wrapper to full width so container can detect scrollable content
+        const isPaginated = this.viewSettings.layout?._flow === 'paginated';
+        if (isPaginated) {
+          // Set wrapper to full paginated width so container scrollWidth reflects actual content
+          displayWrapper.style.width = chapter.width + 'px';
+          displayWrapper.style.height = chapter.height + 'px';
+          displayWrapper.style.overflow = 'hidden'; // Hide content outside viewport like DefaultViewManager
+          console.log(`[BookPreRenderer] Setting up paginated wrapper for ${sectionHref} - width: ${chapter.width}px (full paginated width)`);
+        } else {
+          // For scrolled content, use container dimensions
+          displayWrapper.style.width = chapter.width + 'px';
+          displayWrapper.style.height = chapter.height + 'px';
+          displayWrapper.style.overflow = 'hidden';
+          console.log(`[BookPreRenderer] Setting up scrolled wrapper for ${sectionHref} - width: ${chapter.width}px`);
+        }
+        displayWrapper.style.position = 'relative';
+        displayWrapper.style.display = 'block';
+        // Create a new iframe for display
+        const newIframe = document.createElement('iframe');
+        newIframe.scrolling = 'no';
+        newIframe.style.border = 'none';
+        if (isPaginated) {
+          // For paginated content, set iframe to full width to show all pages
+          newIframe.style.width = chapter.width + 'px';
+          newIframe.style.height = chapter.height + 'px';
+          console.log(`[BookPreRenderer] Setting up paginated iframe for ${sectionHref} - width: ${chapter.width}px (full paginated width)`);
+        } else {
+          // For scrolled content, use container dimensions
+          newIframe.style.width = chapter.width + 'px';
+          newIframe.style.height = chapter.height + 'px';
+          console.log(`[BookPreRenderer] Setting up scrolled iframe for ${sectionHref} - width: ${chapter.width}px`);
+        }
+        newIframe.sandbox = 'allow-same-origin';
+        if (this.viewSettings.allowScriptedContent) {
+          newIframe.sandbox += ' allow-scripts';
+        }
+        if (this.viewSettings.allowPopups) {
+          newIframe.sandbox += ' allow-popups';
+        }
+        // Populate iframe from preservedSrcdoc or preservedContent
+        try {
+          if (chapter.preservedSrcdoc) {
+            newIframe.srcdoc = chapter.preservedSrcdoc;
+          } else if (chapter.preservedContent) {
+            // write will run after iframe is added to DOM; we add a load listener
+            newIframe.src = 'about:blank';
+            newIframe.addEventListener('load', () => {
+              try {
+                const doc = newIframe.contentDocument;
+                if (doc) {
+                  doc.open();
+                  doc.write(chapter.preservedContent);
+                  doc.close();
+                }
+              } catch (e) {
+                console.warn('[BookPreRenderer] clone-on-attach: could not write preserved content to iframe', e);
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('[BookPreRenderer] clone-on-attach: failed to set iframe content', e);
+        }
+        displayWrapper.appendChild(newIframe);
+        // Do NOT mutate the original prerendered chapter or its view/element - keep it in unattachedStorage
+        console.log(`[BookPreRenderer] clone created for attach (preserved original left intact): ${sectionHref}`);
+        // Create a proper IframeView instance for the cloned element
+        // This ensures all IframeView methods like setLayout() are available
+        const clonedView = this.viewRenderer.createView(chapter.section);
+        // Replace the IframeView's element with our cloned element
+        clonedView.element = displayWrapper;
+        // Update the view's internal iframe reference to point to our new iframe
+        // We need to access internal properties to properly initialize the cloned view
+        const iframeView = clonedView;
+        iframeView.iframe = newIframe;
+        iframeView.frame = newIframe;
+        // Set the display state since content is already rendered
+        iframeView.displayed = true;
+        iframeView.rendered = true;
+        // Set the dimensions to match the pre-rendered content
+        // Since we're now pre-rendering with correct target dimensions, use those dimensions
+        iframeView._width = this.viewSettings.width;
+        iframeView._height = this.viewSettings.height;
+        iframeView.lockedWidth = this.viewSettings.width;
+        iframeView.lockedHeight = this.viewSettings.height;
+        iframeView.fixedWidth = this.viewSettings.width;
+        iframeView.fixedHeight = this.viewSettings.height;
+        // Update the wrapper and iframe to use the same dimensions as pre-rendering
+        displayWrapper.style.width = this.viewSettings.width + 'px';
+        displayWrapper.style.height = this.viewSettings.height + 'px';
+        newIframe.style.width = this.viewSettings.width + 'px';
+        newIframe.style.height = this.viewSettings.height + 'px';
+        // The pre-rendered content should already be formatted correctly for the container dimensions
+        // No need for additional formatting since we fixed the pre-rendering phase
+        // Add essential IframeView methods to the cloned view for proper layout support
+        const originalExpand = clonedView.expand?.bind(clonedView);
+        clonedView.expand = () => {
+          // For cloned views, maintain the container dimensions since content is pre-rendered correctly
+          if (originalExpand) {
+            originalExpand();
+          }
+          // Ensure dimensions remain as container dimensions
+          if (newIframe) {
+            newIframe.style.width = this.viewSettings.width + 'px';
+            newIframe.style.height = this.viewSettings.height + 'px';
+          }
+        };
+        const originalSize = clonedView.size?.bind(clonedView);
+        clonedView.size = (width, height) => {
+          // Use container dimensions unless explicitly overridden
+          const finalWidth = width ?? this.viewSettings.width;
+          const finalHeight = height ?? this.viewSettings.height;
+          if (originalSize) {
+            originalSize(finalWidth, finalHeight);
+          }
+          // Update internal dimensions
+          iframeView._width = finalWidth;
+          iframeView._height = finalHeight;
+          iframeView.lockedWidth = finalWidth;
+          iframeView.lockedHeight = finalHeight;
+          // Update iframe dimensions
+          if (newIframe) {
+            newIframe.style.width = finalWidth + 'px';
+            newIframe.style.height = finalHeight + 'px';
+          }
+        };
+        // Add width/height methods that return the current dimensions
+        clonedView.width = () => iframeView._width;
+        clonedView.height = () => iframeView._height;
+        const attachedChapter = {
+          section: chapter.section,
+          view: clonedView,
+          // Now a proper IframeView with all methods
+          element: displayWrapper,
+          rendered: chapter.rendered,
+          attached: false,
+          width: chapter.width,
+          height: chapter.height,
+          pageCount: chapter.pageCount,
+          hasWhitePages: chapter.hasWhitePages,
+          whitePageIndices: chapter.whitePageIndices,
+          preservedSrcdoc: chapter.preservedSrcdoc,
+          preservedContent: chapter.preservedContent,
+          pageMap: chapter.pageMap
+        };
+        // Conservative validation: check readyState and lengths if possible and log
+        try {
+          const ready = newIframe.contentDocument?.readyState;
+          const bodyTextLen = newIframe.contentDocument?.body?.textContent?.trim()?.length || 0;
+          const bodyHtmlLen = newIframe.contentDocument?.body?.innerHTML?.trim()?.length || 0;
+          console.debug(`[BookPreRenderer] clone post-create diagnostics for ${sectionHref}: ready=${ready} textLen=${bodyTextLen} htmlLen=${bodyHtmlLen}`);
+        } catch (e) {
+          console.debug(`[BookPreRenderer] cannot inspect clone iframe post-create: ${e}`);
+        }
+        // Log when srcdoc was used
+        if (chapter.preservedSrcdoc) {
+          console.log(`[BookPreRenderer] clone srcdoc set for ${sectionHref}`);
+        } else if (chapter.preservedContent) {
+          console.log(`[BookPreRenderer] clone preservedContent writer scheduled for ${sectionHref}`);
+        }
+        // Notify listeners about the cloned view being available (non-destructive)
+        try {
+          this.emit(constants_1.EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
+        } catch (e) {
+          console.debug(`[BookPreRenderer] error emitting DISPLAYED for clone: ${e}`);
+        }
+        return attachedChapter;
+      } catch (error) {
+        console.error('[BookPreRenderer] failed to attach chapter:', sectionHref, error);
+        chapter.attached = false;
+        return null;
+      }
+    }
+    detachChapter(sectionHref) {
+      const chapter = this.chapters.get(sectionHref);
+      if (!chapter || !chapter.attached) {
+        return null;
+      }
+      // Remove from whatever container it's currently in
+      if (chapter.element.parentNode) {
+        chapter.element.parentNode.removeChild(chapter.element);
+      }
+      // HYBRID APPROACH: Store in unattached storage instead of offscreen container
+      this.unattachedStorage.appendChild(chapter.element);
+      chapter.attached = false;
+      console.log('[BookPreRenderer] detached chapter and moved to unattached storage:', sectionHref);
+      this.emit(constants_1.EVENTS.VIEWS.HIDDEN, chapter.view);
+      return chapter;
+    }
+    destroy() {
+      console.log('[BookPreRenderer] destroying pre-renderer');
+      this.chapters.forEach(chapter => {
+        if (chapter.element.parentNode) {
+          chapter.element.parentNode.removeChild(chapter.element);
+        }
+      });
+      if (this.offscreenContainer.parentNode) {
+        this.offscreenContainer.parentNode.removeChild(this.offscreenContainer);
+      }
+      this.chapters.clear();
+      this.renderingPromises.clear();
+    }
+  }
+  prerenderer.BookPreRenderer = BookPreRenderer;
+  (0, event_emitter_1.default)(BookPreRenderer.prototype);
+  prerenderer.default = BookPreRenderer;
+  return prerenderer;
+}
+
+var hasRequiredPrerendering;
+function requirePrerendering() {
+  if (hasRequiredPrerendering) return prerendering;
+  hasRequiredPrerendering = 1;
+  (function (exports) {
+
+    var __importDefault = prerendering && prerendering.__importDefault || function (mod) {
+      return mod && mod.__esModule ? mod : {
+        "default": mod
+      };
+    };
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    exports.BookPreRenderer = exports.PreRenderingViewManager = void 0;
+    const default_1 = __importDefault(require_default());
+    const prerenderer_1 = __importDefault(requirePrerenderer());
+    /**
+     * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
+     *
+     * This manager adds prerendering functionality on top of the DefaultViewManager.
+     * The parent DefaultViewManager has no knowledge of prerendering - this manager adds it
+     * as a transparent layer on top.
+     */
+    class PreRenderingViewManager extends default_1.default {
+      // Public getter for compatibility with examples
+      get preRenderer() {
+        return this.myPreRenderer;
+      }
+      constructor(options) {
+        console.log('[PreRenderingViewManager] ✅ CREATING PRERENDERING MANAGER');
+        // Call the parent constructor
+        super(options);
+        this.myPreRenderer = null;
+        this.usePreRendering = false;
+        this.spine = null;
+        // Guard to ensure prerendering is only started once per manager instance
+        this._preRenderingStarted = false;
+        // Override the name property
+        this.name = 'prerendering';
+        console.log('[PreRenderingViewManager] ✅ CONSTRUCTOR COMPLETE - this.name:', this.name);
+        // Add debugging for method verification
+        console.log('[PreRenderingViewManager] Constructor completed, instance created');
+        console.log('[PreRenderingViewManager] paginatedLocation method bound:', typeof this.paginatedLocation === 'function');
+        // Check if prerendering is enabled
+        this.usePreRendering = options.settings.usePreRendering || false;
+        // Store the spine if provided
+        this.spine = options.spine || null;
+        console.log('[PreRenderingViewManager] usePreRendering:', this.usePreRendering);
+        console.log('[PreRenderingViewManager] spine sections:', this.spine?.length || 0);
+        console.log('[PreRenderingViewManager] Pre-renderer initialization deferred until render()');
+        // initialization deferred until render()
+      }
+      // Helper to validate attached iframe content with a small wait and one retry
+      // Override append to use prerendered chapters when available
+      // SIMPLIFIED: Use DefaultViewManager's logic completely
+      async append(section, forceRight = false) {
+        console.log('[PreRenderingViewManager] APPEND called for:', section.href);
+        // Always delegate to DefaultViewManager for proper layout/scrolling/pagination
+        return super.append(section, forceRight);
+      }
+      // SIMPLIFIED: Use DefaultViewManager's logic completely
+      async prepend(section, forceRight = false) {
+        console.log('[PreRenderingViewManager] PREPEND called for:', section.href);
+        // Always delegate to DefaultViewManager for proper layout/scrolling/pagination
+        return super.prepend(section, forceRight);
+      }
+      // SIMPLIFIED: Use DefaultViewManager's logic completely
+      async display(section, target) {
+        console.log('[PreRenderingViewManager] DISPLAY called for:', section.href);
+        // Always delegate to DefaultViewManager for proper layout/scrolling/pagination
+        return super.display(section, target);
+      }
+      // Pre-rendering specific methods
+      async startPreRendering(sections) {
+        if (!this.usePreRendering || !this.myPreRenderer) {
+          console.warn('[PreRenderingViewManager] Pre-rendering not enabled or available');
+          return;
+        }
+        if (this._preRenderingStarted) {
+          console.debug('[PreRenderingViewManager] startPreRendering called but already started');
+          return;
+        }
+        this._preRenderingStarted = true;
+        console.log(`[PreRenderingViewManager] Starting pre-rendering of ${sections.length} sections`);
+        await this.myPreRenderer.preRenderBook(sections);
+      }
+      getPreRenderedChapter(sectionHref) {
+        if (!this.usePreRendering || !this.myPreRenderer) {
+          return undefined;
+        }
+        return this.myPreRenderer.getChapter(sectionHref);
+      }
+      hasPreRenderedChapter(sectionHref) {
+        if (!this.usePreRendering || !this.myPreRenderer) {
+          return false;
+        }
+        return !!this.myPreRenderer.getChapter(sectionHref);
+      }
+      getPreRenderingStatus() {
+        if (!this.usePreRendering || !this.myPreRenderer) {
+          return {
+            total: 0,
+            rendered: 0,
+            failed: 0,
+            chapters: new Map()
+          };
+        }
+        return this.myPreRenderer.getStatus();
+      }
+      getAllPreRenderedChapters() {
+        if (!this.usePreRendering || !this.myPreRenderer) {
+          return [];
+        }
+        return this.myPreRenderer.getAllChapters();
+      }
+      getPreRenderingDebugInfo() {
+        if (!this.usePreRendering || !this.myPreRenderer) {
+          return {
+            totalChapters: 0,
+            renderingInProgress: 0,
+            chapters: []
+          };
+        }
+        return this.myPreRenderer.getDebugInfo();
+      }
+      // SIMPLIFIED: Use DefaultViewManager's logic completely
+      afterDisplayed(view) {
+        console.log('[PreRenderingViewManager] afterDisplayed called for:', view.section?.href);
+        // Always delegate to DefaultViewManager for proper formatting
+        super.afterDisplayed(view);
+      }
+      // Override destroy to clean up pre-renderer
+      destroy() {
+        console.log('[PreRenderingViewManager] Destroying pre-rendering manager');
+        if (this.myPreRenderer) {
+          this.myPreRenderer.destroy();
+        }
+        return super.destroy();
+      }
+      // Override render to initialize the BookPreRenderer once the container and
+      // Only override render to initialize pre-renderer
+      render(element, size) {
+        console.log('[PreRenderingViewManager] render() called - delegating to DefaultViewManager');
+        // Call parent render first
+        super.render(element, size);
+        // Initialize the pre-renderer now that the DOM container and viewSettings exist
+        if (this.usePreRendering && !this.myPreRenderer && this.container) {
+          console.log('[PreRenderingViewManager] Initializing BookPreRenderer');
+          const preRenderViewSettings = {
+            width: this.viewSettings.width || 0,
+            height: this.viewSettings.height || 0,
+            ...this.viewSettings
+          };
+          this.myPreRenderer = new prerenderer_1.default(this.container, preRenderViewSettings, this.request);
+          console.log('[PreRenderingViewManager] BookPreRenderer initialized');
+        }
+      }
+    }
+    exports.PreRenderingViewManager = PreRenderingViewManager;
+    exports.default = PreRenderingViewManager;
+    var prerenderer_2 = requirePrerenderer();
+    Object.defineProperty(exports, "BookPreRenderer", {
+      enumerable: true,
+      get: function () {
+        return prerenderer_2.BookPreRenderer;
+      }
+    });
+  })(prerendering);
+  return prerendering;
+}
+
 var hasRequiredRendition;
 function requireRendition() {
   if (hasRequiredRendition) return rendition;
@@ -11564,6 +12020,7 @@ function requireRendition() {
   const annotations_1 = __importDefault(requireAnnotations());
   const constants_1 = requireConstants();
   const default_1 = __importDefault(require_default());
+  const prerendering_1 = requirePrerendering();
   /**
    * Displays an Epub as a series of Views for each Section.
    * Requires Manager and View class to handle specifics of rendering
@@ -11612,49 +12069,8 @@ function requireRendition() {
         usePreRendering: false,
         ...options
       };
-      if (typeof this.settings.manager === 'object') {
-        this.manager = this.settings.manager;
-      } else {
-        const layoutInstance = new layout_1.default({
-          layout: this.settings.layout || 'reflowable',
-          spread: this.settings.spread || 'auto',
-          minSpreadWidth: typeof this.settings.minSpreadWidth === 'number' ? this.settings.minSpreadWidth : 400,
-          direction: this.settings.direction || 'ltr',
-          flow: this.settings.flow || 'auto'
-        });
-        // Ensure width and height are numbers or undefined
-        const width = typeof this.settings.width === 'number' ? this.settings.width : undefined;
-        const height = typeof this.settings.height === 'number' ? this.settings.height : undefined;
-        this.manager = new default_1.default({
-          view: this.settings.view,
-          queue: this.q,
-          request: this.book.load.bind(this.book),
-          settings: {
-            ...this.settings,
-            layout: layoutInstance,
-            width,
-            height,
-            afterScrolledTimeout: 10
-          }
-        });
-      }
-      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, (...args) => {
-        const view = args[0];
-        this.afterDisplayed(view);
-      });
-      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, (...args) => {
-        const view = args[0];
-        this.afterRemoved(view);
-      });
-      this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, (...args) => {
-        const size = args[0];
-        const epubcfi = args[1];
-        this.onResized(size, epubcfi);
-      });
-      this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, (...args) => {
-        const orientation = args[0];
-        this.onOrientationChange(orientation);
-      });
+      // Manager creation moved to start() method - no conditional creation here!
+      // Event listeners will be set up in start() after manager is created
       this.hooks = {
         display: new hook_1.default(this),
         serialize: new hook_1.default(this),
@@ -11752,30 +12168,76 @@ function requireRendition() {
           this.settings.spread = 'auto';
           break;
       }
-      if (!this.manager) {
-        this.ViewManager = this.settings.manager;
-        this.View = this.settings.view;
-        if (typeof this.ViewManager === 'function') {
-          this.manager = new this.ViewManager({
-            view: this.View,
-            queue: this.q,
-            request: this.book.load.bind(this.book),
-            settings: this.settings
-          });
+      // Create manager in ONE place - always create here, no conditions
+      console.log(`[Rendition] Creating manager in start() - usePreRendering: ${this.settings.usePreRendering}`);
+      if (typeof this.settings.manager === 'object') {
+        console.log('[Rendition] Using provided manager object');
+        this.manager = this.settings.manager;
+      } else {
+        const layoutInstance = new layout_1.default({
+          layout: this.settings.layout || 'reflowable',
+          spread: this.settings.spread || 'auto',
+          minSpreadWidth: typeof this.settings.minSpreadWidth === 'number' ? this.settings.minSpreadWidth : 400,
+          direction: this.settings.direction || 'ltr',
+          flow: this.settings.flow || 'auto'
+        });
+        // Ensure width and height are numbers or undefined
+        const width = typeof this.settings.width === 'number' ? this.settings.width : undefined;
+        const height = typeof this.settings.height === 'number' ? this.settings.height : undefined;
+        // Choose the appropriate view manager based on usePreRendering setting
+        const ManagerClass = this.settings.usePreRendering ? prerendering_1.PreRenderingViewManager : default_1.default;
+        console.log(`[Rendition] Using manager class: ${ManagerClass.name}`);
+        const baseManagerOptions = {
+          view: this.settings.view,
+          queue: this.q,
+          request: this.book.load.bind(this.book),
+          settings: {
+            ...this.settings,
+            layout: layoutInstance,
+            width,
+            height,
+            afterScrolledTimeout: 10
+          }
+        };
+        // Add spine to manager options if using PreRenderingViewManager
+        if (this.settings.usePreRendering) {
+          const spineItems = this.book.spine?.spineItems || [];
+          console.log('[Rendition] Passing spine to PreRenderingViewManager:', spineItems.length, 'sections');
+          const preRenderingOptions = {
+            ...baseManagerOptions,
+            spine: spineItems
+          };
+          this.manager = new ManagerClass(preRenderingOptions);
+        } else {
+          this.manager = new ManagerClass(baseManagerOptions);
         }
+        this.ViewManager = ManagerClass;
+        this.View = this.settings.view;
       }
+      // Set up manager event listeners now that manager is created
+      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, (...args) => {
+        const view = args[0];
+        this.afterDisplayed(view);
+      });
+      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, (...args) => {
+        const view = args[0];
+        this.afterRemoved(view);
+      });
+      this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, (...args) => {
+        const size = args[0];
+        const epubcfi = args[1];
+        this.onResized(size, epubcfi);
+      });
+      this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, (...args) => {
+        const orientation = args[0];
+        this.onOrientationChange(orientation);
+      });
       this.direction(this.book.packaging.metadata.direction || this.settings.defaultDirection);
       // Parse metadata to get layout props
       this.settings.globalLayoutProperties = this.determineLayoutProperties(this.book.packaging.metadata);
       this.flow(this.settings.globalLayoutProperties.flow);
       this.layout(this.settings.globalLayoutProperties);
-      // Listen for displayed views
-      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, this.afterDisplayed.bind(this));
-      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, this.afterRemoved.bind(this));
-      // Listen for resizing
-      this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, this.onResized.bind(this));
-      // Listen for rotation
-      this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, this.onOrientationChange.bind(this));
+      // Manager event listeners are already set up above after manager creation
       // Listen for scroll changes
       this.manager.on(constants_1.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
       /**
@@ -11795,8 +12257,13 @@ function requireRendition() {
     attachTo(element) {
       console.log('[Rendition] *** attachTo METHOD CALLED ***');
       console.log('[Rendition] attachTo called with element:', element);
-      console.log('[Rendition] Manager type:', this.manager.constructor.name);
-      console.log('[Rendition] Manager settings:', this.manager.settings);
+      // Manager might not be created yet if start() hasn't been called
+      if (this.manager) {
+        console.log('[Rendition] Manager type:', this.manager.constructor.name);
+        console.log('[Rendition] Manager settings:', this.manager.settings);
+      } else {
+        console.log('[Rendition] Manager not yet created (will be created in start())');
+      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return this.q.enqueue(() => {
         console.log('[Rendition] *** IN ENQUEUED FUNCTION ***');
@@ -11808,6 +12275,33 @@ function requireRendition() {
         console.log('[Rendition] Calling manager.render with element:', element);
         this.manager.render(element);
         console.log('[Rendition] manager.render call completed');
+        // If pre-rendering is enabled and we're using the PreRenderingViewManager,
+        // start pre-rendering automatically for all spine sections.
+        try {
+          const hasPreRendering = this.settings.usePreRendering && this.manager instanceof prerendering_1.PreRenderingViewManager;
+          if (hasPreRendering && this.book.spine) {
+            const sections = this.book.spine.spineItems || [];
+            console.log(`[Rendition] Auto-starting pre-rendering for ${sections.length} sections`);
+            // Start pre-rendering in the background (don't block attachTo)
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.manager.startPreRendering(sections).catch(err => {
+              console.warn('[Rendition] Pre-rendering failed to start:', err);
+            });
+          }
+        } catch (e) {
+          console.debug('[Rendition] Auto pre-rendering start check failed', e);
+        }
+        // Ensure the first page is shown after attachment. Use the rendition's display
+        // method which will enqueue the request and wait for any pending startup tasks.
+        try {
+          if (this.book.spine && this.book.spine.length) {
+            console.log('[Rendition] Displaying first section (index 0) after attach');
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            this.display(0);
+          }
+        } catch (e) {
+          console.debug('[Rendition] Failed to display first section after attach', e);
+        }
         /**
          * Emit that rendering has attached to an element
          * @event attached
@@ -11897,7 +12391,14 @@ function requireRendition() {
      * Report what section has been displayed
      */
     afterDisplayed(view) {
-      view.on(constants_1.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
+      // Some views (pre-rendered/offscreen) may not implement the EventEmitter
+      // style `on` method. Guard before wiring event handlers to avoid runtime
+      // TypeErrors (see prerendered views created by BookPreRenderer).
+      if (typeof view.on === 'function') {
+        view.on(constants_1.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
+      } else {
+        console.debug('[Rendition] view does not implement .on, skipping MARK_CLICKED wiring for', view.section?.href);
+      }
       this.hooks.render.trigger(view, this).then(() => {
         if (view.contents) {
           this.hooks.content.trigger(view.contents, this).then(() => {
@@ -11948,7 +12449,7 @@ function requireRendition() {
       }, epubcfi);
       // Check if we have a pre-rendering enabled manager that can handle resize natively
       // If so, skip the automatic display call to avoid clearing views that were just attached
-      const hasPreRendering = this.manager && this.manager.usePreRendering && this.manager.preRenderer;
+      const hasPreRendering = this.manager && this.manager instanceof prerendering_1.PreRenderingViewManager;
       if (this.location && this.location.start && !hasPreRendering) {
         this.display(epubcfi || this.location.start.cfi);
       } else if (hasPreRendering) {
@@ -11993,7 +12494,14 @@ function requireRendition() {
      * Go to the next "page" in the rendition
      */
     next() {
-      return this.q.enqueue(this.manager.next.bind(this.manager)).then(this.reportLocation.bind(this));
+      console.log('[DEBUGGING] Rendition.next() called - enqueuing manager.next');
+      const queuePromise = this.q.enqueue(this.manager.next.bind(this.manager));
+      console.log('[DEBUGGING] Queue promise created:', queuePromise);
+      return queuePromise.then(result => {
+        console.log('[DEBUGGING] Manager.next completed, result:', result);
+        this.reportLocation();
+        return result;
+      });
     }
     /**
      * Go to the previous "page" in the rendition

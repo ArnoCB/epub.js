@@ -8,8 +8,7 @@
   "repository": "https://github.com/ArnoCB/epub.js",
   "scripts": {
     "build:utils": "tsc -p tsconfig.json",
-    "build:rollup": "npm run build:lib && rollup -c",
-    "build:lib": "rimraf lib && tsc -p tsconfig.build.json",
+    "build:lib": "rimraf lib && tsc -p tsconfig.build.json && rollup -c",
     "test": "jest --runInBand && npm run test:e2e",
     "test:jest": "jest --runInBand",
     "test:e2e": "playwright test",

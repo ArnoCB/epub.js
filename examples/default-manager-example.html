@@ -231,13 +231,13 @@
 
   <script>
     let book, rendition;
-    let preRenderingEnabled = true;
+    let preRenderingEnabled = false;
     let systemLogs = [];
 
     // Global getter functions for testing
     window.getRendition = () => rendition;
     window.getBook = () => book;
-    window.getPreRenderer = () => rendition?.manager?.preRenderer;
+    window.getPreRenderer = () => null; // No pre-rendering in default manager
 
     // Logging function
     function addLog(message, type = 'info') {
@@ -290,16 +290,14 @@
         width: "100%",
         height: 600,
         ignoreClass: 'annotator-hl',
-        manager: "default", // This should now work with usePreRendering
+        manager: "default",
         flow: "paginated",
         spread: "auto", 
         transparency: true,
-        allowScriptedContent: true, // Enable scripts for proper pre-rendered content display
-        usePreRendering: preRenderingEnabled // 🎉 Enable pre-rendering!
+        allowScriptedContent: true
+        // Remove usePreRendering since we're using default manager
       });
-
-      addLog(`Rendition created with usePreRendering: ${preRenderingEnabled}`, "info");
-
+      
       setupEventListeners();
       
       // Don't display immediately - wait for pre-rendering to start in attached event
@@ -316,41 +314,28 @@
       rendition.on("started", function() {
         addLog("Rendition started", "success");
         addLog(`Layout: ${rendition.manager.layout.name}`, "info");
-        
-        // Apply custom styling now that rendition is started
-        applyCustomStyling();
+        // Note: Don't check pre-renderer here - it's not initialized yet
       });
 
-      // Check pre-renderer after attachment is complete
+      // Check manager after attachment is complete
       rendition.on("attached", function() {
-        addLog("Rendition attached - checking pre-renderer...", "info");
-        addLog(`Pre-rendering enabled: ${!!rendition.manager.preRenderer}`, "info");
-        addLog(`Manager usePreRendering: ${rendition.manager.usePreRendering}`, "info");
+        addLog("Rendition attached - checking manager...", "info");
         addLog(`Manager type: ${rendition.manager.constructor.name}`, "info");
         addLog(`Manager name: ${rendition.manager.name}`, "info");
         addLog(`Manager settings: ${JSON.stringify(rendition.manager.settings)}`, "info");
         
         // Start at spine index 1 (first linear chapter after cover)
-        // Note: Cover pages often have linear:false and don't have proper navigation links
+        // 
+        // NOTE: We start at index 1 instead of 0 (cover) because cover pages
+        // typically have `linear: false` and don't have proper navigation links
+        // to the next section. This is correct EPUB behavior - covers are often
+        // standalone and not part of the sequential reading experience.
+        // Starting from a linear chapter ensures navigation works properly.
+        //
         addLog("Starting at spine index 1 (first chapter after cover)", "info");
         rendition.display(1);
         
         updateStatus();
-        
-        // Start pre-rendering immediately when attached and book is ready
-        if (book.spine && rendition.manager && rendition.manager.preRenderer) {
-          const sections = book.spine.spineItems;
-          addLog(`Starting pre-rendering of ${sections.length} chapters immediately...`, "info");
-          
-          rendition.manager.startPreRendering(sections).then(() => {
-            addLog("Pre-rendering completed successfully", "success");
-            updateStatus();
-          }).catch(err => {
-            addLog(`Pre-rendering failed: ${err.message}`, "error");
-          });
-        } else {
-          addLog("Book spine or pre-renderer not ready for immediate start", "warning");
-        }
       });
 
       // Wait for book to be ready AND rendition to be attached before logging status
@@ -358,18 +343,15 @@
         addLog(`Book ready: ${book.packaging.metadata.title}`, "success");
         addLog(`Total sections: ${book.spine.length}`, "info");
         
-        // Pre-rendering should start automatically when usePreRendering: true
-        if (rendition.manager && rendition.manager.preRenderer) {
-          addLog(`Pre-renderer is available and should auto-start`, "info");
-        } else {
-          addLog("Pre-renderer not available", "warning");
-        }
+        // Start at spine index 1 (first linear chapter) instead of cover
+        addLog("Displaying spine index 1 (first linear chapter)", "info");
+        rendition.display(1);
+        
         updateStatus();
       });
 
       rendition.on("rendered", function(section, view) {
-        const sectionHref = section?.href || '(unknown section)';
-        addLog(`Chapter rendered: ${sectionHref}`, "success");
+        addLog(`Chapter rendered: ${section.href}`, "success");
         updateStatus();
       });
 
@@ -388,26 +370,21 @@
         updateStatus();
       });
 
-      // Pre-renderer specific events
-      if (rendition.manager && rendition.manager.preRenderer) {
-        rendition.manager.on("added", function(data) {
-          // Handle different types of added events
-          if (data && typeof data === 'object' && data.total && data.rendered) {
-            // This is a pre-rendering status update
-            addLog(`Pre-rendering progress: ${data.rendered}/${data.total} chapters`, "success");
-          } else if (data && data.section) {
-            // This is a view being added
-            addLog(`Chapter view added: ${data.section.href}`, "info");
-          }
-          updateStatus();
-        });
-      }
+      // Manager specific events - remove pre-renderer specific code
+      // Default manager doesn't have pre-renderer events
 
       // Navigation
       document.getElementById("next").addEventListener("click", function(e) {
         e.preventDefault();
         addLog("Next button clicked", "info");
-        rendition.next();
+        addLog(`Rendition exists: ${!!rendition}`, "info");
+        addLog(`Rendition.next exists: ${!!(rendition && rendition.next)}`, "info");
+        if (rendition && rendition.next) {
+          addLog("Calling rendition.next()", "info");
+          rendition.next();
+        } else {
+          addLog("Cannot call rendition.next() - not available", "error");
+        }
       });
 
       document.getElementById("prev").addEventListener("click", function(e) {
@@ -534,81 +511,39 @@
         return;
       }
 
-      const preRenderer = rendition.manager.preRenderer;
+      // Since we're using DefaultViewManager without pre-rendering
+      statusText.innerHTML = "<strong>Manager:</strong> DefaultViewManager (No Pre-rendering)";
+      progressFill.style.width = '0%';
+      chapterStatus.innerHTML = '<div>Using standard chapter loading - no pre-rendering</div>';
       
-      if (preRenderer) {
-        const status = preRenderer.getStatus();
-        const percentage = status.total > 0 ? (status.rendered / status.total) * 100 : 0;
-        
-        statusText.innerHTML = `
-          <strong>Pre-rendering Status:</strong> ${status.rendered}/${status.total} chapters rendered 
-          (${status.failed} failed) - ${percentage.toFixed(1)}%
-        `;
-        progressFill.style.width = percentage + '%';
-
-        // Update chapter status cards
-        updateChapterStatusCards(preRenderer);
-        
-        // Update debug info
-        const debugData = preRenderer.getDebugInfo();
-        debugInfo.innerHTML = `<pre>${JSON.stringify(debugData, null, 2)}</pre>`;
+      // Show current location info instead
+      if (rendition.location) {
+        const currentInfo = {
+          currentHref: rendition.location.start?.href || 'unknown',
+          currentPage: rendition.location.start?.displayed?.page || 0,
+          totalPages: rendition.location.start?.displayed?.total || 0,
+          percentage: rendition.location.start?.percentage || 0
+        };
+        debugInfo.innerHTML = `<pre>${JSON.stringify(currentInfo, null, 2)}</pre>`;
       } else {
-        statusText.innerHTML = "<strong>Pre-rendering:</strong> Disabled";
-        progressFill.style.width = '0%';
-        chapterStatus.innerHTML = '<div>Pre-rendering is disabled</div>';
-        debugInfo.innerHTML = '<div>No pre-renderer available</div>';
+        debugInfo.innerHTML = '<div>No location information available</div>';
       }
     }
 
-    function updateChapterStatusCards(preRenderer) {
-      const chapterStatus = document.getElementById('chapter-status');
-      const chapters = preRenderer.getAllChapters();
-      
-      chapterStatus.innerHTML = chapters.map(chapter => {
-        let statusClass = '';
-        let statusText = 'Pending';
-        
-        if (chapter.attached) {
-          statusClass = 'attached';
-          statusText = 'Displayed';
-        } else if (chapter.rendered.promise) {
-          // Check if promise is resolved
-          statusClass = 'rendered';
-          statusText = 'Pre-rendered';
-        }
-
-        const fileName = chapter.section.href.split('/').pop();
-        
-        return `
-          <div class="chapter-card ${statusClass}">
-            <div><strong>${fileName}</strong></div>
-            <div>Index: ${chapter.section.index}</div>
-            <div>Status: ${statusText}</div>
-            <div>Size: ${chapter.width}×${chapter.height}</div>
-          </div>
-        `;
-      }).join('');
-    }
+    // Remove the updateChapterStatusCards function since we don't have pre-rendering
 
     // Apply custom styling
     function applyCustomStyling() {
-      if (rendition && rendition.themes && rendition.manager) {
-        addLog("Applying custom styling to rendition", "info");
-        try {
-          rendition.themes.default({
-            '::selection': {
-              'background': 'rgba(255,255,0, 0.3)'
-            },
-            '.highlight': {
-              'background': 'rgba(255,255,0, 0.3)',
-              'cursor': 'pointer'
-            }
-          });
-        } catch (e) {
-          addLog("Failed to apply custom styling: " + e.message, "error");
-        }
-      } else {
-        addLog("Skipping custom styling - rendition not ready", "warning");
+      if (rendition && rendition.themes) {
+        rendition.themes.default({
+          '::selection': {
+            'background': 'rgba(255,255,0, 0.3)'
+          },
+          '.highlight': {
+            'background': 'rgba(255,255,0, 0.3)',
+            'cursor': 'pointer'
+          }
+        });
       }
     }
 
@@ -616,7 +551,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       addLog("Page loaded, initializing...", "info");
       initializeBook();
-      // Don't apply styling immediately - wait for rendition to be ready
+      applyCustomStyling();
       
       // Update status every 2 seconds
       setInterval(updateStatus, 2000);
@@ -648,13 +583,6 @@
               
               if (afterIframes === 0) {
                 addLog("WARNING: All iframes disappeared after resize!", "error");
-                
-                // Try to get debug info from prerenderer
-                const preRenderer = rendition.manager?.preRenderer;
-                if (preRenderer) {
-                  const debugInfo = preRenderer.getDebugInfo();
-                  addLog(`PreRenderer debug: ${JSON.stringify(debugInfo)}`, "info");
-                }
               }
             }, 100);
           }
@@ -666,8 +594,6 @@
     window.epubDebug = {
       addLog,
       updateStatus,
-      getPreRenderer: () => rendition?.manager?.preRenderer,
-      getDebugInfo: () => rendition?.manager?.preRenderer?.getDebugInfo(),
       book,
       rendition,
       triggerResize: () => {

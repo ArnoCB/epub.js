@@ -15,7 +15,7 @@ const config: PlaywrightTestConfig = {
   reporter: [['line'], ['html', { open: 'never' }]],
   use: {
     headless: true,
-    baseURL: 'http://127.0.0.1:9876',
+    baseURL: 'http://127.0.0.1:9877',
     // Add screenshot on failure for debugging
     screenshot: 'only-on-failure',
     // Faster navigation timeouts
@@ -30,8 +30,8 @@ const config: PlaywrightTestConfig = {
   ],
   webServer: {
     // Serve the repository root so /dist/epub.js and /lib/epub.js are reachable
-    command: 'npx http-server -p 9876 -c-1 --cors',
-    port: 9876,
+    command: 'npx http-server -p 9877 -c-1 --cors',
+    port: 9877,
     timeout: 30_000,
     // Allow using an already-running server (non-destructive)
     reuseExistingServer: true,

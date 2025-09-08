@@ -258,7 +258,6 @@ test.describe('Core Navigation', () => {
           hasIframe: true,
           isVisible,
           hasContent,
-          action,
         };
       });
 
