@@ -42,44 +42,19 @@ export class PreRenderingViewManager
     spine?: Section[];
     [key: string]: unknown;
   }) {
-    console.log('[PreRenderingViewManager] ✅ CREATING PRERENDERING MANAGER');
+    // Ensure overflow is always hidden in settings
+    if (options.settings) {
+      options.settings.overflow = 'hidden';
+    }
 
-    // Call the parent constructor
     super(options);
 
-    console.log(
-      '[PreRenderingViewManager] ✅ CONSTRUCTOR COMPLETE - this.name:',
-      this.name
-    );
-
-    // Add debugging for method verification
-    console.log(
-      '[PreRenderingViewManager] Constructor completed, instance created'
-    );
-    console.log(
-      '[PreRenderingViewManager] paginatedLocation method bound:',
-      typeof this.paginatedLocation === 'function'
-    );
-
-    // Check if prerendering is enabled
     this.usePreRendering = options.settings.usePreRendering || false;
-
-    // Store the spine if provided
     this.spine = options.spine || null;
 
-    console.log(
-      '[PreRenderingViewManager] usePreRendering:',
-      this.usePreRendering
-    );
-
-    console.log(
-      '[PreRenderingViewManager] spine sections:',
-      this.spine?.length || 0
-    );
-    console.log(
-      '[PreRenderingViewManager] Pre-renderer initialization deferred until render()'
-    );
-    // initialization deferred until render()
+    // Always set overflow to hidden
+    this.settings.overflow = 'hidden';
+    this.overflow = 'hidden';
   }
 
   // Helper to validate attached iframe content with a small wait and one retry
@@ -90,13 +65,6 @@ export class PreRenderingViewManager
     section: Section,
     forceRight: boolean = false
   ): Promise<IframeView> {
-    console.log(
-      '[PreRenderingViewManager] APPEND called for:',
-      section.href,
-      'forceRight:',
-      forceRight
-    );
-
     // Try to use prerendered content if available
     if (this.usePreRendering && this._preRenderer) {
       // Set attaching flag before attempting to attach prerendered content
@@ -170,42 +138,27 @@ export class PreRenderingViewManager
               this.container.appendChild(phantomElement);
             }
 
-            // Set phantom width to match the prerendered chapter width
-            // Get container width for proper setup
-            const containerWidth = this.container
-              ? this.container.clientWidth
-              : 900;
-
-            // For DefaultViewManager matching, use the actual content width
-            const fullContentWidth = 4500; // Fixed width to match DefaultViewManager
-
-            // Get viewport dimensions early
-            const viewDimensions = this.container
-              ? this.container.clientWidth
-              : 0;
-            const viewportHeight = this.container
-              ? this.container.clientHeight
-              : 0;
+            // Fix: Ensure phantom width is set correctly and consistently
+            const contentWidth = attached.width || 0;
+            const safeContentWidth = Math.max(contentWidth, this.layout.width);
 
             console.log(
               '[PreRenderingViewManager] Setting up wrapper with widths:',
               'container:',
-              containerWidth,
-              'view dimensions:',
-              viewDimensions,
+              this.container ? this.container.clientWidth : 'unknown',
               'attached.width:',
               attached.width,
-              'using fullContentWidth:',
-              fullContentWidth
+              'safeContentWidth:',
+              safeContentWidth
             );
-            phantomElement.style.width = `${fullContentWidth}px`;
+            phantomElement.style.width = safeContentWidth + 'px';
 
             // Force a reflow to ensure the phantom element takes effect
             void phantomElement.offsetWidth;
 
             console.log(
               '[PreRenderingViewManager] Set phantom width to:',
-              fullContentWidth
+              safeContentWidth
             );
           }
 
@@ -290,12 +243,15 @@ export class PreRenderingViewManager
           );
 
           iframeElement.style.width = `${iframeWidth}px`;
-          
+
           // IMPORTANT: In DefaultViewManager, the wrapper element width matches the iframe width
           // Update the wrapper element's width to match the iframe width
           wrapperElement.style.width = `${iframeWidth}px`;
           iframeElement.style.height = `${attached.height}px`;
+          // Force both overflow properties to hidden to prevent any scrollbars
           iframeElement.style.overflow = 'hidden';
+          iframeElement.style.overflowX = 'hidden';
+          iframeElement.style.overflowY = 'hidden';
           iframeElement.style.background = 'transparent';
           iframeElement.style.visibility = 'visible';
           iframeElement.style.display = 'block';
@@ -367,6 +323,26 @@ export class PreRenderingViewManager
                 doc.open();
                 doc.write(originalContent);
                 doc.close();
+
+                // Add styles to ensure no horizontal scrollbar
+                if (doc.body) {
+                  // Explicitly set both overflow properties to hidden to prevent any scrollbars
+                  doc.body.style.overflowX = 'hidden';
+                  doc.body.style.overflowY = 'hidden';
+                  doc.body.style.overflow = 'hidden';
+
+                  // Add a style tag to ensure these styles aren't overridden by inline styles
+                  const style = doc.createElement('style');
+                  const cssRules = [
+                    'body {',
+                    '  overflow: hidden !important;',
+                    '  overflow-x: hidden !important;',
+                    '  overflow-y: hidden !important;',
+                    '}',
+                  ].join('\n');
+                  style.textContent = cssRules;
+                  doc.head.appendChild(style);
+                }
               }
             } catch (e) {
               console.error(
@@ -379,7 +355,13 @@ export class PreRenderingViewManager
 
           // Update view references
           attached.view.element = wrapperElement;
-          const iframeView = attached.view as any;
+
+          // Cast to a type with iframe/frame properties
+          const iframeView = attached.view as unknown as {
+            iframe?: HTMLIFrameElement;
+            frame?: HTMLIFrameElement;
+          };
+
           if (iframeView) {
             iframeView.iframe = iframeElement;
             iframeView.frame = iframeElement;
@@ -415,19 +397,23 @@ export class PreRenderingViewManager
             this.container.appendChild(phantomElement);
           }
 
-          // Set phantom width to match content width - exactly match DefaultViewManager's approach
+          // Fix: Ensure phantom width is set correctly and consistently
           const safeContentWidth = Math.max(contentWidth, this.layout.width);
           phantomElement.style.width = safeContentWidth + 'px';
-          
+
           // Force a reflow to ensure the phantom element takes effect
           void phantomElement.offsetWidth;
 
           console.log(
             '[PreRenderingViewManager] Created/updated elements with widths:',
-            'phantom:', safeContentWidth + 'px',
-            'wrapper:', wrapperElement.style.width,
-            'iframe:', iframeElement.style.width,
-            'layout.width:', this.layout.width
+            'phantom:',
+            safeContentWidth + 'px',
+            'wrapper:',
+            wrapperElement.style.width,
+            'iframe:',
+            iframeElement.style.width,
+            'layout.width:',
+            this.layout.width
           );
 
           // Add trace after views.append
@@ -595,6 +581,11 @@ export class PreRenderingViewManager
     console.log(
       '[PreRenderingViewManager] render() called - delegating to DefaultViewManager'
     );
+
+    // Ensure overflow is explicitly set to hidden
+    this.settings.overflow = 'hidden';
+    this.overflow = 'hidden';
+
     // Call parent render first
     super.render(element, size);
 

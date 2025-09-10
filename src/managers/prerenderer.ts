@@ -1023,9 +1023,10 @@ export class BookPreRenderer {
                   return resolve(true);
                 }
               }
-            } catch (e) {
+            } catch {
               // ignore cross-origin access errors
             }
+
             elapsed += interval;
             if (elapsed >= timeout) {
               if (!settled) {
@@ -1039,7 +1040,7 @@ export class BookPreRenderer {
           };
 
           let timer = setTimeout(poll, interval) as unknown as number;
-        } catch (e) {
+        } catch {
           return resolve(false);
         }
       });
@@ -1186,7 +1187,10 @@ export class BookPreRenderer {
             const cleanup = () => {
               try {
                 frame.removeEventListener('load', onLoad);
-              } catch (e) {}
+              } catch {
+                // Ignore errors
+              }
+
               if (timer) clearTimeout(timer);
             };
 
@@ -1204,9 +1208,10 @@ export class BookPreRenderer {
                     return resolve(true);
                   }
                 }
-              } catch (e) {
+              } catch {
                 // ignore
               }
+
               elapsed += interval;
               if (elapsed >= timeout) {
                 if (!settled) {

@@ -1196,13 +1196,13 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         void err;
       }
       console.trace('[DefaultViewManager] clear stack trace');
-      
+
       // Skip clearing during prerendered attachment
       // Safe to use 'any' here since we're checking the name first
-      if (this.name === 'prerendering' && (this as unknown as { _attaching?: boolean })._attaching === true) {
-        console.debug(
-          '[DefaultViewManager] Skipping clear during prerendered attachment'
-        );
+      if (
+        this.name === 'prerendering' &&
+        (this as unknown as { _attaching?: boolean })._attaching === true
+      ) {
         return;
       }
     } catch {
@@ -1663,11 +1663,11 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         void err;
       }
       console.trace('[DefaultViewManager] updateLayout stack trace');
-      
+
       // Skip updating layout during prerendered attachment
       // Safe to use type cast here since we're checking the name first
       if (
-        this.name === 'prerendering' && 
+        this.name === 'prerendering' &&
         (this as unknown as { _attaching?: boolean })._attaching === true
       ) {
         console.debug(
@@ -1710,8 +1710,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
       // Set the look ahead offset for what is visible
       this.settings.offset = this.layout.delta / this.layout.divisor;
-
-      // this.stage.addStyleRules("iframe", [{"margin-right" : this.layout.gap + "px"}]);
     }
 
     // Set the dimensions for views
