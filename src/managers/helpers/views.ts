@@ -112,6 +112,30 @@ class Views {
   append(view: View) {
     this._views.push(view);
     if (this.container) {
+      try {
+        // Trace when views are appended to help debug layout invalidation
+        console.debug(
+          '[Views] append called for view.section:',
+          view.section && view.section.href
+        );
+        try {
+          // Use bracket notation to avoid `any` lint rules
+          // Use unknown cast to avoid explicit any
+          const w = window as unknown as Record<string, unknown>;
+          if (!Array.isArray(w['__prerender_trace'])) {
+            w['__prerender_trace'] = [];
+          }
+          (w['__prerender_trace'] as string[]).push(
+            'Views.append: ' + (view.section && view.section.href)
+          );
+        } catch (err) {
+          // ignore trace push errors
+          void err;
+        }
+        console.trace('[Views] append stack trace');
+      } catch {
+        // ignore
+      }
       // WARNING: appendChild() with iframe elements causes content loss!
       // For prerendered content, this DOM move will clear iframe content.
       // The prerenderer should handle content preservation/restoration.

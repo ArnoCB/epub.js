@@ -149,151 +149,52 @@ export class PreRenderingViewManager
             void err;
           }
 
-          // Create/update phantom element to match current chapter's content width
-          if (this.container) {
-            let phantomElement = this.container.querySelector(
-              '.epub-scroll-phantom'
-            ) as HTMLElement;
-
-            if (!phantomElement) {
-              phantomElement = document.createElement('div');
-              phantomElement.className = 'epub-scroll-phantom';
-              phantomElement.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 1px;
-                pointer-events: none;
-                visibility: hidden;
-                z-index: -1000;
-              `;
-              this.container.appendChild(phantomElement);
-            }
-
-            // Set phantom width to match the prerendered chapter width
-            // Get container width for proper setup
-            const containerWidth = this.container
-              ? this.container.clientWidth
-              : 900;
-
-            // For DefaultViewManager matching, use the actual content width
-            const fullContentWidth = 4500; // Fixed width to match DefaultViewManager
-
-            // Get viewport dimensions early
-            const viewDimensions = this.container
-              ? this.container.clientWidth
-              : 0;
-            const viewportHeight = this.container
-              ? this.container.clientHeight
-              : 0;
-
-            console.log(
-              '[PreRenderingViewManager] Setting up wrapper with widths:',
-              'container:',
-              containerWidth,
-              'view dimensions:',
-              viewDimensions,
-              'attached.width:',
-              attached.width,
-              'using fullContentWidth:',
-              fullContentWidth
-            );
-            phantomElement.style.width = `${fullContentWidth}px`;
-
-            // Force a reflow to ensure the phantom element takes effect
-            void phantomElement.offsetWidth;
-
-            console.log(
-              '[PreRenderingViewManager] Set phantom width to:',
-              fullContentWidth
-            );
-          }
-
           // COMPLETE LAYOUT MATCHING APPROACH USING IFRAME CLONING
           // Instead of moving the prerendered iframe (which loses content),
           // we'll create a completely new iframe and copy the content
-
+          
           // Create a fresh wrapper with iframe from scratch
           const wrapperElement = document.createElement('div');
           wrapperElement.classList.add('epub-view');
-          wrapperElement.setAttribute(
-            'ref',
-            this.views._views.length.toString()
-          );
-
+          wrapperElement.setAttribute('ref', this.views._views.length.toString());
+          
           // Size and style according to the view mode
           const isSpreadView = this.layout && this.layout.divisor > 1;
-          // Redeclare viewport dimensions to ensure they're in scope
           const viewportWidth = this.container ? this.container.clientWidth : 0;
-          const viewportHeight = this.container
-            ? this.container.clientHeight
-            : 0;
-
-          // Get the container width and viewport dimensions
-          const containerWidth = this.container
-            ? this.container.clientWidth
-            : 900;
-
-          console.log(
-            '[PreRenderingViewManager] Width values:',
-            'container:',
-            containerWidth,
-            'viewportWidth:',
-            viewportWidth,
-            'attached.width:',
-            attached.width,
-            'layout.width:',
-            this.layout.width
-          );
-
+          const viewportHeight = this.container ? this.container.clientHeight : 0;
+          
           if (isSpreadView) {
             // Set as half width for spread view
-            const columnWidth =
-              this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+            const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
             wrapperElement.style.width = `${columnWidth}px`;
             wrapperElement.style.height = `${viewportHeight}px`;
-
+            
             // Position left or right
             if (forceRight) {
-              const rightPosition =
-                this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+              const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
               const gapAdjustment = this.layout?.gap || 0;
               wrapperElement.style.left = `${rightPosition + gapAdjustment}px`;
             } else {
               wrapperElement.style.left = '0px';
             }
           } else {
-            // IMPORTANT: In DefaultViewManager both the wrapper and iframe get the same width
-            // We need to use the iframe width here, which is set below
-            wrapperElement.style.width = `${containerWidth}px`; // Start with container width
+            // Full width for single view
+            wrapperElement.style.width = `${viewportWidth}px`;
             wrapperElement.style.height = `${viewportHeight}px`;
             wrapperElement.style.left = '0px';
           }
-
+          
           // Common styles
           wrapperElement.style.overflow = 'hidden';
           wrapperElement.style.position = 'relative';
           wrapperElement.style.display = 'block';
           wrapperElement.style.flex = '0 0 auto';
           wrapperElement.style.visibility = 'visible';
-
+          
           // Create a new iframe
           const iframeElement = document.createElement('iframe');
           iframeElement.style.border = 'none';
-
-          // For the iframe width, we should match what the DefaultViewManager does
-          // DefaultViewManager uses safeContentWidth for both wrapper and iframe
-          const iframeWidth = Math.max(attached.width || 0, this.layout.width); // Use same calculation as phantom element
-          console.log(
-            '[PreRenderingViewManager] Setting iframe width to:',
-            iframeWidth
-          );
-
-          iframeElement.style.width = `${iframeWidth}px`;
-          
-          // IMPORTANT: In DefaultViewManager, the wrapper element width matches the iframe width
-          // Update the wrapper element's width to match the iframe width
-          wrapperElement.style.width = `${iframeWidth}px`;
+          iframeElement.style.width = `${attached.width}px`;
           iframeElement.style.height = `${attached.height}px`;
           iframeElement.style.overflow = 'hidden';
           iframeElement.style.background = 'transparent';
@@ -301,33 +202,26 @@ export class PreRenderingViewManager
           iframeElement.style.display = 'block';
           iframeElement.style.wordSpacing = '0px';
           iframeElement.style.lineHeight = 'normal';
-
+          
           // Set sandbox attributes
           iframeElement.setAttribute('sandbox', 'allow-same-origin');
-          if (
-            attached.view?.section?.properties &&
-            Array.isArray(attached.view.section.properties) &&
-            attached.view.section.properties.includes('scripted')
-          ) {
-            iframeElement.setAttribute(
-              'sandbox',
-              'allow-same-origin allow-scripts'
-            );
+          if (attached.view?.section?.properties && 
+              Array.isArray(attached.view.section.properties) && 
+              attached.view.section.properties.includes('scripted')) {
+            iframeElement.setAttribute('sandbox', 'allow-same-origin allow-scripts');
           }
-
+          
           // Position for spreads
           if (isSpreadView && forceRight && attached.pageCount > 1) {
-            const singlePageWidth = Math.floor(
-              attached.width / attached.pageCount
-            );
+            const singlePageWidth = Math.floor(attached.width / attached.pageCount);
             iframeElement.style.marginLeft = `-${singlePageWidth}px`;
           } else {
             iframeElement.style.marginLeft = '0px';
           }
-
+          
           // Add iframe to wrapper
           wrapperElement.appendChild(iframeElement);
-
+          
           // Get content
           let originalContent = '';
           if (attached.preservedContent) {
@@ -336,29 +230,19 @@ export class PreRenderingViewManager
             originalContent = attached.preservedSrcdoc;
           } else {
             try {
-              const originalIframe = attached.element.querySelector(
-                'iframe'
-              ) as HTMLIFrameElement;
+              const originalIframe = attached.element.querySelector('iframe') as HTMLIFrameElement;
               if (originalIframe) {
-                if (
-                  originalIframe.contentDocument &&
-                  originalIframe.contentDocument.documentElement
-                ) {
-                  originalContent =
-                    '<!DOCTYPE html>' +
-                    originalIframe.contentDocument.documentElement.outerHTML;
+                if (originalIframe.contentDocument && originalIframe.contentDocument.documentElement) {
+                  originalContent = '<!DOCTYPE html>' + originalIframe.contentDocument.documentElement.outerHTML;
                 } else if (originalIframe.srcdoc) {
                   originalContent = originalIframe.srcdoc;
                 }
               }
             } catch (e) {
-              console.warn(
-                '[PreRenderingViewManager] Error extracting content:',
-                e
-              );
+              console.warn('[PreRenderingViewManager] Error extracting content:', e);
             }
           }
-
+          
           // Set up content loading
           iframeElement.onload = () => {
             try {
@@ -369,14 +253,11 @@ export class PreRenderingViewManager
                 doc.close();
               }
             } catch (e) {
-              console.error(
-                '[PreRenderingViewManager] Error writing content to iframe:',
-                e
-              );
+              console.error('[PreRenderingViewManager] Error writing content to iframe:', e);
             }
           };
           iframeElement.src = 'about:blank';
-
+          
           // Update view references
           attached.view.element = wrapperElement;
           const iframeView = attached.view as any;
@@ -384,51 +265,14 @@ export class PreRenderingViewManager
             iframeView.iframe = iframeElement;
             iframeView.frame = iframeElement;
           }
-
+          
           // Attach to container
           if (this.container) {
             this.container.appendChild(wrapperElement);
           }
-
+          
           // Add the prerendered view to our views collection
           this.views.append(attached.view);
-
-          // Create/update phantom element to match current chapter's content width
-          // This ensures horizontal scrolling works properly
-          const contentWidth = attached.width || 0;
-          let phantomElement = this.container.querySelector(
-            '.epub-scroll-phantom'
-          ) as HTMLElement;
-
-          if (!phantomElement) {
-            phantomElement = document.createElement('div');
-            phantomElement.className = 'epub-scroll-phantom';
-            phantomElement.style.cssText = `
-              position: absolute;
-              top: 0;
-              left: 0;
-              height: 1px;
-              pointer-events: none;
-              visibility: hidden;
-              z-index: -1000;
-            `;
-            this.container.appendChild(phantomElement);
-          }
-
-          // Set phantom width to match content width - exactly match DefaultViewManager's approach
-          const safeContentWidth = Math.max(contentWidth, this.layout.width);
-          phantomElement.style.width = safeContentWidth + 'px';
-          
-          // Force a reflow to ensure the phantom element takes effect
-          void phantomElement.offsetWidth;
-
-          console.log(
-            '[PreRenderingViewManager] Created/updated elements with widths:',
-            'phantom:', safeContentWidth + 'px',
-            'wrapper:', wrapperElement.style.width,
-            'iframe:', iframeElement.style.width,
-            'layout.width:', this.layout.width
-          );
 
           // Add trace after views.append
           try {
@@ -560,14 +404,14 @@ export class PreRenderingViewManager
         '[PreRenderingViewManager] PRESERVING layout for prerendered view:',
         view.section?.href
       );
-
+      
       // Critical: emit the displayed event so the book knows the content is ready
       // but skip all the layout recalculations that would destroy our prerendered layout
       this.emit(EVENTS.MANAGERS.ADDED, view);
-
+      
       // Skip the layout processing entirely - this prevents the DefaultViewManager's
       // normal layout algorithms from destroying our carefully preserved prerendered layout
-
+      
       // IMPORTANT: Do not call super.afterDisplayed() for prerendered content
       return;
     }

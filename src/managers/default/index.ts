@@ -167,8 +167,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   render(element: HTMLElement, size?: { width: number; height: number }): void {
-    console.log('[DefaultViewManager] render() method called');
-
     const tag = element.tagName;
 
     if (
@@ -221,11 +219,8 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     this.stage.onOrientationChange(this.onOrientationChange.bind(this));
 
-    // Add Event Listeners
     this.addEventListeners();
 
-    // Add Layout method
-    // this.applyLayoutMethod();
     if (this.layout) {
       this.updateLayout();
     }
@@ -281,27 +276,9 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   onOrientationChange() {
-    const { orientation } = window;
-
     if (this.optsSettings.resizeOnOrientationChange) {
       this.resize();
     }
-
-    // Per ampproject:
-    // In IOS 10.3, the measured size of an element is incorrect if the
-    // element size depends on window size directly and the measurement
-    // happens in window.resize event. Adding a timeout for correct
-    // measurement. See https://github.com/ampproject/amphtml/issues/8479
-    clearTimeout(this.orientationTimeout);
-    this.orientationTimeout = setTimeout(() => {
-      this.orientationTimeout = undefined;
-
-      if (this.optsSettings.resizeOnOrientationChange) {
-        this.resize();
-      }
-
-      this.emit(EVENTS.MANAGERS.ORIENTATION_CHANGE, orientation);
-    }, 500);
   }
 
   onResized() {
@@ -328,31 +305,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       this._stageSize.width === stageSize.width &&
       this._stageSize.height === stageSize.height
     ) {
-      // Size is the same, no need to resize
       return;
     }
 
     this._stageSize = stageSize;
 
     this._bounds = this.bounds();
-
-    // Store current chapter before clearing views for redisplay after resize
-    let currentChapter: string | undefined;
-    if (this.views.length > 0) {
-      // Use the first visible view if available, otherwise fall back to first view
-      const visibleViews = this.views.displayed();
-      const currentView =
-        visibleViews.length > 0 ? visibleViews[0] : this.views.first();
-      if (currentView && currentView.section) {
-        currentChapter = currentView.section.href;
-        console.debug(
-          '[DefaultViewManager] resize detected current chapter:',
-          currentChapter,
-          'from',
-          visibleViews.length > 0 ? 'visible view' : 'first view'
-        );
-      }
-    }
 
     // Update for new views
     this.viewSettings.width = this._stageSize.width;
@@ -413,18 +371,11 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     const displaying = new defer();
     const displayed = displaying.promise;
 
-    console.log(`[DefaultViewManager] DISPLAY called for: ${section.href}`);
-
     // Check if moving to target is needed
     if (target === section.href || isNumber(target)) {
       target = undefined;
     }
 
-    // Use normal rendering
-    console.log(
-      '[DefaultViewManager] Using normal rendering for:',
-      section.href
-    );
     this.displaySection(section, target, displaying);
     return displayed;
   }
@@ -757,13 +708,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   async prepend(section: Section, forceRight: boolean = false) {
-    console.log('[DefaultViewManager] PREPEND called for:', section.href);
-
-    // Create new view
-    console.log(
-      '[DefaultViewManager] PREPEND CREATING NEW VIEW:',
-      section.href
-    );
     const view = this.createView(section, forceRight);
 
     // Check if view has event methods before using them
@@ -841,42 +785,12 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       // from a cover page or other non-linear section. Linear chapters (with
       // `linear: true`) should have proper navigation links between them.
       //
-      console.log('[DefaultViewManager] views collection:', this.views);
-      console.log('[DefaultViewManager] last view:', this.views.last());
-      console.log(
-        '[DefaultViewManager] last view section:',
-        this.views.last()?.section
-      );
-      console.log(
-        '[DefaultViewManager] section href:',
-        this.views.last()?.section?.href
-      );
-      console.log(
-        '[DefaultViewManager] section index:',
-        this.views.last()?.section?.index
-      );
 
       const currentSection = this.views.last()?.section;
-      console.log(
-        '[DefaultViewManager] current section has next method:',
-        typeof currentSection?.next === 'function'
-      );
-
       const nextSection = currentSection?.next();
-      console.log(
-        '[DefaultViewManager] no more scroll space, next section:',
-        nextSection?.href
-      );
-      console.log(
-        '[DefaultViewManager] current section:',
-        this.views.last()?.section?.href
-      );
 
       if (nextSection) {
         await this.loadNextSection(nextSection);
-        return;
-      } else {
-        console.log('[DefaultViewManager] reached end of book');
         return;
       }
     }
@@ -1010,11 +924,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       // Don't overshoot the maximum scrollLeft
       const remaining = Math.max(0, maxScrollLeft - this.container.scrollLeft);
       const move = Math.min(step, remaining);
-      console.debug(
-        '[DefaultViewManager] scrolling within section, move:',
-        move
-      );
-
       if (move > 0) {
         this.scrollBy(move, 0, true);
         this.rememberScrollPosition();
@@ -1023,10 +932,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     }
 
     const nextSection = this.views.last()?.section?.next();
-    console.debug(
-      '[DefaultViewManager] moving to next section:',
-      nextSection?.href
-    );
     return nextSection;
   }
 
@@ -1057,6 +962,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         return;
       }
     }
+
     return this.views.last()?.section?.next();
   }
 
@@ -1083,26 +989,14 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     // When at the beginning of the scroll area, move to the previous section if available
     const firstSection = this.views.first()?.section;
     if (!firstSection) {
-      console.debug(
-        '[DefaultViewManager] scrollBackwardLTR: no first section available'
-      );
       return;
     }
 
     const prevSection = firstSection.prev();
+
     if (!prevSection) {
-      console.debug(
-        '[DefaultViewManager] scrollBackwardLTR: reached beginning of book, no more previous sections'
-      );
       return;
     }
-
-    console.debug(
-      '[DefaultViewManager] scrollBackwardLTR: moving from',
-      firstSection.href,
-      'to',
-      prevSection.href
-    );
 
     return prevSection;
   }
@@ -1292,6 +1186,28 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   clear() {
+    try {
+      console.debug('[DefaultViewManager] clear() called');
+      try {
+        const w = window as unknown as Record<string, unknown>;
+        if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+        (w['__prerender_trace'] as string[]).push('DefaultViewManager.clear');
+      } catch (err) {
+        void err;
+      }
+      console.trace('[DefaultViewManager] clear stack trace');
+      
+      // Skip clearing during prerendered attachment
+      // Safe to use 'any' here since we're checking the name first
+      if (this.name === 'prerendering' && (this as unknown as { _attaching?: boolean })._attaching === true) {
+        console.debug(
+          '[DefaultViewManager] Skipping clear during prerendered attachment'
+        );
+        return;
+      }
+    } catch {
+      // ignore
+    }
     // this.q.clear();
 
     if (this.views) {
@@ -1491,22 +1407,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         }
       }
 
-      // Debug: Log the positioning calculation
-      console.debug('[DefaultViewManager] paginatedLocation debug:', {
-        href,
-        containerLeft: container.left,
-        left,
-        offset,
-        positionLeft: position.left,
-        positionRight: position.right,
-        pageWidth,
-        start,
-        end,
-        used,
-        containerScrollLeft: this.container.scrollLeft,
-        layoutWidth: this.layout.width,
-      });
-
       if (this.mapping === undefined) {
         throw new Error('Mapping is not defined');
       }
@@ -1546,12 +1446,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       } else {
         totalPages = this.layout.count(actualWidth).pages;
       }
-      console.debug(
-        '[DefaultViewManager] using layout-calculated page count:',
-        totalPages,
-        'for chapter:',
-        href
-      );
+
       let startPage = 0;
       let endPage = 0;
       const pages: number[] = [];
@@ -1604,13 +1499,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
             pages.push(pg);
           }
         }
-
-        // Debug: Log final page array
-        console.debug('[DefaultViewManager] final pages array:', {
-          href,
-          pages,
-          totalPages,
-        });
       }
 
       // Always return an object to satisfy the type annotation
@@ -1689,19 +1577,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   scrollTo(x: number, y: number, silent: boolean) {
-    console.debug(
-      '[DefaultViewManager] scrollTo called:',
-      'x=',
-      x,
-      'y=',
-      y,
-      'silent=',
-      silent,
-      'current scrollLeft=',
-      this.container.scrollLeft
-    );
-
-    // Add stack trace to identify what's calling scrollTo(0,0)
     if (x === 0 && y === 0 && this.container.scrollLeft > 0) {
       console.warn(
         '[DefaultViewManager] WARNING: scrollTo(0,0) called while scrollLeft >0, this will reset scroll position!'
@@ -1720,11 +1595,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       window.scrollTo(x, y);
     }
     this.scrolled = true;
-
-    console.debug(
-      '[DefaultViewManager] after scrollTo - new scrollLeft:',
-      this.container.scrollLeft
-    );
   }
 
   onScroll() {
@@ -1781,6 +1651,33 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   updateLayout() {
+    try {
+      console.debug('[DefaultViewManager] updateLayout() called');
+      try {
+        const w = window as unknown as Record<string, unknown>;
+        if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+        (w['__prerender_trace'] as string[]).push(
+          'DefaultViewManager.updateLayout'
+        );
+      } catch (err) {
+        void err;
+      }
+      console.trace('[DefaultViewManager] updateLayout stack trace');
+      
+      // Skip updating layout during prerendered attachment
+      // Safe to use type cast here since we're checking the name first
+      if (
+        this.name === 'prerendering' && 
+        (this as unknown as { _attaching?: boolean })._attaching === true
+      ) {
+        console.debug(
+          '[DefaultViewManager] Skipping updateLayout during prerendered attachment'
+        );
+        return;
+      }
+    } catch {
+      // ignore
+    }
     if (!this.stage) {
       return;
     }

@@ -7358,6 +7358,25 @@ function requireViews() {
     append(view) {
       this._views.push(view);
       if (this.container) {
+        try {
+          // Trace when views are appended to help debug layout invalidation
+          console.debug('[Views] append called for view.section:', view.section && view.section.href);
+          try {
+            // Use bracket notation to avoid `any` lint rules
+            // Use unknown cast to avoid explicit any
+            const w = window;
+            if (!Array.isArray(w['__prerender_trace'])) {
+              w['__prerender_trace'] = [];
+            }
+            w['__prerender_trace'].push('Views.append: ' + (view.section && view.section.href));
+          } catch (err) {
+            // ignore trace push errors
+            void err;
+          }
+          console.trace('[Views] append stack trace');
+        } catch {
+          // ignore
+        }
         // WARNING: appendChild() with iframe elements causes content loss!
         // For prerendered content, this DOM move will clear iframe content.
         // The prerenderer should handle content preservation/restoration.
@@ -9766,7 +9785,6 @@ function require_default() {
       }, this.request);
     }
     render(element, size) {
-      console.log('[DefaultViewManager] render() method called');
       const tag = element.tagName;
       if (typeof this.settings.fullsize === 'undefined' && tag && (tag.toLowerCase() == 'body' || tag.toLowerCase() == 'html')) {
         this.settings.fullsize = true;
@@ -9802,10 +9820,7 @@ function require_default() {
       // Will only attach if width and height are both fixed.
       this.stage.onResize(this.onResized.bind(this));
       this.stage.onOrientationChange(this.onOrientationChange.bind(this));
-      // Add Event Listeners
       this.addEventListeners();
-      // Add Layout method
-      // this.applyLayoutMethod();
       if (this.layout) {
         this.updateLayout();
       }
@@ -9847,25 +9862,9 @@ function require_default() {
       this.rendered = false;
     }
     onOrientationChange() {
-      const {
-        orientation
-      } = window;
       if (this.optsSettings.resizeOnOrientationChange) {
         this.resize();
       }
-      // Per ampproject:
-      // In IOS 10.3, the measured size of an element is incorrect if the
-      // element size depends on window size directly and the measurement
-      // happens in window.resize event. Adding a timeout for correct
-      // measurement. See https://github.com/ampproject/amphtml/issues/8479
-      clearTimeout(this.orientationTimeout);
-      this.orientationTimeout = setTimeout(() => {
-        this.orientationTimeout = undefined;
-        if (this.optsSettings.resizeOnOrientationChange) {
-          this.resize();
-        }
-        this.emit(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, orientation);
-      }, 500);
     }
     onResized() {
       this.resize();
@@ -9881,22 +9880,10 @@ function require_default() {
         return;
       }
       if (this._stageSize && this._stageSize.width === stageSize.width && this._stageSize.height === stageSize.height) {
-        // Size is the same, no need to resize
         return;
       }
       this._stageSize = stageSize;
       this._bounds = this.bounds();
-      // Store current chapter before clearing views for redisplay after resize
-      let currentChapter;
-      if (this.views.length > 0) {
-        // Use the first visible view if available, otherwise fall back to first view
-        const visibleViews = this.views.displayed();
-        const currentView = visibleViews.length > 0 ? visibleViews[0] : this.views.first();
-        if (currentView && currentView.section) {
-          currentChapter = currentView.section.href;
-          console.debug('[DefaultViewManager] resize detected current chapter:', currentChapter, 'from', visibleViews.length > 0 ? 'visible view' : 'first view');
-        }
-      }
       // Update for new views
       this.viewSettings.width = this._stageSize.width;
       this.viewSettings.height = this._stageSize.height;
@@ -9938,13 +9925,10 @@ function require_default() {
     display(section, target) {
       const displaying = new core_1.defer();
       const displayed = displaying.promise;
-      console.log(`[DefaultViewManager] DISPLAY called for: ${section.href}`);
       // Check if moving to target is needed
       if (target === section.href || (0, core_1.isNumber)(target)) {
         target = undefined;
       }
-      // Use normal rendering
-      console.log('[DefaultViewManager] Using normal rendering for:', section.href);
       this.displaySection(section, target, displaying);
       return displayed;
     }
@@ -10162,9 +10146,6 @@ function require_default() {
       return view.display(this.request).then(() => view);
     }
     async prepend(section, forceRight = false) {
-      console.log('[DefaultViewManager] PREPEND called for:', section.href);
-      // Create new view
-      console.log('[DefaultViewManager] PREPEND CREATING NEW VIEW:', section.href);
       const view = this.createView(section, forceRight);
       // Check if view has event methods before using them
       if (typeof view.on === 'function') {
@@ -10223,21 +10204,10 @@ function require_default() {
         // from a cover page or other non-linear section. Linear chapters (with
         // `linear: true`) should have proper navigation links between them.
         //
-        console.log('[DefaultViewManager] views collection:', this.views);
-        console.log('[DefaultViewManager] last view:', this.views.last());
-        console.log('[DefaultViewManager] last view section:', this.views.last()?.section);
-        console.log('[DefaultViewManager] section href:', this.views.last()?.section?.href);
-        console.log('[DefaultViewManager] section index:', this.views.last()?.section?.index);
         const currentSection = this.views.last()?.section;
-        console.log('[DefaultViewManager] current section has next method:', typeof currentSection?.next === 'function');
         const nextSection = currentSection?.next();
-        console.log('[DefaultViewManager] no more scroll space, next section:', nextSection?.href);
-        console.log('[DefaultViewManager] current section:', this.views.last()?.section?.href);
         if (nextSection) {
           await this.loadNextSection(nextSection);
-          return;
-        } else {
-          console.log('[DefaultViewManager] reached end of book');
           return;
         }
       }
@@ -10333,7 +10303,6 @@ function require_default() {
         // Don't overshoot the maximum scrollLeft
         const remaining = Math.max(0, maxScrollLeft - this.container.scrollLeft);
         const move = Math.min(step, remaining);
-        console.debug('[DefaultViewManager] scrolling within section, move:', move);
         if (move > 0) {
           this.scrollBy(move, 0, true);
           this.rememberScrollPosition();
@@ -10341,7 +10310,6 @@ function require_default() {
         }
       }
       const nextSection = this.views.last()?.section?.next();
-      console.debug('[DefaultViewManager] moving to next section:', nextSection?.href);
       return nextSection;
     }
     scrollForwardRTL(rtlScrollType) {
@@ -10387,15 +10355,12 @@ function require_default() {
       // When at the beginning of the scroll area, move to the previous section if available
       const firstSection = this.views.first()?.section;
       if (!firstSection) {
-        console.debug('[DefaultViewManager] scrollBackwardLTR: no first section available');
         return;
       }
       const prevSection = firstSection.prev();
       if (!prevSection) {
-        console.debug('[DefaultViewManager] scrollBackwardLTR: reached beginning of book, no more previous sections');
         return;
       }
-      console.debug('[DefaultViewManager] scrollBackwardLTR: moving from', firstSection.href, 'to', prevSection.href);
       return prevSection;
     }
     scrollBackwardRTL(rtlScrollType) {
@@ -10511,6 +10476,25 @@ function require_default() {
       return null;
     }
     clear() {
+      try {
+        console.debug('[DefaultViewManager] clear() called');
+        try {
+          const w = window;
+          if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+          w['__prerender_trace'].push('DefaultViewManager.clear');
+        } catch (err) {
+          void err;
+        }
+        console.trace('[DefaultViewManager] clear stack trace');
+        // Skip clearing during prerendered attachment
+        // Safe to use 'any' here since we're checking the name first
+        if (this.name === 'prerendering' && this._attaching === true) {
+          console.debug('[DefaultViewManager] Skipping clear during prerendered attachment');
+          return;
+        }
+      } catch {
+        // ignore
+      }
       // this.q.clear();
       if (this.views) {
         try {
@@ -10665,21 +10649,6 @@ function require_default() {
             pageWidth = end - start;
           }
         }
-        // Debug: Log the positioning calculation
-        console.debug('[DefaultViewManager] paginatedLocation debug:', {
-          href,
-          containerLeft: container.left,
-          left,
-          offset,
-          positionLeft: position.left,
-          positionRight: position.right,
-          pageWidth,
-          start,
-          end,
-          used,
-          containerScrollLeft: this.container.scrollLeft,
-          layoutWidth: this.layout.width
-        });
         if (this.mapping === undefined) {
           throw new Error('Mapping is not defined');
         }
@@ -10703,7 +10672,6 @@ function require_default() {
         } else {
           totalPages = this.layout.count(actualWidth).pages;
         }
-        console.debug('[DefaultViewManager] using layout-calculated page count:', totalPages, 'for chapter:', href);
         let startPage = 0;
         let endPage = 0;
         const pages = [];
@@ -10749,12 +10717,6 @@ function require_default() {
               pages.push(pg);
             }
           }
-          // Debug: Log final page array
-          console.debug('[DefaultViewManager] final pages array:', {
-            href,
-            pages,
-            totalPages
-          });
         }
         // Always return an object to satisfy the type annotation
         return {
@@ -10807,8 +10769,6 @@ function require_default() {
       this.scrolled = true;
     }
     scrollTo(x, y, silent) {
-      console.debug('[DefaultViewManager] scrollTo called:', 'x=', x, 'y=', y, 'silent=', silent, 'current scrollLeft=', this.container.scrollLeft);
-      // Add stack trace to identify what's calling scrollTo(0,0)
       if (x === 0 && y === 0 && this.container.scrollLeft > 0) {
         console.warn('[DefaultViewManager] WARNING: scrollTo(0,0) called while scrollLeft >0, this will reset scroll position!');
         console.trace('Call stack:');
@@ -10823,7 +10783,6 @@ function require_default() {
         window.scrollTo(x, y);
       }
       this.scrolled = true;
-      console.debug('[DefaultViewManager] after scrollTo - new scrollLeft:', this.container.scrollLeft);
     }
     onScroll() {
       let scrollTop;
@@ -10868,6 +10827,25 @@ function require_default() {
       // this.manager.layout(this.layout.format);
     }
     updateLayout() {
+      try {
+        console.debug('[DefaultViewManager] updateLayout() called');
+        try {
+          const w = window;
+          if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+          w['__prerender_trace'].push('DefaultViewManager.updateLayout');
+        } catch (err) {
+          void err;
+        }
+        console.trace('[DefaultViewManager] updateLayout stack trace');
+        // Skip updating layout during prerendered attachment
+        // Safe to use type cast here since we're checking the name first
+        if (this.name === 'prerendering' && this._attaching === true) {
+          console.debug('[DefaultViewManager] Skipping updateLayout during prerendered attachment');
+          return;
+        }
+      } catch {
+        // ignore
+      }
       if (!this.stage) {
         return;
       }
@@ -11223,87 +11201,52 @@ function requirePrerenderer() {
     }
     async renderView(view, chapter) {
       const href = chapter.section.href;
-      console.debug('[BookPreRenderer] renderView started for:', href);
       try {
-        // Temporarily attach to offscreen container for rendering
-        console.debug('[BookPreRenderer] attaching to offscreen container:', href);
+        // Attach to offscreen container for rendering
         this.offscreenContainer.appendChild(chapter.element);
-        console.debug('[BookPreRenderer] calling view.display for:', href);
+        // Render the view
         const renderedView = await view.display(this.request);
-        console.debug('[BookPreRenderer] view.display completed for:', href);
-        // If layout information is present, format the contents for the column size
-        const layout = this.viewSettings.layout;
-        if (layout && layout._flow === 'paginated') {
-          try {
-            console.debug('[BookPreRenderer] formatting contents for layout columns:', layout.columnWidth, 'x', layout.height);
-            console.debug('[BookPreRenderer] layout details:', {
-              width: layout.width,
-              height: layout.height,
-              columnWidth: layout.columnWidth,
-              gap: layout.gap,
-              flow: layout._flow,
-              viewSettingsWidth: this.viewSettings.width,
-              viewSettingsHeight: this.viewSettings.height
-            });
-            // Use columns to size content using layout's calculated dimensions for proper pagination
-            if (view.contents && typeof view.contents.columns === 'function') {
-              // Use the layout's calculated columnWidth for proper pagination
-              const columnWidth = this.viewSettings.layout?.columnWidth || this.viewSettings.width;
-              const gap = this.viewSettings.layout?.gap || 0;
-              console.log('[BookPreRenderer] applying contents.columns formatting with layout dimensions', 'containerWidth:', this.viewSettings.width, 'columnWidth:', columnWidth, 'gap:', gap);
-              view.contents.columns(this.viewSettings.width, this.viewSettings.height, columnWidth,
-              // Use layout's calculated column width for proper pagination
-              gap,
-              // Use layout's calculated gap
-              layout.settings?.direction || 'ltr');
-            } else if (view.contents && typeof view.contents.fit === 'function') {
-              console.debug('[BookPreRenderer] applying contents.fit formatting');
-              view.contents.fit(layout.columnWidth, layout.height, chapter.section);
-            } else {
-              console.debug('[BookPreRenderer] no contents formatting method available');
+        // Add visual marker to show this is prerendered content
+        try {
+          const iframe = chapter.element.querySelector('iframe');
+          if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
+            const body = iframe.contentDocument.body;
+            // Create marker if not already present
+            const existing = iframe.contentDocument.querySelector("span[data-prerendered='true']");
+            if (!existing) {
+              const marker = iframe.contentDocument.createElement('span');
+              marker.setAttribute('data-prerendered', 'true');
+              marker.style.cssText = 'color: red; font-weight: bold; background: yellow; padding: 2px; margin-right: 8px; display:inline-block;';
+              marker.textContent = '★ [PRERENDERED]';
+              // Insert at the very start of the body (works whether or not firstChild exists)
+              body.insertBefore(marker, body.firstChild || null);
+              console.log('[BookPreRenderer] Added prerendered marker to:', href);
             }
-            // After formatting, try to measure the full content width (textWidth)
-            let contentWidth;
-            try {
-              if (view.contents && view.contents.textWidth) {
-                contentWidth = view.contents.textWidth();
-              }
-            } catch (e) {
-              console.debug('[BookPreRenderer] could not get textWidth:', e);
-            }
-            chapter.width = contentWidth || layout.columnWidth;
-            chapter.height = layout.height;
-            console.debug('[BookPreRenderer] measured content width after formatting:', chapter.width);
-          } catch (e) {
-            console.debug('[BookPreRenderer] could not format contents with layout:', e);
           }
-        } else {
-          console.debug('[BookPreRenderer] checking textWidth for:', href);
-          if (view.contents && view.contents.textWidth) {
-            chapter.width = Math.max(view.contents.textWidth(), this.viewSettings.width);
-            console.debug('[BookPreRenderer] textWidth calculated for:', href, 'width:', chapter.width);
-          } else {
-            console.debug('[BookPreRenderer] no textWidth available for:', href);
-          }
+        } catch (e) {
+          console.debug('[BookPreRenderer] Could not add prerendered marker:', e);
         }
-        console.debug('[BookPreRenderer] calling analyzeContent for:', href);
+        // Measure content dimensions after rendering
+        if (view.contents && view.contents.textWidth) {
+          chapter.width = view.contents.textWidth();
+          console.debug('[BookPreRenderer] measured width:', chapter.width);
+        } else {
+          chapter.width = this.viewSettings.width;
+        }
+        chapter.height = this.viewSettings.height;
+        // Analyze and preserve content
         this.analyzeContent(chapter);
-        console.debug('[BookPreRenderer] analyzeContent completed for:', href);
-        // Preserve initial content after successful rendering
-        console.debug('[BookPreRenderer] preserving content for:', href);
-        this.preserveChapterContent(chapter);
-        console.debug('[BookPreRenderer] content preservation completed for:', href);
-        // Move to unattached storage for long-term storage (hybrid approach)
+        // Ensure preservation waits for iframe readiness before reading document
+        await this.preserveChapterContent(chapter);
+        // Move to unattached storage
         if (chapter.element.parentNode === this.offscreenContainer) {
-          console.debug('[BookPreRenderer] removing from offscreen container:', href);
           this.offscreenContainer.removeChild(chapter.element);
         }
-        console.debug('[BookPreRenderer] moving to unattached storage:', href);
         this.unattachedStorage.appendChild(chapter.element);
         console.debug('[BookPreRenderer] renderView SUCCESS for:', href);
         return renderedView;
       } catch (error) {
-        console.error('[BookPreRenderer] renderView FAILED for:', href, 'error:', error);
+        console.error('[BookPreRenderer] renderView FAILED for:', href, error);
         if (chapter.element.parentNode === this.offscreenContainer) {
           this.offscreenContainer.removeChild(chapter.element);
         }
@@ -11335,7 +11278,6 @@ function requirePrerenderer() {
               // otherwise fall back to container width
               const layoutColumnWidth = this.viewSettings.layout?.columnWidth;
               const viewportWidth = layoutColumnWidth || this.viewSettings.width;
-              console.log('[BookPreRenderer] paginated flow - contentWidth:', contentWidth, 'viewportWidth:', viewportWidth, 'layout.columnWidth:', layoutColumnWidth, 'viewSettings.width:', this.viewSettings.width, 'viewSettings.height:', this.viewSettings.height);
               // Use a fixed tolerance instead of percentage-based
               const tolerance = 10; // Fixed 10px tolerance for measurement inaccuracies
               if (contentWidth > viewportWidth + tolerance) {
@@ -11459,17 +11401,353 @@ function requirePrerenderer() {
       };
     }
     /**
+     * Capture a comprehensive debug snapshot usable by external tests.
+     * Returns a plain JSON-serializable object describing the viewer DOM,
+     * any iframes inside it, and the pre-renderer's internal debug/status info.
+     */
+    captureDebugSnapshot() {
+      // Local snapshot shapes (kept untyped here to avoid function-scoped declarations)
+      // FrameSnapshot and ChildNodeSnapshot shape information is intentionally
+      // documented but not declared as interfaces inside the function.
+      const out = {};
+      try {
+        const viewer = document.getElementById('viewer');
+        out.viewerExists = !!viewer;
+        out.children = [];
+        if (viewer) {
+          const nodes = Array.from(viewer.childNodes).map((node, idx) => {
+            const n = node;
+            const obj = {
+              index: idx,
+              nodeType: n.nodeType,
+              nodeName: n.nodeName,
+              classList: n.classList ? Array.from(n.classList) : [],
+              outerHTMLSnippet: n.outerHTML ? n.outerHTML.slice(0, 500) : null,
+              iframes: []
+            };
+            if (node.getBoundingClientRect) {
+              try {
+                const r = node.getBoundingClientRect();
+                obj.rect = {
+                  width: r.width,
+                  height: r.height,
+                  top: r.top,
+                  left: r.left
+                };
+              } catch (e) {
+                // ignore
+              }
+            }
+            const iframes = node.querySelectorAll ? node.querySelectorAll('iframe') : null;
+            if (iframes) {
+              iframes.forEach(iframe => {
+                const frameObj = {
+                  src: iframe.getAttribute('src') || null,
+                  srcdoc: iframe.getAttribute('srcdoc') ? iframe.getAttribute('srcdoc') : null,
+                  style: iframe.getAttribute('style') || null,
+                  widthAttr: iframe.getAttribute('width') || null,
+                  heightAttr: iframe.getAttribute('height') || null,
+                  bounding: null,
+                  clientWidth: iframe.clientWidth,
+                  clientHeight: iframe.clientHeight,
+                  scrollWidth: iframe.scrollWidth,
+                  scrollHeight: iframe.scrollHeight,
+                  accessibleBodyTextLength: null,
+                  bodyHtmlSample: null
+                };
+                try {
+                  const doc = iframe.contentDocument;
+                  if (doc && doc.body) {
+                    try {
+                      frameObj.accessibleBodyTextLength = (doc.body.textContent || '').length;
+                      frameObj.bodyHtmlSample = (doc.body.innerHTML || '').slice(0, 200);
+                    } catch (e) {
+                      frameObj.accessibleBodyTextLength = 'inaccessible: ' + (e?.message || String(e));
+                    }
+                  }
+                } catch (e) {
+                  frameObj.accessibleBodyTextLength = 'inaccessible: ' + (e?.message || String(e));
+                }
+                try {
+                  const r = iframe.getBoundingClientRect();
+                  frameObj.bounding = {
+                    width: r.width,
+                    height: r.height,
+                    top: r.top,
+                    left: r.left
+                  };
+                } catch (e) {
+                  // ignore
+                }
+                obj.iframes.push(frameObj);
+              });
+            }
+            return obj;
+          });
+          out.children = nodes;
+        }
+        // Add pre-renderer debug info and status
+        try {
+          out.preRenderer = this.getDebugInfo ? this.getDebugInfo() : null;
+          out.preRendererStatus = this.getStatus ? this.getStatus() : null;
+        } catch (e) {
+          out.preRendererError = e?.message || String(e);
+        }
+        // Add basic rendition info if available globally
+        try {
+          const rendition = window.getRendition && window.getRendition();
+          if (rendition && rendition.manager) {
+            out.rendition = {
+              managerName: rendition.manager.name,
+              layoutName: rendition.manager.layout && rendition.manager.layout.name,
+              settings: rendition.manager.settings || null
+            };
+          }
+        } catch (e) {
+          out.rendition = {
+            error: e?.message || String(e)
+          };
+        }
+        // Capture detailed info for unattached prerendered chapters
+        try {
+          const chaptersDetailed = [];
+          Array.from(this.chapters.values()).forEach(chapter => {
+            try {
+              const info = {
+                href: chapter.section?.href || null,
+                attached: !!chapter.attached,
+                width: chapter.width,
+                height: chapter.height,
+                pageCount: chapter.pageCount,
+                pageMap: chapter.pageMap || null,
+                hasWhitePages: chapter.hasWhitePages || false
+              };
+              // preserved content hints
+              info.preservedSrcdocLength = chapter.preservedSrcdoc ? chapter.preservedSrcdoc.length : 0;
+              info.preservedContentLength = chapter.preservedContent ? chapter.preservedContent.length : 0;
+              // Try to inspect any iframe inside the chapter.element (may be in unattached storage)
+              try {
+                const iframe = chapter.element ? chapter.element.querySelector('iframe') : null;
+                if (iframe) {
+                  const frameInfo = {
+                    src: iframe.getAttribute('src') || null,
+                    srcdoc: iframe.getAttribute('srcdoc') ? true : false,
+                    clientWidth: iframe.clientWidth,
+                    clientHeight: iframe.clientHeight,
+                    scrollWidth: iframe.scrollWidth,
+                    scrollHeight: iframe.scrollHeight
+                  };
+                  try {
+                    const doc = iframe.contentDocument;
+                    if (doc && doc.body) {
+                      frameInfo.bodyTextLength = (doc.body.textContent || '').trim().length;
+                      frameInfo.bodyHtmlSample = (doc.body.innerHTML || '').slice(0, 200);
+                      // include a small sample of measurable elements
+                      frameInfo.images = Array.from(doc.images || []).map(im => im.getAttribute('src') || null).slice(0, 5);
+                      frameInfo.links = Array.from(doc.querySelectorAll('a') || []).slice(0, 5).map(a => ({
+                        href: a.href || null,
+                        text: (a.textContent || '').slice(0, 40)
+                      }));
+                    }
+                  } catch (e) {
+                    frameInfo.accessible = false;
+                    frameInfo.accessError = e?.message || String(e);
+                  }
+                  info.iframe = frameInfo;
+                }
+              } catch (e) {
+                info.iframeError = e?.message || String(e);
+              }
+              chaptersDetailed.push(info);
+            } catch (e) {
+              chaptersDetailed.push({
+                error: e?.message || String(e)
+              });
+            }
+          });
+          out.preRendererChaptersDetailed = chaptersDetailed;
+        } catch (e) {
+          out.preRendererChaptersDetailedError = e?.message || String(e);
+        }
+      } catch (e) {
+        return {
+          error: e?.message || String(e)
+        };
+      }
+      return out;
+    }
+    /**
+     * A very small, robust snapshot variant intended only for tests that
+     * need a minimal JSON-serializable view of the viewer + unattached chapters.
+     * Keeps shapes simple and avoids heavy inspection that can trigger cross-origin errors.
+     */
+    captureDebugSnapshotSimple() {
+      const snapshot = {};
+      try {
+        const viewer = document.getElementById('viewer');
+        snapshot.viewerExists = !!viewer;
+        snapshot.children = [];
+        if (viewer) {
+          Array.from(viewer.childNodes).forEach((node, idx) => {
+            const el = node;
+            const item = {
+              index: idx,
+              nodeName: node.nodeName
+            };
+            item.iframes = [];
+            const iframes = el && el.querySelectorAll ? el.querySelectorAll('iframe') : null;
+            if (iframes) {
+              iframes.forEach(iframe => {
+                const f = {
+                  src: iframe.getAttribute('src') || null,
+                  hasSrcdoc: iframe.getAttribute('srcdoc') ? true : false
+                };
+                try {
+                  const doc = iframe.contentDocument;
+                  if (doc && doc.body) {
+                    f.bodyTextLength = (doc.body.textContent || '').trim().length;
+                    f.accessible = true;
+                  } else {
+                    f.accessible = false;
+                  }
+                } catch (e) {
+                  f.accessible = false;
+                  f.accessError = e?.message || String(e);
+                }
+                item.iframes.push(f);
+              });
+            }
+            snapshot.children.push(item);
+          });
+        }
+        // Minimal chapter listing
+        snapshot.preRendererChapters = [];
+        Array.from(this.chapters.values()).forEach(chapter => {
+          try {
+            const c = {
+              href: chapter.section?.href || null,
+              attached: !!chapter.attached,
+              // Whether the chapter.element is currently attached to the document
+              elementAttached: !!chapter.element && document.contains(chapter.element),
+              width: chapter.width,
+              height: chapter.height,
+              pageCount: chapter.pageCount,
+              preservedSrcdocLength: chapter.preservedSrcdoc ? chapter.preservedSrcdoc.length : 0
+            };
+            const iframe = chapter.element ? chapter.element.querySelector('iframe') : null;
+            if (iframe) {
+              try {
+                const doc = iframe.contentDocument;
+                if (doc && doc.body) {
+                  c.iframeBodyTextLength = (doc.body.textContent || '').trim().length;
+                  c.iframeAccessible = true;
+                } else {
+                  c.iframeAccessible = false;
+                }
+              } catch (e) {
+                c.iframeAccessible = false;
+                c.iframeAccessError = e?.message || String(e);
+              }
+            } else {
+              c.iframeExists = false;
+            }
+            snapshot.preRendererChapters.push(c);
+          } catch (e) {
+            snapshot.preRendererChapters.push({
+              error: e?.message || String(e)
+            });
+          }
+        });
+        return snapshot;
+      } catch (e) {
+        return {
+          error: e?.message || String(e)
+        };
+      }
+    }
+    /**
      * Preserve iframe content to prevent loss during DOM moves
      */
-    preserveChapterContent(chapter) {
+    async preserveChapterContent(chapter) {
       const iframe = chapter.element.querySelector('iframe');
       if (!iframe) return;
+      // Helper: wait for iframe to report readyState 'complete' or for load event
+      const waitForIframeReady = (frame, timeout = 1000) => new Promise(resolve => {
+        try {
+          const doc = frame.contentDocument;
+          if (doc && doc.readyState === 'complete') return resolve(true);
+          let settled = false;
+          const onLoad = () => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve(true);
+          };
+          const cleanup = () => {
+            try {
+              frame.removeEventListener('load', onLoad);
+            } catch (e) {}
+            if (timer) clearTimeout(timer);
+          };
+          frame.addEventListener('load', onLoad);
+          // Poll readyState as a fallback for cases where load isn't fired
+          const interval = 50;
+          let elapsed = 0;
+          const poll = () => {
+            try {
+              const d = frame.contentDocument;
+              if (d && d.readyState === 'complete') {
+                if (!settled) {
+                  settled = true;
+                  cleanup();
+                  return resolve(true);
+                }
+              }
+            } catch (e) {
+              // ignore cross-origin access errors
+            }
+            elapsed += interval;
+            if (elapsed >= timeout) {
+              if (!settled) {
+                settled = true;
+                cleanup();
+                return resolve(false);
+              }
+            } else {
+              timer = setTimeout(poll, interval);
+            }
+          };
+          let timer = setTimeout(poll, interval);
+        } catch (e) {
+          return resolve(false);
+        }
+      });
       try {
-        // Preserve srcdoc attribute
+        // Preserve srcdoc attribute immediately where available
         chapter.preservedSrcdoc = iframe.srcdoc;
-        // Preserve full document content
-        if (iframe.contentDocument?.documentElement) {
-          chapter.preservedContent = iframe.contentDocument.documentElement.outerHTML;
+        // Wait briefly for iframe document to become available/complete before reading
+        const ready = await waitForIframeReady(iframe, 1000);
+        if (ready) {
+          try {
+            if (iframe.contentDocument?.documentElement) {
+              chapter.preservedContent = iframe.contentDocument.documentElement.outerHTML;
+            }
+          } catch (e) {
+            // reading may fail for cross-origin or other reasons
+            console.debug('[BookPreRenderer] preserveChapterContent: could not read contentDocument after ready', e);
+          }
+        }
+        // Ensure preserved content includes our visual marker so clones/restores show it
+        const ensureMarkerInHtml = html => {
+          if (!html) return html;
+          if (html.indexOf('★ [PRERENDERED]') !== -1) return html;
+          return html.replace(/<body([^>]*)>/i, `<body$1><span data-prerendered="true" style="color:red;font-weight:bold;background:yellow;padding:2px;margin-right:8px;display:inline-block;">★ [PRERENDERED]</span>`);
+        };
+        if (chapter.preservedSrcdoc) {
+          chapter.preservedSrcdoc = ensureMarkerInHtml(chapter.preservedSrcdoc);
+        }
+        if (chapter.preservedContent) {
+          chapter.preservedContent = ensureMarkerInHtml(chapter.preservedContent);
         }
       } catch (e) {
         console.debug('[BookPreRenderer] could not preserve iframe content:', e);
@@ -11490,17 +11768,20 @@ function requirePrerenderer() {
         if (!hasValidContent && (chapter.preservedSrcdoc || chapter.preservedContent)) {
           console.debug('[BookPreRenderer] restoring iframe content for:', chapter.section.href);
           if (chapter.preservedSrcdoc) {
-            iframe.srcdoc = chapter.preservedSrcdoc;
+            // Use preserved srcdoc (already ensured to contain marker during preservation)
+            const markedContent = chapter.preservedSrcdoc;
+            iframe.srcdoc = markedContent;
             // Force reload to ensure content is properly set
             iframe.src = 'about:blank';
             setTimeout(() => {
               iframe.removeAttribute('src');
-              iframe.srcdoc = chapter.preservedSrcdoc;
+              iframe.srcdoc = markedContent;
             }, 0);
           } else if (chapter.preservedContent) {
             // Fallback: use document.write method
             if (iframe.contentDocument) {
               iframe.contentDocument.open();
+              // preservedContent was normalized during preserve to include marker
               iframe.contentDocument.write(chapter.preservedContent);
               iframe.contentDocument.close();
             }
@@ -11517,7 +11798,7 @@ function requirePrerenderer() {
      * Public helper to attempt restore for a chapter by href and validate result
      * Returns true if content is present after restore, false otherwise
      */
-    tryRestoreContent(sectionHref) {
+    async tryRestoreContent(sectionHref) {
       const chapter = this.chapters.get(sectionHref);
       if (!chapter) {
         console.debug('[BookPreRenderer] tryRestoreContent: chapter not found', sectionHref);
@@ -11526,16 +11807,68 @@ function requirePrerenderer() {
       try {
         console.debug('[BookPreRenderer] tryRestoreContent: attempting restore for', sectionHref);
         const restored = this.restoreChapterContent(chapter);
-        // Validate iframe content
+        // Helper to wait for iframe readiness after restore
+        const waitForIframeReady = (frame, timeout = 1000) => new Promise(resolve => {
+          if (!frame) return resolve(false);
+          try {
+            const doc = frame.contentDocument;
+            if (doc && doc.readyState === 'complete') return resolve(true);
+            let settled = false;
+            const onLoad = () => {
+              if (settled) return;
+              settled = true;
+              cleanup();
+              resolve(true);
+            };
+            const cleanup = () => {
+              try {
+                frame.removeEventListener('load', onLoad);
+              } catch (e) {}
+              if (timer) clearTimeout(timer);
+            };
+            frame.addEventListener('load', onLoad);
+            const interval = 50;
+            let elapsed = 0;
+            const poll = () => {
+              try {
+                const d = frame.contentDocument;
+                if (d && d.readyState === 'complete') {
+                  if (!settled) {
+                    settled = true;
+                    cleanup();
+                    return resolve(true);
+                  }
+                }
+              } catch (e) {
+                // ignore
+              }
+              elapsed += interval;
+              if (elapsed >= timeout) {
+                if (!settled) {
+                  settled = true;
+                  cleanup();
+                  return resolve(false);
+                }
+              } else {
+                timer = setTimeout(poll, interval);
+              }
+            };
+            let timer = setTimeout(poll, interval);
+          } catch (e) {
+            return resolve(false);
+          }
+        });
+        // Validate iframe content after waiting a short while for loads
         const iframe = chapter.element.querySelector('iframe');
+        const ready = await waitForIframeReady(iframe, 1000);
         let hasValidContent = false;
         try {
           if (iframe && iframe.contentDocument) {
             const body = iframe.contentDocument.body;
             const txt = body ? (body.textContent || '').trim() : '';
             const html = body ? (body.innerHTML || '').trim() : '';
-            const ready = iframe.contentDocument.readyState === 'complete';
-            hasValidContent = ready && (txt.length > 0 || html.length > 0 || chapter.hasWhitePages);
+            const isReady = iframe.contentDocument.readyState === 'complete';
+            hasValidContent = isReady && (txt.length > 0 || html.length > 0 || chapter.hasWhitePages);
           }
         } catch (e) {
           console.debug('[BookPreRenderer] tryRestoreContent: cannot access iframe content due to cross-origin or other error', e);
@@ -11543,6 +11876,7 @@ function requirePrerenderer() {
         }
         console.debug('[BookPreRenderer] tryRestoreContent result for', sectionHref, {
           restored,
+          ready,
           hasValidContent
         });
         return hasValidContent || restored;
@@ -11556,6 +11890,14 @@ function requirePrerenderer() {
       if (!chapter) {
         console.warn('[BookPreRenderer] chapter not found for attachment:', sectionHref);
         return null;
+      }
+      // Record attach attempt in global trace for debugging
+      try {
+        const w = window;
+        if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+        w['__prerender_trace'].push('BookPreRenderer.attach:start: ' + sectionHref);
+      } catch {
+        // ignore
       }
       // If chapter is still being rendered, return null (let caller retry)
       if (this.renderingPromises.has(sectionHref)) {
@@ -11682,6 +12024,13 @@ function requirePrerenderer() {
         displayWrapper.appendChild(newIframe);
         // Do NOT mutate the original prerendered chapter or its view/element - keep it in unattachedStorage
         console.log(`[BookPreRenderer] clone created for attach (preserved original left intact): ${sectionHref}`);
+        try {
+          const w = window;
+          if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+          w['__prerender_trace'].push('BookPreRenderer.attach:clone_created: ' + sectionHref);
+        } catch {
+          // ignore
+        }
         // Create a proper IframeView instance for the cloned element
         // This ensures all IframeView methods like setLayout() are available
         const clonedView = this.viewRenderer.createView(chapter.section);
@@ -11778,7 +12127,79 @@ function requirePrerenderer() {
         }
         // Notify listeners about the cloned view being available (non-destructive)
         try {
-          this.emit(constants_1.EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
+          // Emit DISPLAYED once the clone iframe reports loaded/ready.
+          const emitDisplayedWhenReady = frame => {
+            try {
+              let settled = false;
+              const onLoad = () => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                try {
+                  attachedChapter.attached = true;
+                  try {
+                    const w = window;
+                    if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+                    w['__prerender_trace'].push('BookPreRenderer.emitDisplayed: ' + sectionHref);
+                  } catch {
+                    // ignore
+                  }
+                  this.emit(constants_1.EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
+                } catch (err) {
+                  console.debug('[BookPreRenderer] error emitting DISPLAYED after load:', err);
+                }
+              };
+              const cleanup = () => {
+                try {
+                  frame.removeEventListener('load', onLoad);
+                } catch {
+                  // ignore
+                }
+                if (timer) clearTimeout(timer);
+              };
+              frame.addEventListener('load', onLoad);
+              // Fallback: poll readyState for up to 1000ms
+              const interval = 50;
+              let elapsed = 0;
+              const poll = () => {
+                try {
+                  const d = frame.contentDocument;
+                  if (d && d.readyState === 'complete') {
+                    onLoad();
+                    return;
+                  }
+                } catch {
+                  // ignore cross-origin access errors
+                }
+                elapsed += interval;
+                if (elapsed >= 1000) {
+                  // timeout - still emit but mark as possibly incomplete
+                  if (!settled) {
+                    settled = true;
+                    cleanup();
+                    try {
+                      attachedChapter.attached = true;
+                      this.emit(constants_1.EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
+                    } catch (err) {
+                      console.debug('[BookPreRenderer] error emitting DISPLAYED after timeout:', err);
+                    }
+                  }
+                } else {
+                  timer = setTimeout(poll, interval);
+                }
+              };
+              let timer = setTimeout(poll, interval);
+            } catch {
+              // If anything goes wrong, emit immediately as a fallback
+              try {
+                attachedChapter.attached = true;
+                this.emit(constants_1.EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
+              } catch (err2) {
+                console.debug('[BookPreRenderer] emitDisplayedWhenReady fallback failed:', err2);
+              }
+            }
+          };
+          emitDisplayedWhenReady(newIframe);
         } catch (e) {
           console.debug(`[BookPreRenderer] error emitting DISPLAYED for clone: ${e}`);
         }
@@ -11842,6 +12263,7 @@ function requirePrerendering() {
     exports.BookPreRenderer = exports.PreRenderingViewManager = void 0;
     const default_1 = __importDefault(require_default());
     const prerenderer_1 = __importDefault(requirePrerenderer());
+    const constants_1 = requireConstants();
     /**
      * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
      *
@@ -11852,17 +12274,19 @@ function requirePrerendering() {
     class PreRenderingViewManager extends default_1.default {
       // Public getter for compatibility with examples
       get preRenderer() {
-        return this.myPreRenderer;
+        return this._preRenderer;
       }
       constructor(options) {
         console.log('[PreRenderingViewManager] ✅ CREATING PRERENDERING MANAGER');
         // Call the parent constructor
         super(options);
-        this.myPreRenderer = null;
+        this._preRenderer = null;
         this.usePreRendering = false;
         this.spine = null;
         // Guard to ensure prerendering is only started once per manager instance
         this._preRenderingStarted = false;
+        // Flag to track when we're attaching prerendered content to prevent layout destruction
+        this._attaching = false;
         // Override the name property
         this.name = 'prerendering';
         console.log('[PreRenderingViewManager] ✅ CONSTRUCTOR COMPLETE - this.name:', this.name);
@@ -11880,10 +12304,236 @@ function requirePrerendering() {
       }
       // Helper to validate attached iframe content with a small wait and one retry
       // Override append to use prerendered chapters when available
-      // SIMPLIFIED: Use DefaultViewManager's logic completely
+      // Check for prerendered content, otherwise use DefaultViewManager
       async append(section, forceRight = false) {
-        console.log('[PreRenderingViewManager] APPEND called for:', section.href);
-        // Always delegate to DefaultViewManager for proper layout/scrolling/pagination
+        console.log('[PreRenderingViewManager] APPEND called for:', section.href, 'forceRight:', forceRight);
+        // Try to use prerendered content if available
+        if (this.usePreRendering && this._preRenderer) {
+          // Set attaching flag before attempting to attach prerendered content
+          this._attaching = true;
+          try {
+            const attached = this._preRenderer.attachChapter(section.href);
+            if (attached && attached.view) {
+              console.log('[PreRenderingViewManager] Using PRERENDERED content for:', section.href);
+              try {
+                const w = window;
+                if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+                w['__prerender_trace'].push('PreRenderingViewManager.append: ' + section.href + ' forceRight:' + forceRight);
+              } catch (err) {
+                void err;
+              }
+              // CRITICAL: We must mark the view as prerendered and attached BEFORE
+              // adding it to the views collection to prevent layout recalculation
+              attached.attached = true;
+              // CRITICAL: Remove the default onDisplayed handler to prevent layout changes
+              // We'll still have our own overridden afterDisplayed method as a safeguard
+              if (attached.view) {
+                attached.view.onDisplayed = () => {
+                  console.log('[PreRenderingViewManager] Skipping onDisplayed for prerendered view:', section.href);
+                };
+              }
+              // Add trace before views.append
+              try {
+                const w = window;
+                if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+                w['__prerender_trace'].push('PreRenderingViewManager: BEFORE views.append');
+              } catch (err) {
+                void err;
+              }
+              // Create/update phantom element to match current chapter's content width
+              if (this.container) {
+                let phantomElement = this.container.querySelector('.epub-scroll-phantom');
+                if (!phantomElement) {
+                  phantomElement = document.createElement('div');
+                  phantomElement.className = 'epub-scroll-phantom';
+                  phantomElement.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 1px;
+                pointer-events: none;
+                visibility: hidden;
+                z-index: -1000;
+              `;
+                  this.container.appendChild(phantomElement);
+                }
+                // Set phantom width to match the prerendered chapter width
+                // Get container width for proper setup
+                const containerWidth = this.container ? this.container.clientWidth : 900;
+                // For DefaultViewManager matching, use the actual content width
+                const fullContentWidth = 4500; // Fixed width to match DefaultViewManager
+                // Get viewport dimensions early
+                const viewDimensions = this.container ? this.container.clientWidth : 0;
+                const viewportHeight = this.container ? this.container.clientHeight : 0;
+                console.log('[PreRenderingViewManager] Setting up wrapper with widths:', 'container:', containerWidth, 'view dimensions:', viewDimensions, 'attached.width:', attached.width, 'using fullContentWidth:', fullContentWidth);
+                phantomElement.style.width = `${fullContentWidth}px`;
+                // Force a reflow to ensure the phantom element takes effect
+                void phantomElement.offsetWidth;
+                console.log('[PreRenderingViewManager] Set phantom width to:', fullContentWidth);
+              }
+              // COMPLETE LAYOUT MATCHING APPROACH USING IFRAME CLONING
+              // Instead of moving the prerendered iframe (which loses content),
+              // we'll create a completely new iframe and copy the content
+              // Create a fresh wrapper with iframe from scratch
+              const wrapperElement = document.createElement('div');
+              wrapperElement.classList.add('epub-view');
+              wrapperElement.setAttribute('ref', this.views._views.length.toString());
+              // Size and style according to the view mode
+              const isSpreadView = this.layout && this.layout.divisor > 1;
+              // Redeclare viewport dimensions to ensure they're in scope
+              const viewportWidth = this.container ? this.container.clientWidth : 0;
+              const viewportHeight = this.container ? this.container.clientHeight : 0;
+              // Get the container width and viewport dimensions
+              const containerWidth = this.container ? this.container.clientWidth : 900;
+              console.log('[PreRenderingViewManager] Width values:', 'container:', containerWidth, 'viewportWidth:', viewportWidth, 'attached.width:', attached.width, 'layout.width:', this.layout.width);
+              if (isSpreadView) {
+                // Set as half width for spread view
+                const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+                wrapperElement.style.width = `${columnWidth}px`;
+                wrapperElement.style.height = `${viewportHeight}px`;
+                // Position left or right
+                if (forceRight) {
+                  const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+                  const gapAdjustment = this.layout?.gap || 0;
+                  wrapperElement.style.left = `${rightPosition + gapAdjustment}px`;
+                } else {
+                  wrapperElement.style.left = '0px';
+                }
+              } else {
+                // IMPORTANT: In DefaultViewManager both the wrapper and iframe get the same width
+                // We need to use the iframe width here, which is set below
+                wrapperElement.style.width = `${containerWidth}px`; // Start with container width
+                wrapperElement.style.height = `${viewportHeight}px`;
+                wrapperElement.style.left = '0px';
+              }
+              // Common styles
+              wrapperElement.style.overflow = 'hidden';
+              wrapperElement.style.position = 'relative';
+              wrapperElement.style.display = 'block';
+              wrapperElement.style.flex = '0 0 auto';
+              wrapperElement.style.visibility = 'visible';
+              // Create a new iframe
+              const iframeElement = document.createElement('iframe');
+              iframeElement.style.border = 'none';
+              // For the iframe width, we should match what the DefaultViewManager does
+              // DefaultViewManager uses safeContentWidth for both wrapper and iframe
+              const iframeWidth = Math.max(attached.width || 0, this.layout.width); // Use same calculation as phantom element
+              console.log('[PreRenderingViewManager] Setting iframe width to:', iframeWidth);
+              iframeElement.style.width = `${iframeWidth}px`;
+              // IMPORTANT: In DefaultViewManager, the wrapper element width matches the iframe width
+              // Update the wrapper element's width to match the iframe width
+              wrapperElement.style.width = `${iframeWidth}px`;
+              iframeElement.style.height = `${attached.height}px`;
+              iframeElement.style.overflow = 'hidden';
+              iframeElement.style.background = 'transparent';
+              iframeElement.style.visibility = 'visible';
+              iframeElement.style.display = 'block';
+              iframeElement.style.wordSpacing = '0px';
+              iframeElement.style.lineHeight = 'normal';
+              // Set sandbox attributes
+              iframeElement.setAttribute('sandbox', 'allow-same-origin');
+              if (attached.view?.section?.properties && Array.isArray(attached.view.section.properties) && attached.view.section.properties.includes('scripted')) {
+                iframeElement.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+              }
+              // Position for spreads
+              if (isSpreadView && forceRight && attached.pageCount > 1) {
+                const singlePageWidth = Math.floor(attached.width / attached.pageCount);
+                iframeElement.style.marginLeft = `-${singlePageWidth}px`;
+              } else {
+                iframeElement.style.marginLeft = '0px';
+              }
+              // Add iframe to wrapper
+              wrapperElement.appendChild(iframeElement);
+              // Get content
+              let originalContent = '';
+              if (attached.preservedContent) {
+                originalContent = attached.preservedContent;
+              } else if (attached.preservedSrcdoc) {
+                originalContent = attached.preservedSrcdoc;
+              } else {
+                try {
+                  const originalIframe = attached.element.querySelector('iframe');
+                  if (originalIframe) {
+                    if (originalIframe.contentDocument && originalIframe.contentDocument.documentElement) {
+                      originalContent = '<!DOCTYPE html>' + originalIframe.contentDocument.documentElement.outerHTML;
+                    } else if (originalIframe.srcdoc) {
+                      originalContent = originalIframe.srcdoc;
+                    }
+                  }
+                } catch (e) {
+                  console.warn('[PreRenderingViewManager] Error extracting content:', e);
+                }
+              }
+              // Set up content loading
+              iframeElement.onload = () => {
+                try {
+                  const doc = iframeElement.contentDocument;
+                  if (doc) {
+                    doc.open();
+                    doc.write(originalContent);
+                    doc.close();
+                  }
+                } catch (e) {
+                  console.error('[PreRenderingViewManager] Error writing content to iframe:', e);
+                }
+              };
+              iframeElement.src = 'about:blank';
+              // Update view references
+              attached.view.element = wrapperElement;
+              const iframeView = attached.view;
+              if (iframeView) {
+                iframeView.iframe = iframeElement;
+                iframeView.frame = iframeElement;
+              }
+              // Attach to container
+              if (this.container) {
+                this.container.appendChild(wrapperElement);
+              }
+              // Add the prerendered view to our views collection
+              this.views.append(attached.view);
+              // Create/update phantom element to match current chapter's content width
+              // This ensures horizontal scrolling works properly
+              const contentWidth = attached.width || 0;
+              let phantomElement = this.container.querySelector('.epub-scroll-phantom');
+              if (!phantomElement) {
+                phantomElement = document.createElement('div');
+                phantomElement.className = 'epub-scroll-phantom';
+                phantomElement.style.cssText = `
+              position: absolute;
+              top: 0;
+              left: 0;
+              height: 1px;
+              pointer-events: none;
+              visibility: hidden;
+              z-index: -1000;
+            `;
+                this.container.appendChild(phantomElement);
+              }
+              // Set phantom width to match content width - exactly match DefaultViewManager's approach
+              const safeContentWidth = Math.max(contentWidth, this.layout.width);
+              phantomElement.style.width = safeContentWidth + 'px';
+              // Force a reflow to ensure the phantom element takes effect
+              void phantomElement.offsetWidth;
+              console.log('[PreRenderingViewManager] Created/updated elements with widths:', 'phantom:', safeContentWidth + 'px', 'wrapper:', wrapperElement.style.width, 'iframe:', iframeElement.style.width, 'layout.width:', this.layout.width);
+              // Add trace after views.append
+              try {
+                const w = window;
+                if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
+                w['__prerender_trace'].push('PreRenderingViewManager: AFTER views.append');
+              } catch (err) {
+                void err;
+              }
+              this._attaching = false; // Reset flag after successful attachment
+              return attached.view;
+            } else {
+              console.log('[PreRenderingViewManager] No prerendered content for:', section.href, 'using default');
+            }
+          } finally {
+            // Always reset attaching flag to ensure it's not left in active state
+            this._attaching = false;
+          }
+        }
+        // Fallback to DefaultViewManager
         return super.append(section, forceRight);
       }
       // SIMPLIFIED: Use DefaultViewManager's logic completely
@@ -11900,8 +12550,7 @@ function requirePrerendering() {
       }
       // Pre-rendering specific methods
       async startPreRendering(sections) {
-        if (!this.usePreRendering || !this.myPreRenderer) {
-          console.warn('[PreRenderingViewManager] Pre-rendering not enabled or available');
+        if (!this.usePreRendering || !this._preRenderer) {
           return;
         }
         if (this._preRenderingStarted) {
@@ -11910,22 +12559,22 @@ function requirePrerendering() {
         }
         this._preRenderingStarted = true;
         console.log(`[PreRenderingViewManager] Starting pre-rendering of ${sections.length} sections`);
-        await this.myPreRenderer.preRenderBook(sections);
+        await this._preRenderer.preRenderBook(sections);
       }
       getPreRenderedChapter(sectionHref) {
-        if (!this.usePreRendering || !this.myPreRenderer) {
+        if (!this.usePreRendering || !this._preRenderer) {
           return undefined;
         }
-        return this.myPreRenderer.getChapter(sectionHref);
+        return this._preRenderer.getChapter(sectionHref);
       }
       hasPreRenderedChapter(sectionHref) {
-        if (!this.usePreRendering || !this.myPreRenderer) {
+        if (!this.usePreRendering || !this._preRenderer) {
           return false;
         }
-        return !!this.myPreRenderer.getChapter(sectionHref);
+        return !!this._preRenderer.getChapter(sectionHref);
       }
       getPreRenderingStatus() {
-        if (!this.usePreRendering || !this.myPreRenderer) {
+        if (!this.usePreRendering || !this._preRenderer) {
           return {
             total: 0,
             rendered: 0,
@@ -11933,35 +12582,46 @@ function requirePrerendering() {
             chapters: new Map()
           };
         }
-        return this.myPreRenderer.getStatus();
+        return this._preRenderer.getStatus();
       }
       getAllPreRenderedChapters() {
-        if (!this.usePreRendering || !this.myPreRenderer) {
+        if (!this.usePreRendering || !this._preRenderer) {
           return [];
         }
-        return this.myPreRenderer.getAllChapters();
+        return this._preRenderer.getAllChapters();
       }
       getPreRenderingDebugInfo() {
-        if (!this.usePreRendering || !this.myPreRenderer) {
+        if (!this.usePreRendering || !this._preRenderer) {
           return {
             totalChapters: 0,
             renderingInProgress: 0,
             chapters: []
           };
         }
-        return this.myPreRenderer.getDebugInfo();
+        return this._preRenderer.getDebugInfo();
       }
-      // SIMPLIFIED: Use DefaultViewManager's logic completely
       afterDisplayed(view) {
-        console.log('[PreRenderingViewManager] afterDisplayed called for:', view.section?.href);
-        // Always delegate to DefaultViewManager for proper formatting
+        // Check if this is a prerendered view that we just attached
+        const isPrerenderedView = this._preRenderer && view.section && this._preRenderer.getChapter(view.section.href)?.attached === true;
+        if (isPrerenderedView) {
+          console.log('[PreRenderingViewManager] PRESERVING layout for prerendered view:', view.section?.href);
+          // Critical: emit the displayed event so the book knows the content is ready
+          // but skip all the layout recalculations that would destroy our prerendered layout
+          this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
+          // Skip the layout processing entirely - this prevents the DefaultViewManager's
+          // normal layout algorithms from destroying our carefully preserved prerendered layout
+          // IMPORTANT: Do not call super.afterDisplayed() for prerendered content
+          return;
+        }
+        // For regular content, delegate to DefaultViewManager
+        console.log('[PreRenderingViewManager] Using default layout processing for non-prerendered view:', view.section?.href);
         super.afterDisplayed(view);
       }
       // Override destroy to clean up pre-renderer
       destroy() {
         console.log('[PreRenderingViewManager] Destroying pre-rendering manager');
-        if (this.myPreRenderer) {
-          this.myPreRenderer.destroy();
+        if (this._preRenderer) {
+          this._preRenderer.destroy();
         }
         return super.destroy();
       }
@@ -11972,15 +12632,68 @@ function requirePrerendering() {
         // Call parent render first
         super.render(element, size);
         // Initialize the pre-renderer now that the DOM container and viewSettings exist
-        if (this.usePreRendering && !this.myPreRenderer && this.container) {
+        if (this.usePreRendering && !this._preRenderer && this.container) {
           console.log('[PreRenderingViewManager] Initializing BookPreRenderer');
           const preRenderViewSettings = {
             width: this.viewSettings.width || 0,
             height: this.viewSettings.height || 0,
             ...this.viewSettings
           };
-          this.myPreRenderer = new prerenderer_1.default(this.container, preRenderViewSettings, this.request);
+          this._preRenderer = new prerenderer_1.default(this.container, preRenderViewSettings, this.request);
           console.log('[PreRenderingViewManager] BookPreRenderer initialized');
+        }
+      }
+      // Override resize to ensure proper handling of prerendered content during window resize
+      async resize(width, height, epubcfi) {
+        console.log('[PreRenderingViewManager] resize() called with width:', width, 'height:', height);
+        try {
+          // Set _attaching flag to prevent layout destruction during resize
+          this._attaching = true;
+          // Check if any of the current views are prerendered
+          let hasPrerenderedViews = false;
+          const prerenderedSections = [];
+          this.views._views.forEach(view => {
+            if (view && view.section && this._preRenderer?.getChapter(view.section.href)?.attached) {
+              hasPrerenderedViews = true;
+              prerenderedSections.push(view.section);
+              console.log(`[PreRenderingViewManager] Found prerendered view: ${view.section.href}`);
+            }
+          });
+          // SIMPLIFIED: For prerendered content, just update the container dimensions without
+          // trying to modify the prerendered content itself
+          if (hasPrerenderedViews) {
+            console.log('[PreRenderingViewManager] Contains prerendered content - using simplified resize');
+            // Update container dimensions only
+            const stageSize = this.stage.size(width, height);
+            this._stageSize = stageSize;
+            this._bounds = this.bounds();
+            // Update view settings
+            this.viewSettings.width = this._stageSize.width;
+            this.viewSettings.height = this._stageSize.height;
+            // Update layout information without modifying views
+            if (this.layout) {
+              this.layout.calculate(this._stageSize.width, this._stageSize.height, this.settings.gap);
+              this.settings.offset = this.layout.delta / this.layout.divisor;
+            }
+            // Emit resize event with updated dimensions
+            this.emit(constants_1.EVENTS.MANAGERS.RESIZED, {
+              width: this._stageSize.width,
+              height: this._stageSize.height
+            }, epubcfi);
+            // Return early - don't touch the prerendered content
+            return;
+          }
+          // For non-prerendered content, use the standard resize method
+          console.log('[PreRenderingViewManager] No prerendered content - using standard resize');
+          return super.resize(width, height, epubcfi);
+        } catch (error) {
+          console.error('[PreRenderingViewManager] Error during resize:', error);
+          // If our custom resize fails, fall back to the default implementation
+          return super.resize(width, height, epubcfi);
+        } finally {
+          // Always reset the attaching flag
+          this._attaching = false;
+          console.log('[PreRenderingViewManager] resize completed');
         }
       }
     }

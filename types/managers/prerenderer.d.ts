@@ -77,6 +77,7 @@ export declare class BookPreRenderer {
             whitePageIndices: number[];
         }[];
     };
+    captureDebugSnapshot(): any;
     attachChapter(sectionHref: string): PreRenderedChapter | null;
     detachChapter(sectionHref: string): PreRenderedChapter | null;
     destroy(): void;
