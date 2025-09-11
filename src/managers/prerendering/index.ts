@@ -23,7 +23,7 @@ export class PreRenderingViewManager
 {
   private _preRenderer: BookPreRenderer | null = null;
   public usePreRendering: boolean = false;
-  private spine: Section[] | null = null;
+
   // Guard to ensure prerendering is only started once per manager instance
   private _preRenderingStarted: boolean = false;
   // Flag to track when we're attaching prerendered content to prevent layout destruction
@@ -50,15 +50,51 @@ export class PreRenderingViewManager
     super(options);
 
     this.usePreRendering = options.settings.usePreRendering || false;
-    this.spine = options.spine || null;
-
-    // Always set overflow to hidden
     this.settings.overflow = 'hidden';
     this.overflow = 'hidden';
   }
 
-  // Helper to validate attached iframe content with a small wait and one retry
-  // Override append to use prerendered chapters when available
+  // Helper to write preserved content into an iframe and apply necessary styles
+  private writeIframeContent(
+    iframe: HTMLIFrameElement,
+    originalContent: string
+  ): void {
+    iframe.onload = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write(originalContent);
+          doc.close();
+
+          // Add styles to ensure no horizontal scrollbar
+          if (doc.body) {
+            // Explicitly set both overflow properties to hidden to prevent any scrollbars
+            doc.body.style.overflowX = 'hidden';
+            doc.body.style.overflowY = 'hidden';
+            doc.body.style.overflow = 'hidden';
+
+            // Add a style tag to ensure these styles aren't overridden by inline styles
+            const style = doc.createElement('style');
+            const cssRules = [
+              'body {',
+              '  overflow: hidden !important;',
+              '  overflow-x: hidden !important;',
+              '  overflow-y: hidden !important;',
+              '}',
+            ].join('\n');
+            style.textContent = cssRules;
+            doc.head.appendChild(style);
+          }
+        }
+      } catch (e) {
+        console.error(
+          '[PreRenderingViewManager] Error writing content to iframe:',
+          e
+        );
+      }
+    };
+  }
 
   // Check for prerendered content, otherwise use DefaultViewManager
   async append(
@@ -72,24 +108,6 @@ export class PreRenderingViewManager
       try {
         const attached = this._preRenderer.attachChapter(section.href);
         if (attached && attached.view) {
-          console.log(
-            '[PreRenderingViewManager] Using PRERENDERED content for:',
-            section.href
-          );
-          try {
-            const w = window as unknown as Record<string, unknown>;
-            if (!Array.isArray(w['__prerender_trace']))
-              w['__prerender_trace'] = [];
-            (w['__prerender_trace'] as string[]).push(
-              'PreRenderingViewManager.append: ' +
-                section.href +
-                ' forceRight:' +
-                forceRight
-            );
-          } catch (err) {
-            void err;
-          }
-
           // CRITICAL: We must mark the view as prerendered and attached BEFORE
           // adding it to the views collection to prevent layout recalculation
           attached.attached = true;
@@ -103,18 +121,6 @@ export class PreRenderingViewManager
                 section.href
               );
             };
-          }
-
-          // Add trace before views.append
-          try {
-            const w = window as unknown as Record<string, unknown>;
-            if (!Array.isArray(w['__prerender_trace']))
-              w['__prerender_trace'] = [];
-            (w['__prerender_trace'] as string[]).push(
-              'PreRenderingViewManager: BEFORE views.append'
-            );
-          } catch (err) {
-            void err;
           }
 
           // Create/update phantom element to match current chapter's content width
@@ -142,29 +148,11 @@ export class PreRenderingViewManager
             const contentWidth = attached.width || 0;
             const safeContentWidth = Math.max(contentWidth, this.layout.width);
 
-            console.log(
-              '[PreRenderingViewManager] Setting up wrapper with widths:',
-              'container:',
-              this.container ? this.container.clientWidth : 'unknown',
-              'attached.width:',
-              attached.width,
-              'safeContentWidth:',
-              safeContentWidth
-            );
             phantomElement.style.width = safeContentWidth + 'px';
 
             // Force a reflow to ensure the phantom element takes effect
             void phantomElement.offsetWidth;
-
-            console.log(
-              '[PreRenderingViewManager] Set phantom width to:',
-              safeContentWidth
-            );
           }
-
-          // COMPLETE LAYOUT MATCHING APPROACH USING IFRAME CLONING
-          // Instead of moving the prerendered iframe (which loses content),
-          // we'll create a completely new iframe and copy the content
 
           // Create a fresh wrapper with iframe from scratch
           const wrapperElement = document.createElement('div');
@@ -186,18 +174,6 @@ export class PreRenderingViewManager
           const containerWidth = this.container
             ? this.container.clientWidth
             : 900;
-
-          console.log(
-            '[PreRenderingViewManager] Width values:',
-            'container:',
-            containerWidth,
-            'viewportWidth:',
-            viewportWidth,
-            'attached.width:',
-            attached.width,
-            'layout.width:',
-            this.layout.width
-          );
 
           if (isSpreadView) {
             // Set as half width for spread view
@@ -316,41 +292,7 @@ export class PreRenderingViewManager
           }
 
           // Set up content loading
-          iframeElement.onload = () => {
-            try {
-              const doc = iframeElement.contentDocument;
-              if (doc) {
-                doc.open();
-                doc.write(originalContent);
-                doc.close();
-
-                // Add styles to ensure no horizontal scrollbar
-                if (doc.body) {
-                  // Explicitly set both overflow properties to hidden to prevent any scrollbars
-                  doc.body.style.overflowX = 'hidden';
-                  doc.body.style.overflowY = 'hidden';
-                  doc.body.style.overflow = 'hidden';
-
-                  // Add a style tag to ensure these styles aren't overridden by inline styles
-                  const style = doc.createElement('style');
-                  const cssRules = [
-                    'body {',
-                    '  overflow: hidden !important;',
-                    '  overflow-x: hidden !important;',
-                    '  overflow-y: hidden !important;',
-                    '}',
-                  ].join('\n');
-                  style.textContent = cssRules;
-                  doc.head.appendChild(style);
-                }
-              }
-            } catch (e) {
-              console.error(
-                '[PreRenderingViewManager] Error writing content to iframe:',
-                e
-              );
-            }
-          };
+          this.writeIframeContent(iframeElement, originalContent);
           iframeElement.src = 'about:blank';
 
           // Update view references
@@ -404,38 +346,7 @@ export class PreRenderingViewManager
           // Force a reflow to ensure the phantom element takes effect
           void phantomElement.offsetWidth;
 
-          console.log(
-            '[PreRenderingViewManager] Created/updated elements with widths:',
-            'phantom:',
-            safeContentWidth + 'px',
-            'wrapper:',
-            wrapperElement.style.width,
-            'iframe:',
-            iframeElement.style.width,
-            'layout.width:',
-            this.layout.width
-          );
-
-          // Add trace after views.append
-          try {
-            const w = window as unknown as Record<string, unknown>;
-            if (!Array.isArray(w['__prerender_trace']))
-              w['__prerender_trace'] = [];
-            (w['__prerender_trace'] as string[]).push(
-              'PreRenderingViewManager: AFTER views.append'
-            );
-          } catch (err) {
-            void err;
-          }
-
-          this._attaching = false; // Reset flag after successful attachment
           return attached.view as IframeView;
-        } else {
-          console.log(
-            '[PreRenderingViewManager] No prerendered content for:',
-            section.href,
-            'using default'
-          );
         }
       } finally {
         // Always reset attaching flag to ensure it's not left in active state
@@ -452,33 +363,12 @@ export class PreRenderingViewManager
     section: Section,
     forceRight: boolean = false
   ): Promise<IframeView> {
-    console.log('[PreRenderingViewManager] PREPEND called for:', section.href);
-
-    // Try to use prerendered content if available, similar to append method
     if (this.usePreRendering && this._preRenderer) {
       // Set attaching flag before attempting to attach prerendered content
       this._attaching = true;
       try {
         const attached = this._preRenderer.attachChapter(section.href);
         if (attached && attached.view) {
-          console.log(
-            '[PreRenderingViewManager] Using PRERENDERED content for prepend:',
-            section.href
-          );
-          try {
-            const w = window as unknown as Record<string, unknown>;
-            if (!Array.isArray(w['__prerender_trace']))
-              w['__prerender_trace'] = [];
-            (w['__prerender_trace'] as string[]).push(
-              'PreRenderingViewManager.prepend: ' +
-                section.href +
-                ' forceRight:' +
-                forceRight
-            );
-          } catch (err) {
-            void err;
-          }
-
           // CRITICAL: We must mark the view as prerendered and attached BEFORE
           // adding it to the views collection to prevent layout recalculation
           attached.attached = true;
@@ -619,41 +509,8 @@ export class PreRenderingViewManager
           }
 
           // Set up content loading
-          iframeElement.onload = () => {
-            try {
-              const doc = iframeElement.contentDocument;
-              if (doc) {
-                doc.open();
-                doc.write(originalContent);
-                doc.close();
+          this.writeIframeContent(iframeElement, originalContent);
 
-                // Add styles to ensure no horizontal scrollbar
-                if (doc.body) {
-                  // Explicitly set both overflow properties to hidden to prevent any scrollbars
-                  doc.body.style.overflowX = 'hidden';
-                  doc.body.style.overflowY = 'hidden';
-                  doc.body.style.overflow = 'hidden';
-
-                  // Add a style tag to ensure these styles aren't overridden by inline styles
-                  const style = doc.createElement('style');
-                  const cssRules = [
-                    'body {',
-                    '  overflow: hidden !important;',
-                    '  overflow-x: hidden !important;',
-                    '  overflow-y: hidden !important;',
-                    '}',
-                  ].join('\n');
-                  style.textContent = cssRules;
-                  doc.head.appendChild(style);
-                }
-              }
-            } catch (e) {
-              console.error(
-                '[PreRenderingViewManager] Error writing content to iframe:',
-                e
-              );
-            }
-          };
           iframeElement.src = 'about:blank';
 
           // Update view references
@@ -703,24 +560,7 @@ export class PreRenderingViewManager
           phantomElement.style.width = safeContentWidth + 'px';
           void phantomElement.offsetWidth;
 
-          console.log(
-            '[PreRenderingViewManager] Created elements for prepend with widths:',
-            'phantom:',
-            safeContentWidth + 'px',
-            'wrapper:',
-            wrapperElement.style.width,
-            'iframe:',
-            iframeElement.style.width
-          );
-
-          this._attaching = false; // Reset flag
           return attached.view as IframeView;
-        } else {
-          console.log(
-            '[PreRenderingViewManager] No prerendered content for prepend:',
-            section.href,
-            'using default'
-          );
         }
       } finally {
         // Always reset attaching flag
@@ -732,17 +572,6 @@ export class PreRenderingViewManager
     return super.prepend(section, forceRight) as Promise<IframeView>;
   }
 
-  // SIMPLIFIED: Use DefaultViewManager's logic completely
-  async display(
-    section: Section,
-    target?: string | HTMLElement
-  ): Promise<unknown> {
-    console.log('[PreRenderingViewManager] DISPLAY called for:', section.href);
-
-    // Always delegate to DefaultViewManager for proper layout/scrolling/pagination
-    return super.display(section, target);
-  }
-
   // Pre-rendering specific methods
   async startPreRendering(sections: Section[]): Promise<void> {
     if (!this.usePreRendering || !this._preRenderer) {
@@ -750,17 +579,10 @@ export class PreRenderingViewManager
     }
 
     if (this._preRenderingStarted) {
-      console.debug(
-        '[PreRenderingViewManager] startPreRendering called but already started'
-      );
       return;
     }
 
     this._preRenderingStarted = true;
-    console.log(
-      `[PreRenderingViewManager] Starting pre-rendering of ${sections.length} sections`
-    );
-
     await this._preRenderer.preRenderBook(sections);
   }
 
@@ -808,6 +630,44 @@ export class PreRenderingViewManager
     return this._preRenderer.getDebugInfo();
   }
 
+  /**
+   * Get the total number of pages across all chapters in the book
+   */
+  getTotalPages(): number | undefined {
+    return this._preRenderer
+      ?.getAllChapters()
+      .reduce<number | undefined>((sum, ch) => {
+        if (ch.pageCount === undefined) return undefined;
+        return sum! + ch.pageCount;
+      }, 0);
+  }
+
+  /**
+   * Get the current page number across all chapters in the book
+   */
+  getCurrentPage(): number | undefined {
+    const locationInfo = this.currentLocation?.();
+    const chapters = this._preRenderer?.getAllChapters();
+
+    if (!locationInfo?.length || !chapters?.length) return undefined;
+
+    const current = locationInfo[0];
+    const currentHref = current.href;
+    const currentPage = current.pages[0] ?? 1;
+
+    const index = chapters.findIndex((ch) => ch.section.href === currentHref);
+    if (index === -1) return undefined;
+
+    const totalBefore = chapters
+      .slice(0, index)
+      .reduce<number | undefined>((sum, ch) => {
+        if (ch.pageCount === undefined) return undefined;
+        return sum! + ch.pageCount;
+      }, 0);
+
+    return totalBefore === undefined ? undefined : totalBefore + currentPage;
+  }
+
   afterDisplayed(view: View | IframeView): void {
     // Check if this is a prerendered view that we just attached
     const isPrerenderedView =
@@ -816,46 +676,23 @@ export class PreRenderingViewManager
       this._preRenderer.getChapter(view.section.href)?.attached === true;
 
     if (isPrerenderedView) {
-      console.log(
-        '[PreRenderingViewManager] PRESERVING layout for prerendered view:',
-        view.section?.href
-      );
-
-      // Critical: emit the displayed event so the book knows the content is ready
-      // but skip all the layout recalculations that would destroy our prerendered layout
+      // Emit the displayed event so the book knows the content is ready
       this.emit(EVENTS.MANAGERS.ADDED, view);
-
-      // Skip the layout processing entirely - this prevents the DefaultViewManager's
-      // normal layout algorithms from destroying our carefully preserved prerendered layout
-
-      // IMPORTANT: Do not call super.afterDisplayed() for prerendered content
       return;
     }
 
-    // For regular content, delegate to DefaultViewManager
-    console.log(
-      '[PreRenderingViewManager] Using default layout processing for non-prerendered view:',
-      view.section?.href
-    );
     super.afterDisplayed(view);
   }
 
   // Override destroy to clean up pre-renderer
   destroy(): void {
-    console.log('[PreRenderingViewManager] Destroying pre-rendering manager');
-    if (this._preRenderer) {
-      this._preRenderer.destroy();
-    }
+    this._preRenderer?.destroy();
     return super.destroy();
   }
 
   // Override render to initialize the BookPreRenderer once the container and
   // Only override render to initialize pre-renderer
   render(element: HTMLElement, size?: { width: number; height: number }): void {
-    console.log(
-      '[PreRenderingViewManager] render() called - delegating to DefaultViewManager'
-    );
-
     // Ensure overflow is explicitly set to hidden
     this.settings.overflow = 'hidden';
     this.overflow = 'hidden';
@@ -865,8 +702,6 @@ export class PreRenderingViewManager
 
     // Initialize the pre-renderer now that the DOM container and viewSettings exist
     if (this.usePreRendering && !this._preRenderer && this.container) {
-      console.log('[PreRenderingViewManager] Initializing BookPreRenderer');
-
       const preRenderViewSettings: ViewSettings = {
         width: (this.viewSettings.width as number) || 0,
         height: (this.viewSettings.height as number) || 0,
@@ -878,8 +713,6 @@ export class PreRenderingViewManager
         preRenderViewSettings,
         this.request as (url: string) => Promise<Document>
       );
-
-      console.log('[PreRenderingViewManager] BookPreRenderer initialized');
     }
   }
 
@@ -888,7 +721,6 @@ export class PreRenderingViewManager
     try {
       // Set _attaching flag to prevent layout destruction during resize
       this._attaching = true;
-
       // Check if any of the current views are prerendered
       let hasPrerenderedViews = false;
       const prerenderedSections: Section[] = [];
@@ -923,6 +755,7 @@ export class PreRenderingViewManager
             this._stageSize.height,
             this.settings.gap!
           );
+
           this.settings.offset = this.layout.delta / this.layout.divisor;
         }
 
@@ -936,25 +769,111 @@ export class PreRenderingViewManager
           epubcfi
         );
 
-        // Return early - don't touch the prerendered content
         return;
       }
 
-      // For non-prerendered content, use the standard resize method
-      console.log(
-        '[PreRenderingViewManager] No prerendered content - using standard resize'
-      );
       return super.resize(width, height, epubcfi);
-    } catch (error) {
-      console.error('[PreRenderingViewManager] Error during resize:', error);
-
+    } catch {
       // If our custom resize fails, fall back to the default implementation
       return super.resize(width, height, epubcfi);
     } finally {
       // Always reset the attaching flag
       this._attaching = false;
-      console.log('[PreRenderingViewManager] resize completed');
     }
+  }
+
+  private isRtlDirection(): boolean {
+    return (
+      this.settings.direction === 'rtl' && this.settings.axis === 'horizontal'
+    );
+  }
+
+  private async navigate(forwardInReadingOrder: boolean): Promise<void> {
+    if (!this.views?.length) return;
+
+    // Determine the "current view" depending on logical navigation direction
+    // forwardInReadingOrder = true  -> use the last view (end of current content)
+    // forwardInReadingOrder = false -> use the first view (start of current content)
+    const currentView = forwardInReadingOrder
+      ? this.views.last()
+      : this.views.first();
+    if (!currentView?.section) return;
+
+    const currentSection = currentView.section;
+
+    // Can we scroll inside the current section?
+    const maxScrollLeft =
+      this.container.scrollWidth - this.container.offsetWidth;
+    const canScrollMore = forwardInReadingOrder
+      ? this.container.scrollLeft < maxScrollLeft
+      : this.container.scrollLeft > 0;
+
+    // Fallback arrow function to call super method if needed
+    const fallback = () =>
+      forwardInReadingOrder ? super.next() : super.prev();
+
+    // Only proceed with pre-rendered navigation if the preRenderer exists
+    if (!this._preRenderer) return fallback();
+    if (canScrollMore) return fallback();
+
+    // Normalize actual section movement using RTL
+    const actualForward = this.isRtlDirection()
+      ? !forwardInReadingOrder
+      : forwardInReadingOrder;
+
+    const targetSection = actualForward
+      ? currentSection.next()
+      : currentSection.prev();
+
+    if (!targetSection) return fallback();
+
+    this.clear();
+    this.updateLayout();
+
+    const forceRight =
+      this.layout.name === 'pre-paginated' &&
+      this.layout.divisor === 2 &&
+      targetSection.properties.includes('page-spread-right');
+
+    await this.loadSection(targetSection, forwardInReadingOrder, forceRight);
+  }
+
+  private async loadSection(
+    section: Section,
+    goForward: boolean,
+    forceRight: boolean
+  ): Promise<void> {
+    // Append or prepend the section
+    if (goForward) {
+      await this.append(section, forceRight);
+    } else {
+      await this.prepend(section, forceRight);
+    }
+
+    // Only adjust scroll for horizontal layouts
+    if (this.settings.axis !== 'horizontal') return;
+
+    const scrollWidth = this.container.scrollWidth;
+    const offsetWidth = this.container.offsetWidth;
+    const isRtlDefault =
+      this.isRtlDirection() && this.settings.rtlScrollType === 'default';
+
+    // Define scroll positions for next/prev in both directions
+    const rtlOptions = { next: scrollWidth, prev: 0 };
+    const ltrOptions = { next: 0, prev: scrollWidth - offsetWidth };
+
+    const options = isRtlDefault ? rtlOptions : ltrOptions;
+    const scrollPos = goForward ? options.next : options.prev;
+
+    this.scrollTo(scrollPos, 0, true);
+  }
+
+  async next(): Promise<void> {
+    return this.navigate(true); // forward in reading order
+  }
+
+  async prev(): Promise<void> {
+    return this.navigate(false); // backward in reading order
   }
 }
 

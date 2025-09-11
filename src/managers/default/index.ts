@@ -476,17 +476,8 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     // Fix: Ensure container scrollWidth can accommodate content width
     if (view && view.contents) {
       const contentWidth = view.contents.textWidth();
-      console.debug(
-        '[DefaultViewManager] afterDisplayed content width:',
-        contentWidth
-      );
 
       if (contentWidth > this.container.offsetWidth) {
-        console.debug(
-          '[DefaultViewManager] updating phantom element for chapter content width:',
-          contentWidth
-        );
-
         // Create/update phantom element to match current chapter's content width
         let phantomElement = this.container.querySelector(
           '.epub-scroll-phantom'
@@ -535,11 +526,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
             // Fix: Ensure iframe positioning is correct for the content
             iframe.style.left = '0px';
             iframe.style.position = 'absolute';
-
-            console.debug(
-              '[DefaultViewManager] resized iframe to match content width:',
-              safeContentWidth
-            );
           }
         }
 
@@ -756,21 +742,11 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       return;
     }
 
-    console.log('[DefaultViewManager] next() called - checking scroll state');
-
     // Simple check: if there's no more scrollable content in the current section,
     // jump to the next section immediately
     const maxScrollLeft =
       this.container.scrollWidth - this.container.offsetWidth;
     const canScrollMore = this.container.scrollLeft < maxScrollLeft;
-
-    console.log('[DefaultViewManager] scroll check:', {
-      scrollLeft: this.container.scrollLeft,
-      scrollWidth: this.container.scrollWidth,
-      offsetWidth: this.container.offsetWidth,
-      maxScrollLeft,
-      canScrollMore,
-    });
 
     if (!canScrollMore) {
       // No more content to scroll in current section, go to next section
@@ -795,15 +771,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       }
     }
 
-    // There is scrollable content, use normal forward scrolling
-    console.log(
-      '[DefaultViewManager] content available to scroll, using handleScrollForward'
-    );
     const section = this.handleScrollForward();
-    console.log(
-      '[DefaultViewManager] handleScrollForward returned section:',
-      section?.href
-    );
 
     if (section) await this.loadNextSection(section);
   }
@@ -847,10 +815,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     // Check if section exists before trying to load it
     if (section && section.href) {
       await this.loadPrevSection(section);
-    } else {
-      console.debug(
-        '[DefaultViewManager] handleScrollBackward returned no section'
-      );
     }
   }
 
@@ -1652,18 +1616,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
   updateLayout() {
     try {
-      console.debug('[DefaultViewManager] updateLayout() called');
-      try {
-        const w = window as unknown as Record<string, unknown>;
-        if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
-        (w['__prerender_trace'] as string[]).push(
-          'DefaultViewManager.updateLayout'
-        );
-      } catch (err) {
-        void err;
-      }
-      console.trace('[DefaultViewManager] updateLayout stack trace');
-
       // Skip updating layout during prerendered attachment
       // Safe to use type cast here since we're checking the name first
       if (
@@ -1678,6 +1630,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
     } catch {
       // ignore
     }
+
     if (!this.stage) {
       return;
     }

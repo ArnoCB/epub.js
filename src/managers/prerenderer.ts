@@ -208,16 +208,9 @@ export class BookPreRenderer {
     this.offscreenContainer.style.visibility = 'hidden';
 
     document.body.appendChild(this.offscreenContainer);
-    console.log('[BookPreRenderer] initialized with container:', container);
   }
 
   async preRenderBook(sections: Section[]): Promise<PreRenderingStatus> {
-    console.log(
-      '[BookPreRenderer] starting pre-render of',
-      sections.length,
-      'sections'
-    );
-
     this.currentStatus = {
       total: sections.length,
       rendered: 0,
@@ -226,6 +219,7 @@ export class BookPreRenderer {
     };
 
     const BATCH_SIZE = 3;
+
     for (let i = 0; i < sections.length; i += BATCH_SIZE) {
       const batch = sections.slice(i, i + BATCH_SIZE);
 
@@ -247,18 +241,11 @@ export class BookPreRenderer {
       );
     }
 
-    console.log(
-      '[BookPreRenderer] pre-rendering complete:',
-      this.currentStatus
-    );
     if (!this._completeEmitted) {
       this._completeEmitted = true;
       this.emit('complete', this.currentStatus);
-    } else {
-      console.debug(
-        '[BookPreRenderer] complete event already emitted, skipping'
-      );
     }
+
     return this.currentStatus;
   }
 
@@ -266,22 +253,18 @@ export class BookPreRenderer {
     section: Section
   ): Promise<PreRenderedChapter> {
     const href = section.href;
-    console.debug('[BookPreRenderer] preRenderSection started for:', href);
 
     if (this.chapters.has(href)) {
-      console.debug('[BookPreRenderer] chapter already exists:', href);
       return this.chapters.get(href)!;
     }
 
     if (this.renderingPromises.has(href)) {
-      console.debug('[BookPreRenderer] already rendering, waiting for:', href);
       await this.renderingPromises.get(href)!;
       return this.chapters.get(href)!;
     }
 
     const rendering = new defer<View>();
     const view = this.createView(section);
-    console.debug('[BookPreRenderer] view created for:', href);
 
     const chapter: PreRenderedChapter = {
       section,
@@ -296,16 +279,10 @@ export class BookPreRenderer {
       whitePageIndices: [],
     };
 
-    console.debug('[BookPreRenderer] storing chapter in map:', href);
     this.chapters.set(href, chapter);
-    console.debug(
-      '[BookPreRenderer] chapters map size now:',
-      this.chapters.size
-    );
 
     const renderPromise = this.renderView(view, chapter)
       .then((renderedView) => {
-        console.debug('[BookPreRenderer] renderView completed for:', href);
         rendering.resolve(renderedView);
         return chapter;
       })
@@ -318,9 +295,7 @@ export class BookPreRenderer {
     this.renderingPromises.set(href, renderPromise);
 
     try {
-      console.debug('[BookPreRenderer] waiting for render promise:', href);
       await renderPromise;
-      console.debug('[BookPreRenderer] render promise completed for:', href);
       this.renderingPromises.delete(href);
       return chapter;
     } catch (error) {
@@ -392,7 +367,6 @@ export class BookPreRenderer {
       // Measure content dimensions after rendering
       if (view.contents && view.contents.textWidth) {
         chapter.width = view.contents.textWidth();
-        console.debug('[BookPreRenderer] measured width:', chapter.width);
       } else {
         chapter.width = this.viewSettings.width;
       }
@@ -473,9 +447,6 @@ export class BookPreRenderer {
             } else {
               // Content fits in one page
               chapter.pageCount = 1;
-              console.log(
-                `[BookPreRenderer] Content fits in one page: contentWidth=${contentWidth} <= viewportWidth=${viewportWidth} + tolerance=${tolerance}`
-              );
             }
 
             // Build a simple page map with xOffsets and best-effort CFIs for page starts
@@ -533,13 +504,6 @@ export class BookPreRenderer {
             const viewportHeight =
               this.viewSettings.layout?.height ?? this.viewSettings.height;
 
-            console.log(
-              '[BookPreRenderer] scrolled flow - contentHeight:',
-              contentHeight,
-              'viewportHeight:',
-              viewportHeight
-            );
-
             if (contentHeight > viewportHeight * 0.8) {
               chapter.pageCount = Math.max(
                 1,
@@ -595,22 +559,7 @@ export class BookPreRenderer {
   }
 
   getChapter(sectionHref: string): PreRenderedChapter | undefined {
-    console.debug('[BookPreRenderer] getChapter called with:', sectionHref);
-    console.debug(
-      '[BookPreRenderer] available chapters:',
-      Array.from(this.chapters.keys())
-    );
-    console.debug(
-      '[BookPreRenderer] total chapters stored:',
-      this.chapters.size
-    );
-
     const result = this.chapters.get(sectionHref);
-    console.debug(
-      '[BookPreRenderer] getChapter result:',
-      result ? 'FOUND' : 'NOT FOUND'
-    );
-
     return result;
   }
 
@@ -643,342 +592,6 @@ export class BookPreRenderer {
   }
 
   /**
-   * Capture a comprehensive debug snapshot usable by external tests.
-   * Returns a plain JSON-serializable object describing the viewer DOM,
-   * any iframes inside it, and the pre-renderer's internal debug/status info.
-   */
-  public captureDebugSnapshot(): Record<string, unknown> {
-    // Local snapshot shapes (kept untyped here to avoid function-scoped declarations)
-    // FrameSnapshot and ChildNodeSnapshot shape information is intentionally
-    // documented but not declared as interfaces inside the function.
-
-    const out: Record<string, unknown> = {};
-
-    try {
-      const viewer = document.getElementById('viewer');
-      out.viewerExists = !!viewer;
-      out.children = [];
-
-      if (viewer) {
-        const nodes = Array.from(viewer.childNodes).map((node, idx) => {
-          const n = node as Node & {
-            outerHTML?: string;
-            classList?: DOMTokenList;
-          };
-          const obj: any = {
-            index: idx,
-            nodeType: n.nodeType,
-            nodeName: n.nodeName,
-            classList: n.classList ? Array.from(n.classList) : [],
-            outerHTMLSnippet: n.outerHTML ? n.outerHTML.slice(0, 500) : null,
-            iframes: [],
-          };
-
-          if ((node as Element).getBoundingClientRect) {
-            try {
-              const r = (node as Element).getBoundingClientRect();
-              obj.rect = {
-                width: r.width,
-                height: r.height,
-                top: r.top,
-                left: r.left,
-              };
-            } catch (e) {
-              // ignore
-            }
-          }
-
-          const iframes = (node as Element).querySelectorAll
-            ? (node as Element).querySelectorAll('iframe')
-            : (null as unknown as NodeListOf<HTMLIFrameElement>);
-
-          if (iframes) {
-            iframes.forEach((iframe: HTMLIFrameElement) => {
-              const frameObj: any = {
-                src: iframe.getAttribute('src') || null,
-                srcdoc: iframe.getAttribute('srcdoc')
-                  ? iframe.getAttribute('srcdoc')
-                  : null,
-                style: iframe.getAttribute('style') || null,
-                widthAttr: iframe.getAttribute('width') || null,
-                heightAttr: iframe.getAttribute('height') || null,
-                bounding: null,
-                clientWidth: iframe.clientWidth,
-                clientHeight: iframe.clientHeight,
-                scrollWidth: iframe.scrollWidth,
-                scrollHeight: iframe.scrollHeight,
-                accessibleBodyTextLength: null,
-                bodyHtmlSample: null,
-              };
-
-              try {
-                const doc = iframe.contentDocument;
-                if (doc && doc.body) {
-                  try {
-                    frameObj.accessibleBodyTextLength = (
-                      doc.body.textContent || ''
-                    ).length;
-                    frameObj.bodyHtmlSample = (doc.body.innerHTML || '').slice(
-                      0,
-                      200
-                    );
-                  } catch (e) {
-                    frameObj.accessibleBodyTextLength =
-                      'inaccessible: ' + ((e as Error)?.message || String(e));
-                  }
-                }
-              } catch (e) {
-                frameObj.accessibleBodyTextLength =
-                  'inaccessible: ' + ((e as Error)?.message || String(e));
-              }
-
-              try {
-                const r = iframe.getBoundingClientRect();
-                frameObj.bounding = {
-                  width: r.width,
-                  height: r.height,
-                  top: r.top,
-                  left: r.left,
-                };
-              } catch (e) {
-                // ignore
-              }
-
-              obj.iframes.push(frameObj);
-            });
-          }
-
-          return obj;
-        });
-
-        out.children = nodes;
-      }
-
-      // Add pre-renderer debug info and status
-      try {
-        out.preRenderer = this.getDebugInfo ? this.getDebugInfo() : null;
-        out.preRendererStatus = this.getStatus ? this.getStatus() : null;
-      } catch (e) {
-        (out as any).preRendererError = (e as Error)?.message || String(e);
-      }
-
-      // Add basic rendition info if available globally
-      try {
-        const rendition =
-          (window as any).getRendition && (window as any).getRendition();
-        if (rendition && rendition.manager) {
-          out.rendition = {
-            managerName: rendition.manager.name,
-            layoutName:
-              rendition.manager.layout && rendition.manager.layout.name,
-            settings: rendition.manager.settings || null,
-          };
-        }
-      } catch (e) {
-        (out as any).rendition = { error: (e as Error)?.message || String(e) };
-      }
-
-      // Capture detailed info for unattached prerendered chapters
-      try {
-        const chaptersDetailed: any[] = [];
-        Array.from(this.chapters.values()).forEach((chapter) => {
-          try {
-            const info: any = {
-              href: chapter.section?.href || null,
-              attached: !!chapter.attached,
-              width: chapter.width,
-              height: chapter.height,
-              pageCount: chapter.pageCount,
-              pageMap: chapter.pageMap || null,
-              hasWhitePages: chapter.hasWhitePages || false,
-            };
-
-            // preserved content hints
-            info.preservedSrcdocLength = chapter.preservedSrcdoc
-              ? chapter.preservedSrcdoc.length
-              : 0;
-            info.preservedContentLength = chapter.preservedContent
-              ? chapter.preservedContent.length
-              : 0;
-
-            // Try to inspect any iframe inside the chapter.element (may be in unattached storage)
-            try {
-              const iframe = chapter.element
-                ? (chapter.element.querySelector(
-                    'iframe'
-                  ) as HTMLIFrameElement | null)
-                : null;
-              if (iframe) {
-                const frameInfo: any = {
-                  src: iframe.getAttribute('src') || null,
-                  srcdoc: iframe.getAttribute('srcdoc') ? true : false,
-                  clientWidth: iframe.clientWidth,
-                  clientHeight: iframe.clientHeight,
-                  scrollWidth: iframe.scrollWidth,
-                  scrollHeight: iframe.scrollHeight,
-                };
-
-                try {
-                  const doc = iframe.contentDocument;
-                  if (doc && doc.body) {
-                    frameInfo.bodyTextLength = (
-                      doc.body.textContent || ''
-                    ).trim().length;
-                    frameInfo.bodyHtmlSample = (doc.body.innerHTML || '').slice(
-                      0,
-                      200
-                    );
-                    // include a small sample of measurable elements
-                    frameInfo.images = Array.from(doc.images || [])
-                      .map((im) => im.getAttribute('src') || null)
-                      .slice(0, 5);
-                    frameInfo.links = Array.from(
-                      doc.querySelectorAll('a') || []
-                    )
-                      .slice(0, 5)
-                      .map((a) => ({
-                        href: (a as HTMLAnchorElement).href || null,
-                        text: (a.textContent || '').slice(0, 40),
-                      }));
-                  }
-                } catch (e) {
-                  frameInfo.accessible = false;
-                  frameInfo.accessError = (e as Error)?.message || String(e);
-                }
-
-                info.iframe = frameInfo;
-              }
-            } catch (e) {
-              info.iframeError = (e as Error)?.message || String(e);
-            }
-
-            chaptersDetailed.push(info);
-          } catch (e) {
-            chaptersDetailed.push({
-              error: (e as Error)?.message || String(e),
-            });
-          }
-        });
-
-        out.preRendererChaptersDetailed = chaptersDetailed;
-      } catch (e) {
-        (out as any).preRendererChaptersDetailedError =
-          (e as Error)?.message || String(e);
-      }
-    } catch (e) {
-      return { error: (e as Error)?.message || String(e) };
-    }
-
-    return out;
-  }
-
-  /**
-   * A very small, robust snapshot variant intended only for tests that
-   * need a minimal JSON-serializable view of the viewer + unattached chapters.
-   * Keeps shapes simple and avoids heavy inspection that can trigger cross-origin errors.
-   */
-  public captureDebugSnapshotSimple(): Record<string, unknown> {
-    const snapshot: any = {};
-    try {
-      const viewer = document.getElementById('viewer');
-      snapshot.viewerExists = !!viewer;
-      snapshot.children = [];
-
-      if (viewer) {
-        Array.from(viewer.childNodes).forEach((node, idx) => {
-          const el = node as Element;
-          const item: any = { index: idx, nodeName: node.nodeName };
-          item.iframes = [];
-
-          const iframes =
-            el && (el as Element).querySelectorAll
-              ? (el as Element).querySelectorAll('iframe')
-              : (null as unknown as NodeListOf<HTMLIFrameElement>);
-
-          if (iframes) {
-            iframes.forEach((iframe: HTMLIFrameElement) => {
-              const f: any = {
-                src: iframe.getAttribute('src') || null,
-                hasSrcdoc: iframe.getAttribute('srcdoc') ? true : false,
-              };
-              try {
-                const doc = iframe.contentDocument;
-                if (doc && doc.body) {
-                  f.bodyTextLength = (doc.body.textContent || '').trim().length;
-                  f.accessible = true;
-                } else {
-                  f.accessible = false;
-                }
-              } catch (e) {
-                f.accessible = false;
-                f.accessError = (e as Error)?.message || String(e);
-              }
-              item.iframes.push(f);
-            });
-          }
-
-          snapshot.children.push(item);
-        });
-      }
-
-      // Minimal chapter listing
-      snapshot.preRendererChapters = [];
-      Array.from(this.chapters.values()).forEach((chapter) => {
-        try {
-          const c: any = {
-            href: chapter.section?.href || null,
-            attached: !!chapter.attached,
-            // Whether the chapter.element is currently attached to the document
-            elementAttached:
-              !!chapter.element && document.contains(chapter.element),
-            width: chapter.width,
-            height: chapter.height,
-            pageCount: chapter.pageCount,
-            preservedSrcdocLength: chapter.preservedSrcdoc
-              ? chapter.preservedSrcdoc.length
-              : 0,
-          };
-
-          const iframe = chapter.element
-            ? (chapter.element.querySelector(
-                'iframe'
-              ) as HTMLIFrameElement | null as HTMLIFrameElement | null)
-            : null;
-
-          if (iframe) {
-            try {
-              const doc = iframe.contentDocument;
-              if (doc && doc.body) {
-                c.iframeBodyTextLength = (
-                  doc.body.textContent || ''
-                ).trim().length;
-                c.iframeAccessible = true;
-              } else {
-                c.iframeAccessible = false;
-              }
-            } catch (e) {
-              c.iframeAccessible = false;
-              c.iframeAccessError = (e as Error)?.message || String(e);
-            }
-          } else {
-            c.iframeExists = false;
-          }
-
-          (snapshot.preRendererChapters as any[]).push(c);
-        } catch (e) {
-          (snapshot.preRendererChapters as any[]).push({
-            error: (e as Error)?.message || String(e),
-          });
-        }
-      });
-
-      return snapshot;
-    } catch (e) {
-      return { error: (e as Error)?.message || String(e) };
-    }
-  }
-
-  /**
    * Preserve iframe content to prevent loss during DOM moves
    */
   private async preserveChapterContent(
@@ -1005,7 +618,10 @@ export class BookPreRenderer {
           const cleanup = () => {
             try {
               frame.removeEventListener('load', onLoad);
-            } catch (e) {}
+            } catch {
+              // Ignore errors
+            }
+
             if (timer) clearTimeout(timer);
           };
 
@@ -1151,91 +767,16 @@ export class BookPreRenderer {
   public async tryRestoreContent(sectionHref: string): Promise<boolean> {
     const chapter = this.chapters.get(sectionHref);
     if (!chapter) {
-      console.debug(
-        '[BookPreRenderer] tryRestoreContent: chapter not found',
-        sectionHref
-      );
       return false;
     }
 
     try {
-      console.debug(
-        '[BookPreRenderer] tryRestoreContent: attempting restore for',
-        sectionHref
-      );
       const restored = this.restoreChapterContent(chapter);
-
-      // Helper to wait for iframe readiness after restore
-      const waitForIframeReady = (
-        frame: HTMLIFrameElement | null,
-        timeout = 1000
-      ) =>
-        new Promise<boolean>((resolve) => {
-          if (!frame) return resolve(false);
-          try {
-            const doc = frame.contentDocument;
-            if (doc && doc.readyState === 'complete') return resolve(true);
-
-            let settled = false;
-            const onLoad = () => {
-              if (settled) return;
-              settled = true;
-              cleanup();
-              resolve(true);
-            };
-
-            const cleanup = () => {
-              try {
-                frame.removeEventListener('load', onLoad);
-              } catch {
-                // Ignore errors
-              }
-
-              if (timer) clearTimeout(timer);
-            };
-
-            frame.addEventListener('load', onLoad);
-
-            const interval = 50;
-            let elapsed = 0;
-            const poll = () => {
-              try {
-                const d = frame.contentDocument;
-                if (d && d.readyState === 'complete') {
-                  if (!settled) {
-                    settled = true;
-                    cleanup();
-                    return resolve(true);
-                  }
-                }
-              } catch {
-                // ignore
-              }
-
-              elapsed += interval;
-              if (elapsed >= timeout) {
-                if (!settled) {
-                  settled = true;
-                  cleanup();
-                  return resolve(false);
-                }
-              } else {
-                timer = setTimeout(poll, interval) as unknown as number;
-              }
-            };
-
-            let timer = setTimeout(poll, interval) as unknown as number;
-          } catch (e) {
-            return resolve(false);
-          }
-        });
 
       // Validate iframe content after waiting a short while for loads
       const iframe = chapter.element.querySelector(
         'iframe'
       ) as HTMLIFrameElement | null;
-
-      const ready = await waitForIframeReady(iframe, 1000);
 
       let hasValidContent = false;
       try {
@@ -1256,12 +797,6 @@ export class BookPreRenderer {
         hasValidContent = false;
       }
 
-      console.debug(
-        '[BookPreRenderer] tryRestoreContent result for',
-        sectionHref,
-        { restored, ready, hasValidContent }
-      );
-
       return hasValidContent || restored;
     } catch (e) {
       console.warn(
@@ -1276,30 +811,11 @@ export class BookPreRenderer {
   attachChapter(sectionHref: string): PreRenderedChapter | null {
     const chapter = this.chapters.get(sectionHref);
     if (!chapter) {
-      console.warn(
-        '[BookPreRenderer] chapter not found for attachment:',
-        sectionHref
-      );
       return null;
-    }
-
-    // Record attach attempt in global trace for debugging
-    try {
-      const w = window as unknown as Record<string, unknown>;
-      if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
-      (w['__prerender_trace'] as string[]).push(
-        'BookPreRenderer.attach:start: ' + sectionHref
-      );
-    } catch {
-      // ignore
     }
 
     // If chapter is still being rendered, return null (let caller retry)
     if (this.renderingPromises.has(sectionHref)) {
-      console.debug(
-        '[BookPreRenderer] chapter still rendering, caller should retry:',
-        sectionHref
-      );
       return null;
     }
 
@@ -1312,6 +828,7 @@ export class BookPreRenderer {
         const iframe = chapter.element.querySelector(
           'iframe'
         ) as HTMLIFrameElement;
+
         if (iframe && iframe.contentDocument) {
           const body = iframe.contentDocument.body;
           const hasTextContent =
@@ -1327,29 +844,9 @@ export class BookPreRenderer {
             isReady &&
             (hasTextContent || hasHtmlStructure || (isWhitePage && body));
 
-          if (!hasValidContent) {
-            console.warn(
-              '[BookPreRenderer] attached chapter has insufficient content, will attempt refresh:',
-              sectionHref,
-              'readyState:',
-              iframe.contentDocument.readyState,
-              'hasText:',
-              hasTextContent,
-              'hasHtml:',
-              hasHtmlStructure,
-              'isWhitePage:',
-              isWhitePage
-            );
-            // Don't return early - let it go through attachment process to refresh content
-          } else {
+          if (hasValidContent) {
             return chapter;
           }
-        } else {
-          console.warn(
-            '[BookPreRenderer] attached chapter iframe not accessible:',
-            sectionHref
-          );
-          // Don't return early - let it go through attachment process
         }
       } catch (e) {
         console.warn(
@@ -1382,10 +879,6 @@ export class BookPreRenderer {
         ) {
           const toDetach = attachedChapters[i];
           if (toDetach.section.href !== sectionHref) {
-            console.debug(
-              '[BookPreRenderer] detaching chapter to make room for new attachment:',
-              toDetach.section.href
-            );
             this.detachChapter(toDetach.section.href);
           }
         }
@@ -1412,17 +905,11 @@ export class BookPreRenderer {
         displayWrapper.style.width = chapter.width + 'px';
         displayWrapper.style.height = chapter.height + 'px';
         displayWrapper.style.overflow = 'hidden'; // Hide content outside viewport like DefaultViewManager
-        console.log(
-          `[BookPreRenderer] Setting up paginated wrapper for ${sectionHref} - width: ${chapter.width}px (full paginated width)`
-        );
       } else {
         // For scrolled content, use container dimensions
         displayWrapper.style.width = chapter.width + 'px';
         displayWrapper.style.height = chapter.height + 'px';
         displayWrapper.style.overflow = 'hidden';
-        console.log(
-          `[BookPreRenderer] Setting up scrolled wrapper for ${sectionHref} - width: ${chapter.width}px`
-        );
       }
       displayWrapper.style.position = 'relative';
       displayWrapper.style.display = 'block';
@@ -1435,16 +922,10 @@ export class BookPreRenderer {
         // For paginated content, set iframe to full width to show all pages
         newIframe.style.width = chapter.width + 'px';
         newIframe.style.height = chapter.height + 'px';
-        console.log(
-          `[BookPreRenderer] Setting up paginated iframe for ${sectionHref} - width: ${chapter.width}px (full paginated width)`
-        );
       } else {
         // For scrolled content, use container dimensions
         newIframe.style.width = chapter.width + 'px';
         newIframe.style.height = chapter.height + 'px';
-        console.log(
-          `[BookPreRenderer] Setting up scrolled iframe for ${sectionHref} - width: ${chapter.width}px`
-        );
       }
       newIframe.sandbox = 'allow-same-origin';
       if ((this.viewSettings as ViewSettings).allowScriptedContent) {
@@ -1485,21 +966,6 @@ export class BookPreRenderer {
       }
 
       displayWrapper.appendChild(newIframe);
-
-      // Do NOT mutate the original prerendered chapter or its view/element - keep it in unattachedStorage
-      console.log(
-        `[BookPreRenderer] clone created for attach (preserved original left intact): ${sectionHref}`
-      );
-
-      try {
-        const w = window as unknown as Record<string, unknown>;
-        if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
-        (w['__prerender_trace'] as string[]).push(
-          'BookPreRenderer.attach:clone_created: ' + sectionHref
-        );
-      } catch {
-        // ignore
-      }
 
       // Create a proper IframeView instance for the cloned element
       // This ensures all IframeView methods like setLayout() are available
@@ -1643,6 +1109,70 @@ export class BookPreRenderer {
               cleanup();
               try {
                 attachedChapter.attached = true;
+
+                // Initialize cloned view contents so features that depend on it
+                // (like highlighting) work correctly. The cloned iframe already
+                // contains the preserved content, so we can create a Contents
+                // instance that points at the clone's document.
+                try {
+                  const doc = frame.contentDocument;
+                  if (doc) {
+                    // Attach window/document/contents to the cloned view
+                    const v = attachedChapter.view as unknown as {
+                      window?: Window | undefined;
+                      document?: Document;
+                      contents?: Contents;
+                      displayed?: boolean;
+                      rendered?: boolean;
+                      expand?: () => void;
+                      layout?: Layout | undefined;
+                    };
+
+                    v.window = (frame.contentWindow as Window) || undefined;
+                    v.document = doc;
+                    v.contents = new Contents(
+                      doc,
+                      doc.body,
+                      chapter.section.cfiBase,
+                      chapter.section.index
+                    );
+
+                    // Wire contents events to mimic IframeView behaviour
+                    v.contents.on(EVENTS.CONTENTS.EXPAND, () => {
+                      if (v.displayed) {
+                        try {
+                          if (typeof v.expand === 'function') v.expand();
+                          if (v.contents && v.layout) {
+                            v.layout.format(v.contents);
+                          }
+                        } catch {
+                          // ignore
+                        }
+                      }
+                    });
+
+                    v.contents.on(EVENTS.CONTENTS.RESIZE, () => {
+                      if (v.displayed) {
+                        try {
+                          if (typeof v.expand === 'function') v.expand();
+                          if (v.contents && v.layout) {
+                            v.layout.format(v.contents);
+                          }
+                        } catch {
+                          // ignore
+                        }
+                      }
+                    });
+
+                    v.rendered = true;
+                    v.displayed = true;
+                  }
+                } catch {
+                  console.debug(
+                    '[BookPreRenderer] init cloned contents failed'
+                  );
+                }
+
                 try {
                   const w = window as unknown as Record<string, unknown>;
                   if (!Array.isArray(w['__prerender_trace']))
@@ -1653,6 +1183,7 @@ export class BookPreRenderer {
                 } catch {
                   // ignore
                 }
+
                 this.emit(EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
               } catch (err) {
                 console.debug(
@@ -1756,10 +1287,6 @@ export class BookPreRenderer {
     this.unattachedStorage.appendChild(chapter.element);
     chapter.attached = false;
 
-    console.log(
-      '[BookPreRenderer] detached chapter and moved to unattached storage:',
-      sectionHref
-    );
     this.emit(EVENTS.VIEWS.HIDDEN, chapter.view);
     return chapter;
   }
