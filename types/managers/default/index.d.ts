@@ -1,13 +1,3 @@
-export interface PageLocation {
-    index: number;
-    href: string;
-    pages: number[];
-    totalPages: number;
-    mapping: {
-        start: string;
-        end: string;
-    } | undefined;
-}
 import EventEmitter from 'event-emitter';
 import Mapping from '../../mapping';
 import Queue from '../../utils/queue';
@@ -17,8 +7,7 @@ import { ViewManager } from '../helpers/snap';
 import Layout, { Axis, Flow } from 'src/layout';
 import { Section } from 'src/section';
 import { Contents } from 'src/epub';
-import IframeView from '../views/iframe';
-import BookPreRenderer, { PreRenderedChapter } from '../prerenderer';
+import { ViewRenderer } from '../helpers/view-renderer';
 export type DefaultViewManagerSettings = {
     layout: Layout;
     infinite?: boolean;
@@ -32,9 +21,18 @@ export type DefaultViewManagerSettings = {
     offset?: number;
     overflow?: string;
     afterScrolledTimeout: number;
-    usePreRendering?: boolean;
     [key: string]: unknown;
 };
+export interface PageLocation {
+    index: number;
+    href: string;
+    pages: number[];
+    totalPages: number;
+    mapping: {
+        start: string;
+        end: string;
+    } | undefined;
+}
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
     on: EventEmitter['on'];
@@ -57,6 +55,7 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
     views: Views;
     container: HTMLElement;
     overflow: string;
+    protected viewRenderer: ViewRenderer;
     _onScroll?: () => void;
     scrollLeft?: number;
     _stageSize?: {
@@ -87,8 +86,6 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
     ignore: boolean;
     scrolled: boolean;
     targetScrollLeft?: number;
-    preRenderer?: BookPreRenderer;
-    usePreRendering: boolean;
     constructor(options: {
         settings: DefaultViewManagerSettings;
         view?: View | undefined;
@@ -100,32 +97,18 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
         width: number;
         height: number;
     }): void;
-    private initializePreRendering;
     /**
      * Start pre-rendering all sections from a spine
      */
-    startPreRendering(sections: Section[]): Promise<void>;
-    /**
-     * Get pre-rendered chapter for debugging
-     */
-    getPreRenderedChapter(sectionHref: string): PreRenderedChapter | undefined;
-    /**
-     * Check if a chapter is pre-rendered and ready
-     */
-    hasPreRenderedChapter(sectionHref: string): boolean;
     addEventListeners(): void;
     removeEventListeners(): void;
     destroy(): void;
     onOrientationChange(): void;
     onResized(): void;
     resize(width?: string, height?: string, epubcfi?: string): void;
-    createView(section: Section, forceRight?: boolean): IframeView;
+    createView(section: Section, forceRight?: boolean): import("../views/iframe").default;
     handleNextPrePaginated(forceRight: boolean, section: Section, action: (section: Section) => Promise<View>): Promise<View> | undefined;
     display(section: Section, target?: HTMLElement | string): Promise<unknown>;
-    /**
-     * Display a pre-rendered chapter
-     */
-    private displayPreRendered;
     /**
      * Fallback to normal rendering when pre-rendered fails
      */
@@ -142,7 +125,7 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
         top: number;
     }, width: number): void;
     append(section: Section, forceRight?: boolean): Promise<View>;
-    prepend(section: Section, forceRight?: boolean): Promise<IframeView>;
+    prepend(section: Section, forceRight?: boolean): Promise<import("../views/iframe").default>;
     counter(bounds: {
         heightDelta: number;
         widthDelta: number;

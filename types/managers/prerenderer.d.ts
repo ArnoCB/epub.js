@@ -21,6 +21,8 @@ export interface PreRenderedChapter {
         xOffset?: number;
         yOffset?: number;
     }>;
+    preservedSrcdoc?: string;
+    preservedContent?: string;
 }
 export interface ViewSettings {
     ignoreClass?: string;
@@ -51,10 +53,12 @@ export declare class BookPreRenderer {
     private offscreenContainer;
     private unattachedStorage;
     private viewSettings;
+    private viewRenderer;
     private chapters;
     private renderingPromises;
     private request;
     private currentStatus;
+    private _completeEmitted;
     constructor(container: HTMLElement, viewSettings: ViewSettings, request: (url: string) => Promise<Document>);
     preRenderBook(sections: Section[]): Promise<PreRenderingStatus>;
     private preRenderSection;
@@ -77,7 +81,19 @@ export declare class BookPreRenderer {
             whitePageIndices: number[];
         }[];
     };
-    captureDebugSnapshot(): any;
+    /**
+     * Preserve iframe content to prevent loss during DOM moves
+     */
+    private preserveChapterContent;
+    /**
+     * Restore iframe content after DOM moves
+     */
+    private restoreChapterContent;
+    /**
+     * Public helper to attempt restore for a chapter by href and validate result
+     * Returns true if content is present after restore, false otherwise
+     */
+    tryRestoreContent(sectionHref: string): Promise<boolean>;
     attachChapter(sectionHref: string): PreRenderedChapter | null;
     detachChapter(sectionHref: string): PreRenderedChapter | null;
     destroy(): void;

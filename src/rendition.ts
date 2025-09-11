@@ -602,7 +602,7 @@ export class Rendition implements EventEmitterMethods {
     // Some views (pre-rendered/offscreen) may not implement the EventEmitter
     // style `on` method. Guard before wiring event handlers to avoid runtime
     // TypeErrors (see prerendered views created by BookPreRenderer).
-    if (typeof (view as any).on === 'function') {
+    if (typeof view.on === 'function') {
       view.on(
         EVENTS.VIEWS.MARK_CLICKED,
         (cfiRange: string, data: Record<string, unknown>) =>

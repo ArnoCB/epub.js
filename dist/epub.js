@@ -11128,11 +11128,8 @@ function requirePrerenderer() {
         hasWhitePages: false,
         whitePageIndices: []
       };
-      console.debug('[BookPreRenderer] storing chapter in map:', href);
       this.chapters.set(href, chapter);
-      console.debug('[BookPreRenderer] chapters map size now:', this.chapters.size);
       const renderPromise = this.renderView(view, chapter).then(renderedView => {
-        console.debug('[BookPreRenderer] renderView completed for:', href);
         rendering.resolve(renderedView);
         return chapter;
       }).catch(error => {
@@ -11192,7 +11189,6 @@ function requirePrerenderer() {
         // Measure content dimensions after rendering
         if (view.contents && view.contents.textWidth) {
           chapter.width = view.contents.textWidth();
-          console.debug('[BookPreRenderer] measured width:', chapter.width);
         } else {
           chapter.width = this.viewSettings.width;
         }
@@ -11564,7 +11560,6 @@ function requirePrerenderer() {
           for (let i = 0; i < attachedChapters.length - (maxAttachedChapters - 1); i++) {
             const toDetach = attachedChapters[i];
             if (toDetach.section.href !== sectionHref) {
-              console.debug('[BookPreRenderer] detaching chapter to make room for new attachment:', toDetach.section.href);
               this.detachChapter(toDetach.section.href);
             }
           }
