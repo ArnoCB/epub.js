@@ -7076,6 +7076,9 @@
 	      container.style.lineHeight = '0';
 	      container.style.verticalAlign = 'top';
 	      container.style.position = 'relative';
+	      // Ensure container always has transparent background and low z-index for highlight visibility
+	      container.style.backgroundColor = 'transparent';
+	      container.style.zIndex = '0';
 	      if (axis === 'horizontal') {
 	        // container.style.whiteSpace = "nowrap";
 	        container.style.display = 'flex';
@@ -12324,15 +12327,8 @@
 	     */
 	    async performAsyncContentAnalysis(chapter, view) {
 	      try {
-	        console.debug('[BookPreRenderer] Starting content analysis for:', chapter.section.href);
 	        // Use the simple PageMapGenerator
 	        const result = await this.pageMapGenerator.generatePageMap(view, chapter.section, this.viewSettings.width, this.viewSettings.height);
-	        console.debug('[BookPreRenderer] Analysis completed:', chapter.section.href, {
-	          pageCount: result.pageCount,
-	          hasPageMap: !!result.pageMap,
-	          pageMapLength: result.pageMap?.length,
-	          hasCFIs: result.pageMap?.some(p => p.startCfi || p.endCfi)
-	        });
 	        return {
 	          pageCount: result.pageCount,
 	          pageMap: result.pageMap,
@@ -13011,6 +13007,7 @@
 	    const default_1 = __importDefault(require_default());
 	    const prerenderer_1 = __importDefault(requirePrerenderer());
 	    const constants_1 = requireConstants();
+	    const contents_1 = __importDefault(requireContents());
 	    /**
 	     * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
 	     *
@@ -13214,6 +13211,24 @@
 	                iframeView.iframe = iframeElement;
 	                iframeView.frame = iframeElement;
 	              }
+	              // CRITICAL: Set up Contents object for themes and annotations to work
+	              // We need to create a Contents object once the iframe is loaded
+	              const originalOnload = iframeElement.onload;
+	              iframeElement.onload = function (event) {
+	                if (originalOnload) originalOnload.call(this, event);
+	                // Create Contents object for this prerendered view
+	                setTimeout(() => {
+	                  try {
+	                    if (iframeElement.contentDocument && iframeView && attached.view.section) {
+	                      const contents = new contents_1.default(iframeElement.contentDocument, iframeElement.contentDocument.body || iframeElement.contentDocument.documentElement, attached.view.section.href);
+	                      iframeView.contents = contents;
+	                      console.log('[PreRenderingViewManager] Created Contents object for prerendered view');
+	                    }
+	                  } catch (e) {
+	                    console.warn('[PreRenderingViewManager] Failed to create Contents object:', e);
+	                  }
+	                }, 10);
+	              };
 	              // Attach to container
 	              if (this.container) {
 	                this.container.appendChild(wrapperElement);

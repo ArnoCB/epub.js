@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Verify Container Styling</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+    .viewer { width: 400px; height: 300px; border: 1px solid #ccc; margin: 10px 0; }
+    .result { padding: 10px; margin: 5px 0; border-radius: 3px; }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  </style>
+</head>
+<body>
+  <h1>EPUB.js Container Styling Verification</h1>
+  
+  <div class="test-section">
+    <h2>Test 1: Default Manager</h2>
+    <div id="viewer1" class="viewer"></div>
+    <div id="result1" class="result">Testing...</div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test 2: Prerendering Manager</h2>
+    <div id="viewer2" class="viewer"></div>
+    <div id="result2" class="result">Testing...</div>
+  </div>
+
+  <script src="../dist/epub.umd.js"></script>
+  <script>
+    function verifyContainerProperties(container, testName, resultId) {
+      const resultDiv = document.getElementById(resultId);
+      
+      if (!container) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = `❌ ${testName}: Container not found`;
+        return;
+      }
+      
+      const bgColor = getComputedStyle(container).backgroundColor;
+      const zIndex = getComputedStyle(container).zIndex;
+      
+      const isBgTransparent = bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent';
+      const isZIndexZero = zIndex === '0';
+      
+      if (isBgTransparent && isZIndexZero) {
+        resultDiv.className = 'result success';
+        resultDiv.textContent = `✅ ${testName}: Both properties correct (bg: ${bgColor}, z-index: ${zIndex})`;
+      } else {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = `❌ ${testName}: Properties incorrect (bg: ${bgColor}, z-index: ${zIndex})`;
+      }
+    }
+    
+    // Test 1: Default Manager
+    const book1 = window.ePub('https://s3.amazonaws.com/moby-dick/moby-dick.epub');
+    const rendition1 = book1.renderTo('viewer1', {
+      width: 400,
+      height: 300,
+      manager: 'default'
+    });
+    
+    rendition1.on('attached', () => {
+      const container = document.querySelector('#viewer1 .epub-container');
+      verifyContainerProperties(container, 'Default Manager', 'result1');
+    });
+    
+    // Test 2: Prerendering Manager
+    const book2 = window.ePub('https://s3.amazonaws.com/moby-dick/moby-dick.epub');
+    const rendition2 = book2.renderTo('viewer2', {
+      width: 400,
+      height: 300,
+      manager: 'prerendering',
+      usePreRendering: true
+    });
+    
+    rendition2.on('attached', () => {
+      const container = document.querySelector('#viewer2 .epub-container');
+      verifyContainerProperties(container, 'Prerendering Manager', 'result2');
+    });
+    
+    console.log('Starting container styling verification tests...');
+  </script>
+</body>
+</html>

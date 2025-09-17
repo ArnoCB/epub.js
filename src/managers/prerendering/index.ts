@@ -9,6 +9,7 @@ import { View } from '../helpers/views';
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
 import { EVENTS } from '../../utils/constants';
+import Contents from '../../contents';
 
 /**
  * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
@@ -302,12 +303,47 @@ export class PreRenderingViewManager
           const iframeView = attached.view as unknown as {
             iframe?: HTMLIFrameElement;
             frame?: HTMLIFrameElement;
+            contents?: Contents;
           };
 
           if (iframeView) {
             iframeView.iframe = iframeElement;
             iframeView.frame = iframeElement;
           }
+
+          // CRITICAL: Set up Contents object for themes and annotations to work
+          // We need to create a Contents object once the iframe is loaded
+          const originalOnload = iframeElement.onload;
+          iframeElement.onload = function (event) {
+            if (originalOnload) originalOnload.call(this, event);
+
+            // Create Contents object for this prerendered view
+            setTimeout(() => {
+              try {
+                if (
+                  iframeElement.contentDocument &&
+                  iframeView &&
+                  attached.view.section
+                ) {
+                  const contents = new Contents(
+                    iframeElement.contentDocument,
+                    iframeElement.contentDocument.body ||
+                      iframeElement.contentDocument.documentElement,
+                    attached.view.section.href
+                  );
+                  iframeView.contents = contents;
+                  console.log(
+                    '[PreRenderingViewManager] Created Contents object for prerendered view'
+                  );
+                }
+              } catch (e) {
+                console.warn(
+                  '[PreRenderingViewManager] Failed to create Contents object:',
+                  e
+                );
+              }
+            }, 10);
+          };
 
           // Attach to container
           if (this.container) {

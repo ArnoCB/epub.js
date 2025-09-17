@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test Prerendered Highlighting Fix</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #viewer { width: 450px; height: 600px; border: 1px solid #ccc; overflow: auto; }
+    #controls { margin: 10px 0; }
+    button { margin: 5px; padding: 8px 16px; }
+    #log { width: 100%; height: 200px; border: 1px solid #ccc; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Test Prerendered Highlighting Fix</h1>
+  
+  <div id="controls">
+    <button id="test-highlight">Test Highlight</button>
+    <button id="toggle-cfi">Toggle CFI Markers</button>
+  </div>
+  
+  <div id="viewer"></div>
+  
+  <h3>Debug Log:</h3>
+  <div id="log"></div>
+
+  <script src="../dist/epub.umd.js"></script>
+  <script>
+    let book, rendition;
+    
+    function log(message) {
+      const logDiv = document.getElementById('log');
+      logDiv.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '\n';
+      logDiv.scrollTop = logDiv.scrollHeight;
+      console.log(message);
+    }
+    
+    function init() {
+      log('Loading EPUB with prerendering...');
+      
+      book = window.ePub('https://s3.amazonaws.com/moby-dick/moby-dick.epub');
+
+      rendition = book.renderTo('viewer', {
+        width: 450,
+        height: 600,
+        manager: 'prerendering',
+        flow: 'paginated',
+        spread: 'none',
+        usePreRendering: true
+      });
+
+      book.ready.then(() => {
+        log('Book ready: ' + book.packaging.metadata.title);
+      }).catch((error) => {
+        log('Error loading book: ' + error.message);
+      });
+
+      rendition.on('started', () => {
+        log('Rendition started');
+      });
+
+      rendition.on('attached', () => {
+        log('Rendition attached');
+        log('Manager type: ' + (rendition.manager?.name || 'unknown'));
+        
+        // Check that container has the required CSS properties
+        const container = document.querySelector('.epub-container');
+        if (container) {
+          const bgColor = getComputedStyle(container).backgroundColor;
+          const zIndex = getComputedStyle(container).zIndex;
+          
+          log('Container background-color: ' + bgColor);
+          log('Container z-index: ' + zIndex);
+          
+          if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
+            log('✅ Background color is transparent');
+          } else {
+            log('❌ Background color is not transparent');
+          }
+          
+          if (zIndex === '0') {
+            log('✅ Z-index is 0');
+          } else {
+            log('❌ Z-index is not 0');
+          }
+        } else {
+          log('❌ Container not found');
+        }
+        
+        rendition.display(1);
+      });
+
+      rendition.on('rendered', (section) => {
+        log('Chapter rendered: ' + section.href);
+      });
+    }
+    
+    document.getElementById('test-highlight').addEventListener('click', () => {
+      if (rendition && rendition.annotations && rendition.location) {
+        const location = rendition.location.start;
+        if (location.cfi) {
+          rendition.annotations.highlight(location.cfi, {}, () => {
+            log('Highlight clicked');
+          });
+          log('Added highlight at: ' + location.cfi);
+        } else {
+          log('No CFI available');
+        }
+      }
+    });
+    
+    let cfiMarkersVisible = false;
+    document.getElementById('toggle-cfi').addEventListener('click', () => {
+      if (!cfiMarkersVisible) {
+        // Add some CFI markers for testing
+        const preRenderer = rendition?.manager?.preRenderer;
+        if (preRenderer) {
+          const chapters = preRenderer.getAllChapters();
+          const currentHref = rendition?.location?.start?.href;
+          const chapter = chapters.find(c => c.section.href === currentHref);
+          
+          if (chapter && chapter.pageMap) {
+            chapter.pageMap.forEach(page => {
+              if (page.startCfi) {
+                rendition.annotations.highlight(page.startCfi, {}, () => {
+                  log('CFI marker clicked: page ' + page.index);
+                }, 'cfi-marker-start');
+              }
+            });
+            log('Added CFI markers');
+            cfiMarkersVisible = true;
+          }
+        }
+      } else {
+        // Remove markers (simplified)
+        log('CFI marker removal not implemented in this test');
+      }
+    });
+    
+    init();
+  </script>
+</body>
+</html>

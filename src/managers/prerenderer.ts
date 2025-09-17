@@ -397,28 +397,12 @@ export class BookPreRenderer {
     whitePageIndices: number[];
   }> {
     try {
-      console.debug(
-        '[BookPreRenderer] Starting content analysis for:',
-        chapter.section.href
-      );
-
       // Use the simple PageMapGenerator
       const result = await this.pageMapGenerator.generatePageMap(
         view,
         chapter.section,
         this.viewSettings.width,
         this.viewSettings.height
-      );
-
-      console.debug(
-        '[BookPreRenderer] Analysis completed:',
-        chapter.section.href,
-        {
-          pageCount: result.pageCount,
-          hasPageMap: !!result.pageMap,
-          pageMapLength: result.pageMap?.length,
-          hasCFIs: result.pageMap?.some((p) => p.startCfi || p.endCfi),
-        }
       );
 
       return {

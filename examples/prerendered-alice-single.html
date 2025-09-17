@@ -1,0 +1,1032 @@
+<!DOCTYPE htm    /* Mini    /* Minimal styling adapted for single page view with fixed dimensions */
+    body, html { margin:0; padding:0; overflow:auto; }
+    ::selection { background: yellow; }
+    #extras { width: 800px; margin: 40px auto; }
+    #viewer { 
+      top:0; 
+      margin: 50px auto 0; 
+      width: 450px; 
+      height: 600px; 
+      background-color: transparent; 
+      border: 1px solid #ddd; 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      overflow: hidden !important; 
+    }apted for single page view with fixed dimensions */
+    body, html { margin:0; padding:0; overflow-y: auto; overflow-x: hidden; }
+    ::selection { background: rgba(255,255,0, 0.3); }
+    #extras { width: 800px; margin: 40px auto; }
+    #viewer { 
+      top:0; 
+      margin: 50px auto 0; 
+      width: 450px; 
+      height: 600px; 
+      background-color: transparent; 
+      border: 1px solid #ddd; 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      overflow: hidden !important; 
+    }d>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EPUB.js Pre-Rendering Example — Alice (Single Page)</title>
+
+  <script src="../dist/epub.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="examples.css">
+
+  <style type="text/css">
+    /* Minimal styling adapted for single page view with fixed dimensions */
+    body, html { margin:0; padding:0; overflow-x:hidden; overflow-y:auto; }
+    ::selection { background: yellow; }
+    #extras { width: 800px; margin: 40px auto; padding-bottom: 40px; }
+    #viewer { 
+      top:0; 
+      margin: 50px auto 0; 
+      width: 450px; 
+      height: 600px; 
+      background-color: white; 
+      border: 1px solid #ddd; 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      overflow: hidden !important; 
+    }
+    #debug-panel { background:#f5f5f5; border:1px solid #ddd; border-radius:5px; padding:15px; font-family:monospace; font-size:12px; }
+    #chapter-status { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin-top:10px; }
+    .chapter-card { background:white; border:1px solid #ddd; border-radius:3px; padding:8px; font-size:11px; }
+    .chapter-card.rendered { border-color:#28a745; background-color:#d4edda; }
+    .chapter-card.attached { border-color:#007bff; background-color:#cce5ff; }
+    .chapter-card.failed { border-color:#dc3545; background-color:#f8d7da; }
+    #status-bar { background:#007bff; color:white; padding:10px; border-radius:3px; margin-bottom:15px; text-align:center; }
+    #progress-bar { width:100%; height:20px; background:#e9ecef; border-radius:10px; overflow:hidden; margin-top:8px; }
+    #progress-fill { height:100%; background:#28a745; width:0%; transition:width 0.3s ease; }
+    /* Fixed top page counter to ensure visibility when page cannot be scrolled */
+    #fixed-page-counter {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      z-index: 9999;
+      font-size: 13px;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+    #controls button { margin-right:10px; padding:8px 16px; background:#007bff; color:white; border:none; border-radius:3px; cursor:pointer; }
+    #controls button:disabled { background:#6c757d; cursor:not-allowed; }
+    .log-entry { margin:2px 0; padding:2px 0; border-bottom:1px solid #eee; }
+    .log-entry.info { color:#007bff; }
+    .log-entry.success { color:#28a745; }
+    .log-entry.warning { color:#ffc107; }
+    .log-entry.error { color:#dc3545; }
+    
+    /* CFI marker styles */
+    .cfi-marker-start {
+      background: rgba(0, 200, 0, 0.5) !important;
+      border-left: 3px solid green !important;
+      cursor: pointer !important;
+    }
+    .cfi-marker-end {
+      background: rgba(200, 0, 0, 0.5) !important;
+      border-right: 3px solid red !important;
+      cursor: pointer !important;
+    }
+    
+    /* Make sure highlights are visible */
+    .highlight {
+      background: rgba(255, 255, 0, 0.4) !important;
+      cursor: pointer !important;
+    }
+    
+    /* Page map display */
+    #page-map-section { margin-top: 20px; }
+    #page-map-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    #page-map-table th, #page-map-table td { border: 1px solid #ddd; padding: 4px; text-align: left; }
+    #page-map-table th { background: #f8f9fa; }
+    .cfi-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    
+    /* Highlight section styling */
+    #highlights {
+      list-style: none;
+      margin-left: 0;
+      padding: 0;
+    }
+
+    #highlights li {
+      list-style: none;
+      margin-bottom: 20px;
+      border-top: 1px solid #E2E2E2;
+      padding: 10px;
+    }
+
+    #highlights a {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="fixed-page-counter">Page <span id="fixed-current-page">—</span> / <span id="fixed-total-pages">—</span></div>
+  <div id="frame">
+    <div id="viewer"></div>
+    <a id="prev" href="#prev" class="arrow">‹</a>
+    <a id="next" href="#next" class="arrow">›</a>
+  </div>
+
+  <div id="extras">
+    <div id="debug-panel">
+      <h3>📚 Pre-Rendering — Alice (Single Page)</h3>
+      <div id="status-bar">
+        <div id="status-text">Initializing pre-rendering system...</div>
+    <div id="page-info" style="margin-top:6px; font-weight:600;">Page <span id="current-page">—</span> / <span id="total-pages">—</span></div>
+        <div id="progress-bar"><div id="progress-fill"></div></div>
+      </div>
+
+            <div id="controls">
+        <button id="toggle-prerendering">Toggle Pre-rendering</button>
+        <button id="refresh-debug">Refresh Debug Info</button>
+        <button id="dump-prerenderer">Dump PreRenderer</button>
+        <button id="toggle-cfi-markers">Toggle CFI Markers</button>
+        <button id="show-page-map">Show Page Map</button>
+        <button id="test-highlight">Test Highlight</button>
+        <button id="debug-iframe">Debug Iframe</button>
+        <button id="jump-to-chapter">Jump to Chapter</button>
+        <button id="clear-logs">Clear Logs</button>
+      </div>
+
+      <div id="chapter-status"></div>
+
+      <details>
+        <summary><strong>Debug Information</strong></summary>
+        <div id="debug-info"></div>
+      </details>
+
+      <details>
+        <summary><strong>System Logs</strong></summary>
+        <div id="system-logs"></div>
+      </details>
+    </div>
+
+    <div id="highlights-section">
+      <h3>📝 Highlights</h3>
+      <ul id="highlights"></ul>
+    </div>
+
+    <div id="page-map-section">
+      <h3>📄 Current Chapter Page Map</h3>
+      <div id="page-map-info">No page map available</div>
+      <table id="page-map-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Page #</th>
+            <th>Start CFI</th>
+            <th>End CFI</th>
+            <th>X Offset</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="page-map-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // This example mirrors prerendered-alice.html but uses single page mode (no spreads)
+    let book, rendition;
+    let preRenderingEnabled = true;
+    let systemLogs = [];
+    let cfiMarkersVisible = false;
+    let currentChapter = null;
+
+    window.getRendition = () => rendition;
+    window.getBook = () => book;
+    window.getPreRenderer = () => rendition?.manager?.preRenderer;
+
+    // Helper function to force style all highlights in the current iframe
+    function forceStyleAllHighlights() {
+      const viewer = document.getElementById('viewer');
+      const iframe = viewer ? viewer.querySelector('iframe') : null;
+      
+      if (iframe && iframe.contentDocument) {
+        const doc = iframe.contentDocument;
+        
+        // Inject styles if not already present
+        if (!doc.querySelector('#epub-highlight-styles')) {
+          const style = doc.createElement('style');
+          style.id = 'epub-highlight-styles';
+          style.textContent = `
+            .highlight, [data-annotation-id], .epubjs-hl, .epubjs-mk, mark {
+              background: rgba(255, 255, 0, 0.6) !important;
+              cursor: pointer !important;
+              border: 1px solid rgba(255, 255, 0, 0.8) !important;
+            }
+            .cfi-marker-start {
+              background: rgba(0, 200, 0, 0.5) !important;
+              border-left: 3px solid green !important;
+              cursor: pointer !important;
+            }
+            .cfi-marker-end {
+              background: rgba(200, 0, 0, 0.5) !important;
+              border-right: 3px solid red !important;
+              cursor: pointer !important;
+            }
+          `;
+          doc.head.appendChild(style);
+          addLog('Injected fallback styles', 'success');
+        }
+        
+        // Find all highlight elements and force style them
+        const highlights = doc.querySelectorAll('.highlight, [data-annotation-id], .epubjs-hl, .epubjs-mk, mark');
+        const startMarkers = doc.querySelectorAll('.cfi-marker-start');
+        const endMarkers = doc.querySelectorAll('.cfi-marker-end');
+        
+        highlights.forEach(el => {
+          el.style.background = 'rgba(255, 255, 0, 0.6)';
+          el.style.cursor = 'pointer';
+          el.style.border = '1px solid rgba(255, 255, 0, 0.8)';
+        });
+        
+        startMarkers.forEach(el => {
+          el.style.background = 'rgba(0, 200, 0, 0.5)';
+          el.style.borderLeft = '3px solid green';
+          el.style.cursor = 'pointer';
+        });
+        
+        endMarkers.forEach(el => {
+          el.style.background = 'rgba(200, 0, 0, 0.5)';
+          el.style.borderRight = '3px solid red';
+          el.style.cursor = 'pointer';
+        });
+        
+        const totalStyled = highlights.length + startMarkers.length + endMarkers.length;
+        if (totalStyled > 0) {
+          addLog(`Force-styled ${totalStyled} elements (${highlights.length} highlights, ${startMarkers.length + endMarkers.length} markers)`, 'success');
+        }
+        
+        return totalStyled;
+      }
+      return 0;
+    }
+
+    function addLog(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      systemLogs.push({ timestamp, message, type });
+      if (systemLogs.length > 100) systemLogs = systemLogs.slice(-100);
+      updateSystemLogs();
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+
+    function updateSystemLogs() {
+      const logsContainer = document.getElementById('system-logs');
+      logsContainer.innerHTML = systemLogs.map(log =>
+        `<div class="log-entry ${log.type}">[${log.timestamp}] ${log.message}</div>`
+      ).join('');
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    // CFI Marker Functions - Even simpler approach using CSS classes
+    function clearCfiMarkers() {
+      if (window.cfiMarkerAnnotations) {
+        window.cfiMarkerAnnotations.forEach(cfi => {
+          try {
+            rendition.annotations.remove(cfi);
+          } catch (e) {
+            // Ignore removal errors
+          }
+        });
+        window.cfiMarkerAnnotations = [];
+        addLog('Cleared CFI markers', 'info');
+      }
+    }
+
+    function addCfiMarker(cfi, type, pageIndex) {
+      if (!cfi || !rendition || !rendition.annotations) return;
+      
+      try {
+        // Track markers for later removal
+        if (!window.cfiMarkerAnnotations) window.cfiMarkerAnnotations = [];
+        
+        // Use a simple class-based approach
+        const className = type === 'start' ? 'cfi-marker-start' : 'cfi-marker-end';
+        
+        // Add as highlight annotation with callback
+        rendition.annotations.highlight(cfi, {
+          type: 'cfi-marker',
+          pageType: type,
+          pageIndex: pageIndex
+        }, (e) => {
+          addLog(`Clicked ${type} CFI marker for page ${pageIndex}`, 'info');
+        }, className);
+
+        window.cfiMarkerAnnotations.push(cfi);
+        addLog(`Added ${type} CFI marker for page ${pageIndex}`, 'success');
+        
+        // Force apply styling to the CFI marker we just created
+        setTimeout(() => {
+          const viewer = document.getElementById('viewer');
+          const iframe = viewer ? viewer.querySelector('iframe') : null;
+          
+          if (iframe && iframe.contentDocument) {
+            const doc = iframe.contentDocument;
+            
+            // Force style CFI markers
+            const startMarkers = doc.querySelectorAll('.cfi-marker-start');
+            const endMarkers = doc.querySelectorAll('.cfi-marker-end');
+            
+            startMarkers.forEach(el => {
+              el.style.background = 'rgba(0, 200, 0, 0.5)';
+              el.style.borderLeft = '3px solid green';
+              el.style.cursor = 'pointer';
+            });
+            
+            endMarkers.forEach(el => {
+              el.style.background = 'rgba(200, 0, 0, 0.5)';
+              el.style.borderRight = '3px solid red';
+              el.style.cursor = 'pointer';
+            });
+            
+            addLog(`Force-styled ${startMarkers.length + endMarkers.length} CFI marker elements`, 'success');
+          }
+        }, 100);
+        
+      } catch (e) {
+        addLog(`Failed to add ${type} CFI marker: ${e.message}`, 'warning');
+      }
+    }
+
+    function showCfiMarkers() {
+      clearCfiMarkers();
+      
+      const preRenderer = rendition?.manager?.preRenderer;
+      if (!preRenderer) {
+        addLog('No pre-renderer available for CFI markers', 'warning');
+        return;
+      }
+
+      const chapters = preRenderer.getAllChapters();
+      const currentHref = rendition?.location?.start?.href;
+      
+      const chapter = chapters.find(c => c.section.href === currentHref);
+      if (!chapter || !chapter.pageMap) {
+        addLog('No page map available for current chapter', 'warning');
+        return;
+      }
+
+      let markersAdded = 0;
+      chapter.pageMap.forEach(page => {
+        if (page.startCfi) {
+          addCfiMarker(page.startCfi, 'start', page.index);
+          markersAdded++;
+        }
+        if (page.endCfi && page.endCfi !== page.startCfi) {
+          addCfiMarker(page.endCfi, 'end', page.index);
+          markersAdded++;
+        }
+      });
+
+      addLog(`Added ${markersAdded} CFI markers for ${chapter.pageMap.length} pages`, 'success');
+    }
+
+    function toggleCfiMarkers() {
+      cfiMarkersVisible = !cfiMarkersVisible;
+      if (cfiMarkersVisible) {
+        showCfiMarkers();
+      } else {
+        clearCfiMarkers();
+        addLog('CFI markers hidden', 'info');
+      }
+    }
+
+    function updatePageMapDisplay() {
+      const preRenderer = rendition?.manager?.preRenderer;
+      const infoDiv = document.getElementById('page-map-info');
+      const table = document.getElementById('page-map-table');
+      const tbody = document.getElementById('page-map-tbody');
+      
+      if (!preRenderer) {
+        infoDiv.textContent = 'No pre-renderer available';
+        table.style.display = 'none';
+        return;
+      }
+
+      const chapters = preRenderer.getAllChapters();
+      const currentHref = rendition?.location?.start?.href;
+      
+      currentChapter = chapters.find(c => c.section.href === currentHref);
+      if (!currentChapter || !currentChapter.pageMap) {
+        infoDiv.textContent = `No page map for current chapter: ${currentHref || 'unknown'}`;
+        table.style.display = 'none';
+        return;
+      }
+
+      infoDiv.textContent = `Chapter: ${currentChapter.section.href} (${currentChapter.pageMap.length} pages)`;
+      tbody.innerHTML = '';
+      
+      currentChapter.pageMap.forEach(page => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+          <td>${page.index}</td>
+          <td>${page.pageNumber || '—'}</td>
+          <td class="cfi-cell" title="${page.startCfi || 'None'}">${page.startCfi || '—'}</td>
+          <td class="cfi-cell" title="${page.endCfi || 'None'}">${page.endCfi || '—'}</td>
+          <td>${page.xOffset || 0}</td>
+          <td>
+            <button onclick="navigateToPage(${page.index})" style="font-size:10px;">Go</button>
+            ${page.startCfi ? `<button onclick="navigateToCfi('${page.startCfi}')" style="font-size:10px;">Start</button>` : ''}
+          </td>
+        `;
+      });
+      
+      table.style.display = 'table';
+      addLog(`Page map updated: ${currentChapter.pageMap.length} pages`, 'info');
+    }
+
+    function navigateToPage(pageIndex) {
+      if (!currentChapter || !currentChapter.pageMap) return;
+      const page = currentChapter.pageMap.find(p => p.index === pageIndex);
+      if (page && page.startCfi) {
+        rendition.display(page.startCfi);
+        addLog(`Navigating to page ${pageIndex} via CFI`, 'info');
+      }
+    }
+
+    function navigateToCfi(cfi) {
+      rendition.display(cfi);
+      addLog(`Navigating to CFI: ${cfi}`, 'info');
+    }
+
+    function initializeBook() {
+      addLog('Loading local Alice EPUB...', 'info');
+
+      // Use the local Alice fixture used by the test-suite
+      book = window.ePub('/e2e/fixtures/alice.epub', {
+        keepAbsoluteUrl: true
+      });
+
+      rendition = book.renderTo('viewer', {
+        width: 450,
+        height: 600,
+        ignoreClass: 'annotator-hl',
+        manager: preRenderingEnabled ? 'prerendering' : 'default',
+        flow: 'paginated',
+        spread: 'none',  // Changed from 'auto' to 'none' for single page
+        transparency: true,
+        allowScriptedContent: true,
+        usePreRendering: preRenderingEnabled
+      });
+
+      addLog(`Rendition created with usePreRendering: ${preRenderingEnabled} (single page mode, 450x600)`, 'info');
+      setupEventListeners();
+      addLog('Waiting for rendition to be attached before initial display', 'info');
+    }
+
+    function setupEventListeners() {
+      book.ready.then(() => {
+        addLog(`Book loaded: ${book.packaging.metadata.title}`, 'success');
+        addLog(`Total sections: ${book.spine.length}`, 'info');
+      });
+
+      // Enhanced approach: Monitor for new iframes and inject styles
+      function monitorAndStyleIframes() {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                // Check if the added node is an iframe or contains iframes
+                const iframes = node.tagName === 'IFRAME' ? [node] : node.querySelectorAll ? node.querySelectorAll('iframe') : [];
+                
+                iframes.forEach((iframe) => {
+                  // Wait for iframe to load, then inject styles
+                  const injectStyles = () => {
+                    try {
+                      const doc = iframe.contentDocument;
+                      if (doc && doc.body) {
+                        // Check if we've already injected styles
+                        if (doc.querySelector('#epub-highlight-styles')) return;
+                        
+                        const style = doc.createElement('style');
+                        style.id = 'epub-highlight-styles';
+                        style.textContent = `
+                          .highlight {
+                            background: rgba(255, 255, 0, 0.6) !important;
+                            cursor: pointer !important;
+                            border: 1px solid rgba(255, 255, 0, 0.8) !important;
+                          }
+                          .cfi-marker-start {
+                            background: rgba(0, 200, 0, 0.5) !important;
+                            border-left: 3px solid green !important;
+                            cursor: pointer !important;
+                          }
+                          .cfi-marker-end {
+                            background: rgba(200, 0, 0, 0.5) !important;
+                            border-right: 3px solid red !important;
+                            cursor: pointer !important;
+                          }
+                          [data-annotation-id] {
+                            background: rgba(255, 255, 0, 0.6) !important;
+                            cursor: pointer !important;
+                          }
+                          .epubjs-hl, .epubjs-mk {
+                            background: rgba(255, 255, 0, 0.6) !important;
+                            cursor: pointer !important;
+                          }
+                          mark {
+                            background: rgba(255, 255, 0, 0.6) !important;
+                            cursor: pointer !important;
+                          }
+                        `;
+                        doc.head.appendChild(style);
+                        addLog(`Injected styles into iframe: ${iframe.src || 'about:blank'}`, 'success');
+                      }
+                    } catch (e) {
+                      // Cross-origin or other access issues - ignore
+                    }
+                  };
+                  
+                  if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+                    injectStyles();
+                  } else {
+                    iframe.addEventListener('load', injectStyles);
+                  }
+                });
+              }
+            });
+          });
+        });
+        
+        // Start observing the viewer container for new iframes
+        const viewer = document.getElementById('viewer');
+        if (viewer) {
+          observer.observe(viewer, { childList: true, subtree: true });
+          addLog('Started monitoring for new iframes to inject styles', 'success');
+        }
+        
+        return observer;
+      }
+
+      rendition.on('started', function() {
+        addLog('Rendition started (single page mode)', 'success');
+        
+        // Apply styling immediately when rendition starts (like the working example)
+        try {
+          rendition.themes.default({
+            '::selection': {
+              'background': 'rgba(255,255,0, 0.3)'
+            },
+            '.highlight': {
+              'background': 'rgba(255,255,0, 0.3)',
+              'cursor': 'pointer'
+            }
+          });
+          addLog('Applied highlight styling on started event', 'success');
+        } catch (e) {
+          addLog('Failed to apply styling on started: ' + e.message, 'error');
+        }
+      });
+
+      rendition.on('attached', function() {
+        addLog('Rendition attached - checking pre-renderer...', 'info');
+        addLog(`Manager type: ${rendition.manager?.name || 'unknown'}`, 'info');
+        addLog(`Manager has writeIframeContent: ${!!(rendition.manager?.writeIframeContent)}`, 'info');
+        addLog(`Pre-rendering enabled: ${!!rendition.manager.preRenderer}`, 'info');
+        addLog('Starting at spine index 1 (first chapter after cover)', 'info');
+        
+        // Start monitoring for iframes
+        window.iframeObserver = monitorAndStyleIframes();
+        
+        rendition.display(1);
+
+        if (book.spine && rendition.manager && rendition.manager.preRenderer) {
+          const sections = book.spine.spineItems;
+          addLog(`Starting pre-rendering of ${sections.length} chapters immediately...`, 'info');
+          rendition.manager.startPreRendering(sections).then(() => {
+            addLog('Pre-rendering completed successfully', 'success');
+            updateStatus();
+          }).catch(err => addLog(`Pre-rendering failed: ${err?.message || err}`, 'error'));
+        } else {
+          addLog('Book spine or pre-renderer not ready for immediate start', 'warning');
+        }
+        updateStatus();
+      });
+
+      Promise.all([book.ready, new Promise(resolve => rendition.on('attached', resolve))]).then(() => {
+        addLog(`Book ready: ${book.packaging.metadata.title}`, 'success');
+        if (rendition.manager && rendition.manager.preRenderer) addLog('Pre-renderer is available and should auto-start', 'info');
+        else addLog('Pre-renderer not available', 'warning');
+        updateStatus();
+      });
+
+      rendition.on('rendered', function(section) {
+        const sectionHref = section?.href || '(unknown section)';
+        addLog(`Chapter rendered: ${sectionHref}`, 'success');
+        
+        // Reapply styling after each chapter renders (important for prerendered content)
+        try {
+          rendition.themes.default({
+            '::selection': {
+              'background': 'rgba(255,255,0, 0.3)'
+            },
+            '.highlight': {
+              'background': 'rgba(255,255,0, 0.3)',
+              'cursor': 'pointer'
+            }
+          });
+          addLog('Reapplied styling after chapter render', 'info');
+        } catch (e) {
+          addLog('Failed to reapply styling: ' + e.message, 'warning');
+        }
+        
+        updateStatus();
+      });
+
+      rendition.on('relocated', function(location) {
+        const href = location?.start?.href || '(unknown)';
+        addLog(`Navigated to href: ${href}`, 'info');
+        try { window.__lastRelocated = location; } catch (e) {}
+        updateStatus();
+        updatePageMapDisplay(); // Update page map when location changes
+        if (cfiMarkersVisible) {
+          setTimeout(showCfiMarkers, 100); // Refresh CFI markers after location change
+        }
+      });
+
+      if (rendition.manager && rendition.manager.preRenderer) {
+        rendition.manager.on('added', function(data) {
+          if (data && data.total && data.rendered) addLog(`Pre-rendering progress: ${data.rendered}/${data.total} chapters`, 'success');
+          else if (data && data.section) addLog(`Chapter view added: ${data.section.href}`, 'info');
+          updateStatus();
+        });
+      }
+
+      document.getElementById('next').addEventListener('click', function(e){ e.preventDefault(); rendition.next(); addLog('Next clicked','info'); });
+      document.getElementById('prev').addEventListener('click', function(e){ e.preventDefault(); rendition.prev(); addLog('Prev clicked','info'); });
+
+      document.addEventListener('keyup', function(e){ if (e.keyCode===37) rendition.prev(); else if (e.keyCode===39) rendition.next(); });
+
+      rendition.on('selected', function(cfiRange, contents){ addLog(`Text selected: ${cfiRange}`, 'info'); rendition.annotations.highlight(cfiRange, {}, () => addLog('Highlight clicked','info')); contents.window.getSelection().removeAllRanges(); addHighlightToList(cfiRange); });
+
+      document.getElementById('toggle-prerendering').addEventListener('click', function(){ preRenderingEnabled = !preRenderingEnabled; addLog(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}`, 'info'); alert(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}. Reload page to take effect.`); });
+
+      document.getElementById('refresh-debug').addEventListener('click', function(){ addLog('Refreshing debug information','info'); updateStatus(); });
+
+      document.getElementById('dump-prerenderer').addEventListener('click', function(){
+        addLog('Dumping PreRenderer and manager debug info to console', 'info');
+        try {
+          const pr = rendition?.manager?.preRenderer;
+          console.group('PreRenderer Dump');
+          if (!pr) {
+            console.log('PreRenderer not available yet');
+            addLog('PreRenderer not available', 'warning');
+          } else {
+            const chapters = pr.getAllChapters();
+            console.log('Chapters (summary):', chapters.map(c => ({ href: c.section.href, index: c.section.index, pageCount: c.pageCount, hasWhitePages: c.hasWhitePages, whitePageIndices: c.whitePageIndices.length, attached: c.attached, width: c.width, pageMapLength: c.pageMap?.length || 0 })));
+            console.log('Full chapters array:', chapters);
+            console.log('Page Map Details:', chapters.map(c => ({ href: c.section.href, pageMap: c.pageMap })));
+            if (typeof pr.getDebugInfo === 'function') console.log('PreRenderer.getDebugInfo():', pr.getDebugInfo());
+            addLog(`PreRenderer chapters: ${chapters.length}`, 'info');
+            
+            // Check if chapters have global page numbers assigned
+            const hasGlobalPageNumbers = chapters.some(c => c.pageMap?.some(p => p.pageNumber !== undefined));
+            addLog(`Global page numbers assigned: ${hasGlobalPageNumbers}`, hasGlobalPageNumbers ? 'success' : 'warning');
+          }
+
+          const mgr = rendition?.manager;
+          if (mgr) {
+            try {
+              if (typeof mgr.getTotalPages === 'function') {
+                const tot = mgr.getTotalPages();
+                console.log('manager.getTotalPages():', tot);
+                addLog(`manager.getTotalPages() => ${tot}`, 'info');
+              }
+              if (typeof mgr.getCurrentPage === 'function') {
+                const cur = mgr.getCurrentPage();
+                console.log('manager.getCurrentPage():', cur);
+                addLog(`manager.getCurrentPage() => ${cur}`, 'info');
+              }
+              if (typeof mgr.currentLocation === 'function') {
+                const loc = mgr.currentLocation();
+                console.log('manager.currentLocation():', loc);
+                addLog(`manager.currentLocation() printed to console`, 'info');
+              }
+            } catch (e) {
+              console.error('Error reading manager info', e);
+              addLog('Error reading manager info: '+(e?.message||e), 'error');
+            }
+          } else {
+            addLog('Manager not available', 'warning');
+            console.log('Manager not available on rendition yet');
+          }
+          console.groupEnd();
+        } catch (err) {
+          console.error('Dump failed', err);
+          addLog('Dump failed: '+(err?.message||err), 'error');
+        }
+      });
+
+      document.getElementById('jump-to-chapter').addEventListener('click', function(){ const input = prompt('Enter spine index (0-based) or href:'); if (input===null) return; if (!isNaN(Number(input))) { rendition.display(parseInt(input,10)); addLog(`Jumping to spine index ${input}`,'info'); return; } const href = String(input).split('#')[0]; const section = book.spine.get(href); if (section) { rendition.display(href); addLog(`Jumping to href ${href}`,'info'); } else addLog(`Could not resolve href: ${href}`,'error'); });
+
+      document.getElementById('clear-logs').addEventListener('click', function(){ systemLogs = []; updateSystemLogs(); addLog('Logs cleared','info'); });
+
+      document.getElementById('toggle-cfi-markers').addEventListener('click', function(){ toggleCfiMarkers(); });
+
+      document.getElementById('show-page-map').addEventListener('click', function(){ updatePageMapDisplay(); });
+
+      document.getElementById('test-highlight').addEventListener('click', function(){ 
+        // Test highlighting using the current location  
+        if (rendition && rendition.annotations && rendition.location) {
+          try {
+            // Get the current location and create a simple highlight
+            const location = rendition.location.start;
+            if (location.cfi) {
+              // Create a highlight at current location
+              rendition.annotations.highlight(location.cfi, {}, () => {
+                addLog('Test highlight clicked', 'info');
+              });
+              addLog(`Added test highlight at current location: ${location.cfi}`, 'success');
+              
+        // Force apply styling to the highlight we just created
+        setTimeout(() => {
+          forceStyleAllHighlights();
+        }, 100);
+        
+        // Try again after a longer delay in case the DOM hasn't updated
+        setTimeout(() => {
+          forceStyleAllHighlights();
+        }, 500);            } else {
+              addLog('No CFI available at current location', 'warning');
+            }
+          } catch (e) {
+            addLog('Test highlight failed: ' + e.message, 'error');
+          }
+        } else {
+          addLog('Rendition, annotations, or location not available', 'warning');
+        }
+      });
+
+      document.getElementById('debug-iframe').addEventListener('click', function(){
+        addLog('Debugging iframe content and styling...', 'info');
+        
+        const viewer = document.getElementById('viewer');
+        const iframe = viewer ? viewer.querySelector('iframe') : null;
+        
+        if (!iframe) {
+          addLog('No iframe found in viewer', 'error');
+          return;
+        }
+        
+        try {
+          const doc = iframe.contentDocument;
+          if (!doc) {
+            addLog('Cannot access iframe content document', 'error');
+            return;
+          }
+          
+          // Check for existing highlights
+          const highlights = doc.querySelectorAll('.highlight');
+          addLog(`Found ${highlights.length} elements with .highlight class`, 'info');
+          
+          // Check for applied styles
+          const styles = doc.querySelectorAll('style');
+          addLog(`Found ${styles.length} style elements in iframe`, 'info');
+          
+          if (styles.length > 0) {
+            styles.forEach((style, index) => {
+              addLog(`Style ${index}: ${style.textContent.substring(0, 100)}...`, 'info');
+            });
+          }
+          
+          // Try to manually add a highlight style
+          const styleEl = doc.createElement('style');
+          styleEl.textContent = `
+            .highlight { 
+              background: rgba(255, 255, 0, 0.8) !important; 
+              cursor: pointer !important; 
+            }
+            .cfi-marker-start { 
+              background: rgba(0, 255, 0, 0.8) !important; 
+              border-left: 4px solid green !important; 
+            }
+            .cfi-marker-end { 
+              background: rgba(255, 0, 0, 0.8) !important; 
+              border-right: 4px solid red !important; 
+            }
+          `;
+          doc.head.appendChild(styleEl);
+          addLog('Manually added highlight styles to iframe', 'success');
+          
+        } catch (e) {
+          addLog('Error debugging iframe: ' + e.message, 'error');
+        }
+      });
+
+      document.getElementById('test-page-numbers').addEventListener('click', function(){
+        addLog('Testing page number sources...', 'info');
+        
+        const preRenderer = rendition?.manager?.preRenderer;
+        const manager = rendition?.manager;
+        
+        if (preRenderer) {
+          const chapters = preRenderer.getAllChapters();
+          const totalPrerenderedPages = chapters.reduce((sum, ch) => sum + (ch.pageCount || 0), 0);
+          addLog(`Prerendered total pages: ${totalPrerenderedPages}`, 'info');
+          
+          // Check if any chapters have global page numbers
+          let globalPageNumbersFound = false;
+          chapters.forEach(ch => {
+            if (ch.pageMap) {
+              ch.pageMap.forEach(page => {
+                if (page.pageNumber !== undefined) {
+                  globalPageNumbersFound = true;
+                  addLog(`Found global page number ${page.pageNumber} in ${ch.section.href} page ${page.index}`, 'success');
+                }
+              });
+            }
+          });
+          
+          if (!globalPageNumbersFound) {
+            addLog('No global page numbers found in prerendered data', 'warning');
+          }
+        }
+        
+        if (manager) {
+          if (typeof manager.getTotalPages === 'function') {
+            const managerTotal = manager.getTotalPages();
+            addLog(`Manager getTotalPages(): ${managerTotal}`, 'info');
+          }
+          
+          if (typeof manager.getCurrentPage === 'function') {
+            const managerCurrent = manager.getCurrentPage();
+            addLog(`Manager getCurrentPage(): ${managerCurrent}`, 'info');
+          }
+          
+          // Check if manager has prerendering capabilities
+          const hasPrerendering = !!manager.preRenderer;
+          addLog(`Manager has prerenderer: ${hasPrerendering}`, hasPrerendering ? 'success' : 'warning');
+        }
+      });
+    }
+
+    function addHighlightToList(cfiRange) {
+      book.getRange(cfiRange).then(function(range) {
+        if (!range) return;
+        
+        const text = range.toString();
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        const remove = document.createElement('a');
+        const textNode = document.createTextNode(text);
+
+        a.textContent = cfiRange;
+        a.href = "#" + cfiRange;
+        a.onclick = function(e) {
+          e.preventDefault();
+          rendition.display(cfiRange);
+          addLog(`Navigating to highlight: ${cfiRange}`, 'info');
+        };
+
+        remove.textContent = "remove";
+        remove.href = "#" + cfiRange;
+        remove.onclick = function(e) {
+          e.preventDefault();
+          rendition.annotations.remove(cfiRange);
+          li.remove();
+          addLog(`Removing highlight: ${cfiRange}`, 'info');
+          return false;
+        };
+
+        li.appendChild(a);
+        li.appendChild(textNode);
+        li.appendChild(remove);
+        document.getElementById('highlights').appendChild(li);
+      });
+    }
+
+    function updateStatus() {
+      const statusText = document.getElementById('status-text');
+      const progressFill = document.getElementById('progress-fill');
+      const chapterStatus = document.getElementById('chapter-status');
+      const debugInfo = document.getElementById('debug-info');
+      const currentPageEl = document.getElementById('current-page');
+      const totalPagesEl = document.getElementById('total-pages');
+
+      if (!rendition || !rendition.manager) { statusText.textContent = 'Rendition not ready'; return; }
+      const preRenderer = rendition.manager.preRenderer;
+      if (preRenderer) {
+        const status = preRenderer.getStatus();
+        const percentage = status.total>0 ? (status.rendered/status.total)*100 : 0;
+        statusText.innerHTML = `<strong>Pre-rendering Status:</strong> ${status.rendered}/${status.total} chapters rendered (${status.failed} failed) - ${percentage.toFixed(1)}%`;
+        progressFill.style.width = percentage + '%';
+        updateChapterStatusCards(preRenderer);
+        const debugData = preRenderer.getDebugInfo();
+        debugInfo.innerHTML = `<pre>${JSON.stringify(debugData, null, 2)}</pre>`;
+        // Try to read total/current pages from the manager API if available
+        try {
+          let total = undefined;
+          let current = undefined;
+
+          if (rendition.manager && typeof rendition.manager.getTotalPages === 'function') {
+            total = rendition.manager.getTotalPages();
+          }
+
+          if (rendition.manager && typeof rendition.manager.getCurrentPage === 'function') {
+            current = rendition.manager.getCurrentPage();
+          }
+
+          // Fallback: try to get displayed page info from rendition.location()
+          if ((total === undefined || current === undefined) && rendition.location) {
+            try {
+              const loc = rendition.location ? rendition.location.start : null;
+              if (loc && loc.displayed) {
+                if (total === undefined && typeof loc.displayed.total === 'number') total = loc.displayed.total;
+                if (current === undefined && typeof loc.displayed.page === 'number') current = loc.displayed.page;
+              }
+            } catch (e) {
+              // ignore
+            }
+          }
+
+          totalPagesEl.textContent = total === undefined ? '—' : String(total);
+          currentPageEl.textContent = current === undefined ? '—' : String(current);
+          // Debug: log where values came from for easier troubleshooting
+          const source = (typeof rendition.manager.getTotalPages === 'function' || typeof rendition.manager.getCurrentPage === 'function') ? 'manager' : 'fallback';
+          addLog(`Pages: current=${current === undefined ? '—' : current} total=${total === undefined ? '—' : total} (source: ${source})`, 'info');
+          // Update fixed counter as well
+          const fixedTotal = document.getElementById('fixed-total-pages');
+          const fixedCurrent = document.getElementById('fixed-current-page');
+          if (fixedTotal) fixedTotal.textContent = total === undefined ? '—' : String(total);
+          if (fixedCurrent) fixedCurrent.textContent = current === undefined ? '—' : String(current);
+        } catch (e) {
+          // On any error, just display placeholders
+          if (totalPagesEl) totalPagesEl.textContent = '—';
+          if (currentPageEl) currentPageEl.textContent = '—';
+        }
+      } else {
+        statusText.innerHTML = '<strong>Pre-rendering:</strong> Disabled';
+        progressFill.style.width = '0%';
+        chapterStatus.innerHTML = '<div>Pre-rendering is disabled</div>';
+        debugInfo.innerHTML = '<div>No pre-renderer available</div>';
+  // Clear page info when prerenderer is disabled
+  const currentPageEl = document.getElementById('current-page');
+  const totalPagesEl = document.getElementById('total-pages');
+  const fixedTotal = document.getElementById('fixed-total-pages');
+  const fixedCurrent = document.getElementById('fixed-current-page');
+  if (currentPageEl) currentPageEl.textContent = '—';
+  if (totalPagesEl) totalPagesEl.textContent = '—';
+  if (fixedTotal) fixedTotal.textContent = '—';
+  if (fixedCurrent) fixedCurrent.textContent = '—';
+      }
+    }
+
+    function updateChapterStatusCards(preRenderer) {
+      const chapterStatus = document.getElementById('chapter-status');
+      const chapters = preRenderer.getAllChapters();
+      chapterStatus.innerHTML = chapters.map(chapter => {
+        let statusClass = ''; let statusText = 'Pending';
+        if (chapter.attached) { statusClass='attached'; statusText='Displayed'; }
+        else if (chapter.rendered && chapter.rendered.promise) { statusClass='rendered'; statusText='Pre-rendered'; }
+        const fileName = chapter.section.href.split('/').pop();
+        return `<div class="chapter-card ${statusClass}"><div><strong>${fileName}</strong></div><div>Index: ${chapter.section.index}</div><div>Status: ${statusText}</div><div>Size: ${chapter.width}×${chapter.height}</div></div>`;
+      }).join('');
+    }
+
+    function applyCustomStyling() {
+      if (rendition && rendition.themes) {
+        try {
+          // Apply the same styling as the working transparent example
+          rendition.themes.default({
+            '::selection': {
+              'background': 'rgba(255,255,0, 0.3)'
+            },
+            '.highlight': {
+              'background': 'rgba(255,255,0, 0.3)',
+              'cursor': 'pointer'
+            }
+          });
+          addLog('Applied custom styling with proper transparency', 'success');
+        } catch (e) { 
+          addLog('Failed to apply custom styling: '+e.message,'error'); 
+        }
+      } else { 
+        addLog('Skipping custom styling - rendition not ready','warning'); 
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      addLog('Page loaded, initializing...', 'info');
+      initializeBook();
+      // Run a single status update on load; subsequent updates happen on events (relocated/rendered/manager events)
+      updateStatus();
+      let resizeTimeout;
+      window.addEventListener('resize', function(){ addLog('Window resize detected','info'); clearTimeout(resizeTimeout); resizeTimeout = setTimeout(()=>{ addLog('Processing resize...','info'); if (rendition) { const beforeIframes = document.querySelectorAll('#viewer iframe').length; addLog(`Before resize: ${beforeIframes} iframes visible`,'info'); rendition.resize(); setTimeout(()=>{ const afterIframes = document.querySelectorAll('#viewer iframe').length; addLog(`After resize: ${afterIframes} iframes visible`,'info'); if (afterIframes===0) { addLog('WARNING: All iframes disappeared after resize!','error'); const preRenderer = rendition.manager?.preRenderer; if (preRenderer) addLog(`PreRenderer debug: ${JSON.stringify(preRenderer.getDebugInfo())}`,'info'); } },100); } },250); });
+    });
+
+    window.epubDebug = { addLog, updateStatus, getPreRenderer: () => rendition?.manager?.preRenderer, getDebugInfo: () => rendition?.manager?.preRenderer?.getDebugInfo(), book, rendition, triggerResize: () => { addLog('Manual resize triggered','info'); if (rendition) rendition.resize(); } };
+
+    addLog('Prerendered Alice example (single page) initialized', 'success');
+  </script>
+
+</body>
+</html>

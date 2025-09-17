@@ -85,6 +85,10 @@ class Stage {
     container.style.verticalAlign = 'top';
     container.style.position = 'relative';
 
+    // Ensure container always has transparent background and low z-index for highlight visibility
+    container.style.backgroundColor = 'transparent';
+    container.style.zIndex = '0';
+
     if (axis === 'horizontal') {
       // container.style.whiteSpace = "nowrap";
       container.style.display = 'flex';
