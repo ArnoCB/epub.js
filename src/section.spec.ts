@@ -230,7 +230,7 @@ describe('Section', () => {
       );
 
       // Mock cfiFromRange method to return a CFI
-      section.cfiFromRange = jest.fn().mockReturnValue('mock-cfi-string');
+      section.cfiFrom = jest.fn().mockReturnValue('mock-cfi-string');
     });
 
     it('should find matches in text content', () => {
@@ -330,7 +330,7 @@ describe('Section', () => {
     it('should create CFI from range', () => {
       const mockRange = {} as Range;
 
-      const cfi = section.cfiFromRange(mockRange);
+      const cfi = section.cfiFrom(mockRange);
 
       expect(cfi).toBe('mock-cfi-string');
     });
@@ -344,7 +344,7 @@ describe('Section', () => {
     it('should create CFI from element', () => {
       const mockElement = document.createElement('div');
 
-      const cfi = section.cfiFromElement(mockElement);
+      const cfi = section.cfiFrom(mockElement);
 
       expect(cfi).toBe('mock-cfi-string');
     });
