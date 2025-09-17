@@ -154,7 +154,7 @@ export class Section {
           range.setStart(node, pos);
           range.setEnd(node, pos + query.length);
 
-          cfi = this.cfiFromRange(range);
+          cfi = this.cfiFrom(range);
 
           // Generate the excerpt
           if (node.textContent!.length < limit) {
@@ -233,7 +233,7 @@ export class Section {
               ? endPos
               : endPos - beforeEndLengthCount
           );
-          const cfi = this.cfiFromRange(range);
+          const cfi = this.cfiFrom(range);
 
           let excerpt = nodeList
             .slice(0, endNodeIndex + 1)
@@ -308,17 +308,10 @@ export class Section {
   }
 
   /**
-   * Get a CFI from a Range in the Section
+   * Get a CFI from a Range or Element in the Section
    */
-  cfiFromRange(_range: Range) {
-    return new EpubCFI(_range, this.cfiBase).toString();
-  }
-
-  /**
-   * Get a CFI from an Element in the Section
-   */
-  cfiFromElement(el: Node) {
-    return new EpubCFI(el, this.cfiBase).toString();
+  cfiFrom(input: Range | Node): string {
+    return new EpubCFI(input, this.cfiBase).toString();
   }
 
   /**

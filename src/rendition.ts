@@ -274,12 +274,10 @@ export class Rendition implements EventEmitterMethods {
     }
 
     // Create manager in ONE place - always create here, no conditions
-    console.log(
-      `[Rendition] Creating manager in start() - usePreRendering: ${this.settings.usePreRendering}`
-    );
+    // Debug: usePreRendering = ${this.settings.usePreRendering}
 
     if (typeof this.settings.manager === 'object') {
-      console.log('[Rendition] Using provided manager object');
+      console.debug('[Rendition] Using provided manager object');
       this.manager = this.settings.manager;
     } else {
       const layoutInstance = new Layout({
@@ -308,7 +306,7 @@ export class Rendition implements EventEmitterMethods {
         ? PreRenderingViewManager
         : DefaultViewManager;
 
-      console.log(`[Rendition] Using manager class: ${ManagerClass.name}`);
+      // Debug: Using manager class = ${ManagerClass.name}
 
       const baseManagerOptions = {
         view: this.settings.view,

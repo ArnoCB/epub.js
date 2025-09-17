@@ -114,10 +114,7 @@ class Views {
     if (this.container) {
       try {
         // Trace when views are appended to help debug layout invalidation
-        console.debug(
-          '[Views] append called for view.section:',
-          view.section && view.section.href
-        );
+        // Note: Debug logging removed to reduce test output noise
         try {
           // Use bracket notation to avoid `any` lint rules
           // Use unknown cast to avoid explicit any
@@ -132,7 +129,6 @@ class Views {
           // ignore trace push errors
           void err;
         }
-        console.trace('[Views] append stack trace');
       } catch {
         // ignore
       }

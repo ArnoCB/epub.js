@@ -6,31 +6,11 @@ import EventEmitter from 'event-emitter';
 import { EVENTS } from '../utils/constants';
 import { ViewRenderer } from './helpers/view-renderer';
 import Contents from '../contents';
+import { CfiResolver } from './helpers/cfi-resolver';
+import { ChapterManager, PreRenderedChapter } from './helpers/chapter-manager';
+import { PageMapGenerator } from './helpers/page-map-generator';
 
-export interface PreRenderedChapter {
-  section: Section;
-  view: View;
-  element: HTMLElement;
-  rendered: defer<View>;
-  attached: boolean;
-  width: number;
-  height: number;
-  pageCount: number;
-  hasWhitePages: boolean;
-  whitePageIndices: number[];
-  // CFI-based page mapping for precise navigation and fixing "page off" issues
-  // This enables accurate bookmarking, progress tracking, and smooth navigation
-  pageMap?: Array<{
-    index: number; // 1-based page index within the chapter
-    startCfi?: string; // CFI at the start of this page for precise positioning
-    endCfi?: string; // CFI at the end of this page for range calculations
-    xOffset?: number; // horizontal offset for paginated flow
-    yOffset?: number; // vertical offset for scrolled flow
-  }>;
-  // Enhanced content preservation for reliable iframe restoration
-  preservedSrcdoc?: string; // Preserved srcdoc attribute
-  preservedContent?: string; // Preserved full document HTML
-}
+export type { PreRenderedChapter } from './helpers/chapter-manager';
 
 export interface ViewSettings {
   ignoreClass?: string;
@@ -62,9 +42,11 @@ export class BookPreRenderer {
 
   private container: HTMLElement;
   private offscreenContainer: HTMLElement;
-  private unattachedStorage: DocumentFragment; // New: for long-term storage
+  private unattachedStorage: DocumentFragment;
   private viewSettings: ViewSettings;
   private viewRenderer: ViewRenderer;
+  private chapterManager: ChapterManager;
+  private pageMapGenerator: PageMapGenerator;
   private chapters: Map<string, PreRenderedChapter>;
   private renderingPromises: Map<string, Promise<PreRenderedChapter>>;
   private request: (url: string) => Promise<Document>;
@@ -188,6 +170,11 @@ export class BookPreRenderer {
       request
     );
 
+    // Initialize ChapterManager with integrated helpers
+    const cfiResolver = new CfiResolver();
+    this.chapterManager = new ChapterManager(cfiResolver);
+    this.pageMapGenerator = new PageMapGenerator(cfiResolver);
+
     // Create unattached storage for long-term prerendered content
     this.unattachedStorage = document.createDocumentFragment();
 
@@ -227,6 +214,20 @@ export class BookPreRenderer {
         batch.map(async (section) => {
           try {
             await this.preRenderSection(section);
+
+            // After a section is prerendered, recompute global page numbers so
+            // each chapter.pageMap.pageNumber reflects its position in the book
+            // using the order of `sections`. This uses already-rendered chapters
+            // (those present in this.chapters) and is safe to call multiple times.
+            try {
+              this.assignGlobalPageNumbers(sections);
+            } catch (e) {
+              console.debug(
+                '[BookPreRenderer] assignGlobalPageNumbers failed:',
+                e
+              );
+            }
+
             this.currentStatus.rendered++;
             this.emit('added', this.currentStatus);
           } catch (error) {
@@ -247,6 +248,39 @@ export class BookPreRenderer {
     }
 
     return this.currentStatus;
+  }
+
+  // Public methods for chapter access
+  getChapter(sectionHref: string): PreRenderedChapter | undefined {
+    return this.chapters.get(sectionHref);
+  }
+
+  getAllChapters(): PreRenderedChapter[] {
+    return Array.from(this.chapters.values());
+  }
+
+  getStatus(): PreRenderingStatus {
+    return this.currentStatus;
+  }
+
+  getDebugInfo() {
+    const chapters = Array.from(this.chapters.entries()).map(
+      ([href, chapter]) => ({
+        href,
+        attached: chapter.attached,
+        width: chapter.width,
+        height: chapter.height,
+        pageCount: chapter.pageCount,
+        hasWhitePages: chapter.hasWhitePages,
+        whitePageIndices: chapter.whitePageIndices,
+      })
+    );
+
+    return {
+      totalChapters: this.chapters.size,
+      renderingInProgress: this.renderingPromises.size,
+      chapters,
+    };
   }
 
   private async preRenderSection(
@@ -278,6 +312,11 @@ export class BookPreRenderer {
       hasWhitePages: false,
       whitePageIndices: [],
     };
+
+    // Prepare a per-chapter deferred that resolves when pageNumbers are assigned
+    const pageNumbersDeferred = new defer<void>();
+    chapter.pageNumbersDeferred = pageNumbersDeferred;
+    chapter.pageNumbersAssigned = pageNumbersDeferred.promise;
 
     this.chapters.set(href, chapter);
 
@@ -324,6 +363,92 @@ export class BookPreRenderer {
     return view;
   }
 
+  /**
+   * Wait for layout to settle before querying element positions
+   */
+  private async waitForLayout(doc: Document, ticks = 2): Promise<void> {
+    return new Promise<void>((resolve) => {
+      try {
+        const win = doc.defaultView;
+        if (!win) return resolve();
+        let count = 0;
+        const step = () => {
+          count += 1;
+          if (count >= ticks) return resolve();
+          win.requestAnimationFrame(step);
+        };
+        win.requestAnimationFrame(step);
+      } catch {
+        resolve();
+      }
+    });
+  }
+
+  /**
+   * Simple content analysis using PageMapGenerator
+   */
+  private async performAsyncContentAnalysis(
+    chapter: PreRenderedChapter,
+    view: View
+  ): Promise<{
+    pageCount: number;
+    pageMap?: NonNullable<PreRenderedChapter['pageMap']>;
+    hasWhitePages: boolean;
+    whitePageIndices: number[];
+  }> {
+    try {
+      console.debug(
+        '[BookPreRenderer] Starting content analysis for:',
+        chapter.section.href
+      );
+
+      // Use the simple PageMapGenerator
+      const result = await this.pageMapGenerator.generatePageMap(
+        view,
+        chapter.section,
+        this.viewSettings.width,
+        this.viewSettings.height
+      );
+
+      console.debug(
+        '[BookPreRenderer] Analysis completed:',
+        chapter.section.href,
+        {
+          pageCount: result.pageCount,
+          hasPageMap: !!result.pageMap,
+          pageMapLength: result.pageMap?.length,
+          hasCFIs: result.pageMap?.some((p) => p.startCfi || p.endCfi),
+        }
+      );
+
+      return {
+        pageCount: result.pageCount,
+        pageMap: result.pageMap,
+        hasWhitePages: result.hasWhitePages,
+        whitePageIndices: result.whitePageIndices,
+      };
+    } catch (error) {
+      console.error(
+        '[BookPreRenderer] Content analysis failed:',
+        chapter.section.href,
+        error
+      );
+      return {
+        pageCount: 1,
+        pageMap: [
+          {
+            index: 1,
+            startCfi: chapter.section.cfiBase || null,
+            endCfi: null,
+            xOffset: 0,
+          },
+        ],
+        hasWhitePages: false,
+        whitePageIndices: [],
+      };
+    }
+  }
+
   private async renderView(
     view: View,
     chapter: PreRenderedChapter
@@ -357,7 +482,6 @@ export class BookPreRenderer {
             marker.textContent = '★ [PRERENDERED]';
             // Insert at the very start of the body (works whether or not firstChild exists)
             body.insertBefore(marker, body.firstChild || null);
-            console.log('[BookPreRenderer] Added prerendered marker to:', href);
           }
         }
       } catch (e) {
@@ -373,8 +497,22 @@ export class BookPreRenderer {
 
       chapter.height = this.viewSettings.height;
 
-      // Analyze and preserve content
-      this.analyzeContent(chapter);
+      // Wait for layout to settle before analyzing content
+      if (view.contents?.document) {
+        await this.waitForLayout(view.contents.document, 3);
+      }
+
+      // Analyze content using ChapterManager with better error handling
+      const analysisResult = await this.performAsyncContentAnalysis(
+        chapter,
+        view
+      );
+
+      // Update chapter with analysis results
+      chapter.pageCount = analysisResult.pageCount;
+      chapter.pageMap = analysisResult.pageMap;
+      chapter.hasWhitePages = analysisResult.hasWhitePages;
+      chapter.whitePageIndices = analysisResult.whitePageIndices;
       // Ensure preservation waits for iframe readiness before reading document
       await this.preserveChapterContent(chapter);
 
@@ -385,7 +523,6 @@ export class BookPreRenderer {
 
       this.unattachedStorage.appendChild(chapter.element);
 
-      console.debug('[BookPreRenderer] renderView SUCCESS for:', href);
       return renderedView as View;
     } catch (error) {
       console.error('[BookPreRenderer] renderView FAILED for:', href, error);
@@ -396,203 +533,8 @@ export class BookPreRenderer {
     }
   }
 
-  private analyzeContent(chapter: PreRenderedChapter): void {
-    try {
-      const view = chapter.view;
-      chapter.pageCount = 1;
-      chapter.pageMap = undefined;
-
-      if (view.contents && view.contents.document) {
-        const doc = view.contents.document;
-        const body = doc.body;
-
-        if (body) {
-          // Detect flow direction from viewSettings or layout
-          const isPaginated =
-            this.viewSettings.flow === 'paginated' ||
-            this.viewSettings.axis === 'horizontal' ||
-            (this.viewSettings.layout &&
-              this.viewSettings.layout._flow === 'paginated');
-
-          if (isPaginated) {
-            // For paginated/horizontal flow: use content scrollWidth vs viewport (column) width
-            let contentWidth = chapter.width;
-            try {
-              if (
-                view.contents &&
-                typeof view.contents.scrollWidth === 'function'
-              ) {
-                contentWidth = view.contents.scrollWidth();
-              }
-            } catch (e) {
-              console.debug(
-                '[BookPreRenderer] could not get scrollWidth, falling back to chapter.width',
-                e
-              );
-            }
-
-            // Use the column width for pagination calculations if available,
-            // otherwise fall back to container width
-            const layoutColumnWidth = this.viewSettings.layout?.columnWidth;
-            const viewportWidth = layoutColumnWidth || this.viewSettings.width;
-
-            // Use a fixed tolerance instead of percentage-based
-            const tolerance = 10; // Fixed 10px tolerance for measurement inaccuracies
-
-            if (contentWidth > viewportWidth + tolerance) {
-              chapter.pageCount = Math.max(
-                1,
-                Math.ceil(contentWidth / viewportWidth)
-              );
-            } else {
-              // Content fits in one page
-              chapter.pageCount = 1;
-            }
-
-            // Build a simple page map with xOffsets and best-effort CFIs for page starts
-            if (chapter.pageCount && chapter.pageCount > 0) {
-              const pageMap = [] as NonNullable<PreRenderedChapter['pageMap']>;
-              for (let i = 0; i < chapter.pageCount; i++) {
-                const xOffset = i * viewportWidth;
-                let startCfi: string | undefined;
-                try {
-                  // Try to compute CFI at page start using elementFromPoint
-                  const rect = {
-                    x: Math.min(xOffset + 1, contentWidth - 1),
-                    y: 1,
-                  };
-                  // Translate to iframe coordinates if needed
-                  const target = body.ownerDocument.elementFromPoint(
-                    Math.max(0, rect.x),
-                    Math.max(0, rect.y)
-                  );
-                  if (target) {
-                    const range = doc.createRange();
-                    range.selectNode(target);
-                    // Prefer section.cfiFromRange
-                    if (typeof chapter.section.cfiFromRange === 'function') {
-                      startCfi = chapter.section.cfiFromRange(
-                        range as unknown as Range
-                      );
-                    }
-                  }
-                } catch {
-                  // ignore CFI failures
-                }
-
-                pageMap.push({ index: i + 1, startCfi, xOffset });
-              }
-              chapter.pageMap = pageMap;
-            }
-          } else {
-            // For scrolled/vertical flow: use content height vs viewport height
-            let contentHeight = body.scrollHeight;
-            try {
-              if (
-                view.contents &&
-                typeof view.contents.scrollHeight === 'function'
-              ) {
-                contentHeight = view.contents.scrollHeight();
-              }
-            } catch (e) {
-              console.debug(
-                '[BookPreRenderer] could not get contents.scrollHeight(), using body.scrollHeight',
-                e
-              );
-            }
-
-            const viewportHeight =
-              this.viewSettings.layout?.height ?? this.viewSettings.height;
-
-            if (contentHeight > viewportHeight * 0.8) {
-              chapter.pageCount = Math.max(
-                1,
-                Math.ceil(contentHeight / viewportHeight)
-              );
-            }
-
-            // Build a simple page map with yOffsets for vertical flow
-            if (chapter.pageCount && chapter.pageCount > 0) {
-              const pageMap = [] as NonNullable<PreRenderedChapter['pageMap']>;
-              for (let i = 0; i < chapter.pageCount; i++) {
-                const yOffset = i * viewportHeight;
-                pageMap.push({ index: i + 1, yOffset });
-              }
-              chapter.pageMap = pageMap;
-            }
-          }
-
-          // White page detection
-          const textContent = body.textContent || '';
-          const trimmedText = textContent.trim();
-
-          if (trimmedText.length < 50) {
-            const visibleElements = Array.from(
-              body.querySelectorAll('*')
-            ).filter((el) => {
-              const style = doc.defaultView?.getComputedStyle(el);
-              return (
-                style &&
-                style.display !== 'none' &&
-                style.visibility !== 'hidden' &&
-                style.opacity !== '0'
-              );
-            });
-
-            if (visibleElements.length < 5 && trimmedText.length < 20) {
-              chapter.whitePageIndices = [0];
-              chapter.hasWhitePages = true;
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.warn(
-        '[BookPreRenderer] content analysis failed for:',
-        chapter.section.href,
-        error
-      );
-      chapter.pageCount = 1;
-      chapter.hasWhitePages = false;
-      chapter.whitePageIndices = [];
-    }
-  }
-
-  getChapter(sectionHref: string): PreRenderedChapter | undefined {
-    const result = this.chapters.get(sectionHref);
-    return result;
-  }
-
-  getAllChapters(): PreRenderedChapter[] {
-    return Array.from(this.chapters.values());
-  }
-
-  getStatus(): PreRenderingStatus {
-    return this.currentStatus;
-  }
-
-  getDebugInfo() {
-    const chapters = Array.from(this.chapters.entries()).map(
-      ([href, chapter]) => ({
-        href,
-        attached: chapter.attached,
-        width: chapter.width,
-        height: chapter.height,
-        pageCount: chapter.pageCount,
-        hasWhitePages: chapter.hasWhitePages,
-        whitePageIndices: chapter.whitePageIndices,
-      })
-    );
-
-    return {
-      totalChapters: this.chapters.size,
-      renderingInProgress: this.renderingPromises.size,
-      chapters,
-    };
-  }
-
   /**
-   * Preserve iframe content to prevent loss during DOM moves
+   * Enhanced content preservation for reliable iframe restoration
    */
   private async preserveChapterContent(
     chapter: PreRenderedChapter
@@ -806,6 +748,18 @@ export class BookPreRenderer {
       );
       return false;
     }
+  }
+
+  /**
+   * Returns a promise that resolves when page numbering (pageNumber on pageMap)
+   * has been assigned for the given section href. Returns null if chapter is
+   * not known.
+   */
+  public getPageNumbering(sectionHref: string): Promise<void> | null {
+    const chapter = this.chapters.get(sectionHref);
+    if (!chapter) return null;
+    if (!chapter.pageNumbersAssigned) return null;
+    return chapter.pageNumbersAssigned;
   }
 
   attachChapter(sectionHref: string): PreRenderedChapter | null {
@@ -1132,7 +1086,7 @@ export class BookPreRenderer {
                     v.document = doc;
                     v.contents = new Contents(
                       doc,
-                      doc.body,
+                      doc.body as HTMLBodyElement,
                       chapter.section.cfiBase,
                       chapter.section.index
                     );
@@ -1171,17 +1125,6 @@ export class BookPreRenderer {
                   console.debug(
                     '[BookPreRenderer] init cloned contents failed'
                   );
-                }
-
-                try {
-                  const w = window as unknown as Record<string, unknown>;
-                  if (!Array.isArray(w['__prerender_trace']))
-                    w['__prerender_trace'] = [];
-                  (w['__prerender_trace'] as string[]).push(
-                    'BookPreRenderer.emitDisplayed: ' + sectionHref
-                  );
-                } catch {
-                  // ignore
                 }
 
                 this.emit(EVENTS.VIEWS.DISPLAYED, attachedChapter.view);
@@ -1289,6 +1232,49 @@ export class BookPreRenderer {
 
     this.emit(EVENTS.VIEWS.HIDDEN, chapter.view);
     return chapter;
+  }
+
+  /**
+   * Assign cumulative page numbers across the book for all prerendered chapters.
+   * This walks the provided sections in order and sums pageCount for already
+   * prerendered chapters to produce a global pageNumber for each page entry.
+   */
+  private assignGlobalPageNumbers(sections: Section[]) {
+    let cumulative = 0;
+    for (const sec of sections) {
+      const href = sec.href;
+      const chapter = this.chapters.get(href);
+      if (!chapter) continue;
+
+      if (chapter.pageMap && chapter.pageMap.length > 0) {
+        for (let i = 0; i < chapter.pageMap.length; i++) {
+          const entry = chapter.pageMap[i];
+          entry.pageNumber = cumulative + entry.index; // index is 1-based
+        }
+
+        cumulative += chapter.pageCount || chapter.pageMap.length || 0;
+      } else {
+        // No pageMap yet; still advance cumulative by pageCount if known
+        if (typeof chapter.pageCount === 'number' && chapter.pageCount > 0) {
+          cumulative += chapter.pageCount;
+        }
+      }
+
+      // Resolve any per-chapter deferred indicating pageNumbers have been assigned
+      try {
+        if (chapter.pageNumbersDeferred) {
+          try {
+            chapter.pageNumbersDeferred.resolve();
+          } catch {
+            // ignore
+          }
+          // Clean up the deferred to avoid double-resolution
+          delete chapter.pageNumbersDeferred;
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 
   destroy(): void {

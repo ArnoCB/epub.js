@@ -83,13 +83,9 @@ export declare class Section {
         [key: string]: string;
     };
     /**
-     * Get a CFI from a Range in the Section
+     * Get a CFI from a Range or Element in the Section
      */
-    cfiFromRange(_range: Range): string;
-    /**
-     * Get a CFI from an Element in the Section
-     */
-    cfiFromElement(el: Node): string;
+    cfiFrom(input: Range | Node): string;
     /**
      * Unload the section document
      */

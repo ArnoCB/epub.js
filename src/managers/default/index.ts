@@ -468,10 +468,8 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   afterDisplayed(view: View) {
-    console.debug(
-      '[DefaultViewManager] afterDisplayed called for view:',
-      view.section?.href
-    );
+    // Debug info available but commented out to reduce noise
+    // console.debug('[DefaultViewManager] afterDisplayed called for view:', view.section?.href);
 
     // Fix: Ensure container scrollWidth can accommodate content width
     if (view && view.contents) {
@@ -663,10 +661,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   async append(section: Section, forceRight: boolean = false): Promise<View> {
-    console.log('[DefaultViewManager] APPEND called for:', section.href);
-
     // Create new view
-    console.log('[DefaultViewManager] APPEND CREATING NEW VIEW:', section.href);
     const view = this.createView(section, forceRight);
 
     this.views.append(view);
@@ -1151,7 +1146,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
   clear() {
     try {
-      console.debug('[DefaultViewManager] clear() called');
+      // Clear called - debug info available in __prerender_trace if needed
       try {
         const w = window as unknown as Record<string, unknown>;
         if (!Array.isArray(w['__prerender_trace'])) w['__prerender_trace'] = [];
@@ -1159,7 +1154,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       } catch (err) {
         void err;
       }
-      console.trace('[DefaultViewManager] clear stack trace');
 
       // Skip clearing during prerendered attachment
       // Safe to use 'any' here since we're checking the name first

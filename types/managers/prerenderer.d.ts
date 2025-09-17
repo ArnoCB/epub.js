@@ -1,29 +1,8 @@
-import { defer } from '../utils/core';
 import { Section } from '../section';
-import { View } from './helpers/views';
 import Layout, { Axis, Flow } from '../layout';
 import EventEmitter from 'event-emitter';
-export interface PreRenderedChapter {
-    section: Section;
-    view: View;
-    element: HTMLElement;
-    rendered: defer<View>;
-    attached: boolean;
-    width: number;
-    height: number;
-    pageCount: number;
-    hasWhitePages: boolean;
-    whitePageIndices: number[];
-    pageMap?: Array<{
-        index: number;
-        startCfi?: string;
-        endCfi?: string;
-        xOffset?: number;
-        yOffset?: number;
-    }>;
-    preservedSrcdoc?: string;
-    preservedContent?: string;
-}
+import { PreRenderedChapter } from './helpers/chapter-manager';
+export type { PreRenderedChapter } from './helpers/chapter-manager';
 export interface ViewSettings {
     ignoreClass?: string;
     axis?: Axis;
@@ -54,6 +33,8 @@ export declare class BookPreRenderer {
     private unattachedStorage;
     private viewSettings;
     private viewRenderer;
+    private chapterManager;
+    private pageMapGenerator;
     private chapters;
     private renderingPromises;
     private request;
@@ -61,10 +42,6 @@ export declare class BookPreRenderer {
     private _completeEmitted;
     constructor(container: HTMLElement, viewSettings: ViewSettings, request: (url: string) => Promise<Document>);
     preRenderBook(sections: Section[]): Promise<PreRenderingStatus>;
-    private preRenderSection;
-    private createView;
-    private renderView;
-    private analyzeContent;
     getChapter(sectionHref: string): PreRenderedChapter | undefined;
     getAllChapters(): PreRenderedChapter[];
     getStatus(): PreRenderingStatus;
@@ -81,8 +58,19 @@ export declare class BookPreRenderer {
             whitePageIndices: number[];
         }[];
     };
+    private preRenderSection;
+    private createView;
     /**
-     * Preserve iframe content to prevent loss during DOM moves
+     * Wait for layout to settle before querying element positions
+     */
+    private waitForLayout;
+    /**
+     * Simple content analysis using PageMapGenerator
+     */
+    private performAsyncContentAnalysis;
+    private renderView;
+    /**
+     * Enhanced content preservation for reliable iframe restoration
      */
     private preserveChapterContent;
     /**
@@ -94,8 +82,20 @@ export declare class BookPreRenderer {
      * Returns true if content is present after restore, false otherwise
      */
     tryRestoreContent(sectionHref: string): Promise<boolean>;
+    /**
+     * Returns a promise that resolves when page numbering (pageNumber on pageMap)
+     * has been assigned for the given section href. Returns null if chapter is
+     * not known.
+     */
+    getPageNumbering(sectionHref: string): Promise<void> | null;
     attachChapter(sectionHref: string): PreRenderedChapter | null;
     detachChapter(sectionHref: string): PreRenderedChapter | null;
+    /**
+     * Assign cumulative page numbers across the book for all prerendered chapters.
+     * This walks the provided sections in order and sums pageCount for already
+     * prerendered chapters to produce a global pageNumber for each page entry.
+     */
+    private assignGlobalPageNumbers;
     destroy(): void;
 }
 export default BookPreRenderer;
