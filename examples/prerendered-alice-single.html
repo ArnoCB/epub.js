@@ -138,6 +138,10 @@
   <div id="extras">
     <div id="debug-panel">
       <h3>📚 Pre-Rendering — Alice (Single Page)</h3>
+      <p style="background: #e7f3ff; padding: 8px; border-radius: 4px; margin: 10px 0; font-size: 12px;">
+        <strong>📍 CFI Markers:</strong> Static CFI markers (green=start, red=end) are automatically shown on all pages. 
+        Use "Toggle Dynamic CFI Markers" to also show page-map-based markers.
+      </p>
       <div id="status-bar">
         <div id="status-text">Initializing pre-rendering system...</div>
     <div id="page-info" style="margin-top:6px; font-weight:600;">Page <span id="current-page">—</span> / <span id="total-pages">—</span></div>
@@ -148,7 +152,7 @@
         <button id="toggle-prerendering">Toggle Pre-rendering</button>
         <button id="refresh-debug">Refresh Debug Info</button>
         <button id="dump-prerenderer">Dump PreRenderer</button>
-        <button id="toggle-cfi-markers">Toggle CFI Markers</button>
+        <button id="toggle-cfi-markers">Toggle Dynamic CFI Markers</button>
         <button id="show-page-map">Show Page Map</button>
         <button id="test-highlight">Test Highlight</button>
         <button id="debug-iframe">Debug Iframe</button>
@@ -287,6 +291,21 @@
       logsContainer.scrollTop = logsContainer.scrollHeight;
     }
 
+    // Static CFI examples for Alice EPUB - these will be shown automatically
+    const staticCfiMarkers = [
+      // Chapter 1 - Down the Rabbit Hole
+      { cfi: "epubcfi(/6/6[xchapter_001]!/4/2/1:0)", type: 'start', chapter: 'Chapter 1', description: 'Start of Chapter 1' },
+      { cfi: "epubcfi(/6/6[xchapter_001]!/4/10/1:200)", type: 'end', chapter: 'Chapter 1', description: 'Mid Chapter 1' },
+      
+      // Chapter 2 - The Pool of Tears  
+      { cfi: "epubcfi(/6/8[xchapter_002]!/4/2/1:0)", type: 'start', chapter: 'Chapter 2', description: 'Start of Chapter 2' },
+      { cfi: "epubcfi(/6/8[xchapter_002]!/4/8/1:300)", type: 'end', chapter: 'Chapter 2', description: 'Mid Chapter 2' },
+      
+      // Chapter 3 - A Caucus Race and a Long Tale
+      { cfi: "epubcfi(/6/10[xchapter_003]!/4/2/1:0)", type: 'start', chapter: 'Chapter 3', description: 'Start of Chapter 3' },
+      { cfi: "epubcfi(/6/10[xchapter_003]!/4/6/1:150)", type: 'end', chapter: 'Chapter 3', description: 'Mid Chapter 3' },
+    ];
+
     // CFI Marker Functions - Even simpler approach using CSS classes
     function clearCfiMarkers() {
       if (window.cfiMarkerAnnotations) {
@@ -354,6 +373,81 @@
         
       } catch (e) {
         addLog(`Failed to add ${type} CFI marker: ${e.message}`, 'warning');
+      }
+    }
+
+    function showStaticCfiMarkers() {
+      // Clear existing markers first
+      clearCfiMarkers();
+      
+      if (!rendition || !rendition.annotations) {
+        addLog('Rendition or annotations not available for static CFI markers', 'warning');
+        return;
+      }
+
+      let markersAdded = 0;
+      
+      // Add static CFI markers for the current chapter
+      staticCfiMarkers.forEach(marker => {
+        try {
+          // Track markers for later removal
+          if (!window.cfiMarkerAnnotations) window.cfiMarkerAnnotations = [];
+          
+          // Use a simple class-based approach
+          const className = marker.type === 'start' ? 'cfi-marker-start' : 'cfi-marker-end';
+          
+          // Add as highlight annotation with callback
+          rendition.annotations.highlight(marker.cfi, {
+            type: 'static-cfi-marker',
+            pageType: marker.type,
+            chapter: marker.chapter,
+            description: marker.description
+          }, (e) => {
+            addLog(`Clicked ${marker.type} marker: ${marker.description}`, 'info');
+          }, className);
+
+          window.cfiMarkerAnnotations.push(marker.cfi);
+          markersAdded++;
+          
+        } catch (e) {
+          addLog(`Failed to add static ${marker.type} marker (${marker.chapter}): ${e.message}`, 'warning');
+        }
+      });
+
+      if (markersAdded > 0) {
+        addLog(`Added ${markersAdded} static CFI markers`, 'success');
+        
+        // Force apply styling to the CFI markers we just created
+        setTimeout(() => {
+          const viewer = document.getElementById('viewer');
+          const iframe = viewer ? viewer.querySelector('iframe') : null;
+          
+          if (iframe && iframe.contentDocument) {
+            const doc = iframe.contentDocument;
+            
+            // Force style CFI markers
+            const startMarkers = doc.querySelectorAll('.cfi-marker-start');
+            const endMarkers = doc.querySelectorAll('.cfi-marker-end');
+            
+            startMarkers.forEach(el => {
+              el.style.background = 'rgba(0, 200, 0, 0.5)';
+              el.style.borderLeft = '3px solid green';
+              el.style.cursor = 'pointer';
+            });
+            
+            endMarkers.forEach(el => {
+              el.style.background = 'rgba(200, 0, 0, 0.5)';
+              el.style.borderRight = '3px solid red';
+              el.style.cursor = 'pointer';
+            });
+            
+            if (startMarkers.length > 0 || endMarkers.length > 0) {
+              addLog(`Force-styled ${startMarkers.length + endMarkers.length} static CFI marker elements`, 'success');
+            }
+          }
+        }, 100);
+      } else {
+        addLog('No static CFI markers were added', 'warning');
       }
     }
 
@@ -489,7 +583,7 @@
         addLog(`Total sections: ${book.spine.length}`, 'info');
       });
 
-      // Enhanced approach: Monitor for new iframes and inject styles
+      // Enhanced approach: Monitor for new iframes and inject styles AND selection handlers
       function monitorAndStyleIframes() {
         const observer = new MutationObserver((mutations) => {
           mutations.forEach((mutation) => {
@@ -499,57 +593,77 @@
                 const iframes = node.tagName === 'IFRAME' ? [node] : node.querySelectorAll ? node.querySelectorAll('iframe') : [];
                 
                 iframes.forEach((iframe) => {
-                  // Wait for iframe to load, then inject styles
-                  const injectStyles = () => {
+                  // Wait for iframe to load, then inject styles AND setup selection
+                  const setupIframe = () => {
                     try {
                       const doc = iframe.contentDocument;
                       if (doc && doc.body) {
-                        // Check if we've already injected styles
-                        if (doc.querySelector('#epub-highlight-styles')) return;
+                        // Check if we've already set up this iframe
+                        if (iframe.dataset.epubjsSetup === 'true') return;
+                        iframe.dataset.epubjsSetup = 'true';
                         
-                        const style = doc.createElement('style');
-                        style.id = 'epub-highlight-styles';
-                        style.textContent = `
-                          .highlight {
-                            background: rgba(255, 255, 0, 0.6) !important;
-                            cursor: pointer !important;
-                            border: 1px solid rgba(255, 255, 0, 0.8) !important;
-                          }
-                          .cfi-marker-start {
-                            background: rgba(0, 200, 0, 0.5) !important;
-                            border-left: 3px solid green !important;
-                            cursor: pointer !important;
-                          }
-                          .cfi-marker-end {
-                            background: rgba(200, 0, 0, 0.5) !important;
-                            border-right: 3px solid red !important;
-                            cursor: pointer !important;
-                          }
-                          [data-annotation-id] {
-                            background: rgba(255, 255, 0, 0.6) !important;
-                            cursor: pointer !important;
-                          }
-                          .epubjs-hl, .epubjs-mk {
-                            background: rgba(255, 255, 0, 0.6) !important;
-                            cursor: pointer !important;
-                          }
-                          mark {
-                            background: rgba(255, 255, 0, 0.6) !important;
-                            cursor: pointer !important;
-                          }
-                        `;
-                        doc.head.appendChild(style);
-                        addLog(`Injected styles into iframe: ${iframe.src || 'about:blank'}`, 'success');
+                        // Inject styles if not already present
+                        if (!doc.querySelector('#epub-highlight-styles')) {
+                          const style = doc.createElement('style');
+                          style.id = 'epub-highlight-styles';
+                          style.textContent = `
+                            .highlight {
+                              background: rgba(255, 255, 0, 0.3) !important;
+                              cursor: pointer !important;
+                            }
+                            .cfi-marker-start {
+                              background: rgba(0, 200, 0, 0.5) !important;
+                              border-left: 3px solid green !important;
+                              cursor: pointer !important;
+                            }
+                            .cfi-marker-end {
+                              background: rgba(200, 0, 0, 0.5) !important;
+                              border-right: 3px solid red !important;
+                              cursor: pointer !important;
+                            }
+                            [data-annotation-id] {
+                              background: rgba(255, 255, 0, 0.3) !important;
+                              cursor: pointer !important;
+                            }
+                            .epubjs-hl, .epubjs-mk {
+                              background: rgba(255, 255, 0, 0.3) !important;
+                              cursor: pointer !important;
+                            }
+                            mark {
+                              background: rgba(255, 255, 0, 0.3) !important;
+                              cursor: pointer !important;
+                            }
+                          `;
+                          doc.head.appendChild(style);
+                        }
+                        
+                        // Setup text selection handling for this specific iframe
+                        const setupSelection = () => {
+                          // Just log selection detection - let epub.js handle the rest
+                          doc.addEventListener('mouseup', (e) => {
+                            setTimeout(() => {
+                              const selection = doc.getSelection();
+                              if (selection && selection.toString().trim().length > 0) {
+                                addLog(`Text selected in iframe: "${selection.toString().trim().substring(0, 30)}..."`, 'info');
+                                // The epub.js 'selected' event should handle the rest
+                              }
+                            }, 10);
+                          });
+                        };
+                        
+                        setupSelection();
+                        addLog(`Setup iframe: ${iframe.src || 'about:blank'} (styles + selection)`, 'success');
                       }
                     } catch (e) {
                       // Cross-origin or other access issues - ignore
+                      addLog(`Cannot access iframe content: ${e.message}`, 'warning');
                     }
                   };
                   
                   if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
-                    injectStyles();
+                    setupIframe();
                   } else {
-                    iframe.addEventListener('load', injectStyles);
+                    iframe.addEventListener('load', setupIframe);
                   }
                 });
               }
@@ -561,7 +675,7 @@
         const viewer = document.getElementById('viewer');
         if (viewer) {
           observer.observe(viewer, { childList: true, subtree: true });
-          addLog('Started monitoring for new iframes to inject styles', 'success');
+          addLog('Started monitoring for new iframes (styles + selection)', 'success');
         }
         
         return observer;
@@ -639,6 +753,11 @@
           addLog('Failed to reapply styling: ' + e.message, 'warning');
         }
         
+        // Show static CFI markers after rendering
+        setTimeout(() => {
+          showStaticCfiMarkers();
+        }, 300);
+        
         updateStatus();
       });
 
@@ -648,8 +767,14 @@
         try { window.__lastRelocated = location; } catch (e) {}
         updateStatus();
         updatePageMapDisplay(); // Update page map when location changes
+        
+        // Automatically show static CFI markers on every page navigation
+        setTimeout(() => {
+          showStaticCfiMarkers();
+        }, 200); // Give some time for the page to render
+        
         if (cfiMarkersVisible) {
-          setTimeout(showCfiMarkers, 100); // Refresh CFI markers after location change
+          setTimeout(showCfiMarkers, 300); // Refresh dynamic CFI markers after static ones
         }
       });
 
@@ -661,18 +786,42 @@
         });
       }
 
-      document.getElementById('next').addEventListener('click', function(e){ e.preventDefault(); rendition.next(); addLog('Next clicked','info'); });
-      document.getElementById('prev').addEventListener('click', function(e){ e.preventDefault(); rendition.prev(); addLog('Prev clicked','info'); });
+      const nextBtn = document.getElementById('next');
+      const prevBtn = document.getElementById('prev');
+      if (nextBtn) nextBtn.addEventListener('click', function(e){ e.preventDefault(); rendition.next(); addLog('Next clicked','info'); });
+      if (prevBtn) prevBtn.addEventListener('click', function(e){ e.preventDefault(); rendition.prev(); addLog('Prev clicked','info'); });
 
       document.addEventListener('keyup', function(e){ if (e.keyCode===37) rendition.prev(); else if (e.keyCode===39) rendition.next(); });
 
-      rendition.on('selected', function(cfiRange, contents){ addLog(`Text selected: ${cfiRange}`, 'info'); rendition.annotations.highlight(cfiRange, {}, () => addLog('Highlight clicked','info')); contents.window.getSelection().removeAllRanges(); addHighlightToList(cfiRange); });
+      rendition.on('selected', function(cfiRange, contents){ 
+        addLog(`Rendition 'selected' event fired: ${cfiRange}`, 'info'); 
+        try {
+          // Get the selected text directly from the contents
+          let selectedText = '';
+          if (contents && contents.window && contents.window.getSelection) {
+            const selection = contents.window.getSelection();
+            selectedText = selection.toString().trim();
+          }
+          
+          rendition.annotations.highlight(cfiRange, {}, () => addLog('Highlight clicked','info')); 
+          if (contents && contents.window && contents.window.getSelection) {
+            contents.window.getSelection().removeAllRanges(); 
+          }
+          addHighlightToList(cfiRange, selectedText); // Pass the selected text directly
+          addLog('Highlight added via CFI', 'success');
+        } catch (err) {
+          addLog(`Error in selected handler: ${err.message}`, 'error');
+        }
+      });
 
-      document.getElementById('toggle-prerendering').addEventListener('click', function(){ preRenderingEnabled = !preRenderingEnabled; addLog(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}`, 'info'); alert(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}. Reload page to take effect.`); });
+      const togglePreBtn = document.getElementById('toggle-prerendering');
+      if (togglePreBtn) togglePreBtn.addEventListener('click', function(){ preRenderingEnabled = !preRenderingEnabled; addLog(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}`, 'info'); alert(`Pre-rendering ${preRenderingEnabled ? 'enabled' : 'disabled'}. Reload page to take effect.`); });
 
-      document.getElementById('refresh-debug').addEventListener('click', function(){ addLog('Refreshing debug information','info'); updateStatus(); });
+      const refreshBtn = document.getElementById('refresh-debug');
+      if (refreshBtn) refreshBtn.addEventListener('click', function(){ addLog('Refreshing debug information','info'); updateStatus(); });
 
-      document.getElementById('dump-prerenderer').addEventListener('click', function(){
+      const dumpBtn = document.getElementById('dump-prerenderer');
+      if (dumpBtn) dumpBtn.addEventListener('click', function(){
         addLog('Dumping PreRenderer and manager debug info to console', 'info');
         try {
           const pr = rendition?.manager?.preRenderer;
@@ -726,15 +875,32 @@
         }
       });
 
-      document.getElementById('jump-to-chapter').addEventListener('click', function(){ const input = prompt('Enter spine index (0-based) or href:'); if (input===null) return; if (!isNaN(Number(input))) { rendition.display(parseInt(input,10)); addLog(`Jumping to spine index ${input}`,'info'); return; } const href = String(input).split('#')[0]; const section = book.spine.get(href); if (section) { rendition.display(href); addLog(`Jumping to href ${href}`,'info'); } else addLog(`Could not resolve href: ${href}`,'error'); });
+      const jumpBtn = document.getElementById('jump-to-chapter');
+      if (jumpBtn) jumpBtn.addEventListener('click', function(){ const input = prompt('Enter spine index (0-based) or href:'); if (input===null) return; if (!isNaN(Number(input))) { rendition.display(parseInt(input,10)); addLog(`Jumping to spine index ${input}`,'info'); return; } const href = String(input).split('#')[0]; const section = book.spine.get(href); if (section) { rendition.display(href); addLog(`Jumping to href ${href}`,'info'); } else addLog(`Could not resolve href: ${href}`,'error'); });
 
-      document.getElementById('clear-logs').addEventListener('click', function(){ systemLogs = []; updateSystemLogs(); addLog('Logs cleared','info'); });
+      const clearBtn = document.getElementById('clear-logs');
+      if (clearBtn) clearBtn.addEventListener('click', function(){ systemLogs = []; updateSystemLogs(); addLog('Logs cleared','info'); });
 
-      document.getElementById('toggle-cfi-markers').addEventListener('click', function(){ toggleCfiMarkers(); });
+      const toggleCfiBtn = document.getElementById('toggle-cfi-markers');
+      if (toggleCfiBtn) toggleCfiBtn.addEventListener('click', function(){ 
+        cfiMarkersVisible = !cfiMarkersVisible;
+        if (cfiMarkersVisible) {
+          showCfiMarkers(); // Dynamic CFI markers from page map
+          addLog('Dynamic CFI markers shown (static markers are always visible)', 'info');
+        } else {
+          clearCfiMarkers(); // This will clear both static and dynamic
+          setTimeout(() => {
+            showStaticCfiMarkers(); // Re-add static markers
+          }, 100);
+          addLog('Dynamic CFI markers hidden, static markers restored', 'info');
+        }
+      });
 
-      document.getElementById('show-page-map').addEventListener('click', function(){ updatePageMapDisplay(); });
+      const showMapBtn = document.getElementById('show-page-map');
+      if (showMapBtn) showMapBtn.addEventListener('click', function(){ updatePageMapDisplay(); });
 
-      document.getElementById('test-highlight').addEventListener('click', function(){ 
+      const testHighlightBtn = document.getElementById('test-highlight');
+      if (testHighlightBtn) testHighlightBtn.addEventListener('click', function(){ 
         // Test highlighting using the current location  
         if (rendition && rendition.annotations && rendition.location) {
           try {
@@ -766,7 +932,8 @@
         }
       });
 
-      document.getElementById('debug-iframe').addEventListener('click', function(){
+      const debugIframeBtn = document.getElementById('debug-iframe');
+      if (debugIframeBtn) debugIframeBtn.addEventListener('click', function(){
         addLog('Debugging iframe content and styling...', 'info');
         
         const viewer = document.getElementById('viewer');
@@ -821,87 +988,84 @@
           addLog('Error debugging iframe: ' + e.message, 'error');
         }
       });
-
-      document.getElementById('test-page-numbers').addEventListener('click', function(){
-        addLog('Testing page number sources...', 'info');
-        
-        const preRenderer = rendition?.manager?.preRenderer;
-        const manager = rendition?.manager;
-        
-        if (preRenderer) {
-          const chapters = preRenderer.getAllChapters();
-          const totalPrerenderedPages = chapters.reduce((sum, ch) => sum + (ch.pageCount || 0), 0);
-          addLog(`Prerendered total pages: ${totalPrerenderedPages}`, 'info');
-          
-          // Check if any chapters have global page numbers
-          let globalPageNumbersFound = false;
-          chapters.forEach(ch => {
-            if (ch.pageMap) {
-              ch.pageMap.forEach(page => {
-                if (page.pageNumber !== undefined) {
-                  globalPageNumbersFound = true;
-                  addLog(`Found global page number ${page.pageNumber} in ${ch.section.href} page ${page.index}`, 'success');
-                }
-              });
-            }
-          });
-          
-          if (!globalPageNumbersFound) {
-            addLog('No global page numbers found in prerendered data', 'warning');
-          }
-        }
-        
-        if (manager) {
-          if (typeof manager.getTotalPages === 'function') {
-            const managerTotal = manager.getTotalPages();
-            addLog(`Manager getTotalPages(): ${managerTotal}`, 'info');
-          }
-          
-          if (typeof manager.getCurrentPage === 'function') {
-            const managerCurrent = manager.getCurrentPage();
-            addLog(`Manager getCurrentPage(): ${managerCurrent}`, 'info');
-          }
-          
-          // Check if manager has prerendering capabilities
-          const hasPrerendering = !!manager.preRenderer;
-          addLog(`Manager has prerenderer: ${hasPrerendering}`, hasPrerendering ? 'success' : 'warning');
-        }
-      });
     }
 
-    function addHighlightToList(cfiRange) {
+    function addHighlightToList(cfiRange, selectedText) {
+      console.log('[DEBUG] addHighlightToList called with CFI:', cfiRange, 'and text:', selectedText);
+      
+      // If we have the selected text directly, use it
+      if (selectedText && selectedText.trim()) {
+        console.log('[DEBUG] Using provided selected text:', selectedText);
+        createHighlightListItem(cfiRange, selectedText.trim());
+        return;
+      }
+      
+      // Fallback to book.getRange() if no text provided
+      console.log('[DEBUG] No text provided, trying book.getRange()');
+      console.log('[DEBUG] Book object:', book);
+      console.log('[DEBUG] Book ready state:', book && book.ready ? 'ready' : 'not ready');
+      
+      if (!book) {
+        console.error('[DEBUG] Book object is null/undefined');
+        return;
+      }
+      
       book.getRange(cfiRange).then(function(range) {
-        if (!range) return;
+        console.log('[DEBUG] book.getRange resolved:', range);
+        if (!range) {
+          console.warn('[DEBUG] No range returned from book.getRange - CFI might be invalid or book not ready');
+          // Try to use the CFI as text fallback
+          createHighlightListItem(cfiRange, cfiRange); // Use CFI as display text
+          return;
+        }
         
         const text = range.toString();
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        const remove = document.createElement('a');
-        const textNode = document.createTextNode(text);
-
-        a.textContent = cfiRange;
-        a.href = "#" + cfiRange;
-        a.onclick = function(e) {
-          e.preventDefault();
-          rendition.display(cfiRange);
-          addLog(`Navigating to highlight: ${cfiRange}`, 'info');
-        };
-
-        remove.textContent = "remove";
-        remove.href = "#" + cfiRange;
-        remove.onclick = function(e) {
-          e.preventDefault();
-          rendition.annotations.remove(cfiRange);
-          li.remove();
-          addLog(`Removing highlight: ${cfiRange}`, 'info');
-          return false;
-        };
-
-        li.appendChild(a);
-        li.appendChild(textNode);
-        li.appendChild(remove);
-        document.getElementById('highlights').appendChild(li);
+        console.log('[DEBUG] Range text:', text);
+        createHighlightListItem(cfiRange, text);
+      }).catch(function(err) {
+        console.error('[DEBUG] Error in book.getRange:', err);
+        // Fallback to using CFI as text
+        createHighlightListItem(cfiRange, cfiRange);
       });
+    }
+    
+    function createHighlightListItem(cfiRange, text) {
+      console.log('[DEBUG] Creating highlight list item for:', cfiRange, 'with text:', text);
+      
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      const remove = document.createElement('a');
+      const textNode = document.createTextNode(text);
+
+      a.textContent = cfiRange;
+      a.href = "#" + cfiRange;
+      a.onclick = function(e) {
+        e.preventDefault();
+        rendition.display(cfiRange);
+        addLog(`Navigating to highlight: ${cfiRange}`, 'info');
+      };
+
+      remove.textContent = "remove";
+      remove.href = "#" + cfiRange;
+      remove.onclick = function(e) {
+        e.preventDefault();
+        rendition.annotations.remove(cfiRange);
+        li.remove();
+        addLog(`Removing highlight: ${cfiRange}`, 'info');
+        return false;
+      };
+
+      li.appendChild(a);
+      li.appendChild(textNode);
+      li.appendChild(remove);
+      const highlightsList = document.getElementById('highlights');
+      console.log('[DEBUG] Highlights list element:', highlightsList);
+      if (highlightsList) {
+        highlightsList.appendChild(li);
+        console.log('[DEBUG] ✅ Successfully added highlight to list');
+      } else {
+        console.error('[DEBUG] ❌ Could not find highlights list element');
+      }
     }
 
     function updateStatus() {

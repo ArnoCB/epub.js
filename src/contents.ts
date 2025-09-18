@@ -906,11 +906,16 @@ class Contents implements EventEmitterMethods {
    * @private
    */
   onSelectionChange() {
+    console.log('[Contents] Selection change detected');
     if (this.selectionEndTimeout) {
       clearTimeout(this.selectionEndTimeout);
     }
     this.selectionEndTimeout = setTimeout(() => {
       const selection = this.window!.getSelection();
+      console.log('[Contents] Triggering selected event after timeout', {
+        hasSelection: !!selection,
+        selectionText: selection?.toString().trim().substring(0, 50),
+      });
       this.triggerSelectedEvent(selection);
     }, 250);
   }
@@ -920,16 +925,58 @@ class Contents implements EventEmitterMethods {
    * @private
    */
   triggerSelectedEvent(selection: Selection | null) {
+    console.log('[Contents] triggerSelectedEvent called', {
+      hasSelection: !!selection,
+      rangeCount: selection?.rangeCount,
+      cfiBase: this.cfiBase,
+    });
+
     let range, cfirange;
 
     if (selection && selection.rangeCount > 0) {
       range = selection.getRangeAt(0);
+      console.log('[Contents] Range found', {
+        collapsed: range.collapsed,
+        startContainer: range.startContainer,
+        endContainer: range.endContainer,
+        startOffset: range.startOffset,
+        endOffset: range.endOffset,
+        commonAncestor: range.commonAncestorContainer,
+      });
+
       if (!range.collapsed) {
-        // cfirange = this.section.cfiFromRange(range);
-        cfirange = new EpubCFI(range, this.cfiBase).toString();
-        this.emit(EVENTS.CONTENTS.SELECTED, cfirange);
-        this.emit(EVENTS.CONTENTS.SELECTED_RANGE, range);
+        try {
+          console.log(
+            '[Contents] About to generate CFI with cfiBase:',
+            this.cfiBase
+          );
+          console.log('[Contents] Range details:', {
+            startContainerNodeName: range.startContainer.nodeName,
+            startContainerTextContent:
+              range.startContainer.textContent?.substring(0, 50),
+            endContainerNodeName: range.endContainer.nodeName,
+            endContainerTextContent: range.endContainer.textContent?.substring(
+              0,
+              50
+            ),
+          });
+
+          // cfirange = this.section.cfiFromRange(range);
+          cfirange = new EpubCFI(range, this.cfiBase).toString();
+          console.log('[Contents] CFI generated successfully:', cfirange);
+          this.emit(EVENTS.CONTENTS.SELECTED, cfirange);
+          this.emit(EVENTS.CONTENTS.SELECTED_RANGE, range);
+          console.log('[Contents] ✅ Emitted CONTENTS.SELECTED events');
+        } catch (e) {
+          console.error('[Contents] ❌ Error generating CFI from range:', e);
+        }
+      } else {
+        console.log(
+          '[Contents] Range is collapsed, not emitting selection event'
+        );
       }
+    } else {
+      console.log('[Contents] No valid selection found');
     }
   }
 

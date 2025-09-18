@@ -58,12 +58,15 @@ export class PreRenderingViewManager
   // Helper to write preserved content into an iframe and apply necessary styles
   private writeIframeContent(
     iframe: HTMLIFrameElement,
-    originalContent: string
+    originalContent: string,
+    attachedView?: any, // The prerendered view that needs Contents setup
+    section?: any // The section for CFI setup
   ): void {
     iframe.onload = () => {
       try {
         const doc = iframe.contentDocument;
         if (doc) {
+          console.log('[PreRenderingViewManager] Writing content to iframe');
           doc.open();
           doc.write(originalContent);
           doc.close();
@@ -86,6 +89,47 @@ export class PreRenderingViewManager
             ].join('\n');
             style.textContent = cssRules;
             doc.head.appendChild(style);
+          }
+
+          // CRITICAL: Set up Contents object for highlighting/annotations after content is written
+          if (attachedView && section && doc.body) {
+            console.log(
+              '[PreRenderingViewManager] Setting up Contents after content write'
+            );
+            try {
+              const contents = (
+                attachedView as any
+              ).setupContentsForHighlighting(
+                iframe,
+                section,
+                (attachedView as any).settings?.transparency
+              );
+
+              if (contents) {
+                (attachedView as any).window = iframe.contentWindow;
+                (attachedView as any).document = doc;
+                (attachedView as any).contents = contents;
+                console.log(
+                  '[PreRenderingViewManager] ✅ Contents object created successfully after content write'
+                );
+
+                // CRITICAL: Trigger the manager ADDED event to connect Contents to Rendition hooks
+                // This ensures the Contents object gets passed through the normal hook system
+                console.log(
+                  '[PreRenderingViewManager] Triggering MANAGERS.ADDED event to connect Contents to Rendition'
+                );
+                this.emit(EVENTS.MANAGERS.ADDED, attachedView);
+              } else {
+                console.warn(
+                  '[PreRenderingViewManager] ❌ Failed to create Contents object after content write'
+                );
+              }
+            } catch (e) {
+              console.warn(
+                '[PreRenderingViewManager] ❌ Error creating Contents after content write:',
+                e
+              );
+            }
           }
         }
       } catch (e) {
@@ -293,7 +337,12 @@ export class PreRenderingViewManager
           }
 
           // Set up content loading
-          this.writeIframeContent(iframeElement, originalContent);
+          this.writeIframeContent(
+            iframeElement,
+            originalContent,
+            attached.view,
+            attached.section
+          );
           iframeElement.src = 'about:blank';
 
           // Update view references
@@ -310,40 +359,6 @@ export class PreRenderingViewManager
             iframeView.iframe = iframeElement;
             iframeView.frame = iframeElement;
           }
-
-          // CRITICAL: Set up Contents object for themes and annotations to work
-          // We need to create a Contents object once the iframe is loaded
-          const originalOnload = iframeElement.onload;
-          iframeElement.onload = function (event) {
-            if (originalOnload) originalOnload.call(this, event);
-
-            // Create Contents object for this prerendered view
-            setTimeout(() => {
-              try {
-                if (
-                  iframeElement.contentDocument &&
-                  iframeView &&
-                  attached.view.section
-                ) {
-                  const contents = new Contents(
-                    iframeElement.contentDocument,
-                    iframeElement.contentDocument.body ||
-                      iframeElement.contentDocument.documentElement,
-                    attached.view.section.href
-                  );
-                  iframeView.contents = contents;
-                  console.log(
-                    '[PreRenderingViewManager] Created Contents object for prerendered view'
-                  );
-                }
-              } catch (e) {
-                console.warn(
-                  '[PreRenderingViewManager] Failed to create Contents object:',
-                  e
-                );
-              }
-            }, 10);
-          };
 
           // Attach to container
           if (this.container) {
@@ -545,7 +560,12 @@ export class PreRenderingViewManager
           }
 
           // Set up content loading
-          this.writeIframeContent(iframeElement, originalContent);
+          this.writeIframeContent(
+            iframeElement,
+            originalContent,
+            attached.view,
+            attached.section
+          );
 
           iframeElement.src = 'about:blank';
 

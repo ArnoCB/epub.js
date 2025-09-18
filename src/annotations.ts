@@ -289,8 +289,20 @@ class Annotation {
         }
       : undefined;
 
+    console.log(
+      `[Annotations] Attempting to add ${type} annotation with CFI: ${cfiRange}`
+    );
+    console.log(
+      `[Annotations] Found view:`,
+      view ? view.constructor.name : 'null'
+    );
+
     if (type === 'highlight') {
+      console.log(
+        `[Annotations] Calling view.highlight() on ${view ? view.constructor.name : 'null'}`
+      );
       result = view.highlight(cfiRange, data, cbWrapper, className, styles);
+      console.log(`[Annotations] view.highlight() returned:`, result);
     } else if (type === 'underline') {
       result = view.underline(cfiRange, data, cbWrapper, className, styles);
     } else if (type === 'mark') {

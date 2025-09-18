@@ -30,21 +30,25 @@ class StyledPane extends OriginalPane {
   constructor(
     target: HTMLElement,
     container: HTMLElement,
-    transparency: boolean
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _transparency: boolean
   ) {
     super(target, container);
 
     // @ts-expect-error We should add a public method to get the method in Pane
     const svgElement = this.element;
-    // Add custom styling to the SVG element only if transparency is true
-    if (transparency) {
-      svgElement.style.zIndex = '-3';
+    if (svgElement) {
+      // Apply the exact same styling as the working SVG
+      svgElement.setAttribute('pointer-events', 'none');
       svgElement.style.position = 'absolute';
-    }
+      svgElement.style.top = '0px';
+      svgElement.style.left = '0px';
+      svgElement.style.zIndex = '-3';
 
-    // You can add more styles if needed
-    svgElement.style.zIndex = '-3';
-    svgElement.style.position = 'absolute';
+      // Apply important styles to match exactly
+      svgElement.style.setProperty('top', '0px', 'important');
+      svgElement.style.setProperty('left', '0px', 'important');
+    }
   }
 }
 
@@ -597,6 +601,119 @@ class IframeView implements View, EventEmitterMethods {
     return loaded;
   }
 
+  /**
+   * Essential setup for Contents object - used by both normal onLoad and prerendering
+   * This contains only the safe and essential parts needed for highlighting to work
+   */
+  setupContentsForHighlighting(
+    iframe: HTMLIFrameElement,
+    section: Section,
+    transparency?: boolean
+  ): Contents | null {
+    const document = iframe.contentDocument;
+
+    if (!document) {
+      console.warn('[IframeView] No document available for Contents setup');
+      return null;
+    }
+
+    // Inject transparent background if option is enabled
+    if (transparency && document.body) {
+      document.body.style.background = 'transparent';
+      // Also inject a style tag for full coverage
+      const style = document.createElement('style');
+      style.innerHTML = 'html, body { background: transparent !important; }';
+      document.head.appendChild(style);
+    }
+
+    // Create Contents object (essential for highlighting)
+    const contents = new Contents(
+      document,
+      document.body,
+      section.cfiBase,
+      section.index
+    );
+
+    // Set up canonical link (safe)
+    let link = document.querySelector("link[rel='canonical']");
+    if (link) {
+      if (section.canonical) {
+        link.setAttribute('href', section.canonical);
+      }
+    } else {
+      link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      if (section.canonical) {
+        link.setAttribute('href', section.canonical);
+      }
+      document.querySelector('head')?.appendChild(link);
+    }
+
+    return contents;
+  }
+
+  /**
+   * Ensures Contents object exists for highlighting/underlining - works for both normal and prerendered views
+   */
+  private ensureContentsForMarking(): boolean {
+    if (this.contents) {
+      console.log(
+        '[IframeView] Contents already exists, proceeding with highlighting'
+      );
+      return true;
+    }
+
+    console.log(
+      '[IframeView] No Contents object found, checking if this is a prerendered view'
+    );
+
+    // For prerendered views, try to create Contents on-the-fly
+    if (this.iframe && this.iframe.contentDocument && this.section) {
+      console.log('[IframeView] Creating Contents for prerendered view');
+
+      try {
+        const contents = this.setupContentsForHighlighting(
+          this.iframe,
+          this.section,
+          this.settings.transparency
+        );
+
+        if (contents) {
+          this.window = this.iframe.contentWindow ?? undefined;
+          this.document = this.iframe.contentDocument;
+          this.contents = contents;
+
+          console.log(
+            '[IframeView] Successfully created Contents for prerendered view'
+          );
+          return true;
+        } else {
+          console.warn(
+            '[IframeView] Failed to create Contents for prerendered view - helper returned null'
+          );
+          return false;
+        }
+      } catch (e) {
+        console.warn(
+          '[IframeView] Error creating Contents for prerendered view:',
+          e
+        );
+        return false;
+      }
+    } else {
+      console.warn(
+        '[IframeView] Cannot create Contents - missing iframe, document, or section',
+        {
+          hasIframe: !!this.iframe,
+          hasDocument: !!(this.iframe && this.iframe.contentDocument),
+          hasSection: !!this.section,
+        }
+      );
+    }
+
+    return false;
+  }
+
   onLoad(event: Event, promise: defer<Contents>) {
     if (this.iframe === undefined) {
       throw new Error('Iframe not defined');
@@ -605,42 +722,26 @@ class IframeView implements View, EventEmitterMethods {
     this.window = this.iframe.contentWindow ?? undefined;
     this.document = this.iframe.contentDocument ?? undefined;
 
-    // Inject transparent background if option is enabled
-    if (this.settings.transparency && this.document && this.document.body) {
-      this.document.body.style.background = 'transparent';
-      // Also inject a style tag for full coverage
-      const style = this.document.createElement('style');
-      style.innerHTML = 'html, body { background: transparent !important; }';
-      this.document.head.appendChild(style);
-    }
-
     if (this.document === undefined) {
       throw new Error('Document not defined');
     }
 
-    this.contents = new Contents(
-      this.document,
-      this.document!.body,
-      this.section.cfiBase,
-      this.section.index
+    // Use the shared helper for essential Contents setup
+    const contents = this.setupContentsForHighlighting(
+      this.iframe,
+      this.section,
+      this.settings.transparency
     );
+
+    if (!contents) {
+      throw new Error('Failed to create Contents object');
+    }
+
+    this.contents = contents;
 
     this.rendering = false;
 
-    let link = this.document.querySelector("link[rel='canonical']");
-    if (link) {
-      if (this.section.canonical) {
-        link.setAttribute('href', this.section.canonical);
-      }
-    } else {
-      link = this.document.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      if (this.section.canonical) {
-        link.setAttribute('href', this.section.canonical);
-      }
-      this.document.querySelector('head')?.appendChild(link);
-    }
-
+    // Set up event listeners for layout operations (may be disruptive for prerendered content)
     this.contents.on(EVENTS.CONTENTS.EXPAND, () => {
       if (this.displayed && this.iframe) {
         this.expand();
@@ -816,6 +917,11 @@ class IframeView implements View, EventEmitterMethods {
     className = 'epubjs-hl',
     styles = {}
   ): Mark | undefined {
+    if (!this.ensureContentsForMarking()) {
+      return;
+    }
+
+    // Ensure we have contents at this point
     if (!this.contents) {
       return;
     }
@@ -884,7 +990,7 @@ class IframeView implements View, EventEmitterMethods {
     className = 'epubjs-ul',
     styles = {}
   ) {
-    if (!this.contents) {
+    if (!this.ensureContentsForMarking()) {
       return;
     }
     const attributes = Object.assign(
@@ -895,7 +1001,7 @@ class IframeView implements View, EventEmitterMethods {
       },
       styles
     );
-    const range = this.contents.range(cfiRange);
+    const range = this.contents!.range(cfiRange);
     const emitter = () => {
       this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
     };

@@ -6488,8 +6488,12 @@ function requireAnnotations() {
       const cbWrapper = cb ? () => {
         cb(this);
       } : undefined;
+      console.log(`[Annotations] Attempting to add ${type} annotation with CFI: ${cfiRange}`);
+      console.log(`[Annotations] Found view:`, view ? view.constructor.name : 'null');
       if (type === 'highlight') {
+        console.log(`[Annotations] Calling view.highlight() on ${view ? view.constructor.name : 'null'}`);
         result = view.highlight(cfiRange, data, cbWrapper, className, styles);
+        console.log(`[Annotations] view.highlight() returned:`, result);
       } else if (type === 'underline') {
         result = view.underline(cfiRange, data, cbWrapper, className, styles);
       } else if (type === 'mark') {
@@ -8191,11 +8195,16 @@ function requireContents() {
      * @private
      */
     onSelectionChange() {
+      console.log('[Contents] Selection change detected');
       if (this.selectionEndTimeout) {
         clearTimeout(this.selectionEndTimeout);
       }
       this.selectionEndTimeout = setTimeout(() => {
         const selection = this.window.getSelection();
+        console.log('[Contents] Triggering selected event after timeout', {
+          hasSelection: !!selection,
+          selectionText: selection?.toString().trim().substring(0, 50)
+        });
         this.triggerSelectedEvent(selection);
       }, 250);
     }
@@ -8204,15 +8213,45 @@ function requireContents() {
      * @private
      */
     triggerSelectedEvent(selection) {
+      console.log('[Contents] triggerSelectedEvent called', {
+        hasSelection: !!selection,
+        rangeCount: selection?.rangeCount,
+        cfiBase: this.cfiBase
+      });
       let range, cfirange;
       if (selection && selection.rangeCount > 0) {
         range = selection.getRangeAt(0);
+        console.log('[Contents] Range found', {
+          collapsed: range.collapsed,
+          startContainer: range.startContainer,
+          endContainer: range.endContainer,
+          startOffset: range.startOffset,
+          endOffset: range.endOffset,
+          commonAncestor: range.commonAncestorContainer
+        });
         if (!range.collapsed) {
-          // cfirange = this.section.cfiFromRange(range);
-          cfirange = new epubcfi_1.default(range, this.cfiBase).toString();
-          this.emit(constants_1.EVENTS.CONTENTS.SELECTED, cfirange);
-          this.emit(constants_1.EVENTS.CONTENTS.SELECTED_RANGE, range);
+          try {
+            console.log('[Contents] About to generate CFI with cfiBase:', this.cfiBase);
+            console.log('[Contents] Range details:', {
+              startContainerNodeName: range.startContainer.nodeName,
+              startContainerTextContent: range.startContainer.textContent?.substring(0, 50),
+              endContainerNodeName: range.endContainer.nodeName,
+              endContainerTextContent: range.endContainer.textContent?.substring(0, 50)
+            });
+            // cfirange = this.section.cfiFromRange(range);
+            cfirange = new epubcfi_1.default(range, this.cfiBase).toString();
+            console.log('[Contents] CFI generated successfully:', cfirange);
+            this.emit(constants_1.EVENTS.CONTENTS.SELECTED, cfirange);
+            this.emit(constants_1.EVENTS.CONTENTS.SELECTED_RANGE, range);
+            console.log('[Contents] ✅ Emitted CONTENTS.SELECTED events');
+          } catch (e) {
+            console.error('[Contents] ❌ Error generating CFI from range:', e);
+          }
+        } else {
+          console.log('[Contents] Range is collapsed, not emitting selection event');
         }
+      } else {
+        console.log('[Contents] No valid selection found');
       }
     }
     /**
@@ -8759,18 +8798,23 @@ function requireIframe() {
   const marks_pane_1 = require$$5$1;
   // Subclass Pane to inject custom SVG styling
   class StyledPane extends marks_pane_1.Pane {
-    constructor(target, container, transparency) {
+    constructor(target, container,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _transparency) {
       super(target, container);
       // @ts-expect-error We should add a public method to get the method in Pane
       const svgElement = this.element;
-      // Add custom styling to the SVG element only if transparency is true
-      if (transparency) {
-        svgElement.style.zIndex = '-3';
+      if (svgElement) {
+        // Apply the exact same styling as the working SVG
+        svgElement.setAttribute('pointer-events', 'none');
         svgElement.style.position = 'absolute';
+        svgElement.style.top = '0px';
+        svgElement.style.left = '0px';
+        svgElement.style.zIndex = '-3';
+        // Apply important styles to match exactly
+        svgElement.style.setProperty('top', '0px', 'important');
+        svgElement.style.setProperty('left', '0px', 'important');
       }
-      // You can add more styles if needed
-      svgElement.style.zIndex = '-3';
-      svgElement.style.position = 'absolute';
     }
   }
   class IframeView {
@@ -9136,38 +9180,96 @@ function requireIframe() {
       }
       return loaded;
     }
+    /**
+     * Essential setup for Contents object - used by both normal onLoad and prerendering
+     * This contains only the safe and essential parts needed for highlighting to work
+     */
+    setupContentsForHighlighting(iframe, section, transparency) {
+      const document = iframe.contentDocument;
+      if (!document) {
+        console.warn('[IframeView] No document available for Contents setup');
+        return null;
+      }
+      // Inject transparent background if option is enabled
+      if (transparency && document.body) {
+        document.body.style.background = 'transparent';
+        // Also inject a style tag for full coverage
+        const style = document.createElement('style');
+        style.innerHTML = 'html, body { background: transparent !important; }';
+        document.head.appendChild(style);
+      }
+      // Create Contents object (essential for highlighting)
+      const contents = new contents_1.default(document, document.body, section.cfiBase, section.index);
+      // Set up canonical link (safe)
+      let link = document.querySelector("link[rel='canonical']");
+      if (link) {
+        if (section.canonical) {
+          link.setAttribute('href', section.canonical);
+        }
+      } else {
+        link = document.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        if (section.canonical) {
+          link.setAttribute('href', section.canonical);
+        }
+        document.querySelector('head')?.appendChild(link);
+      }
+      return contents;
+    }
+    /**
+     * Ensures Contents object exists for highlighting/underlining - works for both normal and prerendered views
+     */
+    ensureContentsForMarking() {
+      if (this.contents) {
+        console.log('[IframeView] Contents already exists, proceeding with highlighting');
+        return true;
+      }
+      console.log('[IframeView] No Contents object found, checking if this is a prerendered view');
+      // For prerendered views, try to create Contents on-the-fly
+      if (this.iframe && this.iframe.contentDocument && this.section) {
+        console.log('[IframeView] Creating Contents for prerendered view');
+        try {
+          const contents = this.setupContentsForHighlighting(this.iframe, this.section, this.settings.transparency);
+          if (contents) {
+            this.window = this.iframe.contentWindow ?? undefined;
+            this.document = this.iframe.contentDocument;
+            this.contents = contents;
+            console.log('[IframeView] Successfully created Contents for prerendered view');
+            return true;
+          } else {
+            console.warn('[IframeView] Failed to create Contents for prerendered view - helper returned null');
+            return false;
+          }
+        } catch (e) {
+          console.warn('[IframeView] Error creating Contents for prerendered view:', e);
+          return false;
+        }
+      } else {
+        console.warn('[IframeView] Cannot create Contents - missing iframe, document, or section', {
+          hasIframe: !!this.iframe,
+          hasDocument: !!(this.iframe && this.iframe.contentDocument),
+          hasSection: !!this.section
+        });
+      }
+      return false;
+    }
     onLoad(event, promise) {
       if (this.iframe === undefined) {
         throw new Error('Iframe not defined');
       }
       this.window = this.iframe.contentWindow ?? undefined;
       this.document = this.iframe.contentDocument ?? undefined;
-      // Inject transparent background if option is enabled
-      if (this.settings.transparency && this.document && this.document.body) {
-        this.document.body.style.background = 'transparent';
-        // Also inject a style tag for full coverage
-        const style = this.document.createElement('style');
-        style.innerHTML = 'html, body { background: transparent !important; }';
-        this.document.head.appendChild(style);
-      }
       if (this.document === undefined) {
         throw new Error('Document not defined');
       }
-      this.contents = new contents_1.default(this.document, this.document.body, this.section.cfiBase, this.section.index);
-      this.rendering = false;
-      let link = this.document.querySelector("link[rel='canonical']");
-      if (link) {
-        if (this.section.canonical) {
-          link.setAttribute('href', this.section.canonical);
-        }
-      } else {
-        link = this.document.createElement('link');
-        link.setAttribute('rel', 'canonical');
-        if (this.section.canonical) {
-          link.setAttribute('href', this.section.canonical);
-        }
-        this.document.querySelector('head')?.appendChild(link);
+      // Use the shared helper for essential Contents setup
+      const contents = this.setupContentsForHighlighting(this.iframe, this.section, this.settings.transparency);
+      if (!contents) {
+        throw new Error('Failed to create Contents object');
       }
+      this.contents = contents;
+      this.rendering = false;
+      // Set up event listeners for layout operations (may be disruptive for prerendered content)
       this.contents.on(constants_1.EVENTS.CONTENTS.EXPAND, () => {
         if (this.displayed && this.iframe) {
           this.expand();
@@ -9293,6 +9395,10 @@ function requireIframe() {
       return this.elementBounds;
     }
     highlight(cfiRange, data = {}, cb, className = 'epubjs-hl', styles = {}) {
+      if (!this.ensureContentsForMarking()) {
+        return;
+      }
+      // Ensure we have contents at this point
       if (!this.contents) {
         return;
       }
@@ -9340,7 +9446,7 @@ function requireIframe() {
       return h;
     }
     underline(cfiRange, data = {}, cb, className = 'epubjs-ul', styles = {}) {
-      if (!this.contents) {
+      if (!this.ensureContentsForMarking()) {
         return;
       }
       const attributes = Object.assign({
@@ -13001,7 +13107,6 @@ function requirePrerendering() {
     const default_1 = __importDefault(require_default());
     const prerenderer_1 = __importDefault(requirePrerenderer());
     const constants_1 = requireConstants();
-    const contents_1 = __importDefault(requireContents());
     /**
      * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
      *
@@ -13033,11 +13138,15 @@ function requirePrerendering() {
         this.overflow = 'hidden';
       }
       // Helper to write preserved content into an iframe and apply necessary styles
-      writeIframeContent(iframe, originalContent) {
+      writeIframeContent(iframe, originalContent, attachedView,
+      // The prerendered view that needs Contents setup
+      section // The section for CFI setup
+      ) {
         iframe.onload = () => {
           try {
             const doc = iframe.contentDocument;
             if (doc) {
+              console.log('[PreRenderingViewManager] Writing content to iframe');
               doc.open();
               doc.write(originalContent);
               doc.close();
@@ -13052,6 +13161,27 @@ function requirePrerendering() {
                 const cssRules = ['body {', '  overflow: hidden !important;', '  overflow-x: hidden !important;', '  overflow-y: hidden !important;', '}'].join('\n');
                 style.textContent = cssRules;
                 doc.head.appendChild(style);
+              }
+              // CRITICAL: Set up Contents object for highlighting/annotations after content is written
+              if (attachedView && section && doc.body) {
+                console.log('[PreRenderingViewManager] Setting up Contents after content write');
+                try {
+                  const contents = attachedView.setupContentsForHighlighting(iframe, section, attachedView.settings?.transparency);
+                  if (contents) {
+                    attachedView.window = iframe.contentWindow;
+                    attachedView.document = doc;
+                    attachedView.contents = contents;
+                    console.log('[PreRenderingViewManager] ✅ Contents object created successfully after content write');
+                    // CRITICAL: Trigger the manager ADDED event to connect Contents to Rendition hooks
+                    // This ensures the Contents object gets passed through the normal hook system
+                    console.log('[PreRenderingViewManager] Triggering MANAGERS.ADDED event to connect Contents to Rendition');
+                    this.emit(constants_1.EVENTS.MANAGERS.ADDED, attachedView);
+                  } else {
+                    console.warn('[PreRenderingViewManager] ❌ Failed to create Contents object after content write');
+                  }
+                } catch (e) {
+                  console.warn('[PreRenderingViewManager] ❌ Error creating Contents after content write:', e);
+                }
               }
             }
           } catch (e) {
@@ -13195,7 +13325,7 @@ function requirePrerendering() {
                 }
               }
               // Set up content loading
-              this.writeIframeContent(iframeElement, originalContent);
+              this.writeIframeContent(iframeElement, originalContent, attached.view, attached.section);
               iframeElement.src = 'about:blank';
               // Update view references
               attached.view.element = wrapperElement;
@@ -13205,24 +13335,6 @@ function requirePrerendering() {
                 iframeView.iframe = iframeElement;
                 iframeView.frame = iframeElement;
               }
-              // CRITICAL: Set up Contents object for themes and annotations to work
-              // We need to create a Contents object once the iframe is loaded
-              const originalOnload = iframeElement.onload;
-              iframeElement.onload = function (event) {
-                if (originalOnload) originalOnload.call(this, event);
-                // Create Contents object for this prerendered view
-                setTimeout(() => {
-                  try {
-                    if (iframeElement.contentDocument && iframeView && attached.view.section) {
-                      const contents = new contents_1.default(iframeElement.contentDocument, iframeElement.contentDocument.body || iframeElement.contentDocument.documentElement, attached.view.section.href);
-                      iframeView.contents = contents;
-                      console.log('[PreRenderingViewManager] Created Contents object for prerendered view');
-                    }
-                  } catch (e) {
-                    console.warn('[PreRenderingViewManager] Failed to create Contents object:', e);
-                  }
-                }, 10);
-              };
               // Attach to container
               if (this.container) {
                 this.container.appendChild(wrapperElement);
@@ -13365,7 +13477,7 @@ function requirePrerendering() {
                 }
               }
               // Set up content loading
-              this.writeIframeContent(iframeElement, originalContent);
+              this.writeIframeContent(iframeElement, originalContent, attached.view, attached.section);
               iframeElement.src = 'about:blank';
               // Update view references
               attached.view.element = wrapperElement;
