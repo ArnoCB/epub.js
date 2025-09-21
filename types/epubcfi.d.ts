@@ -83,6 +83,7 @@ declare class EpubCFI {
     filteredStep(node: Node, ignoreClass: string): object | undefined;
     pathTo(node: Node, offset: number | null, ignoreClass?: string): CFIComponent;
     equalStep(stepA: CFIStep | undefined, stepB: CFIStep | undefined): boolean;
+    equalTerminal(terminalA: CFITerminal, terminalB: CFITerminal): boolean;
     /**
      * Create a CFI range object from a DOM Range or CustomRange
      */

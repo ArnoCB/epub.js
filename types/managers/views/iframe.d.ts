@@ -12,7 +12,7 @@ interface ExtendedIFrameElement extends HTMLIFrameElement {
     seamless?: string;
 }
 declare class StyledPane extends OriginalPane {
-    constructor(target: HTMLElement, container: HTMLElement, transparency: boolean);
+    constructor(target: HTMLElement, container: HTMLElement, _transparency: boolean);
 }
 export type IframeViewSettings = {
     ignoreClass: string;
@@ -115,6 +115,15 @@ declare class IframeView implements View, EventEmitterMethods {
     expand(): void;
     reframe(width: number, height: number): void;
     load(contents: string): Promise<Contents>;
+    /**
+     * Essential setup for Contents object - used by both normal onLoad and prerendering
+     * This contains only the safe and essential parts needed for highlighting to work
+     */
+    setupContentsForHighlighting(iframe: HTMLIFrameElement, section: Section, transparency?: boolean): Contents | null;
+    /**
+     * Ensures Contents object exists for highlighting/underlining - works for both normal and prerendered views
+     */
+    private ensureContentsForMarking;
     onLoad(event: Event, promise: defer<Contents>): void;
     setLayout(layout: Layout): void;
     setAxis(axis: Axis): void;

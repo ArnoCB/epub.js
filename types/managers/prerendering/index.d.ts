@@ -26,6 +26,13 @@ export declare class PreRenderingViewManager extends DefaultViewManager implemen
         [key: string]: unknown;
     });
     private writeIframeContent;
+    private applyNoScrollStyles;
+    private initializeContents;
+    private attachPrerendered;
+    private updatePhantom;
+    private createWrapper;
+    private createIframe;
+    private extractContent;
     append(section: Section, forceRight?: boolean): Promise<IframeView>;
     prepend(section: Section, forceRight?: boolean): Promise<IframeView>;
     startPreRendering(sections: Section[]): Promise<void>;

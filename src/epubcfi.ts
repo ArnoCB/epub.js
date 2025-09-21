@@ -539,6 +539,7 @@ class EpubCFI {
 
       currentNode = currentNode.parentNode;
     }
+
     // If no steps were added (unattached node), add a step for the node itself
     if (segment.steps.length === 0 && node) {
       if (ignoreClass) {
@@ -581,6 +582,13 @@ class EpubCFI {
     }
 
     return false;
+  }
+
+  equalTerminal(terminalA: CFITerminal, terminalB: CFITerminal): boolean {
+    return (
+      terminalA.offset === terminalB.offset &&
+      terminalA.assertion === terminalB.assertion
+    );
   }
 
   /**
@@ -650,7 +658,9 @@ class EpubCFI {
 
     const patch = (node: Node, offset: number) =>
       needsIgnoring && typeof ignoreClass === 'string'
-        ? this.patchOffset(node, offset, ignoreClass)
+        ? node.nodeType === TEXT_NODE
+          ? this.patchOffset(node, offset, ignoreClass)
+          : offset
         : offset;
 
     // Check if the range is collapsed
@@ -682,7 +692,7 @@ class EpubCFI {
     if (
       len > 0 &&
       this.equalStep(startComp.steps[len - 1], endComp.steps[len - 1]) &&
-      startComp.terminal === endComp.terminal
+      this.equalTerminal(startComp.terminal, endComp.terminal)
     ) {
       path.steps.push(startComp.steps[len - 1]);
     }

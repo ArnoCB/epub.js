@@ -446,32 +446,6 @@ export class BookPreRenderer {
       // Render the view
       const renderedView = await view.display(this.request);
 
-      // Add visual marker to show this is prerendered content
-      try {
-        const iframe = chapter.element.querySelector(
-          'iframe'
-        ) as HTMLIFrameElement;
-        if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
-          const body = iframe.contentDocument.body;
-
-          // Create marker if not already present
-          const existing = iframe.contentDocument.querySelector(
-            "span[data-prerendered='true']"
-          );
-          if (!existing) {
-            const marker = iframe.contentDocument.createElement('span');
-            marker.setAttribute('data-prerendered', 'true');
-            marker.style.cssText =
-              'color: red; font-weight: bold; background: yellow; padding: 2px; margin-right: 8px; display:inline-block;';
-            marker.textContent = '★ [PRERENDERED]';
-            // Insert at the very start of the body (works whether or not firstChild exists)
-            body.insertBefore(marker, body.firstChild || null);
-          }
-        }
-      } catch (e) {
-        console.debug('[BookPreRenderer] Could not add prerendered marker:', e);
-      }
-
       // Measure content dimensions after rendering
       if (view.contents && view.contents.textWidth) {
         chapter.width = view.contents.textWidth();
@@ -606,24 +580,6 @@ export class BookPreRenderer {
             e
           );
         }
-      }
-
-      // Ensure preserved content includes our visual marker so clones/restores show it
-      const ensureMarkerInHtml = (html?: string) => {
-        if (!html) return html;
-        if (html.indexOf('★ [PRERENDERED]') !== -1) return html;
-        return html.replace(
-          /<body([^>]*)>/i,
-          `<body$1><span data-prerendered="true" style="color:red;font-weight:bold;background:yellow;padding:2px;margin-right:8px;display:inline-block;">★ [PRERENDERED]</span>`
-        );
-      };
-
-      if (chapter.preservedSrcdoc) {
-        chapter.preservedSrcdoc = ensureMarkerInHtml(chapter.preservedSrcdoc);
-      }
-
-      if (chapter.preservedContent) {
-        chapter.preservedContent = ensureMarkerInHtml(chapter.preservedContent);
       }
     } catch (e) {
       console.debug('[BookPreRenderer] could not preserve iframe content:', e);

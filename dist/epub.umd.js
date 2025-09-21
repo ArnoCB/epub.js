@@ -2418,6 +2418,9 @@
 	      }
 	      return false;
 	    }
+	    equalTerminal(terminalA, terminalB) {
+	      return terminalA.offset === terminalB.offset && terminalA.assertion === terminalB.assertion;
+	    }
 	    /**
 	     * Create a CFI range object from a DOM Range or CustomRange
 	     */
@@ -2445,7 +2448,7 @@
 	        throw new Error('Invalid range object provided to fromRange');
 	      }
 	      const needsIgnoring = !!(ignoreClass && start.ownerDocument?.querySelector('.' + ignoreClass));
-	      const patch = (node, offset) => needsIgnoring && typeof ignoreClass === 'string' ? this.patchOffset(node, offset, ignoreClass) : offset;
+	      const patch = (node, offset) => needsIgnoring && typeof ignoreClass === 'string' ? node.nodeType === TEXT_NODE ? this.patchOffset(node, offset, ignoreClass) : offset : offset;
 	      // Check if the range is collapsed
 	      const isCollapsed = start === end && startOffset === endOffset;
 	      if (isCollapsed) {
@@ -2475,7 +2478,7 @@
 	        path.steps.push(startComp.steps[i]);
 	      }
 	      // If last step is equal, check terminals
-	      if (len > 0 && this.equalStep(startComp.steps[len - 1], endComp.steps[len - 1]) && startComp.terminal === endComp.terminal) {
+	      if (len > 0 && this.equalStep(startComp.steps[len - 1], endComp.steps[len - 1]) && this.equalTerminal(startComp.terminal, endComp.terminal)) {
 	        path.steps.push(startComp.steps[len - 1]);
 	      }
 	      // Remove common steps from start/end
@@ -12463,25 +12466,6 @@
 	        this.offscreenContainer.appendChild(chapter.element);
 	        // Render the view
 	        const renderedView = await view.display(this.request);
-	        // Add visual marker to show this is prerendered content
-	        try {
-	          const iframe = chapter.element.querySelector('iframe');
-	          if (iframe && iframe.contentDocument && iframe.contentDocument.body) {
-	            const body = iframe.contentDocument.body;
-	            // Create marker if not already present
-	            const existing = iframe.contentDocument.querySelector("span[data-prerendered='true']");
-	            if (!existing) {
-	              const marker = iframe.contentDocument.createElement('span');
-	              marker.setAttribute('data-prerendered', 'true');
-	              marker.style.cssText = 'color: red; font-weight: bold; background: yellow; padding: 2px; margin-right: 8px; display:inline-block;';
-	              marker.textContent = '★ [PRERENDERED]';
-	              // Insert at the very start of the body (works whether or not firstChild exists)
-	              body.insertBefore(marker, body.firstChild || null);
-	            }
-	          }
-	        } catch (e) {
-	          console.debug('[BookPreRenderer] Could not add prerendered marker:', e);
-	        }
 	        // Measure content dimensions after rendering
 	        if (view.contents && view.contents.textWidth) {
 	          chapter.width = view.contents.textWidth();
@@ -12589,18 +12573,6 @@
 	            // reading may fail for cross-origin or other reasons
 	            console.debug('[BookPreRenderer] preserveChapterContent: could not read contentDocument after ready', e);
 	          }
-	        }
-	        // Ensure preserved content includes our visual marker so clones/restores show it
-	        const ensureMarkerInHtml = html => {
-	          if (!html) return html;
-	          if (html.indexOf('★ [PRERENDERED]') !== -1) return html;
-	          return html.replace(/<body([^>]*)>/i, `<body$1><span data-prerendered="true" style="color:red;font-weight:bold;background:yellow;padding:2px;margin-right:8px;display:inline-block;">★ [PRERENDERED]</span>`);
-	        };
-	        if (chapter.preservedSrcdoc) {
-	          chapter.preservedSrcdoc = ensureMarkerInHtml(chapter.preservedSrcdoc);
-	        }
-	        if (chapter.preservedContent) {
-	          chapter.preservedContent = ensureMarkerInHtml(chapter.preservedContent);
 	        }
 	      } catch (e) {
 	        console.debug('[BookPreRenderer] could not preserve iframe content:', e);
@@ -13113,6 +13085,10 @@
 	    const default_1 = __importDefault(require_default());
 	    const prerenderer_1 = __importDefault(requirePrerenderer());
 	    const constants_1 = requireConstants();
+	    // Type guard to check if a View is an IframeView
+	    function isIframeView(view) {
+	      return 'setupContentsForHighlighting' in view && 'settings' in view;
+	    }
 	    /**
 	     * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
 	     *
@@ -13143,392 +13119,210 @@
 	        this.settings.overflow = 'hidden';
 	        this.overflow = 'hidden';
 	      }
-	      // Helper to write preserved content into an iframe and apply necessary styles
-	      writeIframeContent(iframe, originalContent, attachedView,
-	      // The prerendered view that needs Contents setup
-	      section // The section for CFI setup
-	      ) {
+	      writeIframeContent(iframe, originalContent, attachedView, section) {
 	        iframe.onload = () => {
 	          try {
 	            const doc = iframe.contentDocument;
-	            if (doc) {
-	              console.log('[PreRenderingViewManager] Writing content to iframe');
-	              doc.open();
-	              doc.write(originalContent);
-	              doc.close();
-	              // Add styles to ensure no horizontal scrollbar
-	              if (doc.body) {
-	                // Explicitly set both overflow properties to hidden to prevent any scrollbars
-	                doc.body.style.overflowX = 'hidden';
-	                doc.body.style.overflowY = 'hidden';
-	                doc.body.style.overflow = 'hidden';
-	                // Add a style tag to ensure these styles aren't overridden by inline styles
-	                const style = doc.createElement('style');
-	                const cssRules = ['body {', '  overflow: hidden !important;', '  overflow-x: hidden !important;', '  overflow-y: hidden !important;', '}'].join('\n');
-	                style.textContent = cssRules;
-	                doc.head.appendChild(style);
-	              }
-	              // CRITICAL: Set up Contents object for highlighting/annotations after content is written
-	              if (attachedView && section && doc.body) {
-	                console.log('[PreRenderingViewManager] Setting up Contents after content write');
-	                try {
-	                  const contents = attachedView.setupContentsForHighlighting(iframe, section, attachedView.settings?.transparency);
-	                  if (contents) {
-	                    attachedView.window = iframe.contentWindow;
-	                    attachedView.document = doc;
-	                    attachedView.contents = contents;
-	                    console.log('[PreRenderingViewManager] ✅ Contents object created successfully after content write');
-	                    // CRITICAL: Trigger the manager ADDED event to connect Contents to Rendition hooks
-	                    // This ensures the Contents object gets passed through the normal hook system
-	                    console.log('[PreRenderingViewManager] Triggering MANAGERS.ADDED event to connect Contents to Rendition');
-	                    this.emit(constants_1.EVENTS.MANAGERS.ADDED, attachedView);
-	                  } else {
-	                    console.warn('[PreRenderingViewManager] ❌ Failed to create Contents object after content write');
-	                  }
-	                } catch (e) {
-	                  console.warn('[PreRenderingViewManager] ❌ Error creating Contents after content write:', e);
-	                }
-	              }
+	            if (!doc) return;
+	            // Write the content
+	            doc.open();
+	            doc.write(originalContent);
+	            doc.close();
+	            // Prevent scrollbars
+	            if (doc.body) {
+	              this.applyNoScrollStyles(doc);
 	            }
-	          } catch (e) {
-	            console.error('[PreRenderingViewManager] Error writing content to iframe:', e);
+	            // Setup highlighting if needed
+	            if (attachedView && section && doc.body) {
+	              this.initializeContents(iframe, doc, attachedView, section);
+	            }
+	          } catch (err) {
+	            console.error('[PreRenderingViewManager] Error writing content to iframe:', err);
 	          }
 	        };
 	      }
-	      // Check for prerendered content, otherwise use DefaultViewManager
-	      async append(section, forceRight = false) {
-	        // Try to use prerendered content if available
-	        if (this.usePreRendering && this._preRenderer) {
-	          // Set attaching flag before attempting to attach prerendered content
-	          this._attaching = true;
-	          try {
-	            const attached = this._preRenderer.attachChapter(section.href);
-	            if (attached && attached.view) {
-	              // CRITICAL: We must mark the view as prerendered and attached BEFORE
-	              // adding it to the views collection to prevent layout recalculation
-	              attached.attached = true;
-	              // CRITICAL: Remove the default onDisplayed handler to prevent layout changes
-	              // We'll still have our own overridden afterDisplayed method as a safeguard
-	              if (attached.view) {
-	                attached.view.onDisplayed = () => {
-	                  console.log('[PreRenderingViewManager] Skipping onDisplayed for prerendered view:', section.href);
-	                };
-	              }
-	              // Create/update phantom element to match current chapter's content width
-	              if (this.container) {
-	                let phantomElement = this.container.querySelector('.epub-scroll-phantom');
-	                if (!phantomElement) {
-	                  phantomElement = document.createElement('div');
-	                  phantomElement.className = 'epub-scroll-phantom';
-	                  phantomElement.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                height: 1px;
-                pointer-events: none;
-                visibility: hidden;
-                z-index: -1000;
-              `;
-	                  this.container.appendChild(phantomElement);
-	                }
-	                // Fix: Ensure phantom width is set correctly and consistently
-	                const contentWidth = attached.width || 0;
-	                const safeContentWidth = Math.max(contentWidth, this.layout.width);
-	                phantomElement.style.width = safeContentWidth + 'px';
-	                // Force a reflow to ensure the phantom element takes effect
-	                void phantomElement.offsetWidth;
-	              }
-	              // Create a fresh wrapper with iframe from scratch
-	              const wrapperElement = document.createElement('div');
-	              wrapperElement.classList.add('epub-view');
-	              wrapperElement.setAttribute('ref', this.views._views.length.toString());
-	              // Size and style according to the view mode
-	              const isSpreadView = this.layout && this.layout.divisor > 1;
-	              // Redeclare viewport dimensions to ensure they're in scope
-	              const viewportWidth = this.container ? this.container.clientWidth : 0;
-	              const viewportHeight = this.container ? this.container.clientHeight : 0;
-	              // Get the container width and viewport dimensions
-	              const containerWidth = this.container ? this.container.clientWidth : 900;
-	              if (isSpreadView) {
-	                // Set as half width for spread view
-	                const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
-	                wrapperElement.style.width = `${columnWidth}px`;
-	                wrapperElement.style.height = `${viewportHeight}px`;
-	                // Position left or right
-	                if (forceRight) {
-	                  const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
-	                  const gapAdjustment = this.layout?.gap || 0;
-	                  wrapperElement.style.left = `${rightPosition + gapAdjustment}px`;
-	                } else {
-	                  wrapperElement.style.left = '0px';
-	                }
-	              } else {
-	                // IMPORTANT: In DefaultViewManager both the wrapper and iframe get the same width
-	                // We need to use the iframe width here, which is set below
-	                wrapperElement.style.width = `${containerWidth}px`; // Start with container width
-	                wrapperElement.style.height = `${viewportHeight}px`;
-	                wrapperElement.style.left = '0px';
-	              }
-	              // Common styles
-	              wrapperElement.style.overflow = 'hidden';
-	              wrapperElement.style.position = 'relative';
-	              wrapperElement.style.display = 'block';
-	              wrapperElement.style.flex = '0 0 auto';
-	              wrapperElement.style.visibility = 'visible';
-	              // Create a new iframe
-	              const iframeElement = document.createElement('iframe');
-	              iframeElement.style.border = 'none';
-	              // For the iframe width, we should match what the DefaultViewManager does
-	              // DefaultViewManager uses safeContentWidth for both wrapper and iframe
-	              const iframeWidth = Math.max(attached.width || 0, this.layout.width); // Use same calculation as phantom element
-	              console.log('[PreRenderingViewManager] Setting iframe width to:', iframeWidth);
-	              iframeElement.style.width = `${iframeWidth}px`;
-	              // IMPORTANT: In DefaultViewManager, the wrapper element width matches the iframe width
-	              // Update the wrapper element's width to match the iframe width
-	              wrapperElement.style.width = `${iframeWidth}px`;
-	              iframeElement.style.height = `${attached.height}px`;
-	              // Force both overflow properties to hidden to prevent any scrollbars
-	              iframeElement.style.overflow = 'hidden';
-	              iframeElement.style.overflowX = 'hidden';
-	              iframeElement.style.overflowY = 'hidden';
-	              iframeElement.style.background = 'transparent';
-	              iframeElement.style.visibility = 'visible';
-	              iframeElement.style.display = 'block';
-	              iframeElement.style.wordSpacing = '0px';
-	              iframeElement.style.lineHeight = 'normal';
-	              // Set sandbox attributes
-	              iframeElement.setAttribute('sandbox', 'allow-same-origin');
-	              if (attached.view?.section?.properties && Array.isArray(attached.view.section.properties) && attached.view.section.properties.includes('scripted')) {
-	                iframeElement.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-	              }
-	              // Position for spreads
-	              if (isSpreadView && forceRight && attached.pageCount > 1) {
-	                const singlePageWidth = Math.floor(attached.width / attached.pageCount);
-	                iframeElement.style.marginLeft = `-${singlePageWidth}px`;
-	              } else {
-	                iframeElement.style.marginLeft = '0px';
-	              }
-	              // Add iframe to wrapper
-	              wrapperElement.appendChild(iframeElement);
-	              // Get content
-	              let originalContent = '';
-	              if (attached.preservedContent) {
-	                originalContent = attached.preservedContent;
-	              } else if (attached.preservedSrcdoc) {
-	                originalContent = attached.preservedSrcdoc;
-	              } else {
-	                try {
-	                  const originalIframe = attached.element.querySelector('iframe');
-	                  if (originalIframe) {
-	                    if (originalIframe.contentDocument && originalIframe.contentDocument.documentElement) {
-	                      originalContent = '<!DOCTYPE html>' + originalIframe.contentDocument.documentElement.outerHTML;
-	                    } else if (originalIframe.srcdoc) {
-	                      originalContent = originalIframe.srcdoc;
-	                    }
-	                  }
-	                } catch (e) {
-	                  console.warn('[PreRenderingViewManager] Error extracting content:', e);
-	                }
-	              }
-	              // Set up content loading
-	              this.writeIframeContent(iframeElement, originalContent, attached.view, attached.section);
-	              iframeElement.src = 'about:blank';
-	              // Update view references
-	              attached.view.element = wrapperElement;
-	              // Cast to a type with iframe/frame properties
-	              const iframeView = attached.view;
-	              if (iframeView) {
-	                iframeView.iframe = iframeElement;
-	                iframeView.frame = iframeElement;
-	              }
-	              // Attach to container
-	              if (this.container) {
-	                this.container.appendChild(wrapperElement);
-	              }
-	              // Add the prerendered view to our views collection
-	              this.views.append(attached.view);
-	              // Create/update phantom element to match current chapter's content width
-	              // This ensures horizontal scrolling works properly
-	              const contentWidth = attached.width || 0;
-	              let phantomElement = this.container.querySelector('.epub-scroll-phantom');
-	              if (!phantomElement) {
-	                phantomElement = document.createElement('div');
-	                phantomElement.className = 'epub-scroll-phantom';
-	                phantomElement.style.cssText = `
-              position: absolute;
-              top: 0;
-              left: 0;
-              height: 1px;
-              pointer-events: none;
-              visibility: hidden;
-              z-index: -1000;
-            `;
-	                this.container.appendChild(phantomElement);
-	              }
-	              // Fix: Ensure phantom width is set correctly and consistently
-	              const safeContentWidth = Math.max(contentWidth, this.layout.width);
-	              phantomElement.style.width = safeContentWidth + 'px';
-	              // Force a reflow to ensure the phantom element takes effect
-	              void phantomElement.offsetWidth;
-	              return attached.view;
-	            }
-	          } finally {
-	            // Always reset attaching flag to ensure it's not left in active state
-	            this._attaching = false;
-	          }
-	        }
-	        // Fallback to DefaultViewManager
-	        return super.append(section, forceRight);
+	      applyNoScrollStyles(doc) {
+	        Object.assign(doc.body.style, {
+	          overflow: 'hidden',
+	          overflowX: 'hidden',
+	          overflowY: 'hidden'
+	        });
+	        const style = doc.createElement('style');
+	        style.textContent = `
+    body {
+      overflow: hidden !important;
+      overflow-x: hidden !important;
+      overflow-y: hidden !important;
+    }
+  `;
+	        doc.head.appendChild(style);
 	      }
-	      // Use prerendered content for prepend, similar to append
-	      async prepend(section, forceRight = false) {
-	        if (this.usePreRendering && this._preRenderer) {
-	          // Set attaching flag before attempting to attach prerendered content
-	          this._attaching = true;
-	          try {
-	            const attached = this._preRenderer.attachChapter(section.href);
-	            if (attached && attached.view) {
-	              // CRITICAL: We must mark the view as prerendered and attached BEFORE
-	              // adding it to the views collection to prevent layout recalculation
-	              attached.attached = true;
-	              // CRITICAL: Remove the default onDisplayed handler to prevent layout changes
-	              // We'll still have our own overridden afterDisplayed method as a safeguard
-	              if (attached.view) {
-	                attached.view.onDisplayed = () => {
-	                  console.log('[PreRenderingViewManager] Skipping onDisplayed for prerendered view (prepend):', section.href);
-	                };
-	              }
-	              // Create a fresh wrapper with iframe from scratch, similar to append method
-	              const wrapperElement = document.createElement('div');
-	              wrapperElement.classList.add('epub-view');
-	              wrapperElement.setAttribute('ref', this.views._views.length.toString());
-	              // Apply similar styling as in the append method
-	              const isSpreadView = this.layout && this.layout.divisor > 1;
-	              const viewportWidth = this.container ? this.container.clientWidth : 0;
-	              const viewportHeight = this.container ? this.container.clientHeight : 0;
-	              const containerWidth = this.container ? this.container.clientWidth : 900;
-	              if (isSpreadView) {
-	                // Set as half width for spread view
-	                const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
-	                wrapperElement.style.width = `${columnWidth}px`;
-	                wrapperElement.style.height = `${viewportHeight}px`;
-	                // Position left or right
-	                if (forceRight) {
-	                  const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
-	                  const gapAdjustment = this.layout?.gap || 0;
-	                  wrapperElement.style.left = `${rightPosition + gapAdjustment}px`;
-	                } else {
-	                  wrapperElement.style.left = '0px';
-	                }
-	              } else {
-	                wrapperElement.style.width = `${containerWidth}px`;
-	                wrapperElement.style.height = `${viewportHeight}px`;
-	                wrapperElement.style.left = '0px';
-	              }
-	              // Common styles
-	              wrapperElement.style.overflow = 'hidden';
-	              wrapperElement.style.position = 'relative';
-	              wrapperElement.style.display = 'block';
-	              wrapperElement.style.flex = '0 0 auto';
-	              wrapperElement.style.visibility = 'visible';
-	              // Create a new iframe
-	              const iframeElement = document.createElement('iframe');
-	              iframeElement.style.border = 'none';
-	              // For the iframe width, use same calculation as in append
-	              const iframeWidth = Math.max(attached.width || 0, this.layout.width);
-	              iframeElement.style.width = `${iframeWidth}px`;
-	              wrapperElement.style.width = `${iframeWidth}px`;
-	              iframeElement.style.height = `${attached.height}px`;
-	              // Force both overflow properties to hidden to prevent any scrollbars
-	              iframeElement.style.overflow = 'hidden';
-	              iframeElement.style.overflowX = 'hidden';
-	              iframeElement.style.overflowY = 'hidden';
-	              iframeElement.style.background = 'transparent';
-	              iframeElement.style.visibility = 'visible';
-	              iframeElement.style.display = 'block';
-	              iframeElement.style.wordSpacing = '0px';
-	              iframeElement.style.lineHeight = 'normal';
-	              // Set sandbox attributes
-	              iframeElement.setAttribute('sandbox', 'allow-same-origin');
-	              if (attached.view?.section?.properties && Array.isArray(attached.view.section.properties) && attached.view.section.properties.includes('scripted')) {
-	                iframeElement.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-	              }
-	              // Position for spreads
-	              if (isSpreadView && forceRight && attached.pageCount > 1) {
-	                const singlePageWidth = Math.floor(attached.width / attached.pageCount);
-	                iframeElement.style.marginLeft = `-${singlePageWidth}px`;
-	              } else {
-	                iframeElement.style.marginLeft = '0px';
-	              }
-	              // Add iframe to wrapper
-	              wrapperElement.appendChild(iframeElement);
-	              // Get content
-	              let originalContent = '';
-	              if (attached.preservedContent) {
-	                originalContent = attached.preservedContent;
-	              } else if (attached.preservedSrcdoc) {
-	                originalContent = attached.preservedSrcdoc;
-	              } else {
-	                try {
-	                  const originalIframe = attached.element.querySelector('iframe');
-	                  if (originalIframe) {
-	                    if (originalIframe.contentDocument && originalIframe.contentDocument.documentElement) {
-	                      originalContent = '<!DOCTYPE html>' + originalIframe.contentDocument.documentElement.outerHTML;
-	                    } else if (originalIframe.srcdoc) {
-	                      originalContent = originalIframe.srcdoc;
-	                    }
-	                  }
-	                } catch (e) {
-	                  console.warn('[PreRenderingViewManager] Error extracting content:', e);
-	                }
-	              }
-	              // Set up content loading
-	              this.writeIframeContent(iframeElement, originalContent, attached.view, attached.section);
-	              iframeElement.src = 'about:blank';
-	              // Update view references
-	              attached.view.element = wrapperElement;
-	              // Cast to a type with iframe/frame properties
-	              const iframeView = attached.view;
-	              if (iframeView) {
-	                iframeView.iframe = iframeElement;
-	                iframeView.frame = iframeElement;
-	              }
-	              // Attach to container
-	              if (this.container) {
-	                this.container.appendChild(wrapperElement);
-	              }
-	              // Prepend the prerendered view to our views collection
-	              this.views.prepend(attached.view);
-	              // Update phantom element as in append
-	              const contentWidth = attached.width || 0;
-	              let phantomElement = this.container.querySelector('.epub-scroll-phantom');
-	              if (!phantomElement) {
-	                phantomElement = document.createElement('div');
-	                phantomElement.className = 'epub-scroll-phantom';
-	                phantomElement.style.cssText = `
-              position: absolute;
-              top: 0;
-              left: 0;
-              height: 1px;
-              pointer-events: none;
-              visibility: hidden;
-              z-index: -1000;
-            `;
-	                this.container.appendChild(phantomElement);
-	              }
-	              // Ensure phantom width is set correctly
-	              const safeContentWidth = Math.max(contentWidth, this.layout.width);
-	              phantomElement.style.width = safeContentWidth + 'px';
-	              void phantomElement.offsetWidth;
-	              return attached.view;
-	            }
-	          } finally {
-	            // Always reset attaching flag
-	            this._attaching = false;
-	          }
+	      initializeContents(iframe, doc, attachedView, section) {
+	        console.log('[PreRenderingViewManager] Setting up Contents after content write');
+	        const contents = attachedView.setupContentsForHighlighting(iframe, section, attachedView.settings?.transparency);
+	        if (!contents) {
+	          console.warn('[PreRenderingViewManager] ❌ Failed to create Contents object');
+	          return;
 	        }
-	        // Fallback to DefaultViewManager if no prerendered content is available
-	        return super.prepend(section, forceRight);
+	        attachedView.window = iframe.contentWindow || undefined;
+	        attachedView.document = doc;
+	        attachedView.contents = contents;
+	        console.log('[PreRenderingViewManager] ✅ Contents object created successfully');
+	        console.log('[PreRenderingViewManager] Triggering MANAGERS.ADDED event');
+	        this.emit(constants_1.EVENTS.MANAGERS.ADDED, attachedView);
+	      }
+	      async attachPrerendered(section, forceRight, mode) {
+	        if (!(this.usePreRendering && this._preRenderer)) {
+	          return null;
+	        }
+	        this._attaching = true;
+	        try {
+	          const attached = this._preRenderer.attachChapter(section.href);
+	          if (!attached || !attached.view) return null;
+	          attached.attached = true;
+	          // Prevent layout recalculation by removing default handler
+	          attached.view.onDisplayed = () => {};
+	          // Build wrapper + iframe
+	          const wrapperElement = this.createWrapper(forceRight);
+	          const iframeElement = this.createIframe(forceRight, attached);
+	          wrapperElement.appendChild(iframeElement);
+	          // Extract content
+	          const originalContent = this.extractContent(attached);
+	          // Load content
+	          if (isIframeView(attached.view)) {
+	            this.writeIframeContent(iframeElement, originalContent, attached.view, attached.section);
+	          } else {
+	            console.warn('[PreRenderingViewManager] ❌ Expected IframeView but got different view type');
+	          }
+	          iframeElement.src = 'about:blank';
+	          // Update references
+	          attached.view.element = wrapperElement;
+	          const iframeView = attached.view;
+	          iframeView.iframe = iframeElement;
+	          iframeView.frame = iframeElement;
+	          // Attach to container
+	          if (this.container) {
+	            this.container.appendChild(wrapperElement);
+	          }
+	          // Add to collection
+	          if (mode === 'append') {
+	            this.views.append(attached.view);
+	          } else {
+	            this.views.prepend(attached.view);
+	          }
+	          // Update phantom
+	          this.updatePhantom(attached.width);
+	          return attached.view;
+	        } finally {
+	          this._attaching = false;
+	        }
+	      }
+	      updatePhantom(contentWidth) {
+	        if (!this.container) return;
+	        let phantomElement = this.container.querySelector('.epub-scroll-phantom');
+	        if (!phantomElement) {
+	          phantomElement = document.createElement('div');
+	          phantomElement.className = 'epub-scroll-phantom';
+	          phantomElement.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 1px;
+      pointer-events: none;
+      visibility: hidden;
+      z-index: -1000;
+    `;
+	          this.container.appendChild(phantomElement);
+	        }
+	        const safeContentWidth = Math.max(contentWidth || 0, this.layout.width);
+	        phantomElement.style.width = safeContentWidth + 'px';
+	        // Force a reflow
+	        void phantomElement.offsetWidth;
+	      }
+	      createWrapper(forceRight) {
+	        const wrapperElement = document.createElement('div');
+	        wrapperElement.classList.add('epub-view');
+	        wrapperElement.setAttribute('ref', this.views._views.length.toString());
+	        const isSpreadView = this.layout && this.layout.divisor > 1;
+	        const viewportWidth = this.container?.clientWidth || 0;
+	        const viewportHeight = this.container?.clientHeight || 0;
+	        const containerWidth = this.container?.clientWidth || 900;
+	        if (isSpreadView) {
+	          const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+	          wrapperElement.style.width = `${columnWidth}px`;
+	          wrapperElement.style.height = `${viewportHeight}px`;
+	          if (forceRight) {
+	            const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+	            const gapAdjustment = this.layout?.gap || 0;
+	            wrapperElement.style.left = `${rightPosition + gapAdjustment}px`;
+	          } else {
+	            wrapperElement.style.left = '0px';
+	          }
+	        } else {
+	          wrapperElement.style.width = `${containerWidth}px`;
+	          wrapperElement.style.height = `${viewportHeight}px`;
+	          wrapperElement.style.left = '0px';
+	        }
+	        Object.assign(wrapperElement.style, {
+	          overflow: 'hidden',
+	          position: 'relative',
+	          display: 'block',
+	          flex: '0 0 auto',
+	          visibility: 'visible'
+	        });
+	        return wrapperElement;
+	      }
+	      createIframe(forceRight, attached) {
+	        const iframeElement = document.createElement('iframe');
+	        iframeElement.style.border = 'none';
+	        const iframeWidth = Math.max(attached.width || 0, this.layout.width);
+	        iframeElement.style.width = `${iframeWidth}px`;
+	        iframeElement.style.height = `${attached.height}px`;
+	        Object.assign(iframeElement.style, {
+	          overflow: 'hidden',
+	          overflowX: 'hidden',
+	          overflowY: 'hidden',
+	          background: 'transparent',
+	          visibility: 'visible',
+	          display: 'block',
+	          wordSpacing: '0px',
+	          lineHeight: 'normal'
+	        });
+	        iframeElement.setAttribute('sandbox', 'allow-same-origin');
+	        if (attached.view?.section?.properties?.includes('scripted')) {
+	          iframeElement.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+	        }
+	        const isSpreadView = this.layout && this.layout.divisor > 1;
+	        if (isSpreadView && forceRight && attached.pageCount > 1) {
+	          const singlePageWidth = Math.floor(attached.width / attached.pageCount);
+	          iframeElement.style.marginLeft = `-${singlePageWidth}px`;
+	          return iframeElement;
+	        }
+	        iframeElement.style.marginLeft = '0px';
+	        return iframeElement;
+	      }
+	      extractContent(attached) {
+	        if (attached.preservedContent) return attached.preservedContent;
+	        if (attached.preservedSrcdoc) return attached.preservedSrcdoc;
+	        try {
+	          const originalIframe = attached.element.querySelector('iframe');
+	          if (originalIframe) {
+	            if (originalIframe.contentDocument?.documentElement) {
+	              return '<!DOCTYPE html>' + originalIframe.contentDocument.documentElement.outerHTML;
+	            } else if (originalIframe.srcdoc) {
+	              return originalIframe.srcdoc;
+	            }
+	          }
+	        } catch (e) {
+	          console.warn('[PreRenderingViewManager] Error extracting content:', e);
+	        }
+	        return '';
+	      }
+	      async append(section, forceRight = false) {
+	        return (await this.attachPrerendered(section, forceRight, 'append')) ?? super.append(section, forceRight);
+	      }
+	      async prepend(section, forceRight = false) {
+	        return (await this.attachPrerendered(section, forceRight, 'prepend')) ?? super.prepend(section, forceRight);
 	      }
 	      // Pre-rendering specific methods
 	      async startPreRendering(sections) {
