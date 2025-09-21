@@ -13183,7 +13183,7 @@
 	          // Prevent layout recalculation by removing default handler
 	          attached.view.onDisplayed = () => {};
 	          // Build wrapper + iframe
-	          const wrapperElement = this.createWrapper(forceRight);
+	          const wrapperElement = this.createWrapper(forceRight, attached);
 	          const iframeElement = this.createIframe(forceRight, attached);
 	          wrapperElement.appendChild(iframeElement);
 	          // Extract content
@@ -13239,7 +13239,7 @@
 	        // Force a reflow
 	        void phantomElement.offsetWidth;
 	      }
-	      createWrapper(forceRight) {
+	      createWrapper(forceRight, attached) {
 	        const wrapperElement = document.createElement('div');
 	        wrapperElement.classList.add('epub-view');
 	        wrapperElement.setAttribute('ref', this.views._views.length.toString());
@@ -13249,7 +13249,9 @@
 	        const containerWidth = this.container?.clientWidth || 900;
 	        if (isSpreadView) {
 	          const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
-	          wrapperElement.style.width = `${columnWidth}px`;
+	          // For prerendered content, use the full content width to show all pages
+	          const wrapperWidth = attached?.width ? Math.max(attached.width, columnWidth) : columnWidth;
+	          wrapperElement.style.width = `${wrapperWidth}px`;
 	          wrapperElement.style.height = `${viewportHeight}px`;
 	          if (forceRight) {
 	            const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);

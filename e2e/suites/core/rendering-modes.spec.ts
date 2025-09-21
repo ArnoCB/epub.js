@@ -70,7 +70,10 @@ test.describe('Core Rendering Modes', () => {
       expect(renderResult.containerHeight).toBeGreaterThan(0);
     });
 
-    test('renders correctly with default manager', async ({ page, baseURL }) => {
+    test('renders correctly with default manager', async ({
+      page,
+      baseURL,
+    }) => {
       test.setTimeout(60_000);
 
       await page.goto(`${baseURL}/examples/prerendering-example.html`);
@@ -174,7 +177,10 @@ test.describe('Core Rendering Modes', () => {
       expect(renderResult.iframeCount).toBeGreaterThanOrEqual(1);
     });
 
-    test('renders correctly with default manager spread mode', async ({ page, baseURL }) => {
+    test('renders correctly with default manager spread mode', async ({
+      page,
+      baseURL,
+    }) => {
       test.setTimeout(60_000);
 
       await page.goto(`${baseURL}/examples/prerendering-example.html`);
@@ -225,7 +231,7 @@ test.describe('Core Rendering Modes', () => {
       expect(result.spread).toBe('always');
       expect(result.isDisplayed).toBe(true);
       expect(result.managerType).toBe('DefaultViewManager');
-      
+
       // Check if spread mode is actually enabled in layout
       if (result.layoutDivisor === 2) {
         // Spread mode is working - content should be wider for scrolling
@@ -233,7 +239,11 @@ test.describe('Core Rendering Modes', () => {
         expect(result.layoutPageWidth).toBeGreaterThan(400);
       } else {
         // Spread mode is not working - this is the actual bug we need to fix
-        console.warn('Spread mode not working: divisor =', result.layoutDivisor, 'expected 2');
+        console.warn(
+          'Spread mode not working: divisor =',
+          result.layoutDivisor,
+          'expected 2'
+        );
         expect(result.layoutDivisor).toBe(1); // This will fail and show us the actual issue
       }
     });

@@ -18,7 +18,10 @@ import {
 
 test.describe('Core Navigation', () => {
   test.describe('Page Navigation', () => {
-    test('next and previous navigation works with prerenderer', async ({ page, baseURL }) => {
+    test('next and previous navigation works with prerenderer', async ({
+      page,
+      baseURL,
+    }) => {
       test.setTimeout(45_000);
 
       await page.goto(`${baseURL}/examples/prerendering-example.html`);
@@ -89,7 +92,10 @@ test.describe('Core Navigation', () => {
       expect(prevResult.currentHref).toMatch(/chapter_001/);
     });
 
-    test('next and previous navigation works with default manager', async ({ page, baseURL }) => {
+    test('next and previous navigation works with default manager', async ({
+      page,
+      baseURL,
+    }) => {
       test.setTimeout(60_000);
 
       await page.goto(`${baseURL}/examples/prerendering-example.html`);
@@ -164,12 +170,18 @@ test.describe('Core Navigation', () => {
       await page.waitForTimeout(2000);
 
       // Test navigation through several chapters
-      const chapters = ['chapter_001.xhtml', 'chapter_002.xhtml', 'chapter_003.xhtml'];
+      const chapters = [
+        'chapter_001.xhtml',
+        'chapter_002.xhtml',
+        'chapter_003.xhtml',
+      ];
 
       for (const chapter of chapters) {
         await page.evaluate(async (chapterHref) => {
           const win: any = window as any;
-          const rendition = win.getRendition ? win.getRendition() : win.rendition;
+          const rendition = win.getRendition
+            ? win.getRendition()
+            : win.rendition;
           await rendition.display(chapterHref);
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }, chapter);
@@ -177,7 +189,9 @@ test.describe('Core Navigation', () => {
         // Verify content is visible after navigation
         const chapterResult = await page.evaluate((expectedChapter) => {
           const win: any = window as any;
-          const rendition = win.getRendition ? win.getRendition() : win.rendition;
+          const rendition = win.getRendition
+            ? win.getRendition()
+            : win.rendition;
           const container = rendition.manager.container;
           const iframe = container.querySelector('iframe');
 
@@ -359,7 +373,9 @@ test.describe('Core Navigation', () => {
         if (nav === 'next' || nav === 'prev') {
           result = await page.evaluate(async (direction) => {
             const win: any = window as any;
-            const rendition = win.getRendition ? win.getRendition() : win.rendition;
+            const rendition = win.getRendition
+              ? win.getRendition()
+              : win.rendition;
             await rendition[direction]();
             await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -387,7 +403,9 @@ test.describe('Core Navigation', () => {
         } else {
           result = await page.evaluate(async (chapterHref) => {
             const win: any = window as any;
-            const rendition = win.getRendition ? win.getRendition() : win.rendition;
+            const rendition = win.getRendition
+              ? win.getRendition()
+              : win.rendition;
             await rendition.display(chapterHref);
             await new Promise((resolve) => setTimeout(resolve, 1500));
 
