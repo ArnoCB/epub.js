@@ -3,7 +3,7 @@ import {
   waitForRenditionReady,
   navigateToChapter,
   waitForRelocation,
-} from '../../test-helpers';
+} from '../../helpers/test-helpers';
 
 // Check if viewport contains visible iframe content
 const checkVisibleContent = async (page: any) => {

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { EPUB_TEST_DATASET } from '../../test-dataset';
+import { EPUB_TEST_DATASET } from '../../data/test-dataset';
 
 /**
  * Core EPUB Reading Tests
