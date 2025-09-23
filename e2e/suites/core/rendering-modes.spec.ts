@@ -236,7 +236,7 @@ test.describe('Core Rendering Modes', () => {
       expect(result.isDisplayed).toBe(true);
       expect(result.managerType).toBe('DefaultViewManager');
       expect(result.containerWidth).toBeGreaterThan(0);
-      
+
       // Test that spread mode is working by checking if we have the right container setup
       // The key indicator is that content is properly displayed in spread mode
       expect(result.viewCount).toBeGreaterThanOrEqual(1);

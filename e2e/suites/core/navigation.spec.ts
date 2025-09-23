@@ -95,7 +95,9 @@ test.describe('Core Navigation', () => {
 
       // Capture console logs
       const logs: string[] = [];
-      page.on('console', (msg) => logs.push(`[page] ${msg.type()}: ${msg.text()}`));
+      page.on('console', (msg) =>
+        logs.push(`[page] ${msg.type()}: ${msg.text()}`)
+      );
 
       await page.goto(`${baseURL}/examples/default-manager-example.html`);
 
@@ -108,11 +110,13 @@ test.describe('Core Navigation', () => {
       const initialState = await page.evaluate(async () => {
         const book = (window as any).ePub('/e2e/fixtures/alice.epub');
         await book.opened;
-        
+
         // Debug: Check what book was actually loaded
         const bookTitle = book.packaging?.metadata?.title;
-        const spineItems = book.spine.items.slice(0, 5).map((item: any) => item.href);
-        
+        const spineItems = book.spine.items
+          .slice(0, 5)
+          .map((item: any) => item.href);
+
         const rendition = book.renderTo('viewer', {
           width: 900,
           height: 600,
@@ -121,12 +125,12 @@ test.describe('Core Navigation', () => {
         });
 
         (window as any).rendition = rendition;
-        
+
         // Wait for attachment and then display spine index 1 (first linear chapter after cover)
-        await new Promise(resolve => rendition.on('attached', resolve));
+        await new Promise((resolve) => rendition.on('attached', resolve));
         await rendition.display(1); // Start at spine index 1, not cover
         await new Promise((resolve) => setTimeout(resolve, 2000)); // More time
-        
+
         // Return initial state info
         const location = rendition.location;
         return {
@@ -144,26 +148,26 @@ test.describe('Core Navigation', () => {
         const rendition = (window as any).rendition;
         let currentLocation = rendition.location;
         let initialChapter = currentLocation?.start?.href;
-        
+
         // Keep calling next() until we reach a different chapter
         let attempts = 0;
         const maxAttempts = 20; // Safety limit
-        
+
         while (attempts < maxAttempts) {
           await rendition.next();
           await new Promise((resolve) => setTimeout(resolve, 500));
-          
+
           currentLocation = rendition.location;
           const currentChapter = currentLocation?.start?.href;
-          
+
           attempts++;
-          
+
           // If we've moved to a different chapter, stop
           if (currentChapter !== initialChapter) {
             break;
           }
         }
-        
+
         // Return final state
         return {
           href: currentLocation?.start?.href,
@@ -172,7 +176,7 @@ test.describe('Core Navigation', () => {
           attempts,
         };
       });
-      // Should be on the next chapter now  
+      // Should be on the next chapter now
       const secondChapter = await page.evaluate(() => {
         const rendition = (window as any).rendition;
         // Use rendition.location for consistency across managers
@@ -222,9 +226,9 @@ test.describe('Core Navigation', () => {
         });
 
         (window as any).rendition = rendition;
-        
+
         // Wait for attachment and then display spine index 1 (first linear chapter after cover)
-        await new Promise(resolve => rendition.on('attached', resolve));
+        await new Promise((resolve) => rendition.on('attached', resolve));
         await rendition.display(1); // Start at spine index 1, not cover
         await new Promise((resolve) => setTimeout(resolve, 2000)); // Extra time for prerendering
       });
@@ -351,9 +355,9 @@ test.describe('Core Navigation', () => {
 
         (window as any).rendition = rendition;
         (window as any).book = book;
-        
+
         // Wait for attachment and then display spine index 1 (first linear chapter after cover)
-        await new Promise(resolve => rendition.on('attached', resolve));
+        await new Promise((resolve) => rendition.on('attached', resolve));
         await rendition.display(1); // Start at spine index 1, not cover
         await new Promise((resolve) => setTimeout(resolve, 2000)); // Extra time for prerendering
 
@@ -449,7 +453,10 @@ test.describe('Core Navigation', () => {
   });
 
   test.describe('White Page Prevention', () => {
-    test('navigation never shows white pages (except legitimate spread pages)', async ({ page, baseURL }) => {
+    test('navigation never shows white pages (except legitimate spread pages)', async ({
+      page,
+      baseURL,
+    }) => {
       test.setTimeout(60_000);
 
       await page.goto(`${baseURL}/examples/prerendering-example.html`);
@@ -478,12 +485,12 @@ test.describe('Core Navigation', () => {
       });
 
       const navigationSequence = [
-        2,      // spine index 2
+        2, // spine index 2
         'prev', // go back
         'next', // go forward again
-        3,      // spine index 3
+        3, // spine index 3
         'prev', // This used to cause white pages
-        1,      // back to spine index 1
+        1, // back to spine index 1
       ];
 
       for (const nav of navigationSequence) {
@@ -499,24 +506,29 @@ test.describe('Core Navigation', () => {
 
             const container = rendition.manager.container;
             const iframe = container.querySelector('iframe');
-            
+
             // For spread mode, we need to be more nuanced about content detection
             let hasValidContent = false;
             let isSpreadMode = false;
-            
+
             if (iframe) {
               try {
                 // Check if we're in spread mode
-                isSpreadMode = rendition.settings?.spread === 'auto' || rendition.settings?.spread === true;
-                
+                isSpreadMode =
+                  rendition.settings?.spread === 'auto' ||
+                  rendition.settings?.spread === true;
+
                 // In spread mode, legitimate white pages are expected at chapter ends
                 // Just check that the iframe is visible and we have a valid location
-                hasValidContent = iframe.offsetWidth > 0 && iframe.offsetHeight > 0 && 
-                                 rendition.location?.start?.href && 
-                                 rendition.location?.start?.href !== 'unknown';
+                hasValidContent =
+                  iframe.offsetWidth > 0 &&
+                  iframe.offsetHeight > 0 &&
+                  rendition.location?.start?.href &&
+                  rendition.location?.start?.href !== 'unknown';
               } catch (e) {
                 // Cross-origin - assume content exists if iframe is visible
-                hasValidContent = iframe.offsetWidth > 0 && iframe.offsetHeight > 0;
+                hasValidContent =
+                  iframe.offsetWidth > 0 && iframe.offsetHeight > 0;
               }
             }
 
@@ -538,24 +550,29 @@ test.describe('Core Navigation', () => {
 
             const container = rendition.manager.container;
             const iframe = container.querySelector('iframe');
-            
+
             // For spread mode, we need to be more nuanced about content detection
             let hasValidContent = false;
             let isSpreadMode = false;
-            
+
             if (iframe) {
               try {
                 // Check if we're in spread mode
-                isSpreadMode = rendition.settings?.spread === 'auto' || rendition.settings?.spread === true;
-                
+                isSpreadMode =
+                  rendition.settings?.spread === 'auto' ||
+                  rendition.settings?.spread === true;
+
                 // In spread mode, legitimate white pages are expected at chapter ends
                 // Just check that the iframe is visible and we have a valid location
-                hasValidContent = iframe.offsetWidth > 0 && iframe.offsetHeight > 0 && 
-                                 rendition.location?.start?.href && 
-                                 rendition.location?.start?.href !== 'unknown';
+                hasValidContent =
+                  iframe.offsetWidth > 0 &&
+                  iframe.offsetHeight > 0 &&
+                  rendition.location?.start?.href &&
+                  rendition.location?.start?.href !== 'unknown';
               } catch (e) {
                 // Cross-origin - assume content exists if iframe is visible
-                hasValidContent = iframe.offsetWidth > 0 && iframe.offsetHeight > 0;
+                hasValidContent =
+                  iframe.offsetWidth > 0 && iframe.offsetHeight > 0;
               }
             }
 
@@ -579,7 +596,9 @@ test.describe('Core Navigation', () => {
       // Check logs for unexpected white page indicators (but allow expected ones in spread mode)
       const unexpectedWhitePageLogs = logs.filter(
         (log) =>
-          (log.includes('white page') || log.includes('empty content') || log.includes('no content')) &&
+          (log.includes('white page') ||
+            log.includes('empty content') ||
+            log.includes('no content')) &&
           !log.includes('spread') && // Allow spread-related white pages
           !log.includes('chapter end') // Allow chapter end white pages
       );

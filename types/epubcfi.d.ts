@@ -24,19 +24,53 @@ interface CFIRange {
     end: CFIComponent;
 }
 /**
-  * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
-
-  * Implements:
-  * - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
-  * - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
-
-  * Does Not Implement:
-  * - Temporal Offset (~)
-  * - Spatial Offset (@)
-  * - Temporal-Spatial Offset (~ + @)
-  * - Text Location Assertion ([)
-*/
+ * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
+ *
+ * Implements EPUB Canonical Fragment Identifier (CFI) specification:
+ * @see https://idpf.org/epub/linking/cfi/epub-cfi-20111011.html
+ *
+ * ## Supported CFI Types:
+ * - **Character Offset**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)`
+ * - **Simple Ranges**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)`
+ *
+ * ## CFI Range Format:
+ * Range CFIs follow the syntax: `epubcfi(path,start,end)` where:
+ * - `path`: Common parent path to both start and end locations
+ * - `start`: Local path from parent to start location (relative)
+ * - `end`: Local path from parent to end location (relative)
+ *
+ * ### Within-Element vs Cross-Element Ranges:
+ * **Within-element** (preferred for same-element selections):
+ * ```
+ * epubcfi(/6/20!/4/2/22/3,/:7,/:135)
+ * ```
+ * - Parent: `/6/20!/4/2/22/3` (points to containing element)
+ * - Start: `/:7` (character 7 in current element)
+ * - End: `/:135` (character 135 in current element)
+ *
+ * **Cross-element** (required for multi-element selections):
+ * ```
+ * epubcfi(/6/18!/4/2,/4/1:54,/6/1:0)
+ * ```
+ * - Parent: `/6/18!/4/2` (common ancestor)
+ * - Start: `/4/1:54` (absolute path to character 54 in element /4/1)
+ * - End: `/6/1:0` (absolute path to character 0 in element /6/1)
+ *
+ * ## Does Not Implement:
+ * - Temporal Offset (~)
+ * - Spatial Offset (@)
+ * - Temporal-Spatial Offset (~ + @)
+ * - Text Location Assertion ([text])
+ * - Side Bias (;s=a/b)
+ */
 declare class EpubCFI {
+    str: string;
+    base: CFIComponent;
+    spinePos: number;
+    range: boolean;
+    start: CFIComponent | null;
+    end: CFIComponent | null;
+    path: CFIComponent;
     /**
      * Convert custom range objects to DOM Range
      */
@@ -45,14 +79,8 @@ declare class EpubCFI {
      * Helper to get offset from a CFIComponent, falling back to another if needed
      */
     private getOffset;
-    str: string;
-    base: CFIComponent;
-    spinePos: number;
-    range: boolean;
-    start: CFIComponent | null;
-    end: CFIComponent | null;
-    path: CFIComponent;
     constructor(cfiFrom?: string | Range | Node, base?: string | CFIComponent, ignoreClass?: string);
+    private init;
     /**
      * Check the type of constructor input
      */
@@ -66,6 +94,26 @@ declare class EpubCFI {
     parseTerminal(terminalStr: string): CFITerminal;
     getChapterComponent(cfiStr: string): string;
     getPathComponent(cfiStr: string): string | undefined;
+    /**
+     * Extract range components from a CFI string
+     *
+     * Range CFIs follow the format: `path,start,end` where:
+     * - path: Common parent path to both start and end locations
+     * - start: Local path from parent to start location (relative)
+     * - end: Local path from parent to end location (relative)
+     *
+     * @example
+     * // Within-element range (preferred for same-element selections)
+     * getRange("/6/20!/4/2/22/3,/:7,/:135")
+     * // Returns: ["/:7", "/:135"]
+     *
+     * // Cross-element range (required for multi-element selections)
+     * getRange("/6/18!/4/2,/4/1:54,/6/1:0")
+     * // Returns: ["/4/1:54", "/6/1:0"]
+     *
+     * @param cfiStr CFI string potentially containing range components
+     * @returns Array of [start, end] components, or false if not a range CFI
+     */
     getRange(cfiStr: string): string[] | false;
     getCharacterOffsetComponent(cfiStr: string): string;
     joinSteps(steps: CFIStep[]): string;
