@@ -724,17 +724,8 @@ class Book implements EventEmitterMethods {
    * @return {Rendition}
    */
   renderTo(element: HTMLElement | string, options?: object): Rendition {
-    console.log('[Book] *** renderTo METHOD CALLED ***');
-    console.log('[Book] renderTo called with element:', element);
-    console.log('[Book] renderTo options:', options);
-
     this.rendition = new Rendition(this, options!);
-    console.log('[Book] Rendition created:', this.rendition.constructor.name);
-    console.log('[Book] About to call rendition.attachTo');
-
     this.rendition.attachTo(element);
-    console.log('[Book] rendition.attachTo called');
-
     return this.rendition;
   }
 

@@ -403,34 +403,10 @@ export class Rendition implements EventEmitterMethods {
    * @return {Promise}
    */
   attachTo(element: HTMLElement | string): Promise<unknown> {
-    console.log('[Rendition] *** attachTo METHOD CALLED ***');
-    console.log('[Rendition] attachTo called with element:', element);
-
-    // Manager might not be created yet if start() hasn't been called
-    if (this.manager) {
-      console.log('[Rendition] Manager type:', this.manager.constructor.name);
-      console.log('[Rendition] Manager settings:', this.manager.settings);
-    } else {
-      console.log(
-        '[Rendition] Manager not yet created (will be created in start())'
-      );
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return this.q.enqueue(() => {
-      console.log('[Rendition] *** IN ENQUEUED FUNCTION ***');
-      console.log(
-        '[Rendition] In enqueued function, about to call manager.render'
-      );
-
       // Start rendering with the request function
-      if (typeof element === 'string') {
-        console.log('[Rendition] received a string as element:', element);
-      }
-
-      console.log('[Rendition] Calling manager.render with element:', element);
       this.manager.render(element as HTMLElement);
-      console.log('[Rendition] manager.render call completed');
 
       // If pre-rendering is enabled and we're using the PreRenderingViewManager,
       // start pre-rendering automatically for all spine sections.
@@ -461,9 +437,6 @@ export class Rendition implements EventEmitterMethods {
       // method which will enqueue the request and wait for any pending startup tasks.
       try {
         if (this.book.spine && this.book.spine.length) {
-          console.log(
-            '[Rendition] Displaying first section (index 0) after attach'
-          );
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           this.display(0);
         }
@@ -544,22 +517,7 @@ export class Rendition implements EventEmitterMethods {
     let cfiTarget: string | undefined;
     if (targetStr && targetStr.startsWith('epubcfi(')) {
       cfiTarget = targetStr;
-      console.debug('[Rendition] CFI target extracted:', cfiTarget);
-    } else {
-      console.debug(
-        '[Rendition] No CFI target found, target type:',
-        typeof target,
-        'value:',
-        targetStr
-      );
     }
-
-    console.debug(
-      '[Rendition] calling manager.display with section:',
-      section.href,
-      'cfiTarget:',
-      cfiTarget
-    );
 
     this.manager.display(section, cfiTarget).then(
       () => {
@@ -725,11 +683,8 @@ export class Rendition implements EventEmitterMethods {
    * Go to the next "page" in the rendition
    */
   next() {
-    console.log('[DEBUGGING] Rendition.next() called - enqueuing manager.next');
     const queuePromise = this.q.enqueue(this.manager.next.bind(this.manager));
-    console.log('[DEBUGGING] Queue promise created:', queuePromise);
     return queuePromise.then((result) => {
-      console.log('[DEBUGGING] Manager.next completed, result:', result);
       this.reportLocation();
       return result;
     });
@@ -739,14 +694,10 @@ export class Rendition implements EventEmitterMethods {
    * Go to the previous "page" in the rendition
    */
   prev() {
-    console.error(
-      '[DEBUGGING] Rendition.prev() called - enqueuing manager.prev'
-    );
     return this.q
       .enqueue(this.manager.prev.bind(this.manager))
       .then(this.reportLocation.bind(this))
       .catch((error: Error) => {
-        console.error('[DEBUGGING] Rendition.prev() failed:', error);
         throw error;
       });
   }
@@ -946,12 +897,6 @@ export class Rendition implements EventEmitterMethods {
               // ignore
             }
             this.emit(EVENTS.RENDITION.RELOCATED, this.location);
-            console.debug(
-              '[Rendition] emitted relocated',
-              'ts=',
-              ts,
-              JSON.stringify(this.location)
-            );
           } catch {
             // emit may throw in tests; ignore
           }

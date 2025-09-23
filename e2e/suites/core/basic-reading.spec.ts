@@ -140,7 +140,7 @@ test.describe('Core EPUB Reading', () => {
     });
 
     expect(renditionInfo.hasRendition).toBe(true);
-    expect(renditionInfo.managerType).toBe('DefaultViewManager');
+    expect(renditionInfo.managerType).toBe('PreRenderingViewManager');
     expect(renditionInfo.containerExists).toBe(true);
   });
 });

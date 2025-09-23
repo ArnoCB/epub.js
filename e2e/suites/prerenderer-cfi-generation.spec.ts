@@ -69,9 +69,6 @@ test('prerenderer generates valid CFIs and pageMap for Alice', async ({
     );
   });
 
-  // Log the prerenderer chapters for debugging
-  console.log('PRERENDERER_CHAPTERS:', JSON.stringify(chapters, null, 2));
-
   // Basic chapter/page assertions
   expect(chapters.length).toBeGreaterThan(0);
 

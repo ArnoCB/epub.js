@@ -1950,46 +1950,66 @@ function requireEpubcfi() {
   const TEXT_NODE = 3;
   const DOCUMENT_NODE = 9;
   /**
-    * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
-  	  * Implements:
-    * - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
-    * - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
-  	  * Does Not Implement:
-    * - Temporal Offset (~)
-    * - Spatial Offset (@)
-    * - Temporal-Spatial Offset (~ + @)
-    * - Text Location Assertion ([)
-  */
+   * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
+   *
+   * Implements EPUB Canonical Fragment Identifier (CFI) specification:
+   * @see https://idpf.org/epub/linking/cfi/epub-cfi-20111011.html
+   *
+   * ## Supported CFI Types:
+   * - **Character Offset**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)`
+   * - **Simple Ranges**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)`
+   *
+   * ## CFI Range Format:
+   * Range CFIs follow the syntax: `epubcfi(path,start,end)` where:
+   * - `path`: Common parent path to both start and end locations
+   * - `start`: Local path from parent to start location (relative)
+   * - `end`: Local path from parent to end location (relative)
+   *
+   * ### Within-Element vs Cross-Element Ranges:
+   * **Within-element** (preferred for same-element selections):
+   * ```
+   * epubcfi(/6/20!/4/2/22/3,/:7,/:135)
+   * ```
+   * - Parent: `/6/20!/4/2/22/3` (points to containing element)
+   * - Start: `/:7` (character 7 in current element)
+   * - End: `/:135` (character 135 in current element)
+   *
+   * **Cross-element** (required for multi-element selections):
+   * ```
+   * epubcfi(/6/18!/4/2,/4/1:54,/6/1:0)
+   * ```
+   * - Parent: `/6/18!/4/2` (common ancestor)
+   * - Start: `/4/1:54` (absolute path to character 54 in element /4/1)
+   * - End: `/6/1:0` (absolute path to character 0 in element /6/1)
+   *
+   * ## Does Not Implement:
+   * - Temporal Offset (~)
+   * - Spatial Offset (@)
+   * - Temporal-Spatial Offset (~ + @)
+   * - Text Location Assertion ([text])
+   * - Side Bias (;s=a/b)
+   */
   class EpubCFI {
     /**
      * Convert custom range objects to DOM Range
      */
     static resolveToDomRange(input, doc) {
-      if (typeof input !== 'string' && input && typeof input === 'object') {
-        if (input.startContainer && input.endContainer) {
-          // Looks like a DOM Range or CustomRange
-          if (typeof doc.createRange === 'function') {
-            const range = doc.createRange();
-            range.setStart(input.startContainer, input.startOffset);
-            range.setEnd(input.endContainer, input.endOffset);
-            return range;
-          }
-        }
-        // Fallback: return the custom range object as-is
-        console.warn('[EpubCFI.resolveToDomRange] Returning custom range object as-is:', input);
-        return input;
+      if (!input || typeof input === 'string') return null;
+      if ('startContainer' in input && 'endContainer' in input && typeof doc.createRange === 'function') {
+        const range = doc.createRange();
+        range.setStart(input.startContainer, input.startOffset);
+        range.setEnd(input.endContainer, input.endOffset);
+        return range;
       }
-      // If string, not a range
-      return null;
+      return input;
     }
-    // ...existing code...
     /**
      * Helper to get offset from a CFIComponent, falling back to another if needed
      */
     getOffset(comp, fallback) {
       return comp && comp.terminal.offset != null ? comp.terminal.offset : fallback.terminal.offset != null ? fallback.terminal.offset : 0;
     }
-    constructor(cfiFrom, base = {
+    constructor(cfiFrom = '', base = {
       steps: [],
       terminal: {
         offset: null,
@@ -2015,45 +2035,46 @@ function requireEpubcfi() {
           assertion: null
         }
       };
-      // Accept no arguments, default to empty string
-      if (typeof cfiFrom === 'undefined') cfiFrom = '';
-      // Normalize base
-      let baseComponent;
-      if (typeof base === 'string') {
-        baseComponent = this.parseComponent(base);
-      } else if (base && typeof base === 'object' && 'steps' in base) {
-        baseComponent = base;
-      } else {
-        baseComponent = {
-          steps: [],
-          terminal: {
-            offset: null,
-            assertion: null
-          }
-        };
+      this.base = typeof base === 'string' ? this.parseComponent(base) : 'steps' in base ? base : {
+        steps: [],
+        terminal: {
+          offset: null,
+          assertion: null
+        }
+      };
+      if (cfiFrom) {
+        this.init(cfiFrom, ignoreClass);
       }
-      this.base = baseComponent;
-      const type = this.checkType(cfiFrom);
-      switch (type) {
+    }
+    init(cfiFrom, ignoreClass) {
+      switch (this.checkType(cfiFrom)) {
         case 'string':
           {
             this.str = cfiFrom;
             const parsed = this.parse(this.str);
-            this.base = parsed.base;
-            this.spinePos = parsed.spinePos;
-            this.range = !!parsed.range && !!parsed.start && !!parsed.end;
-            this.path = parsed.path;
-            this.start = parsed.start;
-            this.end = parsed.end;
+            Object.assign(this, {
+              base: parsed.base,
+              spinePos: parsed.spinePos,
+              range: !!(parsed.range && parsed.start && parsed.end),
+              path: parsed.path,
+              start: parsed.start,
+              end: parsed.end
+            });
             break;
           }
         case 'range':
           {
-            const rangeObj = this.fromRange(cfiFrom, this.base, ignoreClass);
-            this.range = true;
-            this.path = rangeObj.path;
-            this.start = rangeObj.start;
-            this.end = rangeObj.end;
+            const {
+              path,
+              start,
+              end
+            } = this.fromRange(cfiFrom, this.base, ignoreClass);
+            Object.assign(this, {
+              range: true,
+              path,
+              start,
+              end
+            });
             break;
           }
         case 'customRange':
@@ -2066,50 +2087,68 @@ function requireEpubcfi() {
               endOffset: custom.endOffset,
               collapsed: custom.startContainer === custom.endContainer && custom.startOffset === custom.endOffset
             };
-            const rangeObj = this.fromRange(fakeRange, this.base, ignoreClass);
-            this.range = true;
-            this.path = rangeObj.path;
-            this.start = rangeObj.start;
-            this.end = rangeObj.end;
+            const {
+              path,
+              start,
+              end
+            } = this.fromRange(fakeRange, this.base, ignoreClass);
+            Object.assign(this, {
+              range: true,
+              path,
+              start,
+              end
+            });
             break;
           }
         case 'node':
           {
-            const nodeObj = this.fromNode(cfiFrom, this.base, ignoreClass);
-            this.range = false;
-            this.path = nodeObj.path;
-            this.start = null;
-            this.end = null;
+            const {
+              path
+            } = this.fromNode(cfiFrom, this.base, ignoreClass);
+            Object.assign(this, {
+              range: false,
+              path,
+              start: null,
+              end: null
+            });
             break;
           }
         case 'EpubCFI':
           {
-            return cfiFrom;
+            const sourceCfi = cfiFrom;
+            Object.assign(this, {
+              str: sourceCfi.str,
+              base: sourceCfi.base,
+              spinePos: sourceCfi.spinePos,
+              range: sourceCfi.range,
+              path: sourceCfi.path,
+              start: sourceCfi.start,
+              end: sourceCfi.end
+            });
+            break;
           }
         default:
-          {
-            if (!cfiFrom) return this;
-            throw new TypeError('not a valid argument for EpubCFI');
-          }
+          throw new TypeError(`Invalid argument type for EpubCFI constructor: ${typeof cfiFrom}`);
       }
     }
     /**
      * Check the type of constructor input
      */
     checkType(cfi) {
-      if (this.isCfiString(cfi)) {
-        return 'string';
-      } else if (cfi && typeof cfi === 'object' && ((0, core_1.type)(cfi) === 'Range' || typeof cfi.startContainer != 'undefined' && typeof cfi.collapsed !== 'undefined')) {
+      if (this.isCfiString(cfi)) return 'string';
+      if (cfi && typeof cfi === 'object' && ((0, core_1.type)(cfi) === 'Range' || typeof cfi.startContainer !== 'undefined' && typeof cfi.collapsed !== 'undefined')) {
         return 'range';
-      } else if (cfi && typeof cfi === 'object' && typeof cfi.nodeType != 'undefined') {
-        return 'node';
-      } else if (cfi && typeof cfi === 'object' && typeof cfi.startContainer !== 'undefined' && typeof cfi.startOffset !== 'undefined' && typeof cfi.endContainer !== 'undefined' && typeof cfi.endOffset !== 'undefined' && !('collapsed' in cfi)) {
-        return 'customRange';
-      } else if (cfi && typeof cfi === 'object' && cfi instanceof EpubCFI) {
-        return 'EpubCFI';
-      } else {
-        return false;
       }
+      if (cfi && typeof cfi === 'object' && typeof cfi.nodeType !== 'undefined') {
+        return 'node';
+      }
+      if (cfi && typeof cfi === 'object' && typeof cfi.startContainer !== 'undefined' && typeof cfi.startOffset !== 'undefined' && typeof cfi.endContainer !== 'undefined' && typeof cfi.endOffset !== 'undefined' && !('collapsed' in cfi)) {
+        return 'customRange';
+      }
+      if (cfi && typeof cfi === 'object' && cfi instanceof EpubCFI) {
+        return 'EpubCFI';
+      }
+      return false;
     }
     /**
      * Parse a cfi string to a CFI object representation
@@ -2241,6 +2280,26 @@ function requireEpubcfi() {
         return indirection[1].split(',')[0];
       }
     }
+    /**
+     * Extract range components from a CFI string
+     *
+     * Range CFIs follow the format: `path,start,end` where:
+     * - path: Common parent path to both start and end locations
+     * - start: Local path from parent to start location (relative)
+     * - end: Local path from parent to end location (relative)
+     *
+     * @example
+     * // Within-element range (preferred for same-element selections)
+     * getRange("/6/20!/4/2/22/3,/:7,/:135")
+     * // Returns: ["/:7", "/:135"]
+     *
+     * // Cross-element range (required for multi-element selections)
+     * getRange("/6/18!/4/2,/4/1:54,/6/1:0")
+     * // Returns: ["/4/1:54", "/6/1:0"]
+     *
+     * @param cfiStr CFI string potentially containing range components
+     * @returns Array of [start, end] components, or false if not a range CFI
+     */
     getRange(cfiStr) {
       const ranges = cfiStr.split(',');
       if (ranges.length === 3) {
@@ -2260,14 +2319,11 @@ function requireEpubcfi() {
       }).join('/');
     }
     segmentString(segment) {
-      let segmentString = '/';
-      segmentString += this.joinSteps(segment.steps);
-      if (segment.terminal && segment.terminal.offset != null) {
-        segmentString += ':' + segment.terminal.offset;
-      }
-      if (segment.terminal && segment.terminal.assertion != null) {
-        segmentString += '[' + segment.terminal.assertion + ']';
-      }
+      let segmentString = '/' + this.joinSteps(segment.steps);
+      const terminal = segment.terminal;
+      if (!terminal) return segmentString; // early return if no terminal
+      if (terminal.offset != null) segmentString += `:${terminal.offset}`;
+      if (terminal.assertion != null) segmentString += `[${terminal.assertion}]`;
       return segmentString;
     }
     /**
@@ -2321,7 +2377,9 @@ function requireEpubcfi() {
         if (a.index !== b.index) return a.index > b.index ? 1 : -1;
       }
       if (terminalA.offset == null || terminalB.offset == null) return -1;
-      if (terminalA.offset !== terminalB.offset) return terminalA.offset > terminalB.offset ? 1 : -1;
+      if (terminalA.offset !== terminalB.offset) {
+        return terminalA.offset > terminalB.offset ? 1 : -1;
+      }
       return 0;
     }
     step(node) {
@@ -2404,13 +2462,8 @@ function requireEpubcfi() {
       return segment;
     }
     equalStep(stepA, stepB) {
-      if (!stepA || !stepB) {
-        return false;
-      }
-      if (stepA.index === stepB.index && stepA.id === stepB.id && stepA.type === stepB.type) {
-        return true;
-      }
-      return false;
+      if (!stepA || !stepB) return false;
+      return stepA.index === stepB.index && stepA.id === stepB.id && stepA.type === stepB.type;
     }
     equalTerminal(terminalA, terminalB) {
       return terminalA.offset === terminalB.offset && terminalA.assertion === terminalB.assertion;
@@ -2597,13 +2650,13 @@ function requireEpubcfi() {
           children = (0, core_1.findChildren)(parent);
         }
         index = children ? Array.prototype.indexOf.call(children, anchor) : -1;
-      } else {
-        if (!anchor.parentNode) {
-          return -1;
-        }
-        children = this.textNodes(anchor.parentNode);
-        index = children.indexOf(anchor);
+        return index;
       }
+      if (!anchor.parentNode) {
+        return -1;
+      }
+      children = this.textNodes(anchor.parentNode);
+      index = children.indexOf(anchor);
       return index;
     }
     filteredPosition(anchor, ignoreClass) {
@@ -10121,7 +10174,6 @@ function require_default() {
           phantomElement.style.width = safeContentWidth + 'px';
           // Force a reflow to ensure the phantom element takes effect
           void phantomElement.offsetWidth;
-          console.debug('[DefaultViewManager] afterDisplayed container now scrollWidth:', this.container.scrollWidth, 'phantom width:', phantomElement.offsetWidth);
           // Fix: Ensure view and iframe dimensions are consistent
           const element = view.element;
           if (element) {
@@ -10171,7 +10223,6 @@ function require_default() {
             if (this.container.scrollLeft > maxLeft) {
               this.container.scrollLeft = maxLeft;
             }
-            console.debug('[DefaultViewManager] afterDisplayed (delayed) adjusted phantom/iframe to width:', desiredWidth, 'container.scrollWidth:', this.container.scrollWidth);
           }
         } catch (e) {
           console.warn('[DefaultViewManager] delayed afterDisplayed check failed', e);
@@ -10275,9 +10326,7 @@ function require_default() {
       }
     }
     async next() {
-      console.log('[DefaultViewManager] next() called - START');
       if (!this.hasViews()) {
-        console.log('[DefaultViewManager] next() - no views, returning');
         return;
       }
       // Simple check: if there's no more scrollable content in the current section,
@@ -10309,23 +10358,16 @@ function require_default() {
     }
     async prev() {
       if (!this.hasViews()) return;
-      console.debug('[DefaultViewManager] prev() called');
       // Simple check: if we're already at the start of scrollable content,
       // jump to the previous section immediately
       const canScrollBack = this.container.scrollLeft > 0;
-      console.debug('[DefaultViewManager] prev scroll check:', {
-        scrollLeft: this.container.scrollLeft,
-        canScrollBack
-      });
       if (!canScrollBack) {
         // Already at start of current section, go to previous section
         const prevSection = this.views.first()?.section?.prev();
-        console.debug('[DefaultViewManager] at start of scroll, prev section:', prevSection?.href);
         if (prevSection) {
           await this.loadPrevSection(prevSection);
           return;
         } else {
-          console.debug('[DefaultViewManager] prev() reached beginning of book, no more sections to load');
           return;
         }
       }
@@ -10379,13 +10421,6 @@ function require_default() {
       const maxScrollLeft = this.container.scrollWidth - this.container.offsetWidth;
       // Determine a sensible step: prefer layout.pageWidth, fall back to container offsetWidth or layout.delta
       const step = this.layout.pageWidth && this.layout.pageWidth > 0 ? this.layout.pageWidth : this.container.offsetWidth || this.layout.delta;
-      console.debug('[DefaultViewManager] scrollForwardLTR debug:', {
-        scrollLeft: this.container.scrollLeft,
-        maxScrollLeft,
-        scrollWidth: this.container.scrollWidth,
-        offsetWidth: this.container.offsetWidth,
-        step
-      });
       // If we can still scroll within the current section, do so; otherwise move to next section
       if (this.container.scrollLeft < maxScrollLeft) {
         // Don't overshoot the maximum scrollLeft
@@ -10525,11 +10560,7 @@ function require_default() {
         rtlScrollType,
         direction
       } = this.settings;
-      // Fix: Add validation to prevent scrolling beyond bounds
       const containerScrollWidth = this.container.scrollWidth;
-      const containerOffsetWidth = this.container.offsetWidth;
-      const maxScrollLeft = Math.max(0, containerScrollWidth - containerOffsetWidth);
-      console.debug('[DefaultViewManager] adjustScrollAfterPrepend:', 'scrollWidth=', containerScrollWidth, 'offsetWidth=', containerOffsetWidth, 'maxScrollLeft=', maxScrollLeft);
       // Handle scrolling based on direction and whether we're navigating forward or backward
       // For backward navigation (prev), we need to show the start of the newly added content
       if (direction === 'rtl') {
@@ -10543,7 +10574,6 @@ function require_default() {
         // For LTR navigation when going backward (prev)
         // We want to show the beginning of the content (the first page)
         const targetScrollLeft = 0;
-        console.debug('[DefaultViewManager] adjustScrollAfterPrepend LTR: setting scrollLeft to', targetScrollLeft);
         this.scrollTo(targetScrollLeft, 0, true);
       }
     }
@@ -10605,8 +10635,6 @@ function require_default() {
         const isNavigating = this.views.length > 0;
         if (!hasValidScrollPosition || !isNavigating) {
           this.scrollTo(0, 0, true);
-        } else {
-          console.debug('[DefaultViewManager] clear() preserving scroll position during navigation:', this.container.scrollLeft);
         }
         this.views.clear();
       }
@@ -10648,7 +10676,6 @@ function require_default() {
           const contentWidth = view.contents.textWidth();
           if (contentWidth > width) {
             actualWidth = contentWidth;
-            console.debug('[DefaultViewManager] paginatedLocation using content width:', contentWidth, 'instead of view width:', width);
           }
         }
         let startPos;
@@ -10730,7 +10757,6 @@ function require_default() {
         if (this.layout.pageWidth && this.layout.pageWidth > 0) {
           const maxEnd = start + this.layout.pageWidth;
           if (end > maxEnd) {
-            console.debug('[DefaultViewManager] limiting end position from', end, 'to', maxEnd);
             end = maxEnd;
             pageWidth = end - start;
           }
@@ -10777,19 +10803,6 @@ function require_default() {
           // Clamp pages to not exceed totalPages (prevent white pages)
           startPage = Math.max(0, Math.min(startPage, totalPages - 1));
           endPage = Math.max(0, Math.min(endPage, totalPages - 1));
-          // Debug: Log page calculation
-          console.debug('[DefaultViewManager] page calculation debug:', {
-            href,
-            start,
-            end,
-            pageWidth: this.layout.pageWidth,
-            startPageRaw: Math.floor(start / this.layout.pageWidth),
-            endPageRaw: Math.floor(end / this.layout.pageWidth),
-            startPageClamped: startPage,
-            endPageClamped: endPage,
-            totalPages,
-            actualWidth
-          });
           // Reverse page counts for rtl
           if (this.settings.direction === 'rtl') {
             const tempStartPage = startPage;
@@ -10855,10 +10868,6 @@ function require_default() {
       this.scrolled = true;
     }
     scrollTo(x, y, silent) {
-      if (x === 0 && y === 0 && this.container.scrollLeft > 0) {
-        console.warn('[DefaultViewManager] WARNING: scrollTo(0,0) called while scrollLeft >0, this will reset scroll position!');
-        console.trace('Call stack:');
-      }
       if (silent) {
         this.ignore = true;
       }
@@ -10917,7 +10926,6 @@ function require_default() {
         // Skip updating layout during prerendered attachment
         // Safe to use type cast here since we're checking the name first
         if (this.name === 'prerendering' && this._attaching === true) {
-          console.debug('[DefaultViewManager] Skipping updateLayout during prerendered attachment');
           return;
         }
       } catch {
@@ -11992,7 +12000,11 @@ function requirePageMapGenerator() {
         }
         // Fallback to section base CFI for first page
         if (!startCfi && i === 0) {
-          startCfi = section.cfiBase || null;
+          const baseCfi = section.cfiBase;
+          if (baseCfi) {
+            // Ensure the CFI has the proper epubcfi( prefix
+            startCfi = baseCfi.startsWith('epubcfi(') ? baseCfi : `epubcfi(${baseCfi})`;
+          }
         }
         pageMap.push({
           index: i + 1,
@@ -13806,26 +13818,10 @@ function requireRendition() {
      * @return {Promise}
      */
     attachTo(element) {
-      console.log('[Rendition] *** attachTo METHOD CALLED ***');
-      console.log('[Rendition] attachTo called with element:', element);
-      // Manager might not be created yet if start() hasn't been called
-      if (this.manager) {
-        console.log('[Rendition] Manager type:', this.manager.constructor.name);
-        console.log('[Rendition] Manager settings:', this.manager.settings);
-      } else {
-        console.log('[Rendition] Manager not yet created (will be created in start())');
-      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return this.q.enqueue(() => {
-        console.log('[Rendition] *** IN ENQUEUED FUNCTION ***');
-        console.log('[Rendition] In enqueued function, about to call manager.render');
         // Start rendering with the request function
-        if (typeof element === 'string') {
-          console.log('[Rendition] received a string as element:', element);
-        }
-        console.log('[Rendition] Calling manager.render with element:', element);
         this.manager.render(element);
-        console.log('[Rendition] manager.render call completed');
         // If pre-rendering is enabled and we're using the PreRenderingViewManager,
         // start pre-rendering automatically for all spine sections.
         try {
@@ -13846,7 +13842,6 @@ function requireRendition() {
         // method which will enqueue the request and wait for any pending startup tasks.
         try {
           if (this.book.spine && this.book.spine.length) {
-            console.log('[Rendition] Displaying first section (index 0) after attach');
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.display(0);
           }
@@ -13908,11 +13903,7 @@ function requireRendition() {
       let cfiTarget;
       if (targetStr && targetStr.startsWith('epubcfi(')) {
         cfiTarget = targetStr;
-        console.debug('[Rendition] CFI target extracted:', cfiTarget);
-      } else {
-        console.debug('[Rendition] No CFI target found, target type:', typeof target, 'value:', targetStr);
       }
-      console.debug('[Rendition] calling manager.display with section:', section.href, 'cfiTarget:', cfiTarget);
       this.manager.display(section, cfiTarget).then(() => {
         displaying.resolve(true);
         this.displaying = undefined;
@@ -14045,11 +14036,8 @@ function requireRendition() {
      * Go to the next "page" in the rendition
      */
     next() {
-      console.log('[DEBUGGING] Rendition.next() called - enqueuing manager.next');
       const queuePromise = this.q.enqueue(this.manager.next.bind(this.manager));
-      console.log('[DEBUGGING] Queue promise created:', queuePromise);
       return queuePromise.then(result => {
-        console.log('[DEBUGGING] Manager.next completed, result:', result);
         this.reportLocation();
         return result;
       });
@@ -14058,9 +14046,7 @@ function requireRendition() {
      * Go to the previous "page" in the rendition
      */
     prev() {
-      console.error('[DEBUGGING] Rendition.prev() called - enqueuing manager.prev');
       return this.q.enqueue(this.manager.prev.bind(this.manager)).then(this.reportLocation.bind(this)).catch(error => {
-        console.error('[DEBUGGING] Rendition.prev() failed:', error);
         throw error;
       });
     }
@@ -14209,7 +14195,6 @@ function requireRendition() {
                 // ignore
               }
               this.emit(constants_1.EVENTS.RENDITION.RELOCATED, this.location);
-              console.debug('[Rendition] emitted relocated', 'ts=', ts, JSON.stringify(this.location));
             } catch {
               // emit may throw in tests; ignore
             }
@@ -20624,14 +20609,8 @@ function requireBook() {
      * @return {Rendition}
      */
     renderTo(element, options) {
-      console.log('[Book] *** renderTo METHOD CALLED ***');
-      console.log('[Book] renderTo called with element:', element);
-      console.log('[Book] renderTo options:', options);
       this.rendition = new rendition_1.default(this, options);
-      console.log('[Book] Rendition created:', this.rendition.constructor.name);
-      console.log('[Book] About to call rendition.attachTo');
       this.rendition.attachTo(element);
-      console.log('[Book] rendition.attachTo called');
       return this.rendition;
     }
     /**

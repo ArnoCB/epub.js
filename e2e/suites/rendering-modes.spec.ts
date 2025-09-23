@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { EPUB_TEST_DATASET, RENDERING_MODES } from '../test-dataset';
+import { EPUB_TEST_DATASET, RENDERING_MODES } from '../data/test-dataset';
 
 /**
  * Core Rendering Mode Tests
@@ -42,7 +42,7 @@ test.describe('Core Rendering Modes', () => {
       const rendition = win.getRendition ? win.getRendition() : win.rendition;
 
       // Display first chapter
-      await rendition.display('chapter_001.xhtml');
+      await rendition.display('chapter_001.xhtml'); // Ensure navigation starts at the first chapter
 
       // Wait for layout
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -104,7 +104,7 @@ test.describe('Core Rendering Modes', () => {
       }
 
       // Display content that should trigger spread layout
-      await rendition.display('chapter_001.xhtml');
+      await rendition.display('chapter_001.xhtml'); // Ensure navigation starts at the first chapter
 
       // Wait for layout
       await new Promise((resolve) => setTimeout(resolve, 3000));

@@ -503,13 +503,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         // Force a reflow to ensure the phantom element takes effect
         void phantomElement.offsetWidth;
 
-        console.debug(
-          '[DefaultViewManager] afterDisplayed container now scrollWidth:',
-          this.container.scrollWidth,
-          'phantom width:',
-          phantomElement.offsetWidth
-        );
-
         // Fix: Ensure view and iframe dimensions are consistent
         const element = view.element as HTMLElement;
         if (element) {
@@ -579,12 +572,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
           if (this.container.scrollLeft > maxLeft) {
             this.container.scrollLeft = maxLeft;
           }
-          console.debug(
-            '[DefaultViewManager] afterDisplayed (delayed) adjusted phantom/iframe to width:',
-            desiredWidth,
-            'container.scrollWidth:',
-            this.container.scrollWidth
-          );
         }
       } catch (e) {
         console.warn(
@@ -731,9 +718,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   async next(): Promise<void> {
-    console.log('[DefaultViewManager] next() called - START');
     if (!this.hasViews()) {
-      console.log('[DefaultViewManager] next() - no views, returning');
       return;
     }
 
@@ -774,32 +759,18 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   async prev(): Promise<void> {
     if (!this.hasViews()) return;
 
-    console.debug('[DefaultViewManager] prev() called');
-
     // Simple check: if we're already at the start of scrollable content,
     // jump to the previous section immediately
     const canScrollBack = this.container.scrollLeft > 0;
 
-    console.debug('[DefaultViewManager] prev scroll check:', {
-      scrollLeft: this.container.scrollLeft,
-      canScrollBack,
-    });
-
     if (!canScrollBack) {
       // Already at start of current section, go to previous section
       const prevSection = this.views.first()?.section?.prev();
-      console.debug(
-        '[DefaultViewManager] at start of scroll, prev section:',
-        prevSection?.href
-      );
 
       if (prevSection) {
         await this.loadPrevSection(prevSection);
         return;
       } else {
-        console.debug(
-          '[DefaultViewManager] prev() reached beginning of book, no more sections to load'
-        );
         return;
       }
     }
@@ -869,14 +840,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       this.layout.pageWidth && this.layout.pageWidth > 0
         ? this.layout.pageWidth
         : this.container.offsetWidth || this.layout.delta;
-
-    console.debug('[DefaultViewManager] scrollForwardLTR debug:', {
-      scrollLeft: this.container.scrollLeft,
-      maxScrollLeft,
-      scrollWidth: this.container.scrollWidth,
-      offsetWidth: this.container.offsetWidth,
-      step,
-    });
 
     // If we can still scroll within the current section, do so; otherwise move to next section
     if (this.container.scrollLeft < maxScrollLeft) {
@@ -1079,23 +1042,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
     const { rtlScrollType, direction } = this.settings;
 
-    // Fix: Add validation to prevent scrolling beyond bounds
     const containerScrollWidth = this.container.scrollWidth;
-    const containerOffsetWidth = this.container.offsetWidth;
-    const maxScrollLeft = Math.max(
-      0,
-      containerScrollWidth - containerOffsetWidth
-    );
-
-    console.debug(
-      '[DefaultViewManager] adjustScrollAfterPrepend:',
-      'scrollWidth=',
-      containerScrollWidth,
-      'offsetWidth=',
-      containerOffsetWidth,
-      'maxScrollLeft=',
-      maxScrollLeft
-    );
 
     // Handle scrolling based on direction and whether we're navigating forward or backward
     // For backward navigation (prev), we need to show the start of the newly added content
@@ -1110,11 +1057,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       // For LTR navigation when going backward (prev)
       // We want to show the beginning of the content (the first page)
       const targetScrollLeft = 0;
-
-      console.debug(
-        '[DefaultViewManager] adjustScrollAfterPrepend LTR: setting scrollLeft to',
-        targetScrollLeft
-      );
 
       this.scrollTo(targetScrollLeft, 0, true);
     }
@@ -1196,11 +1138,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
 
       if (!hasValidScrollPosition || !isNavigating) {
         this.scrollTo(0, 0, true);
-      } else {
-        console.debug(
-          '[DefaultViewManager] clear() preserving scroll position during navigation:',
-          this.container.scrollLeft
-        );
       }
 
       this.views.clear();
@@ -1253,12 +1190,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         const contentWidth = view.contents.textWidth();
         if (contentWidth > width) {
           actualWidth = contentWidth;
-          console.debug(
-            '[DefaultViewManager] paginatedLocation using content width:',
-            contentWidth,
-            'instead of view width:',
-            width
-          );
         }
       }
 
@@ -1354,12 +1285,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
       if (this.layout.pageWidth && this.layout.pageWidth > 0) {
         const maxEnd = start + this.layout.pageWidth;
         if (end > maxEnd) {
-          console.debug(
-            '[DefaultViewManager] limiting end position from',
-            end,
-            'to',
-            maxEnd
-          );
           end = maxEnd;
           pageWidth = end - start;
         }
@@ -1428,20 +1353,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         // Clamp pages to not exceed totalPages (prevent white pages)
         startPage = Math.max(0, Math.min(startPage, totalPages - 1));
         endPage = Math.max(0, Math.min(endPage, totalPages - 1));
-
-        // Debug: Log page calculation
-        console.debug('[DefaultViewManager] page calculation debug:', {
-          href,
-          start,
-          end,
-          pageWidth: this.layout.pageWidth,
-          startPageRaw: Math.floor(start / this.layout.pageWidth),
-          endPageRaw: Math.floor(end / this.layout.pageWidth),
-          startPageClamped: startPage,
-          endPageClamped: endPage,
-          totalPages,
-          actualWidth,
-        });
 
         // Reverse page counts for rtl
         if (this.settings.direction === 'rtl') {
@@ -1535,13 +1446,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   scrollTo(x: number, y: number, silent: boolean) {
-    if (x === 0 && y === 0 && this.container.scrollLeft > 0) {
-      console.warn(
-        '[DefaultViewManager] WARNING: scrollTo(0,0) called while scrollLeft >0, this will reset scroll position!'
-      );
-      console.trace('Call stack:');
-    }
-
     if (silent) {
       this.ignore = true;
     }
@@ -1616,9 +1520,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
         this.name === 'prerendering' &&
         (this as unknown as { _attaching?: boolean })._attaching === true
       ) {
-        console.debug(
-          '[DefaultViewManager] Skipping updateLayout during prerendered attachment'
-        );
         return;
       }
     } catch {

@@ -35,20 +35,63 @@ interface CFIRange {
 }
 
 /**
-  * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
-
-  * Implements:
-  * - Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
-  * - Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
-
-  * Does Not Implement:
-  * - Temporal Offset (~)
-  * - Spatial Offset (@)
-  * - Temporal-Spatial Offset (~ + @)
-  * - Text Location Assertion ([)
-*/
+ * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
+ *
+ * Implements EPUB Canonical Fragment Identifier (CFI) specification:
+ * @see https://idpf.org/epub/linking/cfi/epub-cfi-20111011.html
+ *
+ * ## Supported CFI Types:
+ * - **Character Offset**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)`
+ * - **Simple Ranges**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)`
+ *
+ * ## CFI Range Format:
+ * Range CFIs follow the syntax: `epubcfi(path,start,end)` where:
+ * - `path`: Common parent path to both start and end locations
+ * - `start`: Local path from parent to start location (relative)
+ * - `end`: Local path from parent to end location (relative)
+ *
+ * ### Within-Element vs Cross-Element Ranges:
+ * **Within-element** (preferred for same-element selections):
+ * ```
+ * epubcfi(/6/20!/4/2/22/3,/:7,/:135)
+ * ```
+ * - Parent: `/6/20!/4/2/22/3` (points to containing element)
+ * - Start: `/:7` (character 7 in current element)
+ * - End: `/:135` (character 135 in current element)
+ *
+ * **Cross-element** (required for multi-element selections):
+ * ```
+ * epubcfi(/6/18!/4/2,/4/1:54,/6/1:0)
+ * ```
+ * - Parent: `/6/18!/4/2` (common ancestor)
+ * - Start: `/4/1:54` (absolute path to character 54 in element /4/1)
+ * - End: `/6/1:0` (absolute path to character 0 in element /6/1)
+ *
+ * ## Does Not Implement:
+ * - Temporal Offset (~)
+ * - Spatial Offset (@)
+ * - Temporal-Spatial Offset (~ + @)
+ * - Text Location Assertion ([text])
+ * - Side Bias (;s=a/b)
+ */
 
 class EpubCFI {
+  public str: string = '';
+  public base: CFIComponent = {
+    steps: [],
+    terminal: { offset: null, assertion: null },
+  };
+
+  public spinePos: number = 0;
+  public range: boolean = false;
+
+  public start: CFIComponent | null = null;
+  public end: CFIComponent | null = null;
+  public path: CFIComponent = {
+    steps: [],
+    terminal: { offset: null, assertion: null },
+  };
+
   /**
    * Convert custom range objects to DOM Range
    */
@@ -56,36 +99,22 @@ class EpubCFI {
     input: string | Range | CustomRange,
     doc: Document
   ): Range | null {
-    if (typeof input !== 'string' && input && typeof input === 'object') {
-      if ((input as Range).startContainer && (input as Range).endContainer) {
-        // Looks like a DOM Range or CustomRange
-        if (typeof doc.createRange === 'function') {
-          const range = doc.createRange();
-          range.setStart(
-            (input as Range).startContainer,
-            (input as Range).startOffset
-          );
-          range.setEnd(
-            (input as Range).endContainer,
-            (input as Range).endOffset
-          );
+    if (!input || typeof input === 'string') return null;
 
-          return range;
-        }
-      }
-
-      // Fallback: return the custom range object as-is
-      console.warn(
-        '[EpubCFI.resolveToDomRange] Returning custom range object as-is:',
-        input
-      );
-
-      return input as Range;
+    if (
+      'startContainer' in input &&
+      'endContainer' in input &&
+      typeof doc.createRange === 'function'
+    ) {
+      const range = doc.createRange();
+      range.setStart(input.startContainer, input.startOffset);
+      range.setEnd(input.endContainer, input.endOffset);
+      return range;
     }
-    // If string, not a range
-    return null;
+
+    return input as Range;
   }
-  // ...existing code...
+
   /**
    * Helper to get offset from a CFIComponent, falling back to another if needed
    */
@@ -99,70 +128,49 @@ class EpubCFI {
         ? fallback.terminal.offset
         : 0;
   }
-  public str: string = '';
-  public base: CFIComponent = {
-    steps: [],
-    terminal: { offset: null, assertion: null },
-  };
-  public spinePos: number = 0;
-  public range: boolean = false;
-
-  public start: CFIComponent | null = null;
-  public end: CFIComponent | null = null;
-  public path: CFIComponent = {
-    steps: [],
-    terminal: { offset: null, assertion: null },
-  };
 
   constructor(
-    cfiFrom?: string | Range | Node,
+    cfiFrom: string | Range | Node = '',
     base: string | CFIComponent = {
       steps: [],
       terminal: { offset: null, assertion: null },
     },
     ignoreClass?: string
   ) {
-    // Accept no arguments, default to empty string
-    if (typeof cfiFrom === 'undefined') cfiFrom = '';
+    this.base =
+      typeof base === 'string'
+        ? this.parseComponent(base)
+        : 'steps' in base
+          ? base
+          : { steps: [], terminal: { offset: null, assertion: null } };
 
-    // Normalize base
-    let baseComponent: CFIComponent;
-    if (typeof base === 'string') {
-      baseComponent = this.parseComponent(base);
-    } else if (base && typeof base === 'object' && 'steps' in base) {
-      baseComponent = base;
-    } else {
-      baseComponent = {
-        steps: [],
-        terminal: { offset: null, assertion: null },
-      };
+    if (cfiFrom) {
+      this.init(cfiFrom, ignoreClass);
     }
-    this.base = baseComponent;
+  }
 
-    const type = this.checkType(cfiFrom);
-
-    switch (type) {
+  private init(cfiFrom: string | Range | Node, ignoreClass?: string) {
+    switch (this.checkType(cfiFrom)) {
       case 'string': {
         this.str = cfiFrom as string;
         const parsed = this.parse(this.str);
-        this.base = parsed.base;
-        this.spinePos = parsed.spinePos;
-        this.range = !!parsed.range && !!parsed.start && !!parsed.end;
-        this.path = parsed.path;
-        this.start = parsed.start;
-        this.end = parsed.end;
+        Object.assign(this, {
+          base: parsed.base,
+          spinePos: parsed.spinePos,
+          range: !!(parsed.range && parsed.start && parsed.end),
+          path: parsed.path,
+          start: parsed.start,
+          end: parsed.end,
+        });
         break;
       }
       case 'range': {
-        const rangeObj = this.fromRange(
+        const { path, start, end } = this.fromRange(
           cfiFrom as Range,
           this.base,
           ignoreClass
         );
-        this.range = true;
-        this.path = rangeObj.path;
-        this.start = rangeObj.start;
-        this.end = rangeObj.end;
+        Object.assign(this, { range: true, path, start, end });
         break;
       }
       case 'customRange': {
@@ -177,28 +185,36 @@ class EpubCFI {
             custom.startOffset === custom.endOffset,
         } as Range;
 
-        const rangeObj = this.fromRange(fakeRange, this.base, ignoreClass);
-        this.range = true;
-        this.path = rangeObj.path;
-        this.start = rangeObj.start;
-        this.end = rangeObj.end;
+        const { path, start, end } = this.fromRange(
+          fakeRange,
+          this.base,
+          ignoreClass
+        );
+        Object.assign(this, { range: true, path, start, end });
         break;
       }
       case 'node': {
-        const nodeObj = this.fromNode(cfiFrom as Node, this.base, ignoreClass);
-        this.range = false;
-        this.path = nodeObj.path;
-        this.start = null;
-        this.end = null;
+        const { path } = this.fromNode(cfiFrom as Node, this.base, ignoreClass);
+        Object.assign(this, { range: false, path, start: null, end: null });
         break;
       }
       case 'EpubCFI': {
-        return cfiFrom as unknown as EpubCFI;
+        const sourceCfi = cfiFrom as unknown as EpubCFI;
+        Object.assign(this, {
+          str: sourceCfi.str,
+          base: sourceCfi.base,
+          spinePos: sourceCfi.spinePos,
+          range: sourceCfi.range,
+          path: sourceCfi.path,
+          start: sourceCfi.start,
+          end: sourceCfi.end,
+        });
+        break;
       }
-      default: {
-        if (!cfiFrom) return this;
-        throw new TypeError('not a valid argument for EpubCFI');
-      }
+      default:
+        throw new TypeError(
+          `Invalid argument type for EpubCFI constructor: ${typeof cfiFrom}`
+        );
     }
   }
 
@@ -206,23 +222,27 @@ class EpubCFI {
    * Check the type of constructor input
    */
   private checkType(cfi: string | Range | Node) {
-    if (this.isCfiString(cfi)) {
-      return 'string';
-    } else if (
+    if (this.isCfiString(cfi)) return 'string';
+
+    if (
       cfi &&
       typeof cfi === 'object' &&
       (type(cfi) === 'Range' ||
-        (typeof (cfi as Range).startContainer != 'undefined' &&
+        (typeof (cfi as Range).startContainer !== 'undefined' &&
           typeof (cfi as Range).collapsed !== 'undefined'))
     ) {
       return 'range';
-    } else if (
+    }
+
+    if (
       cfi &&
       typeof cfi === 'object' &&
-      typeof (cfi as Node).nodeType != 'undefined'
+      typeof (cfi as Node).nodeType !== 'undefined'
     ) {
       return 'node';
-    } else if (
+    }
+
+    if (
       cfi &&
       typeof cfi === 'object' &&
       typeof (cfi as CustomRange).startContainer !== 'undefined' &&
@@ -232,11 +252,13 @@ class EpubCFI {
       !('collapsed' in cfi)
     ) {
       return 'customRange';
-    } else if (cfi && typeof cfi === 'object' && cfi instanceof EpubCFI) {
-      return 'EpubCFI';
-    } else {
-      return false;
     }
+
+    if (cfi && typeof cfi === 'object' && cfi instanceof EpubCFI) {
+      return 'EpubCFI';
+    }
+
+    return false;
   }
 
   /**
@@ -379,6 +401,26 @@ class EpubCFI {
     }
   }
 
+  /**
+   * Extract range components from a CFI string
+   *
+   * Range CFIs follow the format: `path,start,end` where:
+   * - path: Common parent path to both start and end locations
+   * - start: Local path from parent to start location (relative)
+   * - end: Local path from parent to end location (relative)
+   *
+   * @example
+   * // Within-element range (preferred for same-element selections)
+   * getRange("/6/20!/4/2/22/3,/:7,/:135")
+   * // Returns: ["/:7", "/:135"]
+   *
+   * // Cross-element range (required for multi-element selections)
+   * getRange("/6/18!/4/2,/4/1:54,/6/1:0")
+   * // Returns: ["/4/1:54", "/6/1:0"]
+   *
+   * @param cfiStr CFI string potentially containing range components
+   * @returns Array of [start, end] components, or false if not a range CFI
+   */
   getRange(cfiStr: string): string[] | false {
     const ranges = cfiStr.split(',');
 
@@ -407,14 +449,14 @@ class EpubCFI {
   }
 
   segmentString(segment: CFIComponent) {
-    let segmentString = '/';
-    segmentString += this.joinSteps(segment.steps);
-    if (segment.terminal && segment.terminal.offset != null) {
-      segmentString += ':' + segment.terminal.offset;
-    }
-    if (segment.terminal && segment.terminal.assertion != null) {
-      segmentString += '[' + segment.terminal.assertion + ']';
-    }
+    let segmentString = '/' + this.joinSteps(segment.steps);
+
+    const terminal = segment.terminal;
+    if (!terminal) return segmentString; // early return if no terminal
+
+    if (terminal.offset != null) segmentString += `:${terminal.offset}`;
+    if (terminal.assertion != null) segmentString += `[${terminal.assertion}]`;
+
     return segmentString;
   }
 
@@ -432,6 +474,7 @@ class EpubCFI {
     } else {
       cfiString += this.segmentString(this.path);
     }
+
     cfiString += ')';
     return cfiString;
   }
@@ -469,8 +512,10 @@ class EpubCFI {
     }
 
     if (terminalA.offset == null || terminalB.offset == null) return -1;
-    if (terminalA.offset !== terminalB.offset)
+    if (terminalA.offset !== terminalB.offset) {
       return terminalA.offset > terminalB.offset ? 1 : -1;
+    }
+
     return 0;
   }
 
@@ -491,14 +536,18 @@ class EpubCFI {
     if (!filteredNode) {
       return;
     }
+
     const nodeType: 'element' | 'text' =
       filteredNode.nodeType === TEXT_NODE ? 'text' : 'element';
+
     let id: string | null = null;
     let tagName: string | null = null;
+
     if (filteredNode.nodeType === ELEMENT_NODE) {
       id = (filteredNode as Element).id;
       tagName = (filteredNode as Element).tagName;
     }
+
     return {
       type: nodeType,
       index: this.filteredPosition(filteredNode, ignoreClass),
@@ -569,19 +618,13 @@ class EpubCFI {
   }
 
   equalStep(stepA: CFIStep | undefined, stepB: CFIStep | undefined): boolean {
-    if (!stepA || !stepB) {
-      return false;
-    }
+    if (!stepA || !stepB) return false;
 
-    if (
+    return (
       stepA.index === stepB.index &&
       stepA.id === stepB.id &&
       stepA.type === stepB.type
-    ) {
-      return true;
-    }
-
-    return false;
+    );
   }
 
   equalTerminal(terminalA: CFITerminal, terminalB: CFITerminal): boolean {
@@ -825,20 +868,25 @@ class EpubCFI {
   position(anchor: Node): number {
     let children: HTMLCollection | Node[] | undefined;
     let index: number;
+
     if (anchor.nodeType === ELEMENT_NODE) {
       const parent = anchor.parentNode as Element | null;
       children = parent ? parent.children : undefined;
+
       if (!children && parent) {
         children = findChildren(parent);
       }
       index = children ? Array.prototype.indexOf.call(children, anchor) : -1;
-    } else {
-      if (!anchor.parentNode) {
-        return -1;
-      }
-      children = this.textNodes(anchor.parentNode as Node);
-      index = children.indexOf(anchor);
+      return index;
     }
+
+    if (!anchor.parentNode) {
+      return -1;
+    }
+
+    children = this.textNodes(anchor.parentNode as Node);
+    index = children.indexOf(anchor);
+
     return index;
   }
 

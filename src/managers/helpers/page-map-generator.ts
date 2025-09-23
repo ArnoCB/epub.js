@@ -194,7 +194,13 @@ export class PageMapGenerator {
 
       // Fallback to section base CFI for first page
       if (!startCfi && i === 0) {
-        startCfi = section.cfiBase || null;
+        const baseCfi = section.cfiBase;
+        if (baseCfi) {
+          // Ensure the CFI has the proper epubcfi( prefix
+          startCfi = baseCfi.startsWith('epubcfi(')
+            ? baseCfi
+            : `epubcfi(${baseCfi})`;
+        }
       }
 
       pageMap.push({

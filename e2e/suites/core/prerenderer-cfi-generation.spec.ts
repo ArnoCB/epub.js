@@ -6,11 +6,6 @@ test('prerenderer generates valid CFIs and pageMap for Alice', async ({
 }) => {
   test.setTimeout(60_000);
 
-  // Forward browser console for debugging
-  page.on('console', (msg) =>
-    console.log(`[page] ${msg.type()}: ${msg.text()}`)
-  );
-
   // Enable debug mode
   await page.addInitScript(() => ((window as any).PRERENDER_DEBUG = true));
 
@@ -41,9 +36,6 @@ test('prerenderer generates valid CFIs and pageMap for Alice', async ({
       const isComplete =
         totalAttempted >= (status.total || 0) && status.total > 0;
 
-      console.log(
-        `Prerendering status: ${totalAttempted}/${status.total} chapters (${status.rendered} rendered, ${status.failed} failed)`
-      );
       return isComplete;
     },
     { timeout: 30000 }
@@ -68,9 +60,6 @@ test('prerenderer generates valid CFIs and pageMap for Alice', async ({
       })) || []
     );
   });
-
-  // Log the prerenderer chapters for debugging
-  console.log('PRERENDERER_CHAPTERS:', JSON.stringify(chapters, null, 2));
 
   // Basic chapter/page assertions
   expect(chapters.length).toBeGreaterThan(0);

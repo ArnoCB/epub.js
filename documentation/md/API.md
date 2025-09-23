@@ -1497,17 +1497,46 @@ Remove from a view
 
 Parsing and creation of EpubCFIs: <http://www.idpf.org/epub/linking/cfi/epub-cfi.html>
 
-Implements:
+Implements EPUB Canonical Fragment Identifier (CFI) specification:
+**Specification**: <https://idpf.org/epub/linking/cfi/epub-cfi-20111011.html>
 
-- Character Offset: epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)
-- Simple Ranges : epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)
+### Supported CFI Types:
 
-Does Not Implement:
+- **Character Offset**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05]/2/1:3)`
+- **Simple Ranges**: `epubcfi(/6/4[chap01ref]!/4[body01]/10[para05],/2/1:1,/3:4)`
+
+### CFI Range Format:
+
+Range CFIs follow the syntax: `epubcfi(path,start,end)` where:
+- `path`: Common parent path to both start and end locations
+- `start`: Local path from parent to start location (relative)
+- `end`: Local path from parent to end location (relative)
+
+#### Within-Element vs Cross-Element Ranges:
+
+**Within-element** (preferred for same-element selections):
+```
+epubcfi(/6/20!/4/2/22/3,/:7,/:135)
+```
+- Parent: `/6/20!/4/2/22/3` (points to containing element)
+- Start: `/:7` (character 7 in current element)
+- End: `/:135` (character 135 in current element)
+
+**Cross-element** (required for multi-element selections):
+```
+epubcfi(/6/18!/4/2,/4/1:54,/6/1:0)
+```
+- Parent: `/6/18!/4/2` (common ancestor)
+- Start: `/4/1:54` (absolute path to character 54 in element /4/1)
+- End: `/6/1:0` (absolute path to character 0 in element /6/1)
+
+### Does Not Implement:
 
 - Temporal Offset (~)
 - Spatial Offset (@)
 - Temporal-Spatial Offset (~ + @)
-- Text Location Assertion (\[)
+- Text Location Assertion (\[text])
+- Side Bias (;s=a/b)
 
 **Parameters**
 
