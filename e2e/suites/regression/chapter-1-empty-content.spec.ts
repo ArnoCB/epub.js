@@ -15,7 +15,6 @@ test('Regression test: Navigate back to chapter 1 should show content, not empty
       text.includes('chapter already attached')
     ) {
       consoleLogs.push(text);
-      console.log('BROWSER LOG:', text);
     }
   });
 
@@ -29,8 +28,6 @@ test('Regression test: Navigate back to chapter 1 should show content, not empty
 
   // Wait for initial pre-rendering to complete
   await page.waitForTimeout(3000);
-
-  console.log('=== STEP 1: Navigate to chapter 1 initially ===');
 
   // Navigate to chapter 1 first time
   await page.evaluate(() => {
@@ -70,10 +67,6 @@ test('Regression test: Navigate back to chapter 1 should show content, not empty
     };
   });
 
-  console.log('FIRST LOAD STATE:', JSON.stringify(firstLoadState, null, 2));
-
-  console.log('=== STEP 2: Navigate away to epigraph ===');
-
   // Navigate away to epigraph
   await page.evaluate(() => {
     const win: any = window as any;
@@ -82,10 +75,6 @@ test('Regression test: Navigate back to chapter 1 should show content, not empty
   });
 
   await page.waitForTimeout(2000);
-
-  console.log(
-    '=== STEP 3: Navigate BACK to chapter 1 (THIS IS WHERE THE BUG OCCURS) ==='
-  );
 
   // Navigate back to chapter 1 - this should trigger the regression
   await page.evaluate(() => {
@@ -125,30 +114,6 @@ test('Regression test: Navigate back to chapter 1 should show content, not empty
     };
   });
 
-  console.log('SECOND LOAD STATE:', JSON.stringify(secondLoadState, null, 2));
-  console.log(
-    'CONSOLE LOGS:',
-    consoleLogs.filter((log) => log.includes('chapter_001.xhtml'))
-  );
-
   // The critical test: second load should have content, not be empty
   expect(secondLoadState.iframeContent?.hasContent).toBe(true);
-
-  if (!secondLoadState.iframeContent?.hasContent) {
-    console.error(
-      '❌ REGRESSION CONFIRMED: Navigating back to chapter 1 results in empty content'
-    );
-    console.error(
-      'First load had content:',
-      firstLoadState.iframeContent?.hasContent
-    );
-    console.error(
-      'Second load has content:',
-      secondLoadState.iframeContent?.hasContent
-    );
-  } else {
-    console.log(
-      '✅ NO REGRESSION: Chapter 1 content loads correctly on return navigation'
-    );
-  }
 });

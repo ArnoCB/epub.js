@@ -41,9 +41,6 @@ test('prerenderer generates valid CFIs and pageMap for Alice', async ({
       const isComplete =
         totalAttempted >= (status.total || 0) && status.total > 0;
 
-      console.log(
-        `Prerendering status: ${totalAttempted}/${status.total} chapters (${status.rendered} rendered, ${status.failed} failed)`
-      );
       return isComplete;
     },
     { timeout: 30000 }
