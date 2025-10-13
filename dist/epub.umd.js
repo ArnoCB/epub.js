@@ -10105,14 +10105,6 @@
 	      return displayed;
 	    }
 	    /**
-	     * Fallback to normal rendering when pre-rendered fails
-	     */
-	    displayNormally(section, target, displaying) {
-	      const deferred = displaying || new core_1.defer();
-	      // Use the original display logic
-	      this.displaySection(section, target, deferred);
-	    }
-	    /**
 	     * Original display logic extracted for reuse
 	     */
 	    displaySection(section, target, displaying) {
@@ -11168,729 +11160,6 @@
 	  return cfiResolver;
 	}
 
-	var chapterManager = {};
-
-	var pageMapper = {};
-
-	var hasRequiredPageMapper;
-	function requirePageMapper() {
-	  if (hasRequiredPageMapper) return pageMapper;
-	  hasRequiredPageMapper = 1;
-	  Object.defineProperty(pageMapper, "__esModule", {
-	    value: true
-	  });
-	  pageMapper.PageMapper = void 0;
-	  /**
-	   * Enhanced page mapping service that handles both paginated and scrolled content flows.
-	   * Provides intelligent CFI resolution with fallback strategies and detailed error handling.
-	   */
-	  class PageMapper {
-	    constructor(cfiResolver) {
-	      this.cfiResolver = cfiResolver;
-	    }
-	    /**
-	     * Detects the flow type and gathers layout information for page mapping
-	     */
-	    detectFlow(viewSettings, view, chapter) {
-	      const isPaginated = Boolean(viewSettings.flow === 'paginated' || viewSettings.axis === 'horizontal' || viewSettings.layout && viewSettings.layout._flow === 'paginated');
-	      let contentWidth = chapter.width;
-	      let contentHeight = chapter.height;
-	      // Get precise content dimensions if available
-	      if (view.contents) {
-	        if (typeof view.contents.scrollWidth === 'function') {
-	          try {
-	            contentWidth = view.contents.scrollWidth();
-	          } catch {
-	            // Removed debug log for fallback
-	          }
-	        }
-	        if (typeof view.contents.scrollHeight === 'function') {
-	          try {
-	            contentHeight = view.contents.scrollHeight();
-	          } catch {
-	            // Removed debug log for fallback
-	          }
-	        }
-	      }
-	      const viewportWidth = viewSettings.layout?.columnWidth || viewSettings.width;
-	      const viewportHeight = viewSettings.layout?.height ?? viewSettings.height;
-	      return {
-	        isPaginated,
-	        contentWidth,
-	        contentHeight,
-	        viewportWidth,
-	        viewportHeight
-	      };
-	    }
-	    /**
-	     * Waits for layout to settle before performing element queries
-	     */
-	    async waitForLayout(doc, ticks = 2) {
-	      return new Promise(resolve => {
-	        try {
-	          const win = doc.defaultView;
-	          if (!win) return resolve();
-	          let count = 0;
-	          const step = () => {
-	            count += 1;
-	            if (count >= ticks) return resolve();
-	            win.requestAnimationFrame(step);
-	          };
-	          win.requestAnimationFrame(step);
-	        } catch {
-	          resolve();
-	        }
-	      });
-	    }
-	    /**
-	     * Creates a page map for paginated content with enhanced CFI resolution
-	     */
-	    async mapPaginatedPages(doc, body, section, pageCount, config, flowResult) {
-	      // Wait for layout to settle
-	      await this.waitForLayout(doc, 2);
-	      const pageMap = [];
-	      const {
-	        viewportWidth
-	      } = flowResult;
-	      // Initial mapping pass
-	      for (let i = 0; i < pageCount; i++) {
-	        const xOffset = i * viewportWidth;
-	        const entry = await this.createPaginatedPageEntry(doc, body, section, i + 1, xOffset, config);
-	        pageMap.push(entry);
-	      }
-	      // Enhancement pass: improve CFI resolution for problematic pages
-	      await this.enhancePaginatedCfis(doc, body, section, pageMap, config);
-	      return pageMap;
-	    }
-	    /**
-	     * Creates a single page entry for paginated content
-	     */
-	    async createPaginatedPageEntry(doc, body, section, index, xOffset, config) {
-	      const centerY = Math.max(1, Math.floor(body.scrollHeight / 2));
-	      const startCfi = await this.probeCfiAtPoints(config.probeXOffsets.map(x => ({
-	        x: xOffset + x,
-	        y: centerY
-	      })), doc, section);
-	      let endCfi = await this.probeCfiAtPoints(config.probeXOffsetsEnd.map(x => ({
-	        x: xOffset + x,
-	        y: centerY
-	      })), doc, section);
-	      // Ensure distinct CFIs
-	      if (startCfi === endCfi) {
-	        endCfi = null; // Mark as null to indicate no valid endCfi
-	      }
-	      // Fallback for missing endCfi
-	      if (!endCfi) {
-	        endCfi = await this.probeCfiAtPoints(config.probeXOffsets.map(x => ({
-	          x: xOffset + x,
-	          y: centerY + 10
-	        })), doc, section);
-	      }
-	      return {
-	        index,
-	        startCfi,
-	        endCfi,
-	        xOffset
-	      };
-	    }
-	    /**
-	     * Enhanced CFI resolution for pages with missing or duplicate CFIs
-	     */
-	    async enhancePaginatedCfis(doc, body, section, pageMap, config) {
-	      for (let i = 0; i < pageMap.length; i++) {
-	        const entry = pageMap[i];
-	        const prev = i > 0 ? pageMap[i - 1] : undefined;
-	        if (this.needsCfiEnhancement(entry, prev)) {
-	          const enhancedCfi = await this.probeCfiAtPoints(config.probeXOffsets.map(x => ({
-	            x: (entry.xOffset || 0) + x,
-	            y: body.scrollHeight / 2
-	          })), doc, section);
-	          if (enhancedCfi) {
-	            entry.startCfi = enhancedCfi;
-	          }
-	        }
-	      }
-	    }
-	    /**
-	     * Determines if a page entry needs CFI enhancement
-	     */
-	    needsCfiEnhancement(entry, prev) {
-	      return !entry.startCfi || Boolean(prev?.startCfi && prev.startCfi === entry.startCfi);
-	    }
-	    /**
-	     * Creates a page map for scrolled content
-	     */
-	    async mapScrolledPages(doc, body, section, pageCount, config, flowResult) {
-	      const pageMap = [];
-	      const {
-	        viewportHeight
-	      } = flowResult;
-	      const centerX = Math.max(1, Math.floor(flowResult.contentWidth / 2));
-	      for (let i = 0; i < pageCount; i++) {
-	        const yOffset = i * viewportHeight;
-	        const startCfi = await this.probeCfiAtPoints(config.probeYOffsets.map(y => ({
-	          x: centerX,
-	          y: yOffset + y
-	        })), doc, section);
-	        const endCfi = await this.probeCfiAtPoints(config.probeYOffsetsEnd.map(y => ({
-	          x: centerX,
-	          y: yOffset + y
-	        })), doc, section);
-	        pageMap.push({
-	          index: i + 1,
-	          startCfi,
-	          endCfi,
-	          yOffset
-	        });
-	      }
-	      return pageMap;
-	    }
-	    /**
-	     * Probes multiple points to find the first valid CFI
-	     */
-	    async probeCfiAtPoints(points, doc, section) {
-	      for (const point of points) {
-	        try {
-	          const element = document.elementFromPoint(Math.max(0, Math.min(point.x, doc.body.scrollWidth - 1)), Math.max(0, Math.min(point.y, doc.body.scrollHeight - 1)));
-	          if (element && element instanceof Element) {
-	            const result = await this.cfiResolver.resolveForElement(doc, section, element);
-	            return result.cfi || null;
-	          }
-	        } catch {
-	          // Removed debug log for cleaner output
-	        }
-	      }
-	      return null;
-	    }
-	    /**
-	     * Creates default probe configurations
-	     */
-	    createPaginatedProbeConfig(viewportWidth) {
-	      return {
-	        probeXOffsets: [1, Math.floor(viewportWidth * 0.15), Math.floor(viewportWidth * 0.4)],
-	        probeXOffsetsEnd: [Math.max(0, viewportWidth - 10),
-	        // Ensure distinct end point
-	        Math.max(0, Math.floor(viewportWidth * 0.85)), Math.max(0, Math.floor(viewportWidth * 0.6))],
-	        extraYOffsets: [-20, -8, 8, 20, -40, 40]
-	      };
-	    }
-	    createScrolledProbeConfig(viewportHeight) {
-	      return {
-	        probeYOffsets: [Math.floor(viewportHeight * 0.15), Math.floor(viewportHeight * 0.4), Math.floor(viewportHeight * 0.6)],
-	        probeYOffsetsEnd: [Math.floor(viewportHeight * 0.85), Math.floor(viewportHeight * 0.5)]
-	      };
-	    }
-	    /**
-	     * Validates a page map for common issues
-	     */
-	    validatePageMap(pageMap) {
-	      const issues = [];
-	      let uniqueCfis = 0;
-	      if (pageMap.length === 0) {
-	        issues.push('Page map is empty');
-	        return {
-	          isValid: false,
-	          issues,
-	          uniqueCfis
-	        };
-	      }
-	      const cfis = new Set();
-	      for (const entry of pageMap) {
-	        // Check for invalid indices
-	        if (entry.index <= 0) {
-	          issues.push(`Invalid index ${entry.index} for page`);
-	        }
-	        // Check for CFI data
-	        if (entry.startCfi) {
-	          cfis.add(entry.startCfi);
-	        } else if (!entry.xOffset && !entry.yOffset) {
-	          issues.push(`Page ${entry.index} has no CFI or position data`);
-	        }
-	        if (!entry.endCfi) {
-	          issues.push(`Missing endCfi for page ${entry.index}`);
-	        }
-	      }
-	      uniqueCfis = cfis.size;
-	      // Check for duplicate CFIs
-	      if (uniqueCfis < pageMap.length && uniqueCfis > 0) {
-	        issues.push(`Only ${uniqueCfis} unique CFIs found for ${pageMap.length} pages`);
-	      }
-	      const isValid = issues.length === 0;
-	      return {
-	        isValid,
-	        issues,
-	        uniqueCfis
-	      };
-	    }
-	  }
-	  pageMapper.PageMapper = PageMapper;
-	  return pageMapper;
-	}
-
-	var contentAnalyzer = {};
-
-	var hasRequiredContentAnalyzer;
-	function requireContentAnalyzer() {
-	  if (hasRequiredContentAnalyzer) return contentAnalyzer;
-	  hasRequiredContentAnalyzer = 1;
-	  Object.defineProperty(contentAnalyzer, "__esModule", {
-	    value: true
-	  });
-	  contentAnalyzer.ContentAnalyzer = void 0;
-	  /**
-	   * Service for analyzing content and detecting white/minimal pages
-	   */
-	  class ContentAnalyzer {
-	    constructor(config, debug = false) {
-	      this.config = {
-	        minTextLength: 60,
-	        minVisibleElements: 8,
-	        whitePageTextThreshold: 50,
-	        whitePageElementThreshold: 5,
-	        ...config
-	      };
-	      this.debug = debug;
-	    }
-	    /**
-	     * Analyzes document content to determine if it's a white/minimal page
-	     * and provides content metrics
-	     */
-	    analyzeDocumentContent(doc, body) {
-	      const textContent = body.textContent || '';
-	      const trimmedText = textContent.trim();
-	      const textLength = trimmedText.length;
-	      // Count visible elements conservatively
-	      const visibleElements = this.countVisibleElements(doc, body);
-	      const visibleElementCount = visibleElements.length;
-	      // Determine if this is minimal content using conservative heuristics
-	      const hasMinimalContent = this.isMinimalContent(textLength, visibleElementCount);
-	      // Determine if this is a white page using stricter thresholds
-	      const isWhitePage = this.isWhitePage(textLength, visibleElementCount);
-	      this.debugLog('Content analysis:', {
-	        textLength,
-	        visibleElementCount,
-	        hasMinimalContent,
-	        isWhitePage
-	      });
-	      return {
-	        isWhitePage,
-	        hasMinimalContent,
-	        textLength,
-	        visibleElementCount,
-	        whitePageIndices: isWhitePage ? [0] : [],
-	        pageCount: hasMinimalContent ? 1 : 0 // Will be overridden by caller if needed
-	      };
-	    }
-	    /**
-	     * Analyzes a page map to identify white pages based on content analysis
-	     */
-	    analyzePageMap(pageMap, documentAnalysis, section) {
-	      const whitePageIndices = [];
-	      const enhancedPageMap = [...pageMap];
-	      // If the entire document is minimal content, mark all pages as potentially white
-	      if (documentAnalysis.hasMinimalContent) {
-	        // For minimal content, create a single page entry if none exists
-	        if (enhancedPageMap.length === 0) {
-	          const startCfi = section?.cfiBase || null;
-	          enhancedPageMap.push({
-	            index: 1,
-	            startCfi,
-	            endCfi: null,
-	            xOffset: 0
-	          });
-	        }
-	        // Mark the first page as white if content is truly minimal
-	        if (documentAnalysis.isWhitePage && enhancedPageMap.length > 0) {
-	          whitePageIndices.push(0);
-	        }
-	      }
-	      // Additional heuristics could be added here to analyze individual pages
-	      // if we had per-page content metrics
-	      return {
-	        hasWhitePages: whitePageIndices.length > 0,
-	        whitePageIndices,
-	        enhancedPageMap
-	      };
-	    }
-	    /**
-	     * Counts elements that are visually present in the document
-	     */
-	    countVisibleElements(doc, body) {
-	      return Array.from(body.querySelectorAll('*')).filter(el => {
-	        try {
-	          const style = doc.defaultView?.getComputedStyle(el);
-	          return !!style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-	        } catch {
-	          return false;
-	        }
-	      });
-	    }
-	    /**
-	     * Determines if content is minimal (cover/title pages with little text)
-	     */
-	    isMinimalContent(textLength, visibleElementCount) {
-	      return textLength < this.config.minTextLength && visibleElementCount < this.config.minVisibleElements;
-	    }
-	    /**
-	     * Determines if content represents a white/empty page
-	     */
-	    isWhitePage(textLength, visibleElementCount) {
-	      return textLength < this.config.whitePageTextThreshold && visibleElementCount < this.config.whitePageElementThreshold && textLength < 20 // Additional stricter threshold for truly empty pages
-	      ;
-	    }
-	    /**
-	     * Calculates appropriate page count based on content analysis
-	     */
-	    calculatePageCount(contentHeight, viewportHeight, documentAnalysis) {
-	      // For minimal content, always return 1 page to avoid false multi-page counts
-	      if (documentAnalysis.hasMinimalContent) {
-	        return 1;
-	      }
-	      // For normal content, calculate based on height if content is substantial
-	      if (contentHeight > viewportHeight * 0.8) {
-	        return Math.max(1, Math.ceil(contentHeight / viewportHeight));
-	      }
-	      return 1;
-	    }
-	    /**
-	     * Creates a default configuration for content analysis
-	     */
-	    static createDefaultConfig() {
-	      return {
-	        minTextLength: 60,
-	        minVisibleElements: 8,
-	        whitePageTextThreshold: 50,
-	        whitePageElementThreshold: 5
-	      };
-	    }
-	    /**
-	     * Creates a strict configuration for more aggressive white page detection
-	     */
-	    static createStrictConfig() {
-	      return {
-	        minTextLength: 100,
-	        minVisibleElements: 12,
-	        whitePageTextThreshold: 30,
-	        whitePageElementThreshold: 3
-	      };
-	    }
-	    /**
-	     * Creates a lenient configuration for less aggressive white page detection
-	     */
-	    static createLenientConfig() {
-	      return {
-	        minTextLength: 30,
-	        minVisibleElements: 5,
-	        whitePageTextThreshold: 80,
-	        whitePageElementThreshold: 8
-	      };
-	    }
-	    debugLog(...args) {
-	      if (this.debug) {
-	        console.debug('[ContentAnalyzer]', ...args);
-	      }
-	    }
-	  }
-	  contentAnalyzer.ContentAnalyzer = ContentAnalyzer;
-	  return contentAnalyzer;
-	}
-
-	var hasRequiredChapterManager;
-	function requireChapterManager() {
-	  if (hasRequiredChapterManager) return chapterManager;
-	  hasRequiredChapterManager = 1;
-	  Object.defineProperty(chapterManager, "__esModule", {
-	    value: true
-	  });
-	  chapterManager.ChapterManager = void 0;
-	  const page_mapper_1 = requirePageMapper();
-	  const content_analyzer_1 = requireContentAnalyzer();
-	  /**
-	   * Enhanced chapter manager that handles content analysis, page mapping,
-	   * and CFI resolution for prerendered chapters.
-	   */
-	  class ChapterManager {
-	    constructor(cfiResolver, debug = false) {
-	      this.cfiResolver = cfiResolver;
-	      this.pageMapper = new page_mapper_1.PageMapper(cfiResolver);
-	      this.contentAnalyzer = new content_analyzer_1.ContentAnalyzer(undefined, debug);
-	      this.debug = debug;
-	    }
-	    /**
-	     * Calculates layout metrics from view and content
-	     */
-	    calculateLayoutMetrics(view, chapter, viewSettings) {
-	      let contentWidth = chapter.width;
-	      let contentHeight = chapter.height;
-	      let scrollWidth = contentWidth;
-	      let scrollHeight = contentHeight;
-	      // Get precise content dimensions if available
-	      if (view?.contents) {
-	        try {
-	          if (typeof view.contents.scrollWidth === 'function') {
-	            scrollWidth = view.contents.scrollWidth();
-	            contentWidth = scrollWidth;
-	          }
-	        } catch (e) {
-	          this.debugLog('Failed to get contents.scrollWidth():', e);
-	        }
-	        try {
-	          if (typeof view.contents.scrollHeight === 'function') {
-	            scrollHeight = view.contents.scrollHeight();
-	            contentHeight = scrollHeight;
-	          }
-	        } catch (e) {
-	          this.debugLog('Failed to get contents.scrollHeight():', e);
-	        }
-	      }
-	      // Also try to get from document body if available
-	      if (view?.contents?.document?.body) {
-	        const body = view.contents.document.body;
-	        scrollWidth = Math.max(scrollWidth, body.scrollWidth || 0);
-	        scrollHeight = Math.max(scrollHeight, body.scrollHeight || 0);
-	        contentWidth = Math.max(contentWidth, scrollWidth);
-	        contentHeight = Math.max(contentHeight, scrollHeight);
-	      }
-	      const viewportWidth = viewSettings.layout?.columnWidth || viewSettings.width;
-	      const viewportHeight = viewSettings.layout?.height ?? viewSettings.height;
-	      return {
-	        contentWidth,
-	        contentHeight,
-	        viewportWidth,
-	        viewportHeight,
-	        scrollWidth,
-	        scrollHeight
-	      };
-	    }
-	    /**
-	     * Calculates the number of pages needed for content
-	     */
-	    calculatePageCount(metrics, isPaginated, analysisResult) {
-	      // For minimal content, always treat as single page
-	      if (analysisResult.hasMinimalContent) {
-	        return 1;
-	      }
-	      if (isPaginated) {
-	        // For paginated content, calculate based on content width vs viewport width
-	        return Math.max(1, Math.ceil(metrics.contentWidth / metrics.viewportWidth));
-	      } else {
-	        // For scrolled content, calculate based on content height vs viewport height
-	        if (metrics.contentHeight > metrics.viewportHeight * 0.8) {
-	          return Math.max(1, Math.ceil(metrics.contentHeight / metrics.viewportHeight));
-	        }
-	        return 1;
-	      }
-	    }
-	    async analyzeChapter(chapter, viewSettings) {
-	      const view = chapter.view;
-	      if (!view.contents?.document?.body) {
-	        return this.createEmptyAnalysisResult();
-	      }
-	      const doc = view.contents.document;
-	      const body = doc.body;
-	      try {
-	        // Step 1: Detect flow type and gather layout information
-	        const flowResult = this.pageMapper.detectFlow(viewSettings, view, chapter);
-	        // Step 2: Calculate layout metrics
-	        const layoutMetrics = this.calculateLayoutMetrics(view, chapter, viewSettings);
-	        // Step 3: Analyze content characteristics
-	        const contentAnalysis = this.contentAnalyzer.analyzeDocumentContent(doc, body);
-	        // Step 4: Calculate initial page count
-	        let pageCount = this.calculatePageCount(layoutMetrics, flowResult.isPaginated, contentAnalysis);
-	        // Step 5: Generate page map with CFI resolution
-	        let pageMap;
-	        if (!contentAnalysis.hasMinimalContent) {
-	          pageMap = await this.generatePageMap(doc, body, chapter.section, pageCount, flowResult);
-	          // Update page count based on actual page map
-	          if (pageMap && pageMap.length > 0) {
-	            pageCount = pageMap.length;
-	          }
-	        } else {
-	          // For minimal content, create a simple single-page map
-	          pageMap = this.createSinglePageMap(chapter.section);
-	        }
-	        // Step 6: Validate and enhance the page map
-	        if (pageMap) {
-	          const validation = this.pageMapper.validatePageMap(pageMap);
-	          if (!validation.isValid) {
-	            this.debugLog('Page map validation issues:', validation.issues);
-	            // Attempt to enhance problematic page maps
-	            pageMap = await this.enhancePageMap(doc, body, chapter.section, pageMap);
-	          }
-	        }
-	        return {
-	          pageCount,
-	          pageMap,
-	          hasWhitePages: contentAnalysis.isWhitePage,
-	          whitePageIndices: contentAnalysis.whitePageIndices,
-	          contentAnalysis,
-	          layoutMetrics,
-	          flowResult
-	        };
-	      } catch (error) {
-	        this.debugLog('Chapter analysis failed:', error);
-	        return this.createErrorAnalysisResult(error);
-	      }
-	    }
-	    /**
-	     * Generates a page map based on flow type
-	     */
-	    async generatePageMap(doc, body, section, pageCount, flowResult) {
-	      if (flowResult.isPaginated) {
-	        const config = this.pageMapper.createPaginatedProbeConfig(flowResult.viewportWidth);
-	        const pageMap = await this.pageMapper.mapPaginatedPages(doc, body, section, pageCount, config, flowResult);
-	        // Ensure CFIs are valid and adjust as needed
-	        return pageMap.map(entry => {
-	          if (entry.startCfi && entry.startCfi.split(',').length === 3) {
-	            entry.startCfi = entry.startCfi.split(',')[0]; // Simplify redundant CFIs
-	          }
-	          if (!entry.endCfi) {
-	            entry.endCfi = entry.startCfi; // Set endCfi to startCfi if missing
-	          }
-	          return entry;
-	        });
-	      } else {
-	        const config = this.pageMapper.createScrolledProbeConfig(flowResult.viewportHeight);
-	        const pageMap = await this.pageMapper.mapScrolledPages(doc, body, section, pageCount, config, flowResult);
-	        // Ensure CFIs are valid and adjust as needed
-	        return pageMap.map(entry => {
-	          if (entry.startCfi && entry.startCfi.split(',').length === 3) {
-	            entry.startCfi = entry.startCfi.split(',')[0]; // Simplify redundant CFIs
-	          }
-	          if (!entry.endCfi) {
-	            entry.endCfi = entry.startCfi; // Set endCfi to startCfi if missing
-	          }
-	          return entry;
-	        });
-	      }
-	    }
-	    /**
-	     * Creates a simple single-page map for minimal content
-	     */
-	    createSinglePageMap(section) {
-	      // For a single page at the start of content, we can set the base CFI
-	      const startCfi = section?.cfiBase || null;
-	      return [{
-	        index: 1,
-	        startCfi,
-	        endCfi: null,
-	        xOffset: 0
-	      }];
-	    }
-	    /**
-	     * Attempts to enhance a problematic page map
-	     */
-	    async enhancePageMap(doc, body, section, pageMap) {
-	      this.debugLog('Attempting to enhance page map with', pageMap.length, 'pages');
-	      // For now, return the original page map
-	      // Future enhancements could include:
-	      // - Alternative CFI probing strategies
-	      // - Text-based CFI generation
-	      // - DOM tree walking for better element selection
-	      return pageMap;
-	    }
-	    /**
-	     * Updates page numbers across chapters for book-level navigation
-	     */
-	    updateGlobalPageNumbers(chapters, sections) {
-	      let globalPageNumber = 1;
-	      for (const section of sections) {
-	        const chapter = chapters.get(section.href);
-	        if (chapter?.pageMap) {
-	          for (const entry of chapter.pageMap) {
-	            entry.pageNumber = globalPageNumber++;
-	          }
-	          // Resolve the page numbers deferred promise
-	          if (chapter.pageNumbersDeferred) {
-	            chapter.pageNumbersDeferred.resolve();
-	          }
-	        }
-	      }
-	    }
-	    /**
-	     * Validates a chapter's analysis results
-	     */
-	    validateChapterAnalysis(result) {
-	      const issues = [];
-	      if (result.pageCount < 1) {
-	        issues.push('Page count must be at least 1');
-	      }
-	      if (result.pageMap && result.pageMap.length !== result.pageCount) {
-	        issues.push(`Page map length (${result.pageMap.length}) does not match page count (${result.pageCount})`);
-	      }
-	      // Validate content analysis - basic checks
-	      if (result.contentAnalysis.textLength < 0) {
-	        issues.push('Content analysis: Text length cannot be negative');
-	      }
-	      if (result.contentAnalysis.visibleElementCount < 0) {
-	        issues.push('Content analysis: Visible element count cannot be negative');
-	      }
-	      // Validate page map if present
-	      if (result.pageMap) {
-	        const pageMapValidation = this.pageMapper.validatePageMap(result.pageMap);
-	        if (!pageMapValidation.isValid) {
-	          issues.push(...pageMapValidation.issues.map(issue => `Page map: ${issue}`));
-	        }
-	      }
-	      return {
-	        isValid: issues.length === 0,
-	        issues
-	      };
-	    }
-	    /**
-	     * Creates an empty analysis result for chapters without content
-	     */
-	    createEmptyAnalysisResult() {
-	      return {
-	        pageCount: 1,
-	        pageMap: this.createSinglePageMap(),
-	        hasWhitePages: true,
-	        whitePageIndices: [0],
-	        contentAnalysis: {
-	          textLength: 0,
-	          visibleElementCount: 0,
-	          hasMinimalContent: true,
-	          isWhitePage: true,
-	          whitePageIndices: [0],
-	          pageCount: 1
-	        },
-	        layoutMetrics: {
-	          contentWidth: 0,
-	          contentHeight: 0,
-	          viewportWidth: 0,
-	          viewportHeight: 0,
-	          scrollWidth: 0,
-	          scrollHeight: 0
-	        },
-	        flowResult: {
-	          isPaginated: false,
-	          contentWidth: 0,
-	          contentHeight: 0,
-	          viewportWidth: 0,
-	          viewportHeight: 0
-	        }
-	      };
-	    }
-	    /**
-	     * Creates an error analysis result when analysis fails
-	     */
-	    createErrorAnalysisResult(error) {
-	      this.debugLog('Creating error analysis result for:', error);
-	      const result = this.createEmptyAnalysisResult();
-	      // Add error information to diagnostics if available
-	      if (result.pageMap?.[0]) ;
-	      return result;
-	    }
-	    debugLog(...args) {
-	      if (this.debug) {
-	        console.debug('[ChapterManager]', ...args);
-	      }
-	    }
-	  }
-	  chapterManager.ChapterManager = ChapterManager;
-	  return chapterManager;
-	}
-
 	var pageMapGenerator = {};
 
 	var hasRequiredPageMapGenerator;
@@ -11899,9 +11168,6 @@
 	  hasRequiredPageMapGenerator = 1;
 	  /**
 	   * Simple, lightweight page map generator for prerenderer
-	   *
-	   * This replaces the complex ChapterManager.analyzeChapter() method with
-	   * direct page map generation during prerendering.
 	   */
 	  Object.defineProperty(pageMapGenerator, "__esModule", {
 	    value: true
@@ -12178,7 +11444,6 @@
 	  const view_renderer_1 = requireViewRenderer();
 	  const contents_1 = __importDefault(requireContents());
 	  const cfi_resolver_1 = requireCfiResolver();
-	  const chapter_manager_1 = requireChapterManager();
 	  const page_map_generator_1 = requirePageMapGenerator();
 	  class BookPreRenderer {
 	    /*
@@ -12289,9 +11554,8 @@
 	        forceEvenPages: viewSettings.forceEvenPages,
 	        flow: viewSettings.flow
 	      }, request);
-	      // Initialize ChapterManager with integrated helpers
+	      // Initialize helpers
 	      const cfiResolver = new cfi_resolver_1.CfiResolver();
-	      this.chapterManager = new chapter_manager_1.ChapterManager(cfiResolver);
 	      this.pageMapGenerator = new page_map_generator_1.PageMapGenerator(cfiResolver);
 	      // Create unattached storage for long-term prerendered content
 	      this.unattachedStorage = document.createDocumentFragment();
@@ -12499,7 +11763,7 @@
 	        if (view.contents?.document) {
 	          await this.waitForLayout(view.contents.document, 3);
 	        }
-	        // Analyze content using ChapterManager with better error handling
+	        // Analyze content with better error handling
 	        const analysisResult = await this.performAsyncContentAnalysis(chapter, view);
 	        // Update chapter with analysis results
 	        chapter.pageCount = analysisResult.pageCount;
@@ -13047,159 +12311,158 @@
 	function requirePrerendering() {
 	  if (hasRequiredPrerendering) return prerendering;
 	  hasRequiredPrerendering = 1;
-	  (function (exports) {
-
-	    var __importDefault = prerendering && prerendering.__importDefault || function (mod) {
-	      return mod && mod.__esModule ? mod : {
-	        "default": mod
-	      };
+	  var __importDefault = prerendering && prerendering.__importDefault || function (mod) {
+	    return mod && mod.__esModule ? mod : {
+	      "default": mod
 	    };
-	    Object.defineProperty(exports, "__esModule", {
-	      value: true
-	    });
-	    exports.BookPreRenderer = exports.PreRenderingViewManager = void 0;
-	    const default_1 = __importDefault(require_default());
-	    const prerenderer_1 = __importDefault(requirePrerenderer());
-	    const constants_1 = requireConstants();
-	    // Type guard to check if a View is an IframeView
-	    function isIframeView(view) {
-	      return 'setupContentsForHighlighting' in view && 'settings' in view;
+	  };
+	  Object.defineProperty(prerendering, "__esModule", {
+	    value: true
+	  });
+	  prerendering.BookPreRenderer = prerendering.PreRenderingViewManager = void 0;
+	  const default_1 = __importDefault(require_default());
+	  const prerenderer_1 = __importDefault(requirePrerenderer());
+	  prerendering.BookPreRenderer = prerenderer_1.default;
+	  const constants_1 = requireConstants();
+	  // Type guard to check if a View is an IframeView
+	  function isIframeView(view) {
+	    return 'setupContentsForHighlighting' in view && 'settings' in view;
+	  }
+	  /**
+	   * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
+	   *
+	   * This manager adds prerendering functionality on top of the DefaultViewManager.
+	   * The parent DefaultViewManager has no knowledge of prerendering - this manager adds it
+	   * as a transparent layer on top.
+	   */
+	  class PreRenderingViewManager extends default_1.default {
+	    // Public getter for compatibility with examples
+	    get preRenderer() {
+	      return this._preRenderer;
 	    }
-	    /**
-	     * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
-	     *
-	     * This manager adds prerendering functionality on top of the DefaultViewManager.
-	     * The parent DefaultViewManager has no knowledge of prerendering - this manager adds it
-	     * as a transparent layer on top.
-	     */
-	    class PreRenderingViewManager extends default_1.default {
-	      // Public getter for compatibility with examples
-	      get preRenderer() {
-	        return this._preRenderer;
+	    constructor(options) {
+	      // Ensure overflow is always hidden in settings
+	      if (options.settings) {
+	        options.settings.overflow = 'hidden';
 	      }
-	      constructor(options) {
-	        // Ensure overflow is always hidden in settings
-	        if (options.settings) {
-	          options.settings.overflow = 'hidden';
-	        }
-	        super(options);
-	        this._preRenderer = null;
-	        this.usePreRendering = false;
-	        // Guard to ensure prerendering is only started once per manager instance
-	        this._preRenderingStarted = false;
-	        // Flag to track when we're attaching prerendered content to prevent layout destruction
-	        this._attaching = false;
-	        // Override the name property
-	        this.name = 'prerendering';
-	        this.usePreRendering = options.settings.usePreRendering || false;
-	        this.settings.overflow = 'hidden';
-	        this.overflow = 'hidden';
-	      }
-	      writeIframeContent(iframe, originalContent, attachedView, section) {
-	        iframe.onload = () => {
-	          try {
-	            const doc = iframe.contentDocument;
-	            if (!doc) return;
-	            // Write the content
-	            doc.open();
-	            doc.write(originalContent);
-	            doc.close();
-	            // Prevent scrollbars
-	            if (doc.body) {
-	              this.applyNoScrollStyles(doc);
-	            }
-	            // Setup highlighting if needed
-	            if (attachedView && section && doc.body) {
-	              this.initializeContents(iframe, doc, attachedView, section);
-	            }
-	          } catch (err) {
-	            console.error('[PreRenderingViewManager] Error writing content to iframe:', err);
+	      super(options);
+	      this._preRenderer = null;
+	      this.usePreRendering = false;
+	      // Guard to ensure prerendering is only started once per manager instance
+	      this._preRenderingStarted = false;
+	      // Flag to track when we're attaching prerendered content to prevent layout destruction
+	      this._attaching = false;
+	      // Override the name property
+	      this.name = 'prerendering';
+	      this.usePreRendering = options.settings.usePreRendering || false;
+	      this.settings.overflow = 'hidden';
+	      this.overflow = 'hidden';
+	    }
+	    writeIframeContent(iframe, originalContent, attachedView, section) {
+	      iframe.onload = () => {
+	        try {
+	          const doc = iframe.contentDocument;
+	          if (!doc) return;
+	          // Write the content
+	          doc.open();
+	          doc.write(originalContent);
+	          doc.close();
+	          // Prevent scrollbars
+	          if (doc.body) {
+	            this.applyNoScrollStyles(doc);
 	          }
-	        };
-	      }
-	      applyNoScrollStyles(doc) {
-	        Object.assign(doc.body.style, {
-	          overflow: 'hidden',
-	          overflowX: 'hidden',
-	          overflowY: 'hidden'
-	        });
-	        const style = doc.createElement('style');
-	        style.textContent = `
+	          // Setup highlighting if needed
+	          if (attachedView && section && doc.body) {
+	            this.initializeContents(iframe, doc, attachedView, section);
+	          }
+	        } catch (err) {
+	          console.error('[PreRenderingViewManager] Error writing content to iframe:', err);
+	        }
+	      };
+	    }
+	    applyNoScrollStyles(doc) {
+	      Object.assign(doc.body.style, {
+	        overflow: 'hidden',
+	        overflowX: 'hidden',
+	        overflowY: 'hidden'
+	      });
+	      const style = doc.createElement('style');
+	      style.textContent = `
     body {
       overflow: hidden !important;
       overflow-x: hidden !important;
       overflow-y: hidden !important;
     }
   `;
-	        doc.head.appendChild(style);
+	      doc.head.appendChild(style);
+	    }
+	    initializeContents(iframe, doc, attachedView, section) {
+	      console.log('[PreRenderingViewManager] Setting up Contents after content write');
+	      const contents = attachedView.setupContentsForHighlighting(iframe, section, attachedView.settings?.transparency);
+	      if (!contents) {
+	        console.warn('[PreRenderingViewManager] ❌ Failed to create Contents object');
+	        return;
 	      }
-	      initializeContents(iframe, doc, attachedView, section) {
-	        console.log('[PreRenderingViewManager] Setting up Contents after content write');
-	        const contents = attachedView.setupContentsForHighlighting(iframe, section, attachedView.settings?.transparency);
-	        if (!contents) {
-	          console.warn('[PreRenderingViewManager] ❌ Failed to create Contents object');
-	          return;
-	        }
-	        attachedView.window = iframe.contentWindow || undefined;
-	        attachedView.document = doc;
-	        attachedView.contents = contents;
-	        console.log('[PreRenderingViewManager] ✅ Contents object created successfully');
-	        console.log('[PreRenderingViewManager] Triggering MANAGERS.ADDED event');
-	        this.emit(constants_1.EVENTS.MANAGERS.ADDED, attachedView);
+	      attachedView.window = iframe.contentWindow || undefined;
+	      attachedView.document = doc;
+	      attachedView.contents = contents;
+	      console.log('[PreRenderingViewManager] ✅ Contents object created successfully');
+	      console.log('[PreRenderingViewManager] Triggering MANAGERS.ADDED event');
+	      this.emit(constants_1.EVENTS.MANAGERS.ADDED, attachedView);
+	    }
+	    async attachPrerendered(section, forceRight, mode) {
+	      if (!(this.usePreRendering && this._preRenderer)) {
+	        return null;
 	      }
-	      async attachPrerendered(section, forceRight, mode) {
-	        if (!(this.usePreRendering && this._preRenderer)) {
-	          return null;
+	      this._attaching = true;
+	      try {
+	        const attached = this._preRenderer.attachChapter(section.href);
+	        if (!attached || !attached.view) return null;
+	        attached.attached = true;
+	        // Prevent layout recalculation by removing default handler
+	        attached.view.onDisplayed = () => {};
+	        // Build wrapper + iframe
+	        const wrapperElement = this.createWrapper(forceRight, attached);
+	        const iframeElement = this.createIframe(forceRight, attached);
+	        wrapperElement.appendChild(iframeElement);
+	        // Extract content
+	        const originalContent = this.extractContent(attached);
+	        // Load content
+	        if (isIframeView(attached.view)) {
+	          this.writeIframeContent(iframeElement, originalContent, attached.view, attached.section);
+	        } else {
+	          console.warn('[PreRenderingViewManager] ❌ Expected IframeView but got different view type');
 	        }
-	        this._attaching = true;
-	        try {
-	          const attached = this._preRenderer.attachChapter(section.href);
-	          if (!attached || !attached.view) return null;
-	          attached.attached = true;
-	          // Prevent layout recalculation by removing default handler
-	          attached.view.onDisplayed = () => {};
-	          // Build wrapper + iframe
-	          const wrapperElement = this.createWrapper(forceRight, attached);
-	          const iframeElement = this.createIframe(forceRight, attached);
-	          wrapperElement.appendChild(iframeElement);
-	          // Extract content
-	          const originalContent = this.extractContent(attached);
-	          // Load content
-	          if (isIframeView(attached.view)) {
-	            this.writeIframeContent(iframeElement, originalContent, attached.view, attached.section);
-	          } else {
-	            console.warn('[PreRenderingViewManager] ❌ Expected IframeView but got different view type');
-	          }
-	          iframeElement.src = 'about:blank';
-	          // Update references
-	          attached.view.element = wrapperElement;
-	          const iframeView = attached.view;
-	          iframeView.iframe = iframeElement;
-	          iframeView.frame = iframeElement;
-	          // Attach to container
-	          if (this.container) {
-	            this.container.appendChild(wrapperElement);
-	          }
-	          // Add to collection
-	          if (mode === 'append') {
-	            this.views.append(attached.view);
-	          } else {
-	            this.views.prepend(attached.view);
-	          }
-	          // Update phantom
-	          this.updatePhantom(attached.width);
-	          return attached.view;
-	        } finally {
-	          this._attaching = false;
+	        iframeElement.src = 'about:blank';
+	        // Update references
+	        attached.view.element = wrapperElement;
+	        const iframeView = attached.view;
+	        iframeView.iframe = iframeElement;
+	        iframeView.frame = iframeElement;
+	        // Attach to container
+	        if (this.container) {
+	          this.container.appendChild(wrapperElement);
 	        }
+	        // Add to collection
+	        if (mode === 'append') {
+	          this.views.append(attached.view);
+	        } else {
+	          this.views.prepend(attached.view);
+	        }
+	        // Update phantom
+	        this.updatePhantom(attached.width);
+	        return attached.view;
+	      } finally {
+	        this._attaching = false;
 	      }
-	      updatePhantom(contentWidth) {
-	        if (!this.container) return;
-	        let phantomElement = this.container.querySelector('.epub-scroll-phantom');
-	        if (!phantomElement) {
-	          phantomElement = document.createElement('div');
-	          phantomElement.className = 'epub-scroll-phantom';
-	          phantomElement.style.cssText = `
+	    }
+	    updatePhantom(contentWidth) {
+	      if (!this.container) return;
+	      let phantomElement = this.container.querySelector('.epub-scroll-phantom');
+	      if (!phantomElement) {
+	        phantomElement = document.createElement('div');
+	        phantomElement.className = 'epub-scroll-phantom';
+	        phantomElement.style.cssText = `
       position: absolute;
       top: 0;
       left: 0;
@@ -13208,325 +12471,317 @@
       visibility: hidden;
       z-index: -1000;
     `;
-	          this.container.appendChild(phantomElement);
-	        }
-	        const safeContentWidth = Math.max(contentWidth || 0, this.layout.width);
-	        phantomElement.style.width = safeContentWidth + 'px';
-	        // Force a reflow
-	        void phantomElement.offsetWidth;
+	        this.container.appendChild(phantomElement);
 	      }
-	      createWrapper(forceRight, attached) {
-	        const wrapperElement = document.createElement('div');
-	        wrapperElement.classList.add('epub-view');
-	        wrapperElement.setAttribute('ref', this.views._views.length.toString());
-	        const isSpreadView = this.layout && this.layout.divisor > 1;
-	        const viewportWidth = this.container?.clientWidth || 0;
-	        const viewportHeight = this.container?.clientHeight || 0;
-	        const containerWidth = this.container?.clientWidth || 900;
-	        if (isSpreadView) {
-	          const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
-	          // For prerendered content, use the full content width to show all pages
-	          const wrapperWidth = attached?.width ? Math.max(attached.width, columnWidth) : columnWidth;
-	          wrapperElement.style.width = `${wrapperWidth}px`;
-	          wrapperElement.style.height = `${viewportHeight}px`;
-	          if (forceRight) {
-	            const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
-	            const gapAdjustment = this.layout?.gap || 0;
-	            wrapperElement.style.left = `${rightPosition + gapAdjustment}px`;
-	          } else {
-	            wrapperElement.style.left = '0px';
-	          }
+	      const safeContentWidth = Math.max(contentWidth || 0, this.layout.width);
+	      phantomElement.style.width = safeContentWidth + 'px';
+	      // Force a reflow
+	      void phantomElement.offsetWidth;
+	    }
+	    createWrapper(forceRight, attached) {
+	      const wrapperElement = document.createElement('div');
+	      wrapperElement.classList.add('epub-view');
+	      wrapperElement.setAttribute('ref', this.views._views.length.toString());
+	      const isSpreadView = this.layout && this.layout.divisor > 1;
+	      const viewportWidth = this.container?.clientWidth || 0;
+	      const viewportHeight = this.container?.clientHeight || 0;
+	      const containerWidth = this.container?.clientWidth || 900;
+	      if (isSpreadView) {
+	        const columnWidth = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+	        // For prerendered content, use the full content width to show all pages
+	        const wrapperWidth = attached?.width ? Math.max(attached.width, columnWidth) : columnWidth;
+	        wrapperElement.style.width = `${wrapperWidth}px`;
+	        wrapperElement.style.height = `${viewportHeight}px`;
+	        if (forceRight) {
+	          const rightPosition = this.layout?.columnWidth || Math.floor(viewportWidth / 2);
+	          const gapAdjustment = this.layout?.gap || 0;
+	          wrapperElement.style.left = `${rightPosition + gapAdjustment}px`;
 	        } else {
-	          wrapperElement.style.width = `${containerWidth}px`;
-	          wrapperElement.style.height = `${viewportHeight}px`;
 	          wrapperElement.style.left = '0px';
 	        }
-	        Object.assign(wrapperElement.style, {
-	          overflow: 'hidden',
-	          position: 'relative',
-	          display: 'block',
-	          flex: '0 0 auto',
-	          visibility: 'visible'
-	        });
-	        return wrapperElement;
+	      } else {
+	        wrapperElement.style.width = `${containerWidth}px`;
+	        wrapperElement.style.height = `${viewportHeight}px`;
+	        wrapperElement.style.left = '0px';
 	      }
-	      createIframe(forceRight, attached) {
-	        const iframeElement = document.createElement('iframe');
-	        iframeElement.style.border = 'none';
-	        const iframeWidth = Math.max(attached.width || 0, this.layout.width);
-	        iframeElement.style.width = `${iframeWidth}px`;
-	        iframeElement.style.height = `${attached.height}px`;
-	        Object.assign(iframeElement.style, {
-	          overflow: 'hidden',
-	          overflowX: 'hidden',
-	          overflowY: 'hidden',
-	          background: 'transparent',
-	          visibility: 'visible',
-	          display: 'block',
-	          wordSpacing: '0px',
-	          lineHeight: 'normal'
-	        });
-	        iframeElement.setAttribute('sandbox', 'allow-same-origin');
-	        if (attached.view?.section?.properties?.includes('scripted')) {
-	          iframeElement.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-	        }
-	        const isSpreadView = this.layout && this.layout.divisor > 1;
-	        if (isSpreadView && forceRight && attached.pageCount > 1) {
-	          const singlePageWidth = Math.floor(attached.width / attached.pageCount);
-	          iframeElement.style.marginLeft = `-${singlePageWidth}px`;
-	          return iframeElement;
-	        }
-	        iframeElement.style.marginLeft = '0px';
+	      Object.assign(wrapperElement.style, {
+	        overflow: 'hidden',
+	        position: 'relative',
+	        display: 'block',
+	        flex: '0 0 auto',
+	        visibility: 'visible'
+	      });
+	      return wrapperElement;
+	    }
+	    createIframe(forceRight, attached) {
+	      const iframeElement = document.createElement('iframe');
+	      iframeElement.style.border = 'none';
+	      const iframeWidth = Math.max(attached.width || 0, this.layout.width);
+	      iframeElement.style.width = `${iframeWidth}px`;
+	      iframeElement.style.height = `${attached.height}px`;
+	      Object.assign(iframeElement.style, {
+	        overflow: 'hidden',
+	        overflowX: 'hidden',
+	        overflowY: 'hidden',
+	        background: 'transparent',
+	        visibility: 'visible',
+	        display: 'block',
+	        wordSpacing: '0px',
+	        lineHeight: 'normal'
+	      });
+	      iframeElement.setAttribute('sandbox', 'allow-same-origin');
+	      if (attached.view?.section?.properties?.includes('scripted')) {
+	        iframeElement.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+	      }
+	      const isSpreadView = this.layout && this.layout.divisor > 1;
+	      if (isSpreadView && forceRight && attached.pageCount > 1) {
+	        const singlePageWidth = Math.floor(attached.width / attached.pageCount);
+	        iframeElement.style.marginLeft = `-${singlePageWidth}px`;
 	        return iframeElement;
 	      }
-	      extractContent(attached) {
-	        if (attached.preservedContent) return attached.preservedContent;
-	        if (attached.preservedSrcdoc) return attached.preservedSrcdoc;
-	        try {
-	          const originalIframe = attached.element.querySelector('iframe');
-	          if (originalIframe) {
-	            if (originalIframe.contentDocument?.documentElement) {
-	              return '<!DOCTYPE html>' + originalIframe.contentDocument.documentElement.outerHTML;
-	            } else if (originalIframe.srcdoc) {
-	              return originalIframe.srcdoc;
-	            }
+	      iframeElement.style.marginLeft = '0px';
+	      return iframeElement;
+	    }
+	    extractContent(attached) {
+	      if (attached.preservedContent) return attached.preservedContent;
+	      if (attached.preservedSrcdoc) return attached.preservedSrcdoc;
+	      try {
+	        const originalIframe = attached.element.querySelector('iframe');
+	        if (originalIframe) {
+	          if (originalIframe.contentDocument?.documentElement) {
+	            return '<!DOCTYPE html>' + originalIframe.contentDocument.documentElement.outerHTML;
+	          } else if (originalIframe.srcdoc) {
+	            return originalIframe.srcdoc;
 	          }
-	        } catch (e) {
-	          console.warn('[PreRenderingViewManager] Error extracting content:', e);
 	        }
-	        return '';
+	      } catch (e) {
+	        console.warn('[PreRenderingViewManager] Error extracting content:', e);
 	      }
-	      async append(section, forceRight = false) {
-	        return (await this.attachPrerendered(section, forceRight, 'append')) ?? super.append(section, forceRight);
+	      return '';
+	    }
+	    async append(section, forceRight = false) {
+	      return (await this.attachPrerendered(section, forceRight, 'append')) ?? super.append(section, forceRight);
+	    }
+	    async prepend(section, forceRight = false) {
+	      return (await this.attachPrerendered(section, forceRight, 'prepend')) ?? super.prepend(section, forceRight);
+	    }
+	    // Pre-rendering specific methods
+	    async startPreRendering(sections) {
+	      if (!this.usePreRendering || !this._preRenderer) {
+	        return;
 	      }
-	      async prepend(section, forceRight = false) {
-	        return (await this.attachPrerendered(section, forceRight, 'prepend')) ?? super.prepend(section, forceRight);
+	      if (this._preRenderingStarted) {
+	        return;
 	      }
-	      // Pre-rendering specific methods
-	      async startPreRendering(sections) {
-	        if (!this.usePreRendering || !this._preRenderer) {
-	          return;
-	        }
-	        if (this._preRenderingStarted) {
-	          return;
-	        }
-	        this._preRenderingStarted = true;
-	        await this._preRenderer.preRenderBook(sections);
+	      this._preRenderingStarted = true;
+	      await this._preRenderer.preRenderBook(sections);
+	    }
+	    getPreRenderedChapter(sectionHref) {
+	      if (!this.usePreRendering || !this._preRenderer) {
+	        return undefined;
 	      }
-	      getPreRenderedChapter(sectionHref) {
-	        if (!this.usePreRendering || !this._preRenderer) {
-	          return undefined;
-	        }
-	        return this._preRenderer.getChapter(sectionHref);
+	      return this._preRenderer.getChapter(sectionHref);
+	    }
+	    hasPreRenderedChapter(sectionHref) {
+	      if (!this.usePreRendering || !this._preRenderer) {
+	        return false;
 	      }
-	      hasPreRenderedChapter(sectionHref) {
-	        if (!this.usePreRendering || !this._preRenderer) {
-	          return false;
-	        }
-	        return !!this._preRenderer.getChapter(sectionHref);
-	      }
-	      getPreRenderingStatus() {
-	        if (!this.usePreRendering || !this._preRenderer) {
-	          return {
-	            total: 0,
-	            rendered: 0,
-	            failed: 0,
-	            chapters: new Map()
-	          };
-	        }
-	        return this._preRenderer.getStatus();
-	      }
-	      getAllPreRenderedChapters() {
-	        if (!this.usePreRendering || !this._preRenderer) {
-	          return [];
-	        }
-	        return this._preRenderer.getAllChapters();
-	      }
-	      getPreRenderingDebugInfo() {
-	        if (!this.usePreRendering || !this._preRenderer) {
-	          return {
-	            totalChapters: 0,
-	            renderingInProgress: 0,
-	            chapters: []
-	          };
-	        }
-	        return this._preRenderer.getDebugInfo();
-	      }
-	      /**
-	       * Get the total number of pages across all chapters in the book
-	       */
-	      getTotalPages() {
-	        return this._preRenderer?.getAllChapters().reduce((sum, ch) => {
-	          if (ch.pageCount === undefined) return undefined;
-	          return sum + ch.pageCount;
-	        }, 0);
-	      }
-	      /**
-	       * Get the current page number across all chapters in the book
-	       */
-	      getCurrentPage() {
-	        const locationInfo = this.currentLocation?.();
-	        const chapters = this._preRenderer?.getAllChapters();
-	        if (!locationInfo?.length || !chapters?.length) return undefined;
-	        const current = locationInfo[0];
-	        const currentHref = current.href;
-	        const currentPage = current.pages[0] ?? 1;
-	        const index = chapters.findIndex(ch => ch.section.href === currentHref);
-	        if (index === -1) return undefined;
-	        const totalBefore = chapters.slice(0, index).reduce((sum, ch) => {
-	          if (ch.pageCount === undefined) return undefined;
-	          return sum + ch.pageCount;
-	        }, 0);
-	        return totalBefore === undefined ? undefined : totalBefore + currentPage;
-	      }
-	      afterDisplayed(view) {
-	        // Check if this is a prerendered view that we just attached
-	        const isPrerenderedView = this._preRenderer && view.section && this._preRenderer.getChapter(view.section.href)?.attached === true;
-	        if (isPrerenderedView) {
-	          // Emit the displayed event so the book knows the content is ready
-	          this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
-	          return;
-	        }
-	        super.afterDisplayed(view);
-	      }
-	      // Override destroy to clean up pre-renderer
-	      destroy() {
-	        this._preRenderer?.destroy();
-	        return super.destroy();
-	      }
-	      // Override render to initialize the BookPreRenderer once the container and
-	      // Only override render to initialize pre-renderer
-	      render(element, size) {
-	        // Ensure overflow is explicitly set to hidden
-	        this.settings.overflow = 'hidden';
-	        this.overflow = 'hidden';
-	        // Call parent render first
-	        super.render(element, size);
-	        // Initialize the pre-renderer now that the DOM container and viewSettings exist
-	        if (this.usePreRendering && !this._preRenderer && this.container) {
-	          const preRenderViewSettings = {
-	            width: this.viewSettings.width || 0,
-	            height: this.viewSettings.height || 0,
-	            ...this.viewSettings
-	          };
-	          this._preRenderer = new prerenderer_1.default(this.container, preRenderViewSettings, this.request);
-	        }
-	      }
-	      // Override resize to ensure proper handling of prerendered content during window resize
-	      async resize(width, height, epubcfi) {
-	        try {
-	          // Set _attaching flag to prevent layout destruction during resize
-	          this._attaching = true;
-	          // Check if any of the current views are prerendered
-	          let hasPrerenderedViews = false;
-	          const prerenderedSections = [];
-	          this.views._views.forEach(view => {
-	            if (view && view.section && this._preRenderer?.getChapter(view.section.href)?.attached) {
-	              hasPrerenderedViews = true;
-	              prerenderedSections.push(view.section);
-	            }
-	          });
-	          // For prerendered content, just update the container dimensions without
-	          // trying to modify the prerendered content itself
-	          if (hasPrerenderedViews) {
-	            // Update container dimensions only
-	            const stageSize = this.stage.size(width, height);
-	            this._stageSize = stageSize;
-	            this._bounds = this.bounds();
-	            // Update view settings
-	            this.viewSettings.width = this._stageSize.width;
-	            this.viewSettings.height = this._stageSize.height;
-	            // Update layout information without modifying views
-	            if (this.layout) {
-	              this.layout.calculate(this._stageSize.width, this._stageSize.height, this.settings.gap);
-	              this.settings.offset = this.layout.delta / this.layout.divisor;
-	            }
-	            // Emit resize event with updated dimensions
-	            this.emit(constants_1.EVENTS.MANAGERS.RESIZED, {
-	              width: this._stageSize.width,
-	              height: this._stageSize.height
-	            }, epubcfi);
-	            return;
-	          }
-	          return super.resize(width, height, epubcfi);
-	        } catch {
-	          // If our custom resize fails, fall back to the default implementation
-	          return super.resize(width, height, epubcfi);
-	        } finally {
-	          // Always reset the attaching flag
-	          this._attaching = false;
-	        }
-	      }
-	      isRtlDirection() {
-	        return this.settings.direction === 'rtl' && this.settings.axis === 'horizontal';
-	      }
-	      async navigate(forwardInReadingOrder) {
-	        if (!this.views?.length) return;
-	        // Determine the "current view" depending on logical navigation direction
-	        // forwardInReadingOrder = true  -> use the last view (end of current content)
-	        // forwardInReadingOrder = false -> use the first view (start of current content)
-	        const currentView = forwardInReadingOrder ? this.views.last() : this.views.first();
-	        if (!currentView?.section) return;
-	        const currentSection = currentView.section;
-	        // Can we scroll inside the current section?
-	        const maxScrollLeft = this.container.scrollWidth - this.container.offsetWidth;
-	        const canScrollMore = forwardInReadingOrder ? this.container.scrollLeft < maxScrollLeft : this.container.scrollLeft > 0;
-	        // Fallback arrow function to call super method if needed
-	        const fallback = () => forwardInReadingOrder ? super.next() : super.prev();
-	        // Only proceed with pre-rendered navigation if the preRenderer exists
-	        if (!this._preRenderer) return fallback();
-	        if (canScrollMore) return fallback();
-	        // Normalize actual section movement using RTL
-	        const actualForward = this.isRtlDirection() ? !forwardInReadingOrder : forwardInReadingOrder;
-	        const targetSection = actualForward ? currentSection.next() : currentSection.prev();
-	        if (!targetSection) return fallback();
-	        this.clear();
-	        this.updateLayout();
-	        const forceRight = this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && targetSection.properties.includes('page-spread-right');
-	        await this.loadSection(targetSection, forwardInReadingOrder, forceRight);
-	      }
-	      async loadSection(section, goForward, forceRight) {
-	        // Append or prepend the section
-	        if (goForward) {
-	          await this.append(section, forceRight);
-	        } else {
-	          await this.prepend(section, forceRight);
-	        }
-	        // Only adjust scroll for horizontal layouts
-	        if (this.settings.axis !== 'horizontal') return;
-	        const scrollWidth = this.container.scrollWidth;
-	        const offsetWidth = this.container.offsetWidth;
-	        const isRtlDefault = this.isRtlDirection() && this.settings.rtlScrollType === 'default';
-	        // Define scroll positions for next/prev in both directions
-	        const rtlOptions = {
-	          next: scrollWidth,
-	          prev: 0
+	      return !!this._preRenderer.getChapter(sectionHref);
+	    }
+	    getPreRenderingStatus() {
+	      if (!this.usePreRendering || !this._preRenderer) {
+	        return {
+	          total: 0,
+	          rendered: 0,
+	          failed: 0,
+	          chapters: new Map()
 	        };
-	        const ltrOptions = {
-	          next: 0,
-	          prev: scrollWidth - offsetWidth
+	      }
+	      return this._preRenderer.getStatus();
+	    }
+	    getAllPreRenderedChapters() {
+	      if (!this.usePreRendering || !this._preRenderer) {
+	        return [];
+	      }
+	      return this._preRenderer.getAllChapters();
+	    }
+	    getPreRenderingDebugInfo() {
+	      if (!this.usePreRendering || !this._preRenderer) {
+	        return {
+	          totalChapters: 0,
+	          renderingInProgress: 0,
+	          chapters: []
 	        };
-	        const options = isRtlDefault ? rtlOptions : ltrOptions;
-	        const scrollPos = goForward ? options.next : options.prev;
-	        this.scrollTo(scrollPos, 0, true);
 	      }
-	      async next() {
-	        return this.navigate(true); // forward in reading order
+	      return this._preRenderer.getDebugInfo();
+	    }
+	    /**
+	     * Get the total number of pages across all chapters in the book
+	     */
+	    getTotalPages() {
+	      return this._preRenderer?.getAllChapters().reduce((sum, ch) => {
+	        if (ch.pageCount === undefined) return undefined;
+	        return sum + ch.pageCount;
+	      }, 0);
+	    }
+	    /**
+	     * Get the current page number across all chapters in the book
+	     */
+	    getCurrentPage() {
+	      const locationInfo = this.currentLocation?.();
+	      const chapters = this._preRenderer?.getAllChapters();
+	      if (!locationInfo?.length || !chapters?.length) return undefined;
+	      const current = locationInfo[0];
+	      const currentHref = current.href;
+	      const currentPage = current.pages[0] ?? 1;
+	      const index = chapters.findIndex(ch => ch.section.href === currentHref);
+	      if (index === -1) return undefined;
+	      const totalBefore = chapters.slice(0, index).reduce((sum, ch) => {
+	        if (ch.pageCount === undefined) return undefined;
+	        return sum + ch.pageCount;
+	      }, 0);
+	      return totalBefore === undefined ? undefined : totalBefore + currentPage;
+	    }
+	    afterDisplayed(view) {
+	      // Check if this is a prerendered view that we just attached
+	      const isPrerenderedView = this._preRenderer && view.section && this._preRenderer.getChapter(view.section.href)?.attached === true;
+	      if (isPrerenderedView) {
+	        // Emit the displayed event so the book knows the content is ready
+	        this.emit(constants_1.EVENTS.MANAGERS.ADDED, view);
+	        return;
 	      }
-	      async prev() {
-	        return this.navigate(false); // backward in reading order
+	      super.afterDisplayed(view);
+	    }
+	    // Override destroy to clean up pre-renderer
+	    destroy() {
+	      this._preRenderer?.destroy();
+	      return super.destroy();
+	    }
+	    // Override render to initialize the BookPreRenderer once the container and
+	    // Only override render to initialize pre-renderer
+	    render(element, size) {
+	      // Ensure overflow is explicitly set to hidden
+	      this.settings.overflow = 'hidden';
+	      this.overflow = 'hidden';
+	      // Call parent render first
+	      super.render(element, size);
+	      // Initialize the pre-renderer now that the DOM container and viewSettings exist
+	      if (this.usePreRendering && !this._preRenderer && this.container) {
+	        const preRenderViewSettings = {
+	          width: this.viewSettings.width || 0,
+	          height: this.viewSettings.height || 0,
+	          ...this.viewSettings
+	        };
+	        this._preRenderer = new prerenderer_1.default(this.container, preRenderViewSettings, this.request);
 	      }
 	    }
-	    exports.PreRenderingViewManager = PreRenderingViewManager;
-	    exports.default = PreRenderingViewManager;
-	    var prerenderer_2 = requirePrerenderer();
-	    Object.defineProperty(exports, "BookPreRenderer", {
-	      enumerable: true,
-	      get: function () {
-	        return prerenderer_2.BookPreRenderer;
+	    // Override resize to ensure proper handling of prerendered content during window resize
+	    async resize(width, height, epubcfi) {
+	      try {
+	        // Set _attaching flag to prevent layout destruction during resize
+	        this._attaching = true;
+	        // Check if any of the current views are prerendered
+	        let hasPrerenderedViews = false;
+	        const prerenderedSections = [];
+	        this.views._views.forEach(view => {
+	          if (view && view.section && this._preRenderer?.getChapter(view.section.href)?.attached) {
+	            hasPrerenderedViews = true;
+	            prerenderedSections.push(view.section);
+	          }
+	        });
+	        // For prerendered content, just update the container dimensions without
+	        // trying to modify the prerendered content itself
+	        if (hasPrerenderedViews) {
+	          // Update container dimensions only
+	          const stageSize = this.stage.size(width, height);
+	          this._stageSize = stageSize;
+	          this._bounds = this.bounds();
+	          // Update view settings
+	          this.viewSettings.width = this._stageSize.width;
+	          this.viewSettings.height = this._stageSize.height;
+	          // Update layout information without modifying views
+	          if (this.layout) {
+	            this.layout.calculate(this._stageSize.width, this._stageSize.height, this.settings.gap);
+	            this.settings.offset = this.layout.delta / this.layout.divisor;
+	          }
+	          // Emit resize event with updated dimensions
+	          this.emit(constants_1.EVENTS.MANAGERS.RESIZED, {
+	            width: this._stageSize.width,
+	            height: this._stageSize.height
+	          }, epubcfi);
+	          return;
+	        }
+	        return super.resize(width, height, epubcfi);
+	      } catch {
+	        // If our custom resize fails, fall back to the default implementation
+	        return super.resize(width, height, epubcfi);
+	      } finally {
+	        // Always reset the attaching flag
+	        this._attaching = false;
 	      }
-	    });
-	  })(prerendering);
+	    }
+	    isRtlDirection() {
+	      return this.settings.direction === 'rtl' && this.settings.axis === 'horizontal';
+	    }
+	    async navigate(forwardInReadingOrder) {
+	      if (!this.views?.length) return;
+	      // Determine the "current view" depending on logical navigation direction
+	      // forwardInReadingOrder = true  -> use the last view (end of current content)
+	      // forwardInReadingOrder = false -> use the first view (start of current content)
+	      const currentView = forwardInReadingOrder ? this.views.last() : this.views.first();
+	      if (!currentView?.section) return;
+	      const currentSection = currentView.section;
+	      // Can we scroll inside the current section?
+	      const maxScrollLeft = this.container.scrollWidth - this.container.offsetWidth;
+	      const canScrollMore = forwardInReadingOrder ? this.container.scrollLeft < maxScrollLeft : this.container.scrollLeft > 0;
+	      // Fallback arrow function to call super method if needed
+	      const fallback = () => forwardInReadingOrder ? super.next() : super.prev();
+	      // Only proceed with pre-rendered navigation if the preRenderer exists
+	      if (!this._preRenderer) return fallback();
+	      if (canScrollMore) return fallback();
+	      // Normalize actual section movement using RTL
+	      const actualForward = this.isRtlDirection() ? !forwardInReadingOrder : forwardInReadingOrder;
+	      const targetSection = actualForward ? currentSection.next() : currentSection.prev();
+	      if (!targetSection) return fallback();
+	      this.clear();
+	      this.updateLayout();
+	      const forceRight = this.layout.name === 'pre-paginated' && this.layout.divisor === 2 && targetSection.properties.includes('page-spread-right');
+	      await this.loadSection(targetSection, forwardInReadingOrder, forceRight);
+	    }
+	    async loadSection(section, goForward, forceRight) {
+	      // Append or prepend the section
+	      if (goForward) {
+	        await this.append(section, forceRight);
+	      } else {
+	        await this.prepend(section, forceRight);
+	      }
+	      // Only adjust scroll for horizontal layouts
+	      if (this.settings.axis !== 'horizontal') return;
+	      const scrollWidth = this.container.scrollWidth;
+	      const offsetWidth = this.container.offsetWidth;
+	      const isRtlDefault = this.isRtlDirection() && this.settings.rtlScrollType === 'default';
+	      // Define scroll positions for next/prev in both directions
+	      const rtlOptions = {
+	        next: scrollWidth,
+	        prev: 0
+	      };
+	      const ltrOptions = {
+	        next: 0,
+	        prev: scrollWidth - offsetWidth
+	      };
+	      const options = isRtlDefault ? rtlOptions : ltrOptions;
+	      const scrollPos = goForward ? options.next : options.prev;
+	      this.scrollTo(scrollPos, 0, true);
+	    }
+	    async next() {
+	      return this.navigate(true); // forward in reading order
+	    }
+	    async prev() {
+	      return this.navigate(false); // backward in reading order
+	    }
+	  }
+	  prerendering.PreRenderingViewManager = PreRenderingViewManager;
+	  prerendering.default = PreRenderingViewManager;
 	  return prerendering;
 	}
 

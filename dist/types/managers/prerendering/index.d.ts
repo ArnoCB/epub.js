@@ -1,5 +1,6 @@
 import DefaultViewManager, { DefaultViewManagerSettings } from '../default';
-import BookPreRenderer, { PreRenderedChapter, PreRenderingStatus } from '../prerenderer';
+import BookPreRenderer, { PreRenderingStatus } from '../prerenderer';
+import type { PreRenderedChapter } from '../../types/pre-rendered-chapter';
 import { ViewManager } from '../helpers/snap';
 import { View } from '../helpers/views';
 import { Section } from '../../section';
@@ -75,4 +76,4 @@ export declare class PreRenderingViewManager extends DefaultViewManager implemen
     prev(): Promise<void>;
 }
 export default PreRenderingViewManager;
-export { BookPreRenderer, PreRenderedChapter, PreRenderingStatus, ViewSettings, } from '../prerenderer';
+export { BookPreRenderer };
