@@ -4,7 +4,14 @@
 import { Section } from '../../section';
 import { View } from './views';
 import { CfiResolver } from './cfi-resolver';
-import { PageMapEntry } from './page-mapper';
+export interface PageMapEntry {
+    index: number;
+    startCfi: string | null;
+    endCfi: string | null;
+    pageNumber?: number;
+    xOffset?: number;
+    yOffset?: number;
+}
 export interface PageMapResult {
     pageCount: number;
     pageMap: PageMapEntry[];

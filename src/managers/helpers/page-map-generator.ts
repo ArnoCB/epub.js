@@ -5,7 +5,17 @@
 import { Section } from '../../section';
 import { View } from './views';
 import { CfiResolver } from './cfi-resolver';
-import { PageMapEntry } from './page-mapper';
+
+export interface PageMapEntry {
+  index: number; // 1-based page index within the chapter
+  startCfi: string | null; // CFI at the start of this page for precise positioning
+  endCfi: string | null; // CFI at the end of this page for range calculations
+  // Global page number across the book (optional; assigned when surrounding
+  // chapters are prerendered so a cumulative index can be provided).
+  pageNumber?: number;
+  xOffset?: number; // horizontal offset for paginated flow
+  yOffset?: number; // vertical offset for scrolled flow
+}
 
 export interface PageMapResult {
   pageCount: number;
