@@ -1,11 +1,8 @@
-import type {
-  ChapterPageInfo,
-  ChapterDimensions,
-} from '../types/chapter-page-info';
+import type { ChapterPageInfo, ChapterDimensions } from '../types';
 import { defer } from '../utils/core';
 import { Section } from '../section';
 import { View } from './helpers/views';
-import Layout, { Axis, Flow } from '../layout';
+import Layout from '../layout';
 import EventEmitter from 'event-emitter';
 import { EVENTS } from '../utils/constants';
 import { ViewRenderer } from './helpers/view-renderer';
@@ -14,28 +11,7 @@ import { CfiResolver } from './helpers/cfi-resolver';
 import type { PreRenderedChapter } from '../types/pre-rendered-chapter';
 import { PageMapGenerator } from './helpers/page-map-generator';
 
-export interface ViewSettings {
-  ignoreClass?: string;
-  axis?: Axis;
-  direction?: string;
-  width: number;
-  height: number;
-  layout?: Layout;
-  method?: string;
-  forceRight?: boolean;
-  allowScriptedContent?: boolean;
-  allowPopups?: boolean;
-  transparency?: boolean;
-  forceEvenPages?: boolean;
-  flow?: Flow;
-}
-
-export interface PreRenderingStatus {
-  total: number;
-  rendered: number;
-  failed: number;
-  chapters: Map<string, PreRenderedChapter>;
-}
+import type { ViewSettings, PreRenderingStatus } from 'src/types';
 
 export class BookPreRenderer {
   on!: EventEmitter['on'];

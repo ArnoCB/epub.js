@@ -15,7 +15,7 @@ export type DefaultViewManagerSettings = {
   height?: number;
   axis?: Axis;
   writingMode?: string;
-  direction?: string;
+  direction?: Direction;
   gap?: number;
   offset?: number;
   overflow?: string;

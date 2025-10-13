@@ -1,28 +1,7 @@
 import { Section } from '../section';
-import Layout, { Axis, Flow } from '../layout';
 import EventEmitter from 'event-emitter';
 import type { PreRenderedChapter } from '../types/pre-rendered-chapter';
-export interface ViewSettings {
-    ignoreClass?: string;
-    axis?: Axis;
-    direction?: string;
-    width: number;
-    height: number;
-    layout?: Layout;
-    method?: string;
-    forceRight?: boolean;
-    allowScriptedContent?: boolean;
-    allowPopups?: boolean;
-    transparency?: boolean;
-    forceEvenPages?: boolean;
-    flow?: Flow;
-}
-export interface PreRenderingStatus {
-    total: number;
-    rendered: number;
-    failed: number;
-    chapters: Map<string, PreRenderedChapter>;
-}
+import type { ViewSettings, PreRenderingStatus } from 'src/types';
 export declare class BookPreRenderer {
     on: EventEmitter['on'];
     off: EventEmitter['off'];

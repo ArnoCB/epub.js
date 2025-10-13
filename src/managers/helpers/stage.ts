@@ -1,4 +1,4 @@
-import { Axis } from 'src/layout';
+import { Axis } from '../../types';
 import {
   uuid,
   isNumber,

@@ -1,28 +1,7 @@
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
 import { View } from './views';
-import Layout, { Axis, Flow } from '../../layout';
-export interface ViewRendererSettings {
-    ignoreClass?: string;
-    axis?: Axis;
-    direction?: string;
-    width: number;
-    height: number;
-    layout?: Layout;
-    method?: string;
-    forceRight?: boolean;
-    allowScriptedContent?: boolean;
-    allowPopups?: boolean;
-    transparency?: boolean;
-    forceEvenPages?: boolean;
-    flow?: Flow;
-}
-export interface RenderingOptions {
-    forceRight?: boolean;
-    offscreen?: boolean;
-    container?: HTMLElement;
-    preserveContent?: boolean;
-}
+import type { ViewRendererSettings, RenderingOptions } from 'src/types';
 /**
  * ViewRenderer - Centralized view creation and rendering logic
  *

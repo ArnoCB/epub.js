@@ -19,3 +19,6 @@ export * from './locations';
 export * from './epubcfi';
 export * from './view-manager';
 export * from './view-manager-helpers';
+export * from './view-renderer';
+export * from './prerenderer';
+export * from './view-settings';
