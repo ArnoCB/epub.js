@@ -1,67 +1,11 @@
-export interface ViewManagerConstructor extends ViewManager {
-  new (options: { [key: string]: unknown }): ViewManager;
-}
-
-export interface ViewManager {
-  on(event: string, listener: (...args: unknown[]) => void): EventEmitter;
-  off(event: string, listener: (...args: unknown[]) => void): EventEmitter;
-  settings: {
-    infinite?: boolean;
-    hidden?: boolean;
-    width?: number;
-    height?: number;
-    axis?: string;
-    writingMode?: string;
-    flow?: string;
-    ignoreClass?: string;
-    fullsize?: boolean;
-    allowScriptedContent?: boolean;
-    allowPopups?: boolean;
-    overflow?: unknown;
-    offset?: number;
-    afterScrolledTimeout?: number;
-    gap?: number;
-    layout: Layout;
-    [key: string]: unknown;
-  };
-
-  stage: Stage;
-  isPaginated?: boolean;
-  overflow?: unknown;
-  views: Views;
-  on(event: string, listener: (...args: unknown[]) => void): EventEmitter;
-  container?: HTMLElement;
-  display: (
-    section: Section,
-    target?: HTMLElement | string
-  ) => Promise<unknown>;
-  render: (
-    element: HTMLElement,
-    size?: { width: number; height: number }
-  ) => void;
-  destroy: () => void;
-  clear: () => void;
-  resize: (width?: string, height?: string, epubcfi?: string) => void;
-  prev: () => Promise<void>;
-  next: () => Promise<void>;
-  applyLayout: (layout: Layout) => void;
-  updateFlow: (flow: Flow, defaultScrolledOverflow?: string) => void;
-  isRendered: () => boolean;
-  updateLayout: () => void;
-  direction: (dir?: string) => void;
-  currentLocation: () => PageLocation[];
-  getContents(): Contents[];
-}
+import type { ViewManager } from 'src/types';
 
 import { extend, defer } from '../../utils/core';
 import { EVENTS } from '../../utils/constants';
 import EventEmitter from 'event-emitter';
-import Layout, { Flow } from '../../layout';
-import Views, { View } from './views';
+import Layout from '../../layout';
+import { View } from './views';
 import Contents from '../../contents';
-import Stage from './stage';
-import { PageLocation } from '../default';
-import { Section } from '../../section';
 
 // easing equations from https://github.com/danro/easing-js/blob/master/easing.js
 const PI_D2 = Math.PI / 2;

@@ -1,5 +1,5 @@
 import type { RenditionOptions } from './types';
-import type { DisplayedLocation, RenditionHooks, Flow, Spread } from './types';
+import type { DisplayedLocation, RenditionHooks, Flow, Spread, ViewManager, ViewManagerConstructor } from './types';
 import EventEmitter from 'event-emitter';
 import { defer } from './utils/core';
 import EpubCFI from './epubcfi';
@@ -10,8 +10,6 @@ import Annotations from './annotations';
 import Book from './book';
 import { View } from './managers/helpers/views';
 import Contents from './contents';
-import { ViewManager } from './managers/helpers/snap';
-import { ViewManagerConstructor } from './managers/helpers/snap';
 import { Direction } from './types/common';
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 /**
@@ -152,7 +150,7 @@ export declare class Rendition implements EventEmitterMethods {
     /**
      * Get the Current Location object
      */
-    currentLocation(): import("./managers/default").PageLocation[];
+    currentLocation(): import("./types").PageLocation[];
     /**
      * Creates a Rendition#locationRange from location
      * passed by the Manager
@@ -186,7 +184,7 @@ export declare class Rendition implements EventEmitterMethods {
      * Hook to handle link clicks in rendered content
      */
     private handleLinks;
-    views(): import("./managers/helpers/views").default | View[];
+    views(): View[];
     /**
      * Hook to handle injecting stylesheet before
      * a Section is serialized

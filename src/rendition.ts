@@ -6,6 +6,8 @@ import type {
   RenditionHooks,
   Flow,
   Spread,
+  ViewManager,
+  ViewManagerConstructor,
 } from './types';
 import EventEmitter from 'event-emitter';
 import { defer, isFloat } from './utils/core';
@@ -20,8 +22,6 @@ import { EVENTS, DOM_EVENTS } from './utils/constants';
 import Book from './book';
 import { View } from './managers/helpers/views';
 import Contents from './contents';
-import { ViewManager } from './managers/helpers/snap';
-import { ViewManagerConstructor } from './managers/helpers/snap';
 import DefaultViewManager from './managers/default';
 import { PreRenderingViewManager } from './managers/prerendering';
 import { Direction } from './types/common';
@@ -926,7 +926,7 @@ export class Rendition implements EventEmitterMethods {
     }
   }
 
-  views() {
+  views(): View[] {
     const views = this.manager ? this.manager.views : undefined;
     return views || ([] as View[]);
   }

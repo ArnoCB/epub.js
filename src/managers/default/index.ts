@@ -6,40 +6,17 @@ import Queue from '../../utils/queue';
 import Stage from '../helpers/stage';
 import Views, { View, ViewConstructor } from '../helpers/views';
 import { EVENTS } from '../../utils/constants';
-import { ViewManager } from '../helpers/snap';
-import Layout, { Axis, Flow } from 'src/layout';
+import { ViewManager } from '../../types';
+import Layout from 'src/layout';
 import { Section } from 'src/section';
 import { Contents } from 'src/epub';
 import { ViewRenderer } from '../helpers/view-renderer';
-
-export type DefaultViewManagerSettings = {
-  layout: Layout;
-  infinite?: boolean;
-  hidden?: boolean;
-  width?: number;
-  height?: number;
-  axis?: Axis;
-  writingMode?: string;
-  direction?: string;
-  gap?: number;
-  offset?: number;
-  overflow?: string;
-  afterScrolledTimeout: number;
-  [key: string]: unknown;
-};
-
-export interface PageLocation {
-  index: number;
-  href: string;
-  pages: number[];
-  totalPages: number;
-  mapping:
-    | {
-        start: string;
-        end: string;
-      }
-    | undefined;
-}
+import {
+  Axis,
+  Flow,
+  DefaultViewManagerSettings,
+  PageLocation,
+} from 'src/types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 

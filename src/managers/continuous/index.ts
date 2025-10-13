@@ -1,14 +1,18 @@
 import { extend, defer, requestAnimationFrame } from '../../utils/core';
-import DefaultViewManager, { DefaultViewManagerSettings } from '../default';
+import DefaultViewManager from '../default';
 import Snap from '../helpers/snap';
 import { EVENTS } from '../../utils/constants';
 import { debounce } from '../../utils/helpers';
-import { ViewManager } from '../helpers/snap';
 import Section from '../../section';
 import { View } from '../helpers/views';
 import EventEmitter from 'event-emitter';
 import IframeView from '../views/iframe';
-import type { Flow, Axis } from '../../types';
+import type {
+  Flow,
+  Axis,
+  DefaultViewManagerSettings,
+  ViewManager,
+} from '../../types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 

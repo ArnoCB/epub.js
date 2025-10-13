@@ -17,3 +17,5 @@ export * from './spine';
 export * from './section';
 export * from './locations';
 export * from './epubcfi';
+export * from './view-manager';
+export * from './view-manager-helpers';
