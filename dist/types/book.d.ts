@@ -74,7 +74,7 @@ declare class Book implements EventEmitterMethods {
     private rendition;
     packaging: Packaging | undefined;
     private container;
-    private displayOptions;
+    displayOptions: DisplayOptions | undefined;
     cover: string | undefined;
     package: Packaging | undefined;
     constructor(url?: string | Blob | ArrayBuffer | undefined, options?: BookOptions);

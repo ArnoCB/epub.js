@@ -118,7 +118,7 @@ class Book implements EventEmitterMethods {
   private rendition: Rendition | undefined;
   packaging: Packaging | undefined;
   private container: Container | undefined;
-  private displayOptions: DisplayOptions | undefined;
+  displayOptions: DisplayOptions | undefined;
 
   cover: string | undefined;
 

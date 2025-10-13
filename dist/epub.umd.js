@@ -662,7 +662,6 @@
 	  }
 	  /**
 	   * Gets the height of a document
-	   * @returns {number} height
 	   * @memberof Core
 	   */
 	  function documentHeight() {
@@ -6355,7 +6354,6 @@
 	  const constants_1 = requireConstants();
 	  /**
 	   * Annotation object
-	   * @class
 	   * @param {object} options
 	   * @param {string} options.type Type of annotation to add: "highlight", "underline", "mark"
 	   * @param {EpubCFI} options.cfiRange EpubCFI range to attach annotation to
@@ -19354,7 +19352,6 @@
 	  /**
 	   * An Epub representation with methods for the loading, parsing and manipulation
 	   * of its contents.
-	   * @class
 	   * @param {string} [url]
 	   * @param {object} [options]
 	   * @param {method} [options.requestMethod] a request function to use instead of the default
@@ -19394,10 +19391,6 @@
 	      if (options) (0, core_1.extend)(this.settings, options);
 	      // Promises
 	      this.opening = new core_1.defer();
-	      /**
-	       * @member {promise} opened returns after the book is loaded
-	       * @memberof Book
-	       */
 	      this.opened = this.opening.promise;
 	      this.loading = {
 	        manifest: new core_1.defer(),
@@ -19421,91 +19414,20 @@
 	        displayOptions: this.loading.displayOptions.promise,
 	        packaging: this.loading.packaging.promise
 	      };
-	      /**
-	       * @member {promise} ready returns after the book is loaded and parsed
-	       * @memberof Book
-	       * @private
-	       */
 	      this.ready = Promise.all([this.loaded.manifest, this.loaded.spine, this.loaded.metadata, this.loaded.cover, this.loaded.navigation, this.loaded.resources, this.loaded.displayOptions, this.loaded.packaging]);
-	      /**
-	       * @member {method} request
-	       * @memberof Book
-	       * @private
-	       */
 	      this.request = this.settings.requestMethod || request_1.default;
-	      /**
-	       * @member {Spine} spine
-	       * @memberof Book
-	       */
 	      this.spine = new spine_1.default();
-	      /**
-	       * @member {Locations} locations
-	       * @memberof Book
-	       */
 	      this.locations = new locations_1.default(this.spine, path => this.load(path));
-	      /**
-	       * @member {Navigation} navigation
-	       * @memberof Book
-	       */
 	      this.navigation = undefined;
-	      /**
-	       * @member {PageList} pagelist
-	       * @memberof Book
-	       */
 	      this.pageList = undefined;
-	      /**
-	       * @member {Url} url
-	       * @memberof Book
-	       * @private
-	       */
 	      this.url = undefined;
-	      /**
-	       * @member {Path} path
-	       * @memberof Book
-	       * @private
-	       */
 	      this.path = undefined;
-	      /**
-	       * @member {Archive} archive
-	       * @memberof Book
-	       * @private
-	       */
 	      this.archive = undefined;
-	      /**
-	       * @member {Store} storage
-	       * @memberof Book
-	       * @private
-	       */
 	      this.storage = undefined;
-	      /**
-	       * @member {Resources} resources
-	       * @memberof Book
-	       * @private
-	       */
 	      this.resources = undefined;
-	      /**
-	       * @member {Rendition} rendition
-	       * @memberof Book
-	       * @private
-	       */
 	      this.rendition = undefined;
-	      /**
-	       * @member {Container} container
-	       * @memberof Book
-	       * @private
-	       */
 	      this.container = undefined;
-	      /**
-	       * @member {Packaging} packaging
-	       * @memberof Book
-	       * @private
-	       */
 	      this.packaging = undefined;
-	      /**
-	       * @member {DisplayOptions} displayOptions
-	       * @memberof DisplayOptions
-	       * @private
-	       */
 	      this.displayOptions = undefined;
 	      // this.toc = undefined;
 	      if (this.settings.store) {
@@ -19615,7 +19537,6 @@
 	    async openManifest(url) {
 	      this.path = new path_1.default(url);
 	      return this.load(url).then(json => {
-	        console.log('[Book] opening manifest clears packaging', url);
 	        this.packaging = new packaging_1.default();
 	        const manifestObj = JSON.parse(json);
 	        this.packaging.load(manifestObj);
@@ -19660,9 +19581,7 @@
 	     * Resolve a path to it's absolute position in the Book
 	     */
 	    resolve(path, absolute) {
-	      if (!path) {
-	        return;
-	      }
+	      if (!path) return;
 	      let resolved = path;
 	      const isAbsolute = typeof path === 'string' && (path.startsWith('/') || path.indexOf('://') > -1);
 	      if (isAbsolute) {
@@ -19693,9 +19612,6 @@
 	    }
 	    /**
 	     * Determine the type of they input passed to open
-	     * @private
-	     * @param  {string} input
-	     * @return {string}  binary | directory | epub | opf
 	     */
 	    determineType(input) {
 	      if (this.settings.encoding === 'base64') {
@@ -19709,20 +19625,19 @@
 	        if (extension) {
 	          extension = extension.replace(/\?.*$/, '');
 	        }
-	        if (!extension) {
-	          return INPUT_TYPE.DIRECTORY;
+	        switch (extension) {
+	          case undefined:
+	          case '':
+	            return INPUT_TYPE.DIRECTORY;
+	          case 'epub':
+	            return INPUT_TYPE.EPUB;
+	          case 'opf':
+	            return INPUT_TYPE.OPF;
+	          case 'json':
+	            return INPUT_TYPE.MANIFEST;
+	          default:
+	            return INPUT_TYPE.BINARY;
 	        }
-	        if (extension === 'epub') {
-	          return INPUT_TYPE.EPUB;
-	        }
-	        if (extension === 'opf') {
-	          return INPUT_TYPE.OPF;
-	        }
-	        if (extension === 'json') {
-	          return INPUT_TYPE.MANIFEST;
-	        }
-	        // Default to binary for unknown extensions
-	        return INPUT_TYPE.BINARY;
 	      }
 	      // Robust type checks for Blob and ArrayBuffer
 	      if (typeof Blob !== 'undefined' && input instanceof Blob) {
@@ -19736,7 +19651,6 @@
 	    }
 	    /**
 	     * unpack the contents of the Books packaging
-	     * @param {Packaging} packaging object
 	     */
 	    unpack(packaging) {
 	      this.packaging = packaging;
@@ -19829,9 +19743,6 @@
 	    }
 	    /**
 	     * Sugar to render a book to an element
-	     * @param  {element | string} element element or string to add a rendition to
-	     * @param  {object} [options]
-	     * @return {Rendition}
 	     */
 	    renderTo(element, options) {
 	      this.rendition = new rendition_1.default(this, options);
@@ -19922,19 +19833,10 @@
 	     * Get the cover url
 	     */
 	    async coverUrl() {
-	      return this.loaded.cover.then(() => {
-	        if (!this.cover) {
-	          return null;
-	        }
-	        if (this.archived) {
-	          if (this.archive === undefined) {
-	            return null;
-	          }
-	          return this.archive.createUrl(this.cover);
-	        } else {
-	          return this.cover;
-	        }
-	      });
+	      await this.loaded?.cover;
+	      if (!this.cover) return null;
+	      if (this.archived && this.archive) return this.archive.createUrl(this.cover);
+	      return this.archived ? null : this.cover;
 	    }
 	    /**
 	     * Load replacement urls
@@ -19995,6 +19897,7 @@
 	      this.packaging?.destroy();
 	      this.rendition?.destroy();
 	      this.displayOptions?.destroy();
+	      // @ts-expect-error this is only at destroy time
 	      this.spine = undefined;
 	      this.locations = undefined;
 	      this.pageList = undefined;
@@ -20009,7 +19912,6 @@
 	      this.archived = false;
 	    }
 	  }
-	  //-- Enable binding events to book
 	  (0, event_emitter_1.default)(Book.prototype);
 	  book.default = Book;
 	  return book;
