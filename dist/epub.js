@@ -11099,9 +11099,6 @@ var hasRequiredPageMapGenerator;
 function requirePageMapGenerator() {
   if (hasRequiredPageMapGenerator) return pageMapGenerator;
   hasRequiredPageMapGenerator = 1;
-  /**
-   * Simple, lightweight page map generator for prerenderer
-   */
   Object.defineProperty(pageMapGenerator, "__esModule", {
     value: true
   });

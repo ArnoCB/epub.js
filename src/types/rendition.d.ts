@@ -6,6 +6,7 @@ import type {
   Orientation,
   LayoutType,
 } from './common';
+import type { Hook } from '../utils/hook';
 
 export type LayoutProperties = {
   layout?: LayoutType;

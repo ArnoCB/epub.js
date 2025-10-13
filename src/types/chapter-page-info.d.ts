@@ -1,4 +1,4 @@
-import type { PreRenderedChapter } from '../../types/managers/helpers/chapter-manager';
+import type { PreRenderedChapter } from './pre-rendered-chapter';
 
 export interface ChapterPageInfo {
   pageCount: number;

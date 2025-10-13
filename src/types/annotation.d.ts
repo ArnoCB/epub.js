@@ -1,3 +1,5 @@
+import type { Annotation } from '../annotation';
+
 export type MarkType = 'highlight' | 'underline' | 'mark';
 
 export type AnnotationData = {

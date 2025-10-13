@@ -1,7 +1,3 @@
-/**
- * Simple, lightweight page map generator for prerenderer
- */
-
 import { Section } from '../../section';
 import { View } from './views';
 import { CfiResolver } from './cfi-resolver';
