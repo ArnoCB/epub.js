@@ -3,8 +3,14 @@ import EpubCFI from './epubcfi';
 import Hook from './utils/hook';
 import { sprint } from './utils/core';
 import Request from './utils/request';
-
-import type { SectionItem, Match } from './types';
+import type {
+  SectionItem,
+  Match,
+  Orientation,
+  Spread,
+  LayoutType,
+  SectionLayoutSettings,
+} from './types';
 
 /**
  * Represents a Section of the Book
@@ -259,15 +265,14 @@ export class Section {
   /**
    * Reconciles the current chapters layout properties with
    * the global layout properties.
-   * @return layoutProperties Object with layout properties
    */
   reconcileLayoutSettings(globalLayout: {
-    layout: string;
-    spread: string;
-    orientation: string;
-  }) {
+    layout: LayoutType;
+    spread: Spread;
+    orientation: Orientation;
+  }): SectionLayoutSettings {
     //-- Get the global defaults
-    const settings: { [key: string]: string } = {
+    const settings: SectionLayoutSettings = {
       layout: globalLayout.layout,
       spread: globalLayout.spread,
       orientation: globalLayout.orientation,
@@ -286,6 +291,7 @@ export class Section {
         settings[property] = value;
       }
     });
+
     return settings;
   }
 
@@ -309,9 +315,6 @@ export class Section {
     this.unload();
     this.hooks.serialize.clear();
     this.hooks.content.clear();
-
-    // Note: The object itself will be garbage collected when all references are removed
-    // No need to clear primitive properties or create type conflicts
   }
 }
 

@@ -1,7 +1,7 @@
 import Book from './book';
 import Layout from './layout';
-import { ViewManager } from './managers/helpers/snap';
-import Rendition, { RenditionOptions } from './rendition';
+import Rendition from './rendition';
+import { RenditionOptions, ViewManager } from './types';
 
 // Mocks for dependencies
 jest.mock('./themes', () =>

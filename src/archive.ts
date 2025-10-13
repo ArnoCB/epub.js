@@ -145,7 +145,6 @@ class Archive {
           throw err;
         });
     } else {
-      console.error('[Archive] getBlob: file not found', url);
       return Promise.reject({
         message: 'File not found in the epub: ' + url,
         stack: new Error().stack,
@@ -153,7 +152,7 @@ class Archive {
     }
   }
 
-  getText(url: string) {
+  async getText(url: string) {
     const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
     if (entry) {
@@ -167,7 +166,6 @@ class Archive {
           throw err;
         });
     } else {
-      console.error('[Archive] getText: file not found', url);
       return Promise.reject({
         message: 'File not found in the epub: ' + url,
         stack: new Error().stack,
@@ -178,7 +176,7 @@ class Archive {
   /**
    * Get a base64 encoded result from Archive by Url
    */
-  getBase64(url: string, mimeType?: string) {
+  asyncgetBase64(url: string, mimeType?: string) {
     const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
 

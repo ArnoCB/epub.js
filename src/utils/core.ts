@@ -661,3 +661,26 @@ export class defer<T = unknown> {
     // Removed Object.freeze(this) to allow resolve/reject to work as expected
   }
 }
+
+/**
+ * Returns a valid value from allowed options or a default if invalid/missing
+ */
+export function getValidOrDefault<
+  T extends readonly string[] | { [key: string]: string },
+>(
+  value: string | null | undefined,
+  allowed: T,
+  defaultValue: T extends readonly string[] ? T[number] : T[keyof T]
+): T extends readonly string[] ? T[number] : T[keyof T] {
+  const allowedValues: readonly string[] = Array.isArray(allowed)
+    ? allowed
+    : Object.values(allowed);
+
+  if (
+    typeof value === 'string' &&
+    (allowedValues as ReadonlyArray<string>).includes(value)
+  ) {
+    return value as T extends readonly string[] ? T[number] : T[keyof T];
+  }
+  return defaultValue;
+}

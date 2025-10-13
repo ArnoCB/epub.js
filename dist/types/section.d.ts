@@ -1,5 +1,5 @@
 import Hook from './utils/hook';
-import type { SectionItem, Match } from './types';
+import type { SectionItem, Match, Orientation, Spread, LayoutType, SectionLayoutSettings } from './types';
 /**
  * Represents a Section of the Book
  *
@@ -58,15 +58,12 @@ export declare class Section {
     /**
      * Reconciles the current chapters layout properties with
      * the global layout properties.
-     * @return layoutProperties Object with layout properties
      */
     reconcileLayoutSettings(globalLayout: {
-        layout: string;
-        spread: string;
-        orientation: string;
-    }): {
-        [key: string]: string;
-    };
+        layout: LayoutType;
+        spread: Spread;
+        orientation: Orientation;
+    }): SectionLayoutSettings;
     /**
      * Get a CFI from a Range or Element in the Section
      */

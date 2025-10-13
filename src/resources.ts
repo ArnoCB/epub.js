@@ -25,7 +25,6 @@ export type ResolverFunction = (path: string, absolute?: boolean) => string;
 
 /**
  * Handle Package Resources
- * @class
  * @param {Manifest} manifest
  * @param {object} [options]
  * @param {string} [options.replacements="base64"]

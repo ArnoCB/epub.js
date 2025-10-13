@@ -7,7 +7,7 @@ import type {
   RenditionOptions,
 } from './types';
 import EventEmitter from 'event-emitter';
-import { extend, defer } from './utils/core';
+import { extend, defer, getValidOrDefault } from './utils/core';
 import Url from './utils/url';
 import Path from './utils/path';
 import Spine from './spine';
@@ -26,6 +26,7 @@ import DisplayOptions from './displayoptions';
 import { EPUBJS_VERSION, EVENTS } from './utils/constants';
 import { Section } from './section';
 import JSZip from 'jszip';
+import { Spread, DEFAULT_SPREAD } from './enums/epub-enums';
 
 const CONTAINER_PATH = 'META-INF/container.xml';
 const IBOOKS_DISPLAY_OPTIONS_PATH =
@@ -492,23 +493,17 @@ class Book implements EventEmitterMethods {
     this.packaging = packaging;
     this.loading!.packaging.resolve(this.packaging);
 
-    if (this.packaging.metadata.layout === '') {
-      // rendition:layout not set - check display options if book is pre-paginated
-      this.load<XMLDocument>(
-        this.url?.resolve(IBOOKS_DISPLAY_OPTIONS_PATH) ?? ''
-      )
-        .then((xml) => {
-          this.displayOptions = new DisplayOptions(xml);
-          this.loading!.displayOptions.resolve(this.displayOptions);
-        })
-        .catch(() => {
-          this.displayOptions = new DisplayOptions();
-          this.loading!.displayOptions.resolve(this.displayOptions);
-        });
-    } else {
-      this.displayOptions = new DisplayOptions();
-      this.loading!.displayOptions.resolve(this.displayOptions);
-    }
+    // Always attempt to load iBooks display options
+    this.load<XMLDocument>(this.url?.resolve(IBOOKS_DISPLAY_OPTIONS_PATH) ?? '')
+      .then((xml) => {
+        this.displayOptions = new DisplayOptions(xml);
+        this.applyDisplayOptionsOverrides(this.displayOptions);
+        this.loading!.displayOptions.resolve(this.displayOptions);
+      })
+      .catch(() => {
+        this.displayOptions = new DisplayOptions();
+        this.loading!.displayOptions.resolve(this.displayOptions);
+      });
 
     this.spine?.unpack(
       this.packaging,
@@ -788,6 +783,34 @@ class Book implements EventEmitterMethods {
     return `epubjs:${EPUBJS_VERSION}:${ident}`;
   }
 
+  /**
+   * Apply iBooks display options overrides to packaging metadata
+   */
+  private applyDisplayOptionsOverrides(displayOptions: DisplayOptions) {
+    if (!this.packaging || !this.packaging.metadata) return;
+
+    // fixedLayout: 'true'|'false' (maps to layout)
+    if (displayOptions.fixedLayout === 'true') {
+      this.packaging.metadata.layout = 'pre-paginated';
+    } else if (displayOptions.fixedLayout === 'false') {
+      this.packaging.metadata.layout = 'reflowable';
+    }
+
+    // orientationLock: 'landscape'|'portrait' (maps to orientation)
+    if (
+      displayOptions.orientationLock === 'landscape' ||
+      displayOptions.orientationLock === 'portrait'
+    ) {
+      this.packaging.metadata.orientation = displayOptions.orientationLock;
+    }
+
+    // openToSpread: use getValidOrDefault for type safety
+    this.packaging.metadata.spread = getValidOrDefault(
+      displayOptions.openToSpread,
+      Spread,
+      DEFAULT_SPREAD
+    );
+  }
   /**
    * Destroy the Book and all associated objects
    */

@@ -2,35 +2,14 @@ import EventEmitter from 'event-emitter';
 import { defer } from '../../utils/core';
 import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
-import { Pane as OriginalPane, Mark } from 'marks-pane';
+import { Mark } from 'marks-pane';
 import { View } from '../helpers/views';
 import Layout from '../../layout';
 import Section from '../../section';
-import type { Flow, Axis } from '../../types';
+import type { Axis } from '../../types';
+import { StyledPane } from './styled-pane';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
-interface ExtendedIFrameElement extends HTMLIFrameElement {
-    allowTransparency?: string;
-    seamless?: string;
-}
-declare class StyledPane extends OriginalPane {
-    constructor(target: HTMLElement, container: HTMLElement, _transparency: boolean);
-}
-export type IframeViewSettings = {
-    ignoreClass: string;
-    axis: Axis | undefined;
-    direction: string | undefined;
-    width: number;
-    height: number;
-    layout: Layout | undefined;
-    globalLayoutProperties: Record<string, unknown>;
-    method: string | undefined;
-    forceRight: boolean;
-    allowScriptedContent: boolean;
-    allowPopups: boolean;
-    transparency: boolean;
-    forceEvenPages?: boolean;
-    flow?: Flow;
-};
+import type { ExtendedIFrameElement, IframeViewSettings } from '../../types';
 declare class IframeView implements View, EventEmitterMethods {
     emit: EventEmitter['emit'];
     on: EventEmitter['on'];
@@ -102,7 +81,7 @@ declare class IframeView implements View, EventEmitterMethods {
         height: number;
     } | undefined;
     constructor(section: Section, options?: Partial<IframeViewSettings>);
-    container(axis: string): HTMLDivElement;
+    container(axis: Axis): HTMLDivElement;
     create(): ExtendedIFrameElement;
     /**
      * Stub for createContainer to resolve TypeScript errors.

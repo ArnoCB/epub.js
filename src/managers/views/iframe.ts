@@ -12,62 +12,16 @@ import {
 import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import { EVENTS } from '../../utils/constants';
-import { Pane as OriginalPane, Highlight, Underline, Mark } from 'marks-pane';
+import { Highlight, Underline, Mark } from 'marks-pane';
 import { View } from '../helpers/views';
 import Layout from '../../layout';
 import Section from '../../section';
-import type { Flow, Axis } from '../../types';
+import type { Axis } from '../../types';
+import { StyledPane } from './styled-pane';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 
-interface ExtendedIFrameElement extends HTMLIFrameElement {
-  allowTransparency?: string;
-  seamless?: string;
-}
-
-// Subclass Pane to inject custom SVG styling
-class StyledPane extends OriginalPane {
-  constructor(
-    target: HTMLElement,
-    container: HTMLElement,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _transparency: boolean
-  ) {
-    super(target, container);
-
-    // @ts-expect-error We should add a public method to get the method in Pane
-    const svgElement = this.element;
-    if (svgElement) {
-      // Apply the exact same styling as the working SVG
-      svgElement.setAttribute('pointer-events', 'none');
-      svgElement.style.position = 'absolute';
-      svgElement.style.top = '0px';
-      svgElement.style.left = '0px';
-      svgElement.style.zIndex = '-3';
-
-      // Apply important styles to match exactly
-      svgElement.style.setProperty('top', '0px', 'important');
-      svgElement.style.setProperty('left', '0px', 'important');
-    }
-  }
-}
-
-export type IframeViewSettings = {
-  ignoreClass: string;
-  axis: Axis | undefined;
-  direction: string | undefined;
-  width: number;
-  height: number;
-  layout: Layout | undefined;
-  globalLayoutProperties: Record<string, unknown>;
-  method: string | undefined;
-  forceRight: boolean;
-  allowScriptedContent: boolean;
-  allowPopups: boolean;
-  transparency: boolean;
-  forceEvenPages?: boolean;
-  flow?: Flow;
-};
+import type { ExtendedIFrameElement, IframeViewSettings } from '../../types';
 
 class IframeView implements View, EventEmitterMethods {
   emit!: EventEmitter['emit'];
@@ -196,7 +150,7 @@ class IframeView implements View, EventEmitterMethods {
     this.marks = {};
   }
 
-  container(axis: string) {
+  container(axis: Axis) {
     const element = document.createElement('div');
 
     element.classList.add('epub-view');
@@ -208,7 +162,7 @@ class IframeView implements View, EventEmitterMethods {
     element.style.position = 'relative';
     element.style.display = 'block';
 
-    if (axis && axis == 'horizontal') {
+    if (axis && axis === 'horizontal') {
       element.style.flex = 'none';
     } else {
       element.style.flex = 'initial';
@@ -288,7 +242,7 @@ class IframeView implements View, EventEmitterMethods {
     return document.createElement('div');
   }
 
-  render(request?: (url: string) => Promise<Document>): Promise<void> {
+  async render(request?: (url: string) => Promise<Document>): Promise<void> {
     this.create();
 
     // Fit to size of the container, apply padding

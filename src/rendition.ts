@@ -171,7 +171,7 @@ export class Rendition implements EventEmitterMethods {
       this.settings.layout = 'pre-paginated';
     }
 
-    switch (this.book.packaging.metadata.spread) {
+    switch (this.book.packaging.metadata.spread as Spread | 'both') {
       case 'none':
         this.settings.spread = 'none';
         break;

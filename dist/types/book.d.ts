@@ -169,6 +169,10 @@ declare class Book implements EventEmitterMethods {
      */
     key(identifier?: string): string;
     /**
+     * Apply iBooks display options overrides to packaging metadata
+     */
+    private applyDisplayOptionsOverrides;
+    /**
      * Destroy the Book and all associated objects
      */
     destroy(): void;

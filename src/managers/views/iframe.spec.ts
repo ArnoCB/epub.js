@@ -1,6 +1,7 @@
 import Layout from '../../layout';
-import IframeView, { IframeViewSettings } from './iframe';
+import IframeView from './iframe';
 import Section from '../../section';
+import { IframeViewSettings } from '../../types';
 
 jest.mock('../../epubcfi', () => {
   return jest.fn().mockImplementation(() => ({}));

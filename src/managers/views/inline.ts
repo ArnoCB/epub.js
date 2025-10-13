@@ -1,24 +1,4 @@
-// Types for options and settings
-export interface InlineViewOptions {
-  ignoreClass?: string;
-  axis?: 'vertical' | 'horizontal';
-  width?: number;
-  height?: number;
-  layout?: Layout;
-  globalLayoutProperties?: Record<string, unknown>;
-  quest?: (url: string) => Promise<Document>;
-  [key: string]: unknown;
-}
-
-export interface InlineViewSettings {
-  // All properties from InlineViewOptions, but required after extend
-  ignoreClass: string;
-  axis: 'vertical' | 'horizontal';
-  width: number;
-  height: number;
-  layout: Layout;
-  globalLayoutProperties: Record<string, unknown>;
-}
+import type { Axis, InlineViewOptions, InlineViewSettings } from '../../types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 
@@ -109,7 +89,7 @@ class InlineView implements EventEmitterMethods, View {
     // this.listenedEvents = ["keydown", "keyup", "keypressed", "mouseup", "mousedown", "click", "touchend", "touchstart"];
   }
 
-  container(axis: string) {
+  container(axis: Axis) {
     const element = document.createElement('div');
 
     element.classList.add('epub-view');

@@ -6,6 +6,15 @@
  * @see src/section.ts
  */
 import type { Section } from '../section';
+import type { LayoutType, Spread, Orientation } from './common';
+
+// Layout settings for a section, including required and dynamic keys
+export type SectionLayoutSettings = {
+  layout: LayoutType;
+  spread: Spread;
+  orientation: Orientation;
+  [key: string]: string;
+};
 
 // Define the actual item structure that gets passed to Section constructor
 export interface SectionItem {

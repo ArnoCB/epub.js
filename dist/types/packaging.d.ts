@@ -30,8 +30,6 @@ declare class Packaging {
     };
     /**
      * Parse Metadata
-     * @param  {Element} xml
-     * @return {PackagingMetadataObject} metadata
      */
     private parseMetadata;
     /**

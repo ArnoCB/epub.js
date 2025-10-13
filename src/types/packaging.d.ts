@@ -1,4 +1,11 @@
-import type { RawNavItem } from '../navigation';
+import type { RawNavItem, NavItem } from './navigation';
+import type {
+  LayoutType,
+  Orientation,
+  Flow,
+  Spread,
+  Direction,
+} from './common';
 
 export interface PackagingMetadataObject {
   title: string;
@@ -75,12 +82,6 @@ export interface Packaging {
 // ExtendedNavItem type is only used locally, so define it here
 export type ExtendedNavItem = NavItem & {
   title: string;
-  [key: string]: unknown;
-};
-
-// Extended types for JSON loading with additional properties
-export type ExtendedManifestItem = PackagingManifestItem & {
-  rel?: string[];
   [key: string]: unknown;
 };
 

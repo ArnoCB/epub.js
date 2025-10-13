@@ -11,6 +11,19 @@ import type {
   Flow,
 } from './types';
 import { indexOfElementNode } from './utils/helpers';
+import { getValidOrDefault } from './utils/core';
+import {
+  LayoutType,
+  DEFAULT_LAYOUT_TYPE,
+  Orientation,
+  DEFAULT_ORIENTATION,
+  Spread,
+  DEFAULT_SPREAD,
+  Flow as FlowEnum,
+  DEFAULT_FLOW,
+  DEFAULT_DIRECTION,
+} from './enums/epub-enums';
+// Add similar imports for ORIENTATIONS and SPREADS if you have them
 
 /**
  * Open Packaging Format Parser
@@ -68,8 +81,8 @@ class Packaging {
     this.uniqueIdentifier = this.findUniqueIdentifier(packageDocument);
     this.metadata = this.parseMetadata(metadataNode);
 
-    this.metadata.direction =
-      spineNode.getAttribute('page-progression-direction') || 'ltr';
+    const dir = spineNode.getAttribute('page-progression-direction');
+    this.metadata.direction = dir === 'ltr' || dir === 'rtl' ? dir : 'ltr';
 
     return {
       metadata: this.metadata,
@@ -84,8 +97,6 @@ class Packaging {
 
   /**
    * Parse Metadata
-   * @param  {Element} xml
-   * @return {PackagingMetadataObject} metadata
    */
   private parseMetadata(xml: Element): PackagingMetadataObject {
     return {
@@ -98,12 +109,28 @@ class Packaging {
       language: this.getElementText(xml, 'language'),
       rights: this.getElementText(xml, 'rights'),
       modified_date: this.getPropertyText(xml, 'dcterms:modified'),
-      layout: this.getPropertyText(xml, 'rendition:layout'),
-      orientation: this.getPropertyText(xml, 'rendition:orientation'),
-      flow: this.getPropertyText(xml, 'rendition:flow') as Flow,
+      layout: getValidOrDefault(
+        this.getPropertyText(xml, 'rendition:layout'),
+        LayoutType,
+        DEFAULT_LAYOUT_TYPE
+      ) as LayoutType,
+      orientation: getValidOrDefault(
+        this.getPropertyText(xml, 'rendition:orientation'),
+        Orientation,
+        DEFAULT_ORIENTATION
+      ) as Orientation,
+      flow: getValidOrDefault(
+        this.getPropertyText(xml, 'rendition:flow'),
+        FlowEnum,
+        DEFAULT_FLOW
+      ) as Flow,
       viewport: this.getPropertyText(xml, 'rendition:viewport'),
-      spread: this.getPropertyText(xml, 'rendition:spread'),
-      direction: '', // Will be set later from spine element
+      spread: getValidOrDefault(
+        this.getPropertyText(xml, 'rendition:spread'),
+        Spread,
+        DEFAULT_SPREAD
+      ) as Spread,
+      direction: DEFAULT_DIRECTION, // Will be set later from spine element, set default here
     };
   }
 

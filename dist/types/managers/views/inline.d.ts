@@ -1,21 +1,4 @@
-export interface InlineViewOptions {
-    ignoreClass?: string;
-    axis?: 'vertical' | 'horizontal';
-    width?: number;
-    height?: number;
-    layout?: Layout;
-    globalLayoutProperties?: Record<string, unknown>;
-    quest?: (url: string) => Promise<Document>;
-    [key: string]: unknown;
-}
-export interface InlineViewSettings {
-    ignoreClass: string;
-    axis: 'vertical' | 'horizontal';
-    width: number;
-    height: number;
-    layout: Layout;
-    globalLayoutProperties: Record<string, unknown>;
-}
+import type { Axis, InlineViewOptions, InlineViewSettings } from '../../types';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 import EventEmitter from 'event-emitter';
 import EpubCFI from '../../epubcfi';
@@ -62,7 +45,7 @@ declare class InlineView implements EventEmitterMethods, View {
     document: Document | undefined;
     window: Window | null | undefined;
     constructor(section: Section, options?: InlineViewOptions);
-    container(axis: string): HTMLDivElement;
+    container(axis: Axis): HTMLDivElement;
     width(): number;
     height(): number;
     highlight(cfiRange: string, data: Record<string, string>, cb?: (e: Event) => void, className?: string, styles?: object): undefined;

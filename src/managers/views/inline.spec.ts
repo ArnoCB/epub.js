@@ -1,6 +1,7 @@
 import Section from '../../section';
 import Contents from '../../contents';
-import InlineView, { InlineViewOptions } from './inline';
+import InlineView from './inline';
+import { InlineViewOptions } from '../../types';
 
 describe('InlineView', () => {
   let section: Section;

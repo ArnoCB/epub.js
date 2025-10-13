@@ -50,4 +50,4 @@ export type Flow =
  * Spread type for EPUB content rendering.
  * @see http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
  */
-export type Spread = 'none' | 'always' | 'auto';
+export type Spread = 'none' | 'landscape' | 'portrait' | 'both' | 'auto';

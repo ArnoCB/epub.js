@@ -1,5 +1,5 @@
 // Setup polyfills for Node.js environment
-import type { Flow } from './types';
+import type { Direction, Flow, LayoutType, Orientation, Spread } from './types';
 import { TextEncoder, TextDecoder } from 'util';
 import Packaging from './packaging';
 Object.assign(global, { TextDecoder, TextEncoder });
@@ -278,12 +278,12 @@ describe('Packaging', () => {
           language: 'en',
           rights: 'All rights reserved',
           modified_date: '2023-01-01T00:00:00Z',
-          layout: 'reflowable',
-          orientation: 'auto',
+          layout: 'reflowable' as LayoutType,
+          orientation: 'auto' as Orientation,
           flow: 'auto' as Flow,
           viewport: '',
-          spread: 'auto',
-          direction: 'ltr',
+          spread: 'auto' as Spread,
+          direction: 'ltr' as Direction,
         },
         resources: [
           {

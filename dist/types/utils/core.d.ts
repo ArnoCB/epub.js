@@ -220,3 +220,9 @@ export declare class defer<T = unknown> {
     id: string;
     constructor();
 }
+/**
+ * Returns a valid value from allowed options or a default if invalid/missing
+ */
+export declare function getValidOrDefault<T extends readonly string[] | {
+    [key: string]: string;
+}>(value: string | null | undefined, allowed: T, defaultValue: T extends readonly string[] ? T[number] : T[keyof T]): T extends readonly string[] ? T[number] : T[keyof T];
