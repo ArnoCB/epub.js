@@ -1,3 +1,4 @@
+export declare function indexOfElementNode(elementNode: Node): number;
 /**
  * Creates a debounced function that delays invoking the provided function
  * until after the specified wait time has elapsed since the last invocation.

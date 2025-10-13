@@ -6,44 +6,14 @@ import type {
   PackagingManifestObject,
   ExtendedManifestItem,
   ExtendedNavItem,
+  PackagingParseResult,
 } from './types';
 import type { RawNavItem } from './navigation';
 import { Flow } from './layout';
-
-const ELEMENT_NODE = 1;
-
-/**
- * Gets the index of a node in its parent
- * @memberof Core
- */
-export function indexOfNode(node: Node, typeId: number): number {
-  const parent = node.parentNode;
-
-  if (!parent) {
-    return -1;
-  }
-
-  const children = parent.childNodes;
-  let sib: Node;
-  let index = -1;
-  for (let i = 0; i < children.length; i++) {
-    sib = children[i];
-    if (sib.nodeType === typeId) {
-      index++;
-    }
-    if (sib == node) break;
-  }
-
-  return index;
-}
-
-function indexOfElementNode(elementNode: Node) {
-  return indexOfNode(elementNode, ELEMENT_NODE);
-}
+import { indexOfElementNode } from './utils/helpers';
 
 /**
  * Open Packaging Format Parser
- * @class
  * @param {document} packageDocument OPF XML
  */
 class Packaging {
@@ -94,11 +64,8 @@ class Packaging {
     this.navPath = this.findNavPath(manifestNode);
     this.ncxPath = this.findNcxPath(manifestNode, spineNode);
     this.coverPath = this.findCoverPath(packageDocument);
-
     this.spineNodeIndex = indexOfElementNode(spineNode);
-
     this.spine = this.parseSpine(spineNode);
-
     this.uniqueIdentifier = this.findUniqueIdentifier(packageDocument);
     this.metadata = this.parseMetadata(metadataNode);
 
@@ -143,8 +110,6 @@ class Packaging {
 
   /**
    * Parse Manifest
-   * @param  {Element} manifestXml
-   * @return {PackagingManifestObject} manifest
    */
   private parseManifest(manifestXml: Element): PackagingManifestObject {
     const manifest: PackagingManifestObject = {};
@@ -175,8 +140,6 @@ class Packaging {
 
   /**
    * Parse Spine
-   * @param  {Element} spineXml
-   * @return {object} spine
    */
   private parseSpine(spineXml: Element): PackagingSpineItem[] {
     const spine: PackagingSpineItem[] = [];
@@ -212,41 +175,26 @@ class Packaging {
   }
 
   /**
-   * Find Unique Identifier
-   * @param  {node} packageXml
-   * @return {string} Unique Identifier text
+   * Find the unique identifier text from the package document.
    */
   private findUniqueIdentifier(packageXml: XMLDocument): string {
-    const uniqueIdentifierId =
-      packageXml.documentElement.getAttribute('unique-identifier');
-    if (!uniqueIdentifierId) {
-      return '';
-    }
+    const id = packageXml.documentElement.getAttribute('unique-identifier');
+    if (!id) return '';
 
-    const identifier = packageXml.getElementById(uniqueIdentifierId);
-    if (!identifier) {
-      return '';
-    }
-
+    const el = packageXml.getElementById(id);
     if (
-      identifier.localName === 'identifier' &&
-      identifier.namespaceURI === 'http://purl.org/dc/elements/1.1/'
+      !el ||
+      el.localName !== 'identifier' ||
+      el.namespaceURI !== 'http://purl.org/dc/elements/1.1/'
     ) {
-      if (
-        identifier.childNodes.length > 0 &&
-        identifier.childNodes[0].nodeValue
-      ) {
-        return identifier.childNodes[0].nodeValue.trim();
-      }
+      return '';
     }
 
-    return '';
+    return el.textContent?.trim() || '';
   }
 
   /**
    * Find TOC NAV
-   * @param {element} manifestNode
-   * @return {string}
    */
   private findNavPath(manifestNode: Node): string {
     // Find item with property "nav"
@@ -260,16 +208,13 @@ class Packaging {
   /**
    * Find TOC NCX
    * media-type="application/x-dtbncx+xml" href="toc.ncx"
-   * @private
-   * @param {element} manifestNode
-   * @param {element} spineNode
-   * @return {string}
    */
   private findNcxPath(manifestNode: Node, spineNode: Node): string {
     // var node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
     let node = (manifestNode as Element).querySelector(
       "item[media-type='application/x-dtbncx+xml']"
     );
+
     let tocId;
 
     // If we can't find the toc by media-type then try to look for id of the item in the spine attributes as
@@ -287,19 +232,15 @@ class Packaging {
   }
 
   /**
-   * Find the Cover Path
+   * Find the Cover Path and return the href
    * <item properties="cover-image" id="ci" href="cover.svg" media-type="image/svg+xml" />
    * Fallback for Epub 2.0
-   * @private
-   * @param  {XMLDocument} packageXml
-   * @return {string} href
    */
   private findCoverPath(packageXml: XMLDocument): string {
     const pkg = packageXml.querySelector('package');
     pkg?.getAttribute('version');
 
     // Try parsing cover with epub 3.
-    // var node = packageXml.querySelector("item[properties='cover-image']");
     const node = packageXml.querySelector("item[properties~='cover-image']");
     if (node) return node.getAttribute('href') || '';
 
@@ -309,7 +250,6 @@ class Packaging {
     if (metaCover) {
       const coverId = metaCover.getAttribute('content');
       if (coverId) {
-        // var cover = packageXml.querySelector("item[id='" + coverId + "']");
         const cover = packageXml.getElementById(coverId);
         return cover ? cover.getAttribute('href') || '' : '';
       }
@@ -320,9 +260,6 @@ class Packaging {
 
   /**
    * Get text of a namespaced element
-   * @param  {node} xml
-   * @param  {string} tag
-   * @return {string} text
    */
   private getElementText(xml: Element, tag: string): string {
     const found = xml.getElementsByTagNameNS(
@@ -342,9 +279,6 @@ class Packaging {
 
   /**
    * Get text by property
-   * @param  {Element} xml
-   * @param  {string} property
-   * @return {string} text
    */
   private getPropertyText(xml: Element, property: string): string {
     const el = xml.querySelector(`meta[property='${property}']`);
@@ -358,18 +292,8 @@ class Packaging {
 
   /**
    * Load JSON Manifest
-   * @param  {document} packageDocument OPF XML
-   * @return {object} parsed package parts
    */
-  load(json: PackagingManifestJson): {
-    metadata: PackagingMetadataObject;
-    spine: PackagingSpineItem[];
-    manifest: PackagingManifestObject;
-    navPath: string;
-    ncxPath: string;
-    coverPath: string;
-    spineNodeIndex: number;
-  } {
+  load(json: PackagingManifestJson): PackagingParseResult {
     this.metadata = json.metadata;
 
     const spine = json.readingOrder || json.spine;

@@ -1,13 +1,7 @@
-import type { PackagingManifestJson, PackagingMetadataObject, PackagingSpineItem, PackagingManifestObject } from './types';
+import type { PackagingManifestJson, PackagingMetadataObject, PackagingSpineItem, PackagingManifestObject, PackagingParseResult } from './types';
 import type { RawNavItem } from './navigation';
 /**
- * Gets the index of a node in its parent
- * @memberof Core
- */
-export declare function indexOfNode(node: Node, typeId: number): number;
-/**
  * Open Packaging Format Parser
- * @class
  * @param {document} packageDocument OPF XML
  */
 declare class Packaging {
@@ -44,74 +38,43 @@ declare class Packaging {
     private parseMetadata;
     /**
      * Parse Manifest
-     * @param  {Element} manifestXml
-     * @return {PackagingManifestObject} manifest
      */
     private parseManifest;
     /**
      * Parse Spine
-     * @param  {Element} spineXml
-     * @return {object} spine
      */
     private parseSpine;
     /**
-     * Find Unique Identifier
-     * @param  {node} packageXml
-     * @return {string} Unique Identifier text
+     * Find the unique identifier text from the package document.
      */
     private findUniqueIdentifier;
     /**
      * Find TOC NAV
-     * @param {element} manifestNode
-     * @return {string}
      */
     private findNavPath;
     /**
      * Find TOC NCX
      * media-type="application/x-dtbncx+xml" href="toc.ncx"
-     * @private
-     * @param {element} manifestNode
-     * @param {element} spineNode
-     * @return {string}
      */
     private findNcxPath;
     /**
-     * Find the Cover Path
+     * Find the Cover Path and return the href
      * <item properties="cover-image" id="ci" href="cover.svg" media-type="image/svg+xml" />
      * Fallback for Epub 2.0
-     * @private
-     * @param  {XMLDocument} packageXml
-     * @return {string} href
      */
     private findCoverPath;
     /**
      * Get text of a namespaced element
-     * @param  {node} xml
-     * @param  {string} tag
-     * @return {string} text
      */
     private getElementText;
     /**
      * Get text by property
-     * @param  {Element} xml
-     * @param  {string} property
-     * @return {string} text
      */
     private getPropertyText;
     /**
      * Load JSON Manifest
-     * @param  {document} packageDocument OPF XML
-     * @return {object} parsed package parts
      */
-    load(json: PackagingManifestJson): {
-        metadata: PackagingMetadataObject;
-        spine: PackagingSpineItem[];
-        manifest: PackagingManifestObject;
-        navPath: string;
-        ncxPath: string;
-        coverPath: string;
-        spineNodeIndex: number;
-    };
+    load(json: PackagingManifestJson): PackagingParseResult;
     destroy(): void;
 }
 export default Packaging;

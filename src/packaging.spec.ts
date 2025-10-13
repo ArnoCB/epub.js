@@ -1,7 +1,7 @@
 // Setup polyfills for Node.js environment
+import type { Flow } from './layout';
 import { TextEncoder, TextDecoder } from 'util';
 import Packaging from './packaging';
-import { indexOfNode } from './packaging';
 Object.assign(global, { TextDecoder, TextEncoder });
 
 import { JSDOM } from 'jsdom';
@@ -95,56 +95,6 @@ function createMockPackageDocument(
 }
 
 describe('Packaging', () => {
-  describe('indexOfNode function', () => {
-    it('should return -1 when element not found', () => {
-      const dom = new JSDOM('<root><item id="1"/><item id="2"/></root>', {
-        contentType: 'text/xml',
-      });
-      const items = dom.window.document.querySelectorAll('item');
-
-      // Using Node.COMMENT_NODE (8) which won't be found among elements
-      const result = indexOfNode(items[0], 8);
-      expect(result).toBe(-1);
-    });
-
-    it('should return correct index when element found', () => {
-      const dom = new JSDOM(
-        '<root><item id="first"/><item id="second"/><item id="third"/></root>',
-        { contentType: 'text/xml' }
-      );
-      const items = dom.window.document.querySelectorAll('item');
-
-      // Using Node.ELEMENT_NODE (1) to count elements
-      const result = indexOfNode(items[1], 1);
-      expect(result).toBe(1);
-    });
-
-    it('should return 0 for first element', () => {
-      const dom = new JSDOM(
-        '<root><item id="first"/><item id="second"/></root>',
-        { contentType: 'text/xml' }
-      );
-      const items = dom.window.document.querySelectorAll('item');
-
-      // Using Node.ELEMENT_NODE (1) to count elements
-      const result = indexOfNode(items[0], 1);
-      expect(result).toBe(0);
-    });
-
-    it('should handle elements without parent', () => {
-      const dom = new JSDOM('<root><item id="single"/></root>', {
-        contentType: 'text/xml',
-      });
-      const item = dom.window.document.querySelector('item');
-      if (item) {
-        item.remove(); // Remove from parent
-
-        const result = indexOfNode(item, 1);
-        expect(result).toBe(-1);
-      }
-    });
-  });
-
   describe('constructor', () => {
     it('should create instance without package document', () => {
       const packaging = new Packaging();
@@ -330,7 +280,7 @@ describe('Packaging', () => {
           modified_date: '2023-01-01T00:00:00Z',
           layout: 'reflowable',
           orientation: 'auto',
-          flow: 'auto',
+          flow: 'auto' as Flow,
           viewport: '',
           spread: 'auto',
           direction: 'ltr',
@@ -342,7 +292,9 @@ describe('Packaging', () => {
             properties: [],
           },
         ],
-        readingOrder: [{ idref: 'item1', properties: [] }],
+        readingOrder: [
+          { idref: 'item1', properties: [], linear: 'yes', index: 0 },
+        ],
         toc: [
           {
             id: 'ch1',

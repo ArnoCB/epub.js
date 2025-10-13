@@ -1,4 +1,5 @@
 import type {
+  ArchiveRequestTypeMap,
   BookOptions,
   PackagingManifestJson,
   PackagingManifestObject,
@@ -17,7 +18,7 @@ import Navigation from './navigation';
 import Resources from './resources';
 import PageList from './pagelist';
 import Rendition from './rendition';
-import Archive, { type ArchiveRequestTypeMap } from './archive';
+import Archive from './archive';
 import request from './utils/request';
 import EpubCFI from './epubcfi';
 import Store from './store';

@@ -1,14 +1,5 @@
 import { View } from './managers/helpers/views';
-type MarkType = 'highlight' | 'underline' | 'mark';
-type AnnotationData = {
-    type: MarkType;
-    cfiRange: string;
-    data: Record<string, string>;
-    sectionIndex: number;
-    cb: undefined | ((annotation: Annotation) => void);
-    className: string | undefined;
-    styles: Record<string, string> | undefined;
-};
+import type { MarkType, AnnotationData } from './types';
 /**
  * Annotation object
  * @param {object} options

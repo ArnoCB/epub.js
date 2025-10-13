@@ -2,8 +2,7 @@ import Rendition from './rendition';
 import { View } from './managers/helpers/views';
 import Annotation from './annotation';
 import EpubCFI from './epubcfi';
-
-type MarkType = 'highlight' | 'underline' | 'mark';
+import type { MarkType } from './types';
 
 /**
  * Handles managing adding & removing Annotations

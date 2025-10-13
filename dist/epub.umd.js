@@ -4482,18 +4482,20 @@
 
 	var packaging = {};
 
-	var hasRequiredPackaging;
-	function requirePackaging() {
-	  if (hasRequiredPackaging) return packaging;
-	  hasRequiredPackaging = 1;
-	  Object.defineProperty(packaging, "__esModule", {
+	var helpers = {};
+
+	var hasRequiredHelpers;
+	function requireHelpers() {
+	  if (hasRequiredHelpers) return helpers;
+	  hasRequiredHelpers = 1;
+	  Object.defineProperty(helpers, "__esModule", {
 	    value: true
 	  });
-	  packaging.indexOfNode = indexOfNode;
-	  const ELEMENT_NODE = 1;
+	  helpers.indexOfElementNode = indexOfElementNode;
+	  helpers.debounce = debounce;
+	  helpers.throttle = throttle;
 	  /**
 	   * Gets the index of a node in its parent
-	   * @memberof Core
 	   */
 	  function indexOfNode(node, typeId) {
 	    const parent = node.parentNode;
@@ -4513,11 +4515,46 @@
 	    return index;
 	  }
 	  function indexOfElementNode(elementNode) {
-	    return indexOfNode(elementNode, ELEMENT_NODE);
+	    return indexOfNode(elementNode, 1);
 	  }
 	  /**
+	   * Creates a debounced function that delays invoking the provided function
+	   * until after the specified wait time has elapsed since the last invocation.
+	   */
+	  function debounce(func, wait) {
+	    let timeout;
+	    return function (...args) {
+	      clearTimeout(timeout);
+	      timeout = setTimeout(() => func.apply(this, args), wait);
+	    };
+	  }
+	  /**
+	   * Creates a throttled function that only invokes the provided function
+	   * at most once per every specified wait time.
+	   */
+	  function throttle(func, wait) {
+	    let lastCall = 0;
+	    return function (...args) {
+	      const now = Date.now();
+	      if (now - lastCall >= wait) {
+	        lastCall = now;
+	        func.apply(this, args);
+	      }
+	    };
+	  }
+	  return helpers;
+	}
+
+	var hasRequiredPackaging;
+	function requirePackaging() {
+	  if (hasRequiredPackaging) return packaging;
+	  hasRequiredPackaging = 1;
+	  Object.defineProperty(packaging, "__esModule", {
+	    value: true
+	  });
+	  const helpers_1 = requireHelpers();
+	  /**
 	   * Open Packaging Format Parser
-	   * @class
 	   * @param {document} packageDocument OPF XML
 	   */
 	  class Packaging {
@@ -4557,7 +4594,7 @@
 	      this.navPath = this.findNavPath(manifestNode);
 	      this.ncxPath = this.findNcxPath(manifestNode, spineNode);
 	      this.coverPath = this.findCoverPath(packageDocument);
-	      this.spineNodeIndex = indexOfElementNode(spineNode);
+	      this.spineNodeIndex = (0, helpers_1.indexOfElementNode)(spineNode);
 	      this.spine = this.parseSpine(spineNode);
 	      this.uniqueIdentifier = this.findUniqueIdentifier(packageDocument);
 	      this.metadata = this.parseMetadata(metadataNode);
@@ -4598,8 +4635,6 @@
 	    }
 	    /**
 	     * Parse Manifest
-	     * @param  {Element} manifestXml
-	     * @return {PackagingManifestObject} manifest
 	     */
 	    parseManifest(manifestXml) {
 	      const manifest = {};
@@ -4625,8 +4660,6 @@
 	    }
 	    /**
 	     * Parse Spine
-	     * @param  {Element} spineXml
-	     * @return {object} spine
 	     */
 	    parseSpine(spineXml) {
 	      const spine = [];
@@ -4656,30 +4689,19 @@
 	      return spine;
 	    }
 	    /**
-	     * Find Unique Identifier
-	     * @param  {node} packageXml
-	     * @return {string} Unique Identifier text
+	     * Find the unique identifier text from the package document.
 	     */
 	    findUniqueIdentifier(packageXml) {
-	      const uniqueIdentifierId = packageXml.documentElement.getAttribute('unique-identifier');
-	      if (!uniqueIdentifierId) {
+	      const id = packageXml.documentElement.getAttribute('unique-identifier');
+	      if (!id) return '';
+	      const el = packageXml.getElementById(id);
+	      if (!el || el.localName !== 'identifier' || el.namespaceURI !== 'http://purl.org/dc/elements/1.1/') {
 	        return '';
 	      }
-	      const identifier = packageXml.getElementById(uniqueIdentifierId);
-	      if (!identifier) {
-	        return '';
-	      }
-	      if (identifier.localName === 'identifier' && identifier.namespaceURI === 'http://purl.org/dc/elements/1.1/') {
-	        if (identifier.childNodes.length > 0 && identifier.childNodes[0].nodeValue) {
-	          return identifier.childNodes[0].nodeValue.trim();
-	        }
-	      }
-	      return '';
+	      return el.textContent?.trim() || '';
 	    }
 	    /**
 	     * Find TOC NAV
-	     * @param {element} manifestNode
-	     * @return {string}
 	     */
 	    findNavPath(manifestNode) {
 	      // Find item with property "nav"
@@ -4690,10 +4712,6 @@
 	    /**
 	     * Find TOC NCX
 	     * media-type="application/x-dtbncx+xml" href="toc.ncx"
-	     * @private
-	     * @param {element} manifestNode
-	     * @param {element} spineNode
-	     * @return {string}
 	     */
 	    findNcxPath(manifestNode, spineNode) {
 	      // var node = manifestNode.querySelector("item[media-type='application/x-dtbncx+xml']");
@@ -4712,18 +4730,14 @@
 	      return node ? node.getAttribute('href') || '' : '';
 	    }
 	    /**
-	     * Find the Cover Path
+	     * Find the Cover Path and return the href
 	     * <item properties="cover-image" id="ci" href="cover.svg" media-type="image/svg+xml" />
 	     * Fallback for Epub 2.0
-	     * @private
-	     * @param  {XMLDocument} packageXml
-	     * @return {string} href
 	     */
 	    findCoverPath(packageXml) {
 	      const pkg = packageXml.querySelector('package');
 	      pkg?.getAttribute('version');
 	      // Try parsing cover with epub 3.
-	      // var node = packageXml.querySelector("item[properties='cover-image']");
 	      const node = packageXml.querySelector("item[properties~='cover-image']");
 	      if (node) return node.getAttribute('href') || '';
 	      // Fallback to epub 2.
@@ -4731,7 +4745,6 @@
 	      if (metaCover) {
 	        const coverId = metaCover.getAttribute('content');
 	        if (coverId) {
-	          // var cover = packageXml.querySelector("item[id='" + coverId + "']");
 	          const cover = packageXml.getElementById(coverId);
 	          return cover ? cover.getAttribute('href') || '' : '';
 	        }
@@ -4740,9 +4753,6 @@
 	    }
 	    /**
 	     * Get text of a namespaced element
-	     * @param  {node} xml
-	     * @param  {string} tag
-	     * @return {string} text
 	     */
 	    getElementText(xml, tag) {
 	      const found = xml.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', tag);
@@ -4755,9 +4765,6 @@
 	    }
 	    /**
 	     * Get text by property
-	     * @param  {Element} xml
-	     * @param  {string} property
-	     * @return {string} text
 	     */
 	    getPropertyText(xml, property) {
 	      const el = xml.querySelector(`meta[property='${property}']`);
@@ -4768,8 +4775,6 @@
 	    }
 	    /**
 	     * Load JSON Manifest
-	     * @param  {document} packageDocument OPF XML
-	     * @return {object} parsed package parts
 	     */
 	    load(json) {
 	      this.metadata = json.metadata;
@@ -7056,45 +7061,6 @@
 	}
 
 	var stage = {};
-
-	var helpers = {};
-
-	var hasRequiredHelpers;
-	function requireHelpers() {
-	  if (hasRequiredHelpers) return helpers;
-	  hasRequiredHelpers = 1;
-	  Object.defineProperty(helpers, "__esModule", {
-	    value: true
-	  });
-	  helpers.debounce = debounce;
-	  helpers.throttle = throttle;
-	  /**
-	   * Creates a debounced function that delays invoking the provided function
-	   * until after the specified wait time has elapsed since the last invocation.
-	   */
-	  function debounce(func, wait) {
-	    let timeout;
-	    return function (...args) {
-	      clearTimeout(timeout);
-	      timeout = setTimeout(() => func.apply(this, args), wait);
-	    };
-	  }
-	  /**
-	   * Creates a throttled function that only invokes the provided function
-	   * at most once per every specified wait time.
-	   */
-	  function throttle(func, wait) {
-	    let lastCall = 0;
-	    return function (...args) {
-	      const now = Date.now();
-	      if (now - lastCall >= wait) {
-	        lastCall = now;
-	        func.apply(this, args);
-	      }
-	    };
-	  }
-	  return helpers;
-	}
 
 	var hasRequiredStage;
 	function requireStage() {

@@ -1,4 +1,38 @@
-import { debounce, throttle } from './helpers';
+import { debounce, throttle, indexOfElementNode } from './helpers';
+
+describe('indexOfElementNode', () => {
+  it('returns correct index for element nodes', () => {
+    const parent = document.createElement('div');
+    const child1 = document.createElement('span');
+    const child2 = document.createElement('span');
+    const child3 = document.createElement('span');
+    parent.appendChild(child1);
+    parent.appendChild(child2);
+    parent.appendChild(child3);
+    expect(indexOfElementNode(child1)).toBe(0);
+    expect(indexOfElementNode(child2)).toBe(1);
+    expect(indexOfElementNode(child3)).toBe(2);
+  });
+
+  it('returns -1 if node has no parent', () => {
+    const orphan = document.createElement('div');
+    expect(indexOfElementNode(orphan)).toBe(-1);
+  });
+
+  it('ignores non-element siblings', () => {
+    const parent = document.createElement('div');
+    const text1 = document.createTextNode('a');
+    const el1 = document.createElement('span');
+    const text2 = document.createTextNode('b');
+    const el2 = document.createElement('span');
+    parent.appendChild(text1);
+    parent.appendChild(el1);
+    parent.appendChild(text2);
+    parent.appendChild(el2);
+    expect(indexOfElementNode(el1)).toBe(0);
+    expect(indexOfElementNode(el2)).toBe(1);
+  });
+});
 
 describe('helpers', () => {
   describe('debounce', () => {

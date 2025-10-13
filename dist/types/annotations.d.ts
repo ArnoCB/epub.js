@@ -1,6 +1,6 @@
 import Rendition from './rendition';
 import Annotation from './annotation';
-type MarkType = 'highlight' | 'underline' | 'mark';
+import type { MarkType } from './types';
 /**
  * Handles managing adding & removing Annotations
  */
