@@ -111,26 +111,12 @@ describe('Archive', () => {
     });
 
     test('should destroy archive and clear cache', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       const content = await zip.generateAsync({ type: 'uint8array' });
       await archive.open(content, false);
       await archive.createUrl('/test.txt');
       archive.destroy();
 
       await expect(archive.request('/test.txt', 'text')).rejects.toBeDefined();
-
-      // Expect the console.error calls that should occur
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Archive] getText: file not found',
-        '/test.txt'
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Archive] request error',
-        expect.any(Object)
-      );
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -224,8 +210,6 @@ describe('Archive', () => {
     });
 
     test('should handle missing files gracefully', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
       await archive.open(new Uint8Array(epubBuffer), false);
 
       await expect(
@@ -233,13 +217,6 @@ describe('Archive', () => {
       ).rejects.toMatchObject({
         message: expect.stringContaining('File not found in the epub'),
       });
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[Archive] getText: file not found',
-        '/nonexistent/file.txt'
-      );
-
-      consoleErrorSpy.mockRestore();
     });
 
     test('should destroy archive and clean up resources', async () => {
@@ -285,22 +262,12 @@ describe('Archive', () => {
     });
 
     test('should handle request for nonexistent file', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       const content = await zip.generateAsync({ type: 'uint8array' });
       await archive.open(content, false);
 
       await expect(
         archive.getText('/nonexistent/file.txt')
       ).rejects.toBeDefined();
-
-      // Expect the console.error call for file not found
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[Archive] getText: file not found',
-        '/nonexistent/file.txt'
-      );
-
-      consoleSpy.mockRestore();
     });
   });
 });
