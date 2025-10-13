@@ -1,6 +1,5 @@
 /**
  * Core Utilities and Helpers
- * @module Core
  */
 
 /**

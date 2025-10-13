@@ -1,4 +1,4 @@
-import type { BookOptions, PackagingManifestJson, PackagingManifestObject } from './types';
+import type { BookOptions, PackagingManifestJson, PackagingManifestObject, RenditionOptions } from './types';
 import EventEmitter from 'event-emitter';
 import { defer } from './utils/core';
 import Path from './utils/path';
@@ -8,7 +8,7 @@ import Packaging from './packaging';
 import Navigation from './navigation';
 import Resources from './resources';
 import PageList from './pagelist';
-import Rendition, { RenditionOptions } from './rendition';
+import Rendition from './rendition';
 import DisplayOptions from './displayoptions';
 import { Section } from './section';
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;

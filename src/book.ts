@@ -3,6 +3,7 @@ import type {
   PackagingManifestJson,
   PackagingManifestObject,
   PackagingMetadataObject,
+  RenditionOptions,
 } from './types';
 import EventEmitter from 'event-emitter';
 import { extend, defer } from './utils/core';
@@ -15,7 +16,7 @@ import Packaging from './packaging';
 import Navigation from './navigation';
 import Resources from './resources';
 import PageList from './pagelist';
-import Rendition, { RenditionOptions } from './rendition';
+import Rendition from './rendition';
 import Archive, { type ArchiveRequestTypeMap } from './archive';
 import request from './utils/request';
 import EpubCFI from './epubcfi';

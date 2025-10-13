@@ -589,7 +589,6 @@ function requireCore() {
   hasRequiredCore = 1;
   /**
    * Core Utilities and Helpers
-   * @module Core
    */
   Object.defineProperty(core, "__esModule", {
     value: true

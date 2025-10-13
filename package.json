@@ -28,7 +28,8 @@
     "minify": "NODE_ENV=production MINIMIZE=true webpack --progress",
     "watch": "babel --watch -d lib/ src/",
     "dev:prepare": "npm run compile && npm run build && npm run minify",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postbuild": "cp -R src/types dist/types"
   },
   "author": "fchasen@gmail.com",
   "license": "BSD-2-Clause",

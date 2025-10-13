@@ -1,4 +1,4 @@
-import type { PackagingManifestJson, PackagingMetadataObject, PackagingSpineItem, PackagingManifestObject } from './types/packaging';
+import type { PackagingManifestJson, PackagingMetadataObject, PackagingSpineItem, PackagingManifestObject } from './types';
 import type { RawNavItem } from './navigation';
 /**
  * Gets the index of a node in its parent

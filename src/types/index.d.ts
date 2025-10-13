@@ -6,3 +6,4 @@ export * from './modules';
 export * from './packaging';
 export * from './pre-rendered-chapter';
 export * from './viewport';
+export * from './rendition';

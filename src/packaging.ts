@@ -6,7 +6,7 @@ import type {
   PackagingManifestObject,
   ExtendedManifestItem,
   ExtendedNavItem,
-} from './types/packaging';
+} from './types';
 import type { RawNavItem } from './navigation';
 import { Flow } from './layout';
 
