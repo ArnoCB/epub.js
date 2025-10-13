@@ -1707,7 +1707,6 @@
 	   *
 	   * Uses a polyfill for Nodejs path: https://nodejs.org/api/path.html
 	   * @param	pathString	a url string (relative or absolute)
-	   * @class
 	   */
 	  class Path {
 	    constructor(pathString) {
@@ -1855,10 +1854,9 @@
 	  });
 	  const path_1 = __importDefault(requirePath());
 	  /**
-	   * creates a Url object for parsing and manipulation of a url string
-	   * @param	{string} urlString	a url string (relative or absolute)
-	   * @param	{string} [baseString] optional base for the url,
-	   * default to window.location.href
+	   * Creates a Url object for parsing and manipulation of a url string
+	   *
+	   * Defaults to window.location.href
 	   */
 	  class Url {
 	    constructor(urlString, baseString) {
@@ -2970,7 +2968,7 @@
 	  const core_1 = requireCore();
 	  const path_1 = __importDefault(requirePath());
 	  function request$1(url, type, withCredentials = false, headers = {}) {
-	    const supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
+	    const supportsURL = typeof window != 'undefined' ? window.URL : false;
 	    const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
 	    return new Promise((resolve, reject) => {
 	      const xhr = new XMLHttpRequest();
@@ -4555,7 +4553,6 @@
 	  const helpers_1 = requireHelpers();
 	  /**
 	   * Open Packaging Format Parser
-	   * @param {document} packageDocument OPF XML
 	   */
 	  class Packaging {
 	    constructor(packageDocument) {
@@ -5629,7 +5626,6 @@
 	  const core_1 = requireCore();
 	  /**
 	   * Page List Parser
-	   * @param {document} [xml]
 	   */
 	  class PageList {
 	    constructor(xml = null) {
@@ -5661,9 +5657,6 @@
 	    }
 	    /**
 	     * Parse a Nav PageList
-	     * @private
-	     * @param  {node} navHtml
-	     * @return {PageList.item[]} list
 	     */
 	    parseNav(navHtml) {
 	      const navElement = (0, core_1.querySelectorByType)(navHtml, 'nav', 'page-list');
@@ -5753,8 +5746,6 @@
 	    }
 	    /**
 	     * Get a PageList result from a EpubCFI
-	     * @param  {string} cfi EpubCFI String
-	     * @return {number} page
 	     */
 	    pageFromCfi(cfi) {
 	      let pg = -1;
@@ -5825,6 +5816,61 @@
 
 	var rendition = {};
 
+	var locationHelpers = {};
+
+	var hasRequiredLocationHelpers;
+	function requireLocationHelpers() {
+	  if (hasRequiredLocationHelpers) return locationHelpers;
+	  hasRequiredLocationHelpers = 1;
+	  Object.defineProperty(locationHelpers, "__esModule", {
+	    value: true
+	  });
+	  locationHelpers.buildEnrichedLocationPoint = buildEnrichedLocationPoint;
+	  locationHelpers.enrichLocationSide = enrichLocationSide;
+	  locationHelpers.buildLocationPoint = buildLocationPoint;
+	  function buildEnrichedLocationPoint(point, side, book) {
+	    const base = buildLocationPoint(point, side);
+	    enrichLocationSide(side, point, base, book);
+	    return base;
+	  }
+	  /**
+	   * Enriches a DisplayedLocation side (start or end) with location, percentage, and page info.
+	   */
+	  function enrichLocationSide(side, point, locatedSide, book) {
+	    // Location and percentage
+	    const cfi = point.mapping?.[side];
+	    if (cfi && book.locations) {
+	      const location = book.locations.locationFromCfi(cfi);
+	      if (location !== null) {
+	        locatedSide.location = location;
+	        locatedSide.percentage = book.locations.percentageFromLocation(location);
+	      }
+	    }
+	    // Page
+	    if (cfi && book.pageList) {
+	      const page = book.pageList.pageFromCfi(cfi);
+	      if (page !== -1) {
+	        locatedSide.page = page;
+	      }
+	    }
+	  }
+	  /**
+	   * Builds a DisplayedLocation sub-object (start or end) from a LocationPoint and side ('start' | 'end').
+	   */
+	  function buildLocationPoint(point, side) {
+	    return {
+	      index: point.index,
+	      href: point.href,
+	      cfi: point.mapping?.[side] ?? '',
+	      displayed: {
+	        page: side === 'start' ? point.pages?.[0] ?? 1 : point.pages?.[point.pages?.length - 1] ?? 1,
+	        total: point.totalPages ?? 0
+	      }
+	    };
+	  }
+	  return locationHelpers;
+	}
+
 	var layout = {};
 
 	var hasRequiredLayout;
@@ -5844,8 +5890,6 @@
 	  const event_emitter_1 = __importDefault(requireEventEmitter());
 	  /**
 	   * Figures out the CSS values to apply for a layout
-	   * @class
-	   * @param {object} settings
 	   * @param {string} [settings.layout='reflowable']
 	   * @param {string} [settings.spread]
 	   * @param {number} [settings.minSpreadWidth=800]
@@ -5889,8 +5933,6 @@
 	    }
 	    /**
 	     * Switch the flow between paginated and scrolled
-	     * @param  {string} flow paginated | scrolled
-	     * @return {string} simplified flow
 	     */
 	    flow(flow) {
 	      if (typeof flow != 'undefined') {
@@ -5909,9 +5951,6 @@
 	    /**
 	     * Switch between using spreads or not, and set the
 	     * width at which they switch to single.
-	     * @param  {string} spread "none" | "always" | "auto"
-	     * @param  {number} min integer in pixels
-	     * @return {boolean} spread true | false
 	     */
 	    spread(spread, min) {
 	      if (spread) {
@@ -5928,9 +5967,6 @@
 	    }
 	    /**
 	     * Calculate the dimensions of the pagination
-	     * @param  {number} _width  width of the rendering
-	     * @param  {number} _height height of the rendering
-	     * @param  {number} _gap    width of the gap between columns
 	     */
 	    calculate(_width, _height, _gap) {
 	      let divisor = 1;
@@ -6144,8 +6180,6 @@
 	    }
 	    /**
 	     * Register a theme by passing its css as string
-	     * @param {string} name
-	     * @param {string} css
 	     */
 	    registerCss(name, css) {
 	      if (this._themes === undefined) {
@@ -6175,8 +6209,6 @@
 	    }
 	    /**
 	     * Register rule
-	     * @param {string} name
-	     * @param {object} rules
 	     */
 	    registerRules(name, rules) {
 	      if (this._themes === undefined) {
@@ -6210,7 +6242,6 @@
 	    }
 	    /**
 	     * Update a theme
-	     * @param {string} name
 	     */
 	    update(name) {
 	      if (!this.rendition || !this.rendition.getContents) {
@@ -6225,7 +6256,6 @@
 	    }
 	    /**
 	     * Inject all themes into contents
-	     * @param {Contents} contents
 	     */
 	    inject(contents) {
 	      const links = [];
@@ -6246,8 +6276,6 @@
 	    }
 	    /**
 	     * Add Theme to contents
-	     * @param {string} name
-	     * @param {Contents} contents
 	     */
 	    add(name, contents) {
 	      const theme = this._themes ? this._themes[name] : undefined;
@@ -6266,9 +6294,6 @@
 	    }
 	    /**
 	     * Add override
-	     * @param {string} name
-	     * @param {string} value
-	     * @param {boolean} priority
 	     */
 	    override(name, value, priority = false) {
 	      if (!this.rendition || !this.rendition.getContents) {
@@ -6691,7 +6716,6 @@
 	  const core_1 = requireCore();
 	  /**
 	   * Map text locations to CFI ranges
-	   * @param {Layout} layout Layout to apply
 	   * @param {string} [direction="ltr"] Text direction
 	   * @param {string} [axis="horizontal"] vertical or horizontal axis
 	   * @param {boolean} [dev] toggle developer highlighting
@@ -6716,9 +6740,7 @@
 	     */
 	    page(contents, cfiBase, start, end) {
 	      const root = contents && contents.document ? contents.document.body : false;
-	      if (!root) {
-	        return;
-	      }
+	      if (!root) return;
 	      const result = this.rangePairToCfiPair(cfiBase, {
 	        start: this.findStart(root, start, end),
 	        end: this.findEnd(root, start, end)
@@ -6790,11 +6812,6 @@
 	    }
 	    /**
 	     * Find Start Range
-	     * @private
-	     * @param {Node} root root node
-	     * @param {number} start position to start at
-	     * @param {number} end position to end at
-	     * @return {Range}
 	     */
 	    findStart(root, start, end) {
 	      const stack = [root];
@@ -8228,16 +8245,11 @@
 	     * @private
 	     */
 	    onSelectionChange() {
-	      console.log('[Contents] Selection change detected');
 	      if (this.selectionEndTimeout) {
 	        clearTimeout(this.selectionEndTimeout);
 	      }
 	      this.selectionEndTimeout = setTimeout(() => {
 	        const selection = this.window.getSelection();
-	        console.log('[Contents] Triggering selected event after timeout', {
-	          hasSelection: !!selection,
-	          selectionText: selection?.toString().trim().substring(0, 50)
-	        });
 	        this.triggerSelectedEvent(selection);
 	      }, 250);
 	    }
@@ -8246,45 +8258,19 @@
 	     * @private
 	     */
 	    triggerSelectedEvent(selection) {
-	      console.log('[Contents] triggerSelectedEvent called', {
-	        hasSelection: !!selection,
-	        rangeCount: selection?.rangeCount,
-	        cfiBase: this.cfiBase
-	      });
 	      let range, cfirange;
 	      if (selection && selection.rangeCount > 0) {
 	        range = selection.getRangeAt(0);
-	        console.log('[Contents] Range found', {
-	          collapsed: range.collapsed,
-	          startContainer: range.startContainer,
-	          endContainer: range.endContainer,
-	          startOffset: range.startOffset,
-	          endOffset: range.endOffset,
-	          commonAncestor: range.commonAncestorContainer
-	        });
 	        if (!range.collapsed) {
 	          try {
-	            console.log('[Contents] About to generate CFI with cfiBase:', this.cfiBase);
-	            console.log('[Contents] Range details:', {
-	              startContainerNodeName: range.startContainer.nodeName,
-	              startContainerTextContent: range.startContainer.textContent?.substring(0, 50),
-	              endContainerNodeName: range.endContainer.nodeName,
-	              endContainerTextContent: range.endContainer.textContent?.substring(0, 50)
-	            });
 	            // cfirange = this.section.cfiFromRange(range);
 	            cfirange = new epubcfi_1.default(range, this.cfiBase).toString();
-	            console.log('[Contents] CFI generated successfully:', cfirange);
 	            this.emit(constants_1.EVENTS.CONTENTS.SELECTED, cfirange);
 	            this.emit(constants_1.EVENTS.CONTENTS.SELECTED_RANGE, range);
-	            console.log('[Contents] ✅ Emitted CONTENTS.SELECTED events');
 	          } catch (e) {
 	            console.error('[Contents] ❌ Error generating CFI from range:', e);
 	          }
-	        } else {
-	          console.log('[Contents] Range is collapsed, not emitting selection event');
 	        }
-	      } else {
-	        console.log('[Contents] No valid selection found');
 	      }
 	    }
 	    /**
@@ -8330,10 +8316,6 @@
 	    }
 	    /**
 	     * Apply columns to the contents for pagination
-	     * @param {number} width
-	     * @param {number} height
-	     * @param {number} columnWidth
-	     * @param {number} gap
 	     */
 	    columns(width, height, columnWidth, gap, dir) {
 	      const COLUMN_AXIS = (0, core_1.prefixed)('column-axis');
@@ -9253,21 +9235,15 @@
 	     * Ensures Contents object exists for highlighting/underlining - works for both normal and prerendered views
 	     */
 	    ensureContentsForMarking() {
-	      if (this.contents) {
-	        console.log('[IframeView] Contents already exists, proceeding with highlighting');
-	        return true;
-	      }
-	      console.log('[IframeView] No Contents object found, checking if this is a prerendered view');
+	      if (this.contents) return true;
 	      // For prerendered views, try to create Contents on-the-fly
 	      if (this.iframe && this.iframe.contentDocument && this.section) {
-	        console.log('[IframeView] Creating Contents for prerendered view');
 	        try {
 	          const contents = this.setupContentsForHighlighting(this.iframe, this.section, this.settings.transparency);
 	          if (contents) {
 	            this.window = this.iframe.contentWindow ?? undefined;
 	            this.document = this.iframe.contentDocument;
 	            this.contents = contents;
-	            console.log('[IframeView] Successfully created Contents for prerendered view');
 	            return true;
 	          } else {
 	            console.warn('[IframeView] Failed to create Contents for prerendered view - helper returned null');
@@ -12761,6 +12737,7 @@
 	    value: true
 	  });
 	  rendition.Rendition = void 0;
+	  const location_helpers_1 = requireLocationHelpers();
 	  const event_emitter_1 = __importDefault(requireEventEmitter());
 	  const core_1 = requireCore();
 	  const hook_1 = __importDefault(requireHook());
@@ -12776,7 +12753,6 @@
 	   * Displays an Epub as a series of Views for each Section.
 	   * Requires Manager and View class to handle specifics of rendering
 	   * the section content.
-	   * @class
 	   * @param {Book} book
 	   * @param {object} [options]
 	   * @param {number} [options.width]
@@ -12820,8 +12796,6 @@
 	        usePreRendering: false,
 	        ...options
 	      };
-	      // Manager creation moved to start() method - no conditional creation here!
-	      // Event listeners will be set up in start() after manager is created
 	      this.hooks = {
 	        display: new hook_1.default(this),
 	        serialize: new hook_1.default(this),
@@ -12844,43 +12818,9 @@
 	      if (this.settings.script) {
 	        this.book.spine.hooks.content.register(this.injectScript.bind(this));
 	      }
-	      /**
-	       * @member {Themes} themes
-	       * @memberof Rendition
-	       */
 	      this.themes = new themes_1.default(this);
-	      /**
-	       * @member {Annotations} annotations
-	       * @memberof Rendition
-	       */
 	      this.annotations = new annotations_1.default(this);
 	      this.epubcfi = new epubcfi_1.default();
-	      /**
-	       * A Rendered Location Range
-	       * @typedef location
-	       * @type {Object}
-	       * @property {object} start
-	       * @property {string} start.index
-	       * @property {string} start.href
-	       * @property {object} start.displayed
-	       * @property {EpubCFI} start.cfi
-	       * @property {number} start.location
-	       * @property {number} start.percentage
-	       * @property {number} start.displayed.page
-	       * @property {number} start.displayed.total
-	       * @property {object} end
-	       * @property {string} end.index
-	       * @property {string} end.href
-	       * @property {object} end.displayed
-	       * @property {EpubCFI} end.cfi
-	       * @property {number} end.location
-	       * @property {number} end.percentage
-	       * @property {number} end.displayed.page
-	       * @property {number} end.displayed.total
-	       * @property {boolean} atStart
-	       * @property {boolean} atEnd
-	       * @memberof Rendition
-	       */
 	      this.location = null;
 	      // Hold queue until book is opened
 	      this.q.enqueue(this.book.opened);
@@ -12953,7 +12893,6 @@
 	        // Add spine to manager options if using PreRenderingViewManager
 	        if (this.settings.usePreRendering) {
 	          const spineItems = this.book.spine?.spineItems || [];
-	          console.log('[Rendition] Passing spine to PreRenderingViewManager:', spineItems.length, 'sections');
 	          const preRenderingOptions = {
 	            ...baseManagerOptions,
 	            spine: spineItems
@@ -13003,7 +12942,6 @@
 	    /**
 	     * Call to attach the container to an element in the dom
 	     * Container must be attached before rendering can begin
-	     * @return {Promise}
 	     */
 	    attachTo(element) {
 	      // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -13016,7 +12954,6 @@
 	          const hasPreRendering = this.settings.usePreRendering && this.manager instanceof prerendering_1.PreRenderingViewManager;
 	          if (hasPreRendering && this.book.spine) {
 	            const sections = this.book.spine.spineItems || [];
-	            console.log(`[Rendition] Auto-starting pre-rendering for ${sections.length} sections`);
 	            // Start pre-rendering in the background (don't block attachTo)
 	            // eslint-disable-next-line @typescript-eslint/no-floating-promises
 	            this.manager.startPreRendering(sections).catch(err => {
@@ -13238,9 +13175,10 @@
 	        throw error;
 	      });
 	    }
-	    //-- http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
 	    /**
 	     * Determine the Layout properties from metadata and settings
+	     *
+	     * @link http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
 	     */
 	    determineLayoutProperties(metadata) {
 	      const layout = this.settings.layout || metadata.layout || 'reflowable';
@@ -13289,7 +13227,6 @@
 	    }
 	    /**
 	     * Adjust the layout of the rendition to reflowable or pre-paginated
-	     * @param  {object} settings
 	     */
 	    layout(settings) {
 	      if (settings) {
@@ -13307,7 +13244,6 @@
 	    }
 	    /**
 	     * Adjust if the rendition uses spreads
-	     * @param  {int} [min] min width to use spreads at
 	     */
 	    spread(spread, min) {
 	      this.settings.spread = spread;
@@ -13342,7 +13278,6 @@
 	    reportLocation() {
 	      return this.q.enqueue(() => {
 	        requestAnimationFrame(() => {
-	          const ts = new Date().toISOString();
 	          const pageLocations = this.manager.currentLocation();
 	          if (pageLocations && Array.isArray(pageLocations) && pageLocations.length > 0) {
 	            // Map PageLocation[] to LocationPoint[]
@@ -13363,29 +13298,7 @@
 	              return;
 	            }
 	            this.location = located;
-	            /**
-	             * @event relocated
-	             * @type {displayedLocation}
-	             * @memberof Rendition
-	             */
-	            try {
-	              // push to global trace if present
-	              try {
-	                const g = globalThis;
-	                if (g && g.__navTrace) {
-	                  g.__navTrace.push({
-	                    ts: ts,
-	                    event: 'relocated',
-	                    details: this.location
-	                  });
-	                }
-	              } catch {
-	                // ignore
-	              }
-	              this.emit(constants_1.EVENTS.RENDITION.RELOCATED, this.location);
-	            } catch {
-	              // emit may throw in tests; ignore
-	            }
+	            this.emit(constants_1.EVENTS.RENDITION.RELOCATED, this.location);
 	          }
 	        });
 	      });
@@ -13399,52 +13312,15 @@
 	    /**
 	     * Creates a Rendition#locationRange from location
 	     * passed by the Manager
-	     * @returns {displayedLocation}
 	     */
 	    located(location) {
-	      if (!location.length) {
-	        return null;
-	      }
+	      if (!location.length) return null;
 	      const start = location[0];
 	      const end = location[location.length - 1];
 	      const located = {
-	        start: {
-	          index: start.index,
-	          href: start.href,
-	          cfi: start.mapping?.start ?? '',
-	          displayed: {
-	            page: start.pages?.[0] ?? 1,
-	            total: start.totalPages ?? 0
-	          }
-	        },
-	        end: {
-	          index: end.index,
-	          href: end.href,
-	          cfi: end.mapping?.end ?? '',
-	          displayed: {
-	            page: end.pages?.[end.pages?.length - 1] ?? 1,
-	            total: end.totalPages ?? 0
-	          }
-	        }
+	        start: (0, location_helpers_1.buildEnrichedLocationPoint)(start, 'start', this.book),
+	        end: (0, location_helpers_1.buildEnrichedLocationPoint)(end, 'end', this.book)
 	      };
-	      const locationStart = start.mapping?.start ? this.book.locations.locationFromCfi(start.mapping.start) : null;
-	      const locationEnd = end.mapping?.end ? this.book.locations.locationFromCfi(end.mapping.end) : null;
-	      if (locationStart !== null) {
-	        located.start.location = locationStart;
-	        located.start.percentage = this.book.locations.percentageFromLocation(locationStart);
-	      }
-	      if (locationEnd !== null) {
-	        located.end.location = locationEnd;
-	        located.end.percentage = this.book.locations.percentageFromLocation(locationEnd);
-	      }
-	      const pageStart = start.mapping?.start ? this.book.pageList.pageFromCfi(start.mapping.start) : -1;
-	      const pageEnd = end.mapping?.end ? this.book.pageList.pageFromCfi(end.mapping.end) : -1;
-	      if (pageStart !== -1) {
-	        located.start.page = pageStart;
-	      }
-	      if (pageEnd !== -1) {
-	        located.end.page = pageEnd;
-	      }
 	      if (end.index === this.book.spine.last()?.index && located.end.displayed.page >= located.end.displayed.total) {
 	        located.atEnd = true;
 	      }
@@ -13481,33 +13357,14 @@
 	    }
 	    /**
 	     * Emit a selection event's CFI Range passed from a a view
-	     * @private
-	     * @param  {string} cfirange
 	     */
 	    triggerSelectedEvent(cfirange, contents) {
-	      /**
-	       * Emit that a text selection has occurred
-	       * @event selected
-	       * @param {string} cfirange
-	       * @param {Contents} contents
-	       * @memberof Rendition
-	       */
 	      this.emit(constants_1.EVENTS.RENDITION.SELECTED, cfirange, contents);
 	    }
 	    /**
 	     * Emit a markClicked event with the cfiRange and data from a mark
-	     * @private
-	     * @param  {EpubCFI} cfirange
 	     */
 	    triggerMarkEvent(cfiRange, data, contents) {
-	      /**
-	       * Emit that a mark was clicked
-	       * @event markClicked
-	       * @param {EpubCFI} cfirange
-	       * @param {object} data
-	       * @param {Contents} contents
-	       * @memberof Rendition
-	       */
 	      this.emit(constants_1.EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
 	    }
 	    /**
@@ -18908,7 +18765,6 @@
 	  const localforage_1 = __importDefault(require$$5);
 	  /**
 	   * Handles saving and requesting files from local storage
-	   * @class
 	   * @param {string} name This should be the name of the application for modals
 	   * @param {function} [requester]
 	   * @param {function} [resolver]
@@ -18948,7 +18804,6 @@
 	    }
 	    /**
 	     * Add online and offline event listeners
-	     * @private
 	     */
 	    addListeners() {
 	      this._status = this.status.bind(this);

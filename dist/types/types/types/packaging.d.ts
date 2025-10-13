@@ -1,5 +1,4 @@
 import type { RawNavItem } from '../navigation';
-import type { Flow } from '../layout';
 
 export interface PackagingMetadataObject {
   title: string;
@@ -11,12 +10,12 @@ export interface PackagingMetadataObject {
   language: string;
   rights: string;
   modified_date: string;
-  layout: string;
-  orientation: string;
+  layout: LayoutType;
+  orientation: Orientation;
   flow: Flow;
   viewport: string;
-  spread: string;
-  direction: string;
+  spread: Spread;
+  direction: Direction;
 }
 
 export interface PackagingSpineItem {

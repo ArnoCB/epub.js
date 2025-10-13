@@ -1,14 +1,16 @@
-import DefaultViewManager, { DefaultViewManagerSettings } from '../default';
-import BookPreRenderer, {
-  PreRenderingStatus,
-  ViewSettings,
-} from '../prerenderer';
+import DefaultViewManager from '../default';
+import BookPreRenderer from '../prerenderer';
 import type { PreRenderedChapter } from '../../types/pre-rendered-chapter';
-import { ViewManager } from '../helpers/snap';
 import { View } from '../helpers/views';
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
 import { EVENTS } from '../../utils/constants';
+import type {
+  DefaultViewManagerSettings,
+  PreRenderingStatus,
+  ViewManager,
+  ViewSettings,
+} from '../../types';
 
 // Type guard to check if a View is an IframeView
 function isIframeView(view: View): view is IframeView {

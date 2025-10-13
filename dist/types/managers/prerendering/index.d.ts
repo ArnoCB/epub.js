@@ -1,10 +1,10 @@
-import DefaultViewManager, { DefaultViewManagerSettings } from '../default';
-import BookPreRenderer, { PreRenderingStatus } from '../prerenderer';
+import DefaultViewManager from '../default';
+import BookPreRenderer from '../prerenderer';
 import type { PreRenderedChapter } from '../../types/pre-rendered-chapter';
-import { ViewManager } from '../helpers/snap';
 import { View } from '../helpers/views';
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
+import type { DefaultViewManagerSettings, PreRenderingStatus, ViewManager } from '../../types';
 /**
  * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
  *
