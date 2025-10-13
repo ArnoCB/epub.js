@@ -1,3 +1,7 @@
+import type {
+  ChapterPageInfo,
+  ChapterDimensions,
+} from '../types/chapter-page-info';
 import { defer } from '../utils/core';
 import { Section } from '../section';
 import { View } from './helpers/views';
@@ -268,8 +272,10 @@ export class BookPreRenderer {
       ([href, chapter]) => ({
         href,
         attached: chapter.attached,
-        width: chapter.width,
-        height: chapter.height,
+        ...({
+          width: chapter.width,
+          height: chapter.height,
+        } as ChapterDimensions),
         pageCount: chapter.pageCount,
         hasWhitePages: chapter.hasWhitePages,
         whitePageIndices: chapter.whitePageIndices,
@@ -390,12 +396,7 @@ export class BookPreRenderer {
   private async performAsyncContentAnalysis(
     chapter: PreRenderedChapter,
     view: View
-  ): Promise<{
-    pageCount: number;
-    pageMap?: NonNullable<PreRenderedChapter['pageMap']>;
-    hasWhitePages: boolean;
-    whitePageIndices: number[];
-  }> {
+  ): Promise<ChapterPageInfo> {
     try {
       // Use the simple PageMapGenerator
       const result = await this.pageMapGenerator.generatePageMap(
@@ -567,22 +568,14 @@ export class BookPreRenderer {
 
       // Wait briefly for iframe document to become available/complete before reading
       const ready = await waitForIframeReady(iframe, 1000);
-      if (ready) {
-        try {
-          if (iframe.contentDocument?.documentElement) {
-            chapter.preservedContent =
-              iframe.contentDocument.documentElement.outerHTML;
-          }
-        } catch (e) {
-          // reading may fail for cross-origin or other reasons
-          console.debug(
-            '[BookPreRenderer] preserveChapterContent: could not read contentDocument after ready',
-            e
-          );
-        }
+      if (ready && iframe.contentDocument?.documentElement) {
+        // Reading may fail for cross-origin or other reasons — let outer try handle it
+        chapter.preservedContent =
+          iframe.contentDocument.documentElement.outerHTML;
       }
-    } catch (e) {
-      console.debug('[BookPreRenderer] could not preserve iframe content:', e);
+    } catch {
+      // Only catch actual errors preserving iframe content
+      console.error('Failed to preserve iframe content');
     }
   }
 
@@ -648,9 +641,7 @@ export class BookPreRenderer {
    */
   public async tryRestoreContent(sectionHref: string): Promise<boolean> {
     const chapter = this.chapters.get(sectionHref);
-    if (!chapter) {
-      return false;
-    }
+    if (!chapter) return false;
 
     try {
       const restored = this.restoreChapterContent(chapter);
@@ -702,22 +693,18 @@ export class BookPreRenderer {
     return chapter.pageNumbersAssigned;
   }
 
-  attachChapter(sectionHref: string): PreRenderedChapter | null {
+  public attachChapter(sectionHref: string): PreRenderedChapter | null {
     const chapter = this.chapters.get(sectionHref);
-    if (!chapter) {
-      return null;
-    }
+
+    if (!chapter) return null;
 
     // If chapter is still being rendered, return null (let caller retry)
-    if (this.renderingPromises.has(sectionHref)) {
-      return null;
-    }
+    if (this.renderingPromises.has(sectionHref)) return null;
 
     if (chapter.attached) {
-      console.debug('[BookPreRenderer] chapter already attached:', sectionHref);
-
       // Validate that the iframe still has content - sometimes iframe content gets cleared
       // especially with sandboxing or when elements are moved between containers
+
       try {
         const iframe = chapter.element.querySelector(
           'iframe'
@@ -748,7 +735,6 @@ export class BookPreRenderer {
           sectionHref,
           e
         );
-        // Don't return early - let it go through attachment process
       }
     }
 
@@ -793,18 +779,13 @@ export class BookPreRenderer {
       displayWrapper.classList.add('epub-view');
 
       // For paginated content, set wrapper to full width so container can detect scrollable content
-      const isPaginated = this.viewSettings.layout?._flow === 'paginated';
-      if (isPaginated) {
-        // Set wrapper to full paginated width so container scrollWidth reflects actual content
-        displayWrapper.style.width = chapter.width + 'px';
-        displayWrapper.style.height = chapter.height + 'px';
-        displayWrapper.style.overflow = 'hidden'; // Hide content outside viewport like DefaultViewManager
-      } else {
-        // For scrolled content, use container dimensions
-        displayWrapper.style.width = chapter.width + 'px';
-        displayWrapper.style.height = chapter.height + 'px';
-        displayWrapper.style.overflow = 'hidden';
-      }
+      const dims: ChapterDimensions = {
+        width: chapter.width,
+        height: chapter.height,
+      };
+      displayWrapper.style.width = dims.width + 'px';
+      displayWrapper.style.height = dims.height + 'px';
+      displayWrapper.style.overflow = 'hidden';
       displayWrapper.style.position = 'relative';
       displayWrapper.style.display = 'block';
 
@@ -812,19 +793,18 @@ export class BookPreRenderer {
       const newIframe = document.createElement('iframe') as HTMLIFrameElement;
       newIframe.scrolling = 'no';
       newIframe.style.border = 'none';
-      if (isPaginated) {
-        // For paginated content, set iframe to full width to show all pages
-        newIframe.style.width = chapter.width + 'px';
-        newIframe.style.height = chapter.height + 'px';
-      } else {
-        // For scrolled content, use container dimensions
-        newIframe.style.width = chapter.width + 'px';
-        newIframe.style.height = chapter.height + 'px';
-      }
+      const iframeDims: ChapterDimensions = {
+        width: chapter.width,
+        height: chapter.height,
+      };
+      newIframe.style.width = iframeDims.width + 'px';
+      newIframe.style.height = iframeDims.height + 'px';
       newIframe.sandbox = 'allow-same-origin';
+
       if ((this.viewSettings as ViewSettings).allowScriptedContent) {
         newIframe.sandbox += ' allow-scripts';
       }
+
       if ((this.viewSettings as ViewSettings).allowPopups) {
         newIframe.sandbox += ' allow-popups';
       }
@@ -906,9 +886,6 @@ export class BookPreRenderer {
       newIframe.style.width = this.viewSettings.width + 'px';
       newIframe.style.height = this.viewSettings.height + 'px';
 
-      // The pre-rendered content should already be formatted correctly for the container dimensions
-      // No need for additional formatting since we fixed the pre-rendering phase
-
       // Add essential IframeView methods to the cloned view for proper layout support
       const originalExpand = clonedView.expand?.bind(clonedView);
       clonedView.expand = () => {
@@ -916,6 +893,7 @@ export class BookPreRenderer {
         if (originalExpand) {
           originalExpand();
         }
+
         // Ensure dimensions remain as container dimensions
         if (newIframe) {
           newIframe.style.width = this.viewSettings.width + 'px';
@@ -965,31 +943,6 @@ export class BookPreRenderer {
         preservedContent: chapter.preservedContent,
         pageMap: chapter.pageMap,
       };
-
-      // Conservative validation: check readyState and lengths if possible and log
-      try {
-        const ready = newIframe.contentDocument?.readyState;
-        const bodyTextLen =
-          newIframe.contentDocument?.body?.textContent?.trim()?.length || 0;
-        const bodyHtmlLen =
-          newIframe.contentDocument?.body?.innerHTML?.trim()?.length || 0;
-        console.debug(
-          `[BookPreRenderer] clone post-create diagnostics for ${sectionHref}: ready=${ready} textLen=${bodyTextLen} htmlLen=${bodyHtmlLen}`
-        );
-      } catch (e) {
-        console.debug(
-          `[BookPreRenderer] cannot inspect clone iframe post-create: ${e}`
-        );
-      }
-
-      // Log when srcdoc was used
-      if (chapter.preservedSrcdoc) {
-        console.log(`[BookPreRenderer] clone srcdoc set for ${sectionHref}`);
-      } else if (chapter.preservedContent) {
-        console.log(
-          `[BookPreRenderer] clone preservedContent writer scheduled for ${sectionHref}`
-        );
-      }
 
       // Notify listeners about the cloned view being available (non-destructive)
       try {
@@ -1157,16 +1110,15 @@ export class BookPreRenderer {
 
   detachChapter(sectionHref: string): PreRenderedChapter | null {
     const chapter = this.chapters.get(sectionHref);
-    if (!chapter || !chapter.attached) {
-      return null;
-    }
+
+    if (!chapter || !chapter.attached) return null;
 
     // Remove from whatever container it's currently in
     if (chapter.element.parentNode) {
       chapter.element.parentNode.removeChild(chapter.element);
     }
 
-    // HYBRID APPROACH: Store in unattached storage instead of offscreen container
+    // Store in unattached storage instead of offscreen container
     this.unattachedStorage.appendChild(chapter.element);
     chapter.attached = false;
 
@@ -1203,12 +1155,7 @@ export class BookPreRenderer {
       // Resolve any per-chapter deferred indicating pageNumbers have been assigned
       try {
         if (chapter.pageNumbersDeferred) {
-          try {
-            chapter.pageNumbersDeferred.resolve();
-          } catch {
-            // ignore
-          }
-          // Clean up the deferred to avoid double-resolution
+          chapter.pageNumbersDeferred.resolve();
           delete chapter.pageNumbersDeferred;
         }
       } catch {
@@ -1218,8 +1165,6 @@ export class BookPreRenderer {
   }
 
   destroy(): void {
-    console.log('[BookPreRenderer] destroying pre-renderer');
-
     this.chapters.forEach((chapter) => {
       if (chapter.element.parentNode) {
         chapter.element.parentNode.removeChild(chapter.element);

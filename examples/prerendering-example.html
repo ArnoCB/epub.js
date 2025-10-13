@@ -331,16 +331,8 @@
 
       // Check pre-renderer after attachment is complete
       rendition.on("attached", function() {
-        addLog("Rendition attached - checking pre-renderer...", "info");
-        addLog(`Pre-rendering enabled: ${!!rendition.manager.preRenderer}`, "info");
-        addLog(`Manager usePreRendering: ${rendition.manager.usePreRendering}`, "info");
-        addLog(`Manager type: ${rendition.manager.constructor.name}`, "info");
-        addLog(`Manager name: ${rendition.manager.name}`, "info");
-        addLog(`Manager settings: ${JSON.stringify(rendition.manager.settings)}`, "info");
-        
         // Start at spine index 1 (first linear chapter after cover)
         // Note: Cover pages often have linear:false and don't have proper navigation links
-        addLog("Starting at spine index 1 (first chapter after cover)", "info");
         rendition.display(1);
         
         updateStatus();
@@ -427,10 +419,8 @@
       // Keyboard navigation
       document.addEventListener("keyup", function(e) {
         if (e.keyCode === 37) { // Left arrow
-          addLog("Left arrow pressed", "info");
           rendition.prev();
         } else if (e.keyCode === 39) { // Right arrow
-          addLog("Right arrow pressed", "info");
           rendition.next();
         }
       });
@@ -622,7 +612,6 @@
 
     // Initialize everything when the page loads
     document.addEventListener('DOMContentLoaded', function() {
-      addLog("Page loaded, initializing...", "info");
       initializeBook();
       // Don't apply styling immediately - wait for rendition to be ready
       
@@ -632,19 +621,15 @@
       // Add window resize debugging
       let resizeTimeout;
       window.addEventListener('resize', function() {
-        addLog("Window resize detected", "info");
         
         // Clear any existing timeout
         clearTimeout(resizeTimeout);
         
         // Debounce the resize handling
         resizeTimeout = setTimeout(() => {
-          addLog("Processing resize...", "info");
-          
           if (rendition) {
             // Log current state before resize
             const beforeIframes = document.querySelectorAll('#viewer iframe').length;
-            addLog(`Before resize: ${beforeIframes} iframes visible`, "info");
             
             // Trigger the resize
             rendition.resize();
@@ -652,7 +637,6 @@
             // Check state after resize
             setTimeout(() => {
               const afterIframes = document.querySelectorAll('#viewer iframe').length;
-              addLog(`After resize: ${afterIframes} iframes visible`, "info");
               
               if (afterIframes === 0) {
                 addLog("WARNING: All iframes disappeared after resize!", "error");
@@ -683,8 +667,6 @@
         if (rendition) rendition.resize();
       }
     };
-
-    addLog("Pre-rendering example initialized", "success");
   </script>
 
 </body>

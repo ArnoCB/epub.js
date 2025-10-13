@@ -409,6 +409,7 @@ export class PreRenderingViewManager
         chapters: new Map(),
       };
     }
+
     return this._preRenderer.getStatus();
   }
 
@@ -427,6 +428,7 @@ export class PreRenderingViewManager
         chapters: [],
       };
     }
+
     return this._preRenderer.getDebugInfo();
   }
 

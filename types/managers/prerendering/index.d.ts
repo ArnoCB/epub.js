@@ -44,13 +44,13 @@ export declare class PreRenderingViewManager extends DefaultViewManager implemen
         totalChapters: number;
         renderingInProgress: number;
         chapters: {
-            href: string;
-            attached: boolean;
-            width: number;
-            height: number;
             pageCount: number;
             hasWhitePages: boolean;
             whitePageIndices: number[];
+            width: number;
+            height: number;
+            href: string;
+            attached: boolean;
         }[];
     };
     /**
