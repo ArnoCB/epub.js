@@ -8,8 +8,8 @@ import { EVENTS } from '../../utils/constants';
 import type {
   DefaultViewManagerSettings,
   PreRenderingStatus,
-  ViewManager,
   ViewSettings,
+  ViewManager,
 } from '../../types';
 
 // Type guard to check if a View is an IframeView

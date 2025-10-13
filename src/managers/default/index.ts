@@ -7,16 +7,16 @@ import Stage from '../helpers/stage';
 import Views, { View, ViewConstructor } from '../helpers/views';
 import { EVENTS } from '../../utils/constants';
 import { ViewManager } from '../../types';
-import Layout from 'src/layout';
-import { Section } from 'src/section';
-import { Contents } from 'src/epub';
+import Layout from '../../layout';
+import { Section } from '../../section';
+import { Contents } from '../../epub';
 import { ViewRenderer } from '../helpers/view-renderer';
 import {
   Axis,
   Flow,
   DefaultViewManagerSettings,
   PageLocation,
-} from 'src/types';
+} from '../../types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 

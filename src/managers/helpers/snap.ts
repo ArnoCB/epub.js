@@ -1,5 +1,4 @@
-import type { ViewManager } from 'src/types';
-
+import type { ViewManager } from '../../types';
 import { extend, defer } from '../../utils/core';
 import { EVENTS } from '../../utils/constants';
 import EventEmitter from 'event-emitter';

@@ -3644,6 +3644,7 @@ function requireSpine() {
           delete this.spineById[section.idref];
           return this.spineItems.splice(index, 1);
         }
+        return undefined;
       }
       /**
        * Loop over the Sections in the Spine
@@ -3663,6 +3664,7 @@ function requireSpine() {
           }
           index += 1;
         } while (index < this.spineItems.length);
+        return undefined;
       }
       /**
        * Find the last Section in the Spine
@@ -3676,6 +3678,7 @@ function requireSpine() {
           }
           index -= 1;
         } while (index >= 0);
+        return undefined;
       }
       destroy() {
         this.spineItems.forEach(section => section.destroy());
@@ -3968,9 +3971,6 @@ function requireLocations() {
   const event_emitter_1 = __importDefault(requireEventEmitter());
   /**
    * Find Locations for a Book
-   * @param {Spine} spine
-   * @param {request} request
-   * @param {number} [pause=100]
    */
   class Locations {
     constructor(spine, request, pause) {
@@ -4108,6 +4108,7 @@ function requireLocations() {
           }
         }
         prev = textNode;
+        return undefined;
       };
       (0, core_1.sprint)(body, parser);
       // Close remaining
@@ -4248,6 +4249,7 @@ function requireLocations() {
             this._wordCounter = 0;
           }
         }
+        return undefined;
       };
       (0, core_1.sprint)(body, parser);
       return locations;
@@ -5360,21 +5362,15 @@ function requireResources() {
         }
         // HTML
         this.html = this.resources.filter(function (item) {
-          if (item.type === 'application/xhtml+xml' || item.type === 'text/html') {
-            return true;
-          }
+          return item.type === 'application/xhtml+xml' || item.type === 'text/html';
         });
         // Exclude HTML
         this.assets = this.resources.filter(function (item) {
-          if (item.type !== 'application/xhtml+xml' && item.type !== 'text/html') {
-            return true;
-          }
+          return item.type !== 'application/xhtml+xml' && item.type !== 'text/html';
         });
         // Only CSS
         this.css = this.resources.filter(function (item) {
-          if (item.type === 'text/css') {
-            return true;
-          }
+          return item.type === 'text/css';
         });
       }
       /**
@@ -7982,14 +7978,14 @@ function requireContents() {
     /**
      * Listen for font load and check for resize when loaded
      */
-    fontLoadListeners() {
-      if (!this.document || !this.document.fonts) {
-        return;
-      }
-      this.document.fonts.ready.then(() => {
-        this.resizeCheck();
-      });
-    }
+    // private fontLoadListeners() {
+    //   if (!this.document || !this.document.fonts) {
+    //     return;
+    //   }
+    //   this.document.fonts.ready.then(() => {
+    //     this.resizeCheck();
+    //   });
+    // }
     /**
      * Get the documentElement
      */
@@ -11463,7 +11459,7 @@ function requirePrerenderer() {
      */
     constructor(container, viewSettings, request) {
       this._completeEmitted = false;
-      this.container = container;
+      // this.container = container;
       this.viewSettings = viewSettings;
       this.chapters = new Map();
       this.renderingPromises = new Map();

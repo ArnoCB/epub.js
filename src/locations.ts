@@ -6,13 +6,10 @@ import EventEmitter from 'event-emitter';
 import Spine from './spine';
 import Section from './section';
 import SpineItem from './section';
-import type { RequestFunction, CustomRange } from './types';
+import type { RequestFunction, OptionalCustomRange } from './types';
 
 /**
  * Find Locations for a Book
- * @param {Spine} spine
- * @param {request} request
- * @param {number} [pause=100]
  */
 export class Locations {
   spine: Spine | undefined;
@@ -87,7 +84,7 @@ export class Locations {
     });
   }
 
-  createRange(): CustomRange {
+  createRange(): OptionalCustomRange {
     return {
       startContainer: undefined,
       startOffset: undefined,
@@ -123,7 +120,7 @@ export class Locations {
 
   parse(contents: Element, cfiBase: string, chars?: number) {
     const locations = [];
-    let range: CustomRange | undefined;
+    let range: OptionalCustomRange | undefined;
     const doc = contents.ownerDocument;
     const body = doc.querySelector('body');
     if (!body) {
@@ -195,6 +192,7 @@ export class Locations {
         }
       }
       prev = textNode;
+      return undefined;
     };
 
     sprint(body, parser);
@@ -394,6 +392,7 @@ export class Locations {
           this._wordCounter = 0;
         }
       }
+      return undefined;
     };
 
     sprint(body, parser);

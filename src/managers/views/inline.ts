@@ -37,7 +37,7 @@ import Contents from '../../contents';
 import { EVENTS } from '../../utils/constants';
 import Layout from '../../layout';
 import { View } from '../helpers/views';
-import Section from 'src/section';
+import Section from '../../section';
 
 class InlineView implements EventEmitterMethods, View {
   emit!: EventEmitter['emit'];

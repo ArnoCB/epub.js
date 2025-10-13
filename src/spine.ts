@@ -223,6 +223,8 @@ class Spine {
 
       return this.spineItems.splice(index, 1);
     }
+
+    return undefined;
   }
 
   /**
@@ -246,6 +248,8 @@ class Spine {
       }
       index += 1;
     } while (index < this.spineItems.length);
+
+    return undefined;
   }
 
   /**
@@ -261,6 +265,8 @@ class Spine {
       }
       index -= 1;
     } while (index >= 0);
+
+    return undefined;
   }
 
   destroy() {

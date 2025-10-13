@@ -560,15 +560,15 @@ class Contents implements EventEmitterMethods {
   /**
    * Listen for font load and check for resize when loaded
    */
-  private fontLoadListeners() {
-    if (!this.document || !this.document.fonts) {
-      return;
-    }
+  // private fontLoadListeners() {
+  //   if (!this.document || !this.document.fonts) {
+  //     return;
+  //   }
 
-    this.document.fonts.ready.then(() => {
-      this.resizeCheck();
-    });
-  }
+  //   this.document.fonts.ready.then(() => {
+  //     this.resizeCheck();
+  //   });
+  // }
 
   /**
    * Get the documentElement

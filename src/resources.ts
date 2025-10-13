@@ -102,23 +102,17 @@ class Resources {
 
     // HTML
     this.html = this.resources.filter(function (item) {
-      if (item.type === 'application/xhtml+xml' || item.type === 'text/html') {
-        return true;
-      }
+      return item.type === 'application/xhtml+xml' || item.type === 'text/html';
     });
 
     // Exclude HTML
     this.assets = this.resources.filter(function (item) {
-      if (item.type !== 'application/xhtml+xml' && item.type !== 'text/html') {
-        return true;
-      }
+      return item.type !== 'application/xhtml+xml' && item.type !== 'text/html';
     });
 
     // Only CSS
     this.css = this.resources.filter(function (item) {
-      if (item.type === 'text/css') {
-        return true;
-      }
+      return item.type === 'text/css';
     });
   }
 

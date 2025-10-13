@@ -40,7 +40,7 @@
                 "message": "Do not import from top-level `types`. Use `src/types` or local types instead."
               }
             ],
-            "patterns": ["types/*"]
+            "patterns": ["types/*", "src/*"]
           }
         ]
       }

@@ -14,9 +14,9 @@ import Contents from '../../contents';
 import { EVENTS } from '../../utils/constants';
 import { Pane as OriginalPane, Highlight, Underline, Mark } from 'marks-pane';
 import { View } from '../helpers/views';
-import Layout from 'src/layout';
-import Section from 'src/section';
-import type { Flow, Axis } from 'src/types';
+import Layout from '../../layout';
+import Section from '../../section';
+import type { Flow, Axis } from '../../types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 

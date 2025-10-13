@@ -1,4 +1,9 @@
-import type { ChapterPageInfo, ChapterDimensions } from '../types';
+import type {
+  ChapterPageInfo,
+  ChapterDimensions,
+  ViewSettings,
+  PreRenderingStatus,
+} from '../types';
 import { defer } from '../utils/core';
 import { Section } from '../section';
 import { View } from './helpers/views';
@@ -11,14 +16,12 @@ import { CfiResolver } from './helpers/cfi-resolver';
 import type { PreRenderedChapter } from '../types/pre-rendered-chapter';
 import { PageMapGenerator } from './helpers/page-map-generator';
 
-import type { ViewSettings, PreRenderingStatus } from 'src/types';
-
 export class BookPreRenderer {
   on!: EventEmitter['on'];
   off!: EventEmitter['off'];
   emit!: EventEmitter['emit'];
 
-  private container: HTMLElement;
+  // private container: HTMLElement;
   private offscreenContainer: HTMLElement;
   private unattachedStorage: DocumentFragment;
   private viewSettings: ViewSettings;
@@ -121,7 +124,7 @@ export class BookPreRenderer {
     viewSettings: ViewSettings,
     request: (url: string) => Promise<Document>
   ) {
-    this.container = container;
+    // this.container = container;
     this.viewSettings = viewSettings;
     this.chapters = new Map();
     this.renderingPromises = new Map();

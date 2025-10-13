@@ -2,7 +2,7 @@ import { Section } from '../../section';
 import IframeView from '../views/iframe';
 import { View } from './views';
 import { extend } from '../../utils/core';
-import type { ViewRendererSettings, RenderingOptions } from 'src/types';
+import type { ViewRendererSettings, RenderingOptions } from '../../types';
 
 /**
  * ViewRenderer - Centralized view creation and rendering logic
