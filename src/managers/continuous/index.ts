@@ -689,13 +689,7 @@ class ContinuousViewManager
         const currentScrollTop = this.container.scrollTop;
         const tolerance = 10;
         const canScrollBackward = currentScrollTop > tolerance;
-        console.debug(
-          '[ContinuousViewManager] prev() scroll-based check vertical:',
-          {
-            currentScrollTop,
-            canScrollBackward,
-          }
-        );
+
         if (canScrollBackward) {
           this.scrollBy(0, -this.layout.height, true);
           return Promise.resolve();

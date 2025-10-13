@@ -1,8 +1,7 @@
 import { Section } from '../section';
 import Layout, { Axis, Flow } from '../layout';
 import EventEmitter from 'event-emitter';
-import { PreRenderedChapter } from './helpers/chapter-manager';
-export type { PreRenderedChapter } from './helpers/chapter-manager';
+import type { PreRenderedChapter } from '../types/pre-rendered-chapter';
 export interface ViewSettings {
     ignoreClass?: string;
     axis?: Axis;
@@ -33,7 +32,6 @@ export declare class BookPreRenderer {
     private unattachedStorage;
     private viewSettings;
     private viewRenderer;
-    private chapterManager;
     private pageMapGenerator;
     private chapters;
     private renderingPromises;

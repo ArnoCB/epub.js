@@ -11,10 +11,8 @@ import { EVENTS } from '../utils/constants';
 import { ViewRenderer } from './helpers/view-renderer';
 import Contents from '../contents';
 import { CfiResolver } from './helpers/cfi-resolver';
-import { ChapterManager, PreRenderedChapter } from './helpers/chapter-manager';
+import type { PreRenderedChapter } from '../types/pre-rendered-chapter';
 import { PageMapGenerator } from './helpers/page-map-generator';
-
-export type { PreRenderedChapter } from './helpers/chapter-manager';
 
 export interface ViewSettings {
   ignoreClass?: string;
@@ -49,7 +47,6 @@ export class BookPreRenderer {
   private unattachedStorage: DocumentFragment;
   private viewSettings: ViewSettings;
   private viewRenderer: ViewRenderer;
-  private chapterManager: ChapterManager;
   private pageMapGenerator: PageMapGenerator;
   private chapters: Map<string, PreRenderedChapter>;
   private renderingPromises: Map<string, Promise<PreRenderedChapter>>;
@@ -174,9 +171,8 @@ export class BookPreRenderer {
       request
     );
 
-    // Initialize ChapterManager with integrated helpers
+    // Initialize helpers
     const cfiResolver = new CfiResolver();
-    this.chapterManager = new ChapterManager(cfiResolver);
     this.pageMapGenerator = new PageMapGenerator(cfiResolver);
 
     // Create unattached storage for long-term prerendered content
@@ -461,7 +457,7 @@ export class BookPreRenderer {
         await this.waitForLayout(view.contents.document, 3);
       }
 
-      // Analyze content using ChapterManager with better error handling
+      // Analyze content with better error handling
       const analysisResult = await this.performAsyncContentAnalysis(
         chapter,
         view

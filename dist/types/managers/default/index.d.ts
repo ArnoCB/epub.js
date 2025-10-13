@@ -110,10 +110,6 @@ declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
     handleNextPrePaginated(forceRight: boolean, section: Section, action: (section: Section) => Promise<View>): Promise<View> | undefined;
     display(section: Section, target?: HTMLElement | string): Promise<unknown>;
     /**
-     * Fallback to normal rendering when pre-rendered fails
-     */
-    private displayNormally;
-    /**
      * Original display logic extracted for reuse
      */
     private displaySection;

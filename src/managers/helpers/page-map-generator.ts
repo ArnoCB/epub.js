@@ -1,8 +1,5 @@
 /**
  * Simple, lightweight page map generator for prerenderer
- *
- * This replaces the complex ChapterManager.analyzeChapter() method with
- * direct page map generation during prerendering.
  */
 
 import { Section } from '../../section';

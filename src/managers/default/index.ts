@@ -381,20 +381,6 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   /**
-   * Fallback to normal rendering when pre-rendered fails
-   */
-  private displayNormally(
-    section: Section,
-    target?: HTMLElement | string,
-    displaying?: defer<unknown>
-  ): void {
-    const deferred = displaying || new defer();
-
-    // Use the original display logic
-    this.displaySection(section, target, deferred);
-  }
-
-  /**
    * Original display logic extracted for reuse
    */
   private displaySection(
