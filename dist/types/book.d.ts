@@ -1,8 +1,7 @@
-import type { PackagingManifestJson } from './types/packaging';
-import type { PackagingManifestObject } from './types/packaging';
+import type { BookOptions, PackagingManifestJson, PackagingManifestObject } from './types';
 import EventEmitter from 'event-emitter';
-import type { BookOptions } from './types/book';
 import { defer } from './utils/core';
+import Path from './utils/path';
 import Spine from './spine';
 import Locations from './locations';
 import Packaging from './packaging';
@@ -16,7 +15,6 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 /**
  * An Epub representation with methods for the loading, parsing and manipulation
  * of its contents.
- * @class
  * @param {string} [url]
  * @param {object} [options]
  * @param {method} [options.requestMethod] a request function to use instead of the default
@@ -68,13 +66,13 @@ declare class Book implements EventEmitterMethods {
     navigation: Navigation | undefined;
     pageList: PageList | undefined;
     private url;
-    private path;
+    path: Path | undefined;
     private archived;
     private archive;
     private storage;
     private resources;
     private rendition;
-    private packaging;
+    packaging: Packaging | undefined;
     private container;
     private displayOptions;
     cover: string | undefined;

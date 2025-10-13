@@ -36,7 +36,6 @@ describe('Book', () => {
   });
 
   it('should generate a key with identifier', () => {
-    // @ts-expect-error: Accessing private for test
     book.packaging = {
       metadata: { identifier: 'abc' },
     } as unknown as Packaging;

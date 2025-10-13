@@ -1,4 +1,4 @@
-import { PackagingManifestItem, PackagingManifestObject } from './packaging';
+import { PackagingManifestItem, PackagingManifestObject } from './types/packaging';
 import Archive from './archive';
 export interface ResourcesOptions {
     replacements?: string;

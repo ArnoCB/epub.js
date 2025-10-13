@@ -1,10 +1,10 @@
-import type { PackagingManifestJson } from './types/packaging';
 import type {
+  BookOptions,
+  PackagingManifestJson,
   PackagingManifestObject,
   PackagingMetadataObject,
-} from './types/packaging';
+} from './types';
 import EventEmitter from 'event-emitter';
-import type { BookOptions } from './types/book';
 import { extend, defer } from './utils/core';
 import Url from './utils/url';
 import Path from './utils/path';
@@ -45,7 +45,6 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 /**
  * An Epub representation with methods for the loading, parsing and manipulation
  * of its contents.
- * @class
  * @param {string} [url]
  * @param {object} [options]
  * @param {method} [options.requestMethod] a request function to use instead of the default
@@ -111,13 +110,13 @@ class Book implements EventEmitterMethods {
   pageList: PageList | undefined;
 
   private url: Url | undefined;
-  private path: Path | undefined;
+  path: Path | undefined;
   private archived: boolean = false;
   private archive: Archive | undefined;
   private storage: Store | undefined;
   private resources: Resources | undefined;
   private rendition: Rendition | undefined;
-  private packaging: Packaging | undefined;
+  packaging: Packaging | undefined;
   private container: Container | undefined;
   private displayOptions: DisplayOptions | undefined;
 
@@ -182,11 +181,6 @@ class Book implements EventEmitterMethods {
       packaging: this.loading.packaging.promise,
     };
 
-    /**
-     * @member {promise} ready returns after the book is loaded and parsed
-     * @memberof Book
-     * @private
-     */
     this.ready = Promise.all([
       this.loaded.manifest,
       this.loaded.spine,

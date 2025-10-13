@@ -16,7 +16,6 @@ type AnnotationData = {
 
 /**
  * Annotation object
- * @class
  * @param {object} options
  * @param {string} options.type Type of annotation to add: "highlight", "underline", "mark"
  * @param {EpubCFI} options.cfiRange EpubCFI range to attach annotation to
