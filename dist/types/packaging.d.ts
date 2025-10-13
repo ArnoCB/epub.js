@@ -1,8 +1,6 @@
-import type { PackagingManifestJson, PackagingMetadataObject, PackagingSpineItem, PackagingManifestObject, PackagingParseResult } from './types';
-import type { RawNavItem } from './navigation';
+import type { PackagingManifestJson, PackagingMetadataObject, PackagingSpineItem, PackagingManifestObject, PackagingParseResult, RawNavItem } from './types';
 /**
  * Open Packaging Format Parser
- * @param {document} packageDocument OPF XML
  */
 declare class Packaging {
     manifest: PackagingManifestObject;

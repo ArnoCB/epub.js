@@ -2,11 +2,11 @@ import { defer } from '../../utils/core';
 import DefaultViewManager, { DefaultViewManagerSettings } from '../default';
 import Snap from '../helpers/snap';
 import { ViewManager } from '../helpers/snap';
-import { Flow } from '../../layout';
 import Section from '../../section';
 import { View } from '../helpers/views';
 import EventEmitter from 'event-emitter';
 import IframeView from '../views/iframe';
+import type { Flow } from '../../types';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 declare class ContinuousViewManager extends DefaultViewManager implements ViewManager, EventEmitterMethods {
     trimTimeout: NodeJS.Timeout | undefined;

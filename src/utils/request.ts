@@ -7,7 +7,7 @@ function request<T = unknown>(
   withCredentials: boolean = false,
   headers: Record<string, string> = {}
 ): Promise<T> {
-  const supportsURL = typeof window != 'undefined' ? window.URL : false; // TODO: fallback for url if window isn't defined
+  const supportsURL = typeof window != 'undefined' ? window.URL : false;
   const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
 
   return new Promise((resolve, reject) => {

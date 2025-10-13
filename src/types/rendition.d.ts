@@ -1,3 +1,22 @@
+// Layout-related properties for metadata and settings
+import type {
+  Flow,
+  Spread,
+  Direction,
+  Orientation,
+  LayoutType,
+} from './common';
+
+export type LayoutProperties = {
+  layout?: LayoutType;
+  spread?: Spread;
+  orientation?: Orientation;
+  flow?: Flow;
+  direction?: Direction;
+  minSpreadWidth?: number;
+  viewport?: string;
+};
+
 // Type definitions for location objects
 export type DisplayedInfo = {
   page: number;
@@ -41,7 +60,7 @@ export interface RenditionOptions {
   manager?: ViewManager;
   view?: View;
   flow?: Flow;
-  layout?: string;
+  layout?: LayoutType;
   spread?: Spread;
   minSpreadWidth?: number;
   stylesheet?: string;
@@ -54,8 +73,8 @@ export interface RenditionOptions {
   allowScriptedContent?: boolean;
   allowPopups?: boolean;
   transparency?: boolean;
-  direction?: string;
-  orientation?: string;
+  direction?: Direction;
+  orientation?: Orientation;
   usePreRendering?: boolean;
   globalLayoutProperties?: {
     flow?: Flow;

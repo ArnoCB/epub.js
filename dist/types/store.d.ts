@@ -4,7 +4,6 @@ import Resources from './resources';
 type EventEmitterMethods = Pick<EventEmitter, 'on'>;
 /**
  * Handles saving and requesting files from local storage
- * @class
  * @param {string} name This should be the name of the application for modals
  * @param {function} [requester]
  * @param {function} [resolver]
@@ -27,7 +26,6 @@ declare class Store implements EventEmitterMethods {
     private checkRequirements;
     /**
      * Add online and offline event listeners
-     * @private
      */
     private addListeners;
     /**

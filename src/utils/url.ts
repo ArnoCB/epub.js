@@ -1,10 +1,9 @@
 import Path from './path';
 
 /**
- * creates a Url object for parsing and manipulation of a url string
- * @param	{string} urlString	a url string (relative or absolute)
- * @param	{string} [baseString] optional base for the url,
- * default to window.location.href
+ * Creates a Url object for parsing and manipulation of a url string
+ *
+ * Defaults to window.location.href
  */
 class Url {
   Url: URL | undefined;

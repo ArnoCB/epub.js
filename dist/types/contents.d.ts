@@ -3,13 +3,7 @@ import EpubCFI from './epubcfi';
 import Layout from './layout';
 import Section from './section';
 import type { Viewport } from './types/viewport';
-export type StylesheetRules = [string, ...[string, string, boolean?][]][] | {
-    [selector: string]: {
-        [property: string]: string;
-    } | {
-        [property: string]: string;
-    }[];
-};
+import { Direction } from './types';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
 /**
  * Handles DOM manipulation, queries and events for View contents
@@ -262,12 +256,8 @@ declare class Contents implements EventEmitterMethods {
     size(width: number, height: number): void;
     /**
      * Apply columns to the contents for pagination
-     * @param {number} width
-     * @param {number} height
-     * @param {number} columnWidth
-     * @param {number} gap
      */
-    columns(width: number, height: number, columnWidth: number, gap: number, dir: string): void;
+    columns(width: number, height: number, columnWidth: number, gap: number, dir: Direction): void;
     /**
      * Scale contents from center
      * @param {number} scale

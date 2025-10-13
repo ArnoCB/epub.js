@@ -1,38 +1,15 @@
 import { type, isNumber, findChildren } from './utils/core';
-
-interface CustomRange {
-  startContainer: Node;
-  startOffset: number;
-  endContainer: Node;
-  endOffset: number;
-}
+import type {
+  CustomRange,
+  CFIStep,
+  CFITerminal,
+  CFIComponent,
+  CFIRange,
+} from './types';
 
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
 const DOCUMENT_NODE = 9;
-
-interface CFIStep {
-  type: 'element' | 'text';
-  index: number;
-  id?: string | null;
-  tagName?: string | null;
-}
-
-interface CFITerminal {
-  offset: number | null;
-  assertion: string | null;
-}
-
-interface CFIComponent {
-  steps: CFIStep[];
-  terminal: CFITerminal;
-}
-
-interface CFIRange {
-  path: CFIComponent;
-  start: CFIComponent;
-  end: CFIComponent;
-}
 
 /**
  * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
@@ -107,8 +84,8 @@ class EpubCFI {
       typeof doc.createRange === 'function'
     ) {
       const range = doc.createRange();
-      range.setStart(input.startContainer, input.startOffset);
-      range.setEnd(input.endContainer, input.endOffset);
+      range.setStart(input.startContainer as Node, input.startOffset as number);
+      range.setEnd(input.endContainer as Node, input.endOffset as number);
       return range;
     }
 
@@ -682,15 +659,15 @@ class EpubCFI {
     }
 
     if (isDOMRange(range)) {
-      start = range.startContainer;
-      end = range.endContainer;
-      startOffset = range.startOffset;
-      endOffset = range.endOffset;
+      start = range.startContainer as Node;
+      end = range.endContainer as Node;
+      startOffset = range.startOffset as number;
+      endOffset = range.endOffset as number;
     } else if (isCustomRange(range)) {
-      start = range.startContainer;
-      end = range.endContainer;
-      startOffset = range.startOffset;
-      endOffset = range.endOffset;
+      start = range.startContainer as Node;
+      end = range.endContainer as Node;
+      startOffset = range.startOffset as number;
+      endOffset = range.endOffset as number;
     } else {
       throw new Error('Invalid range object provided to fromRange');
     }

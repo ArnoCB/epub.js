@@ -42,8 +42,6 @@ declare class Themes {
     }): void;
     /**
      * Register a theme by passing its css as string
-     * @param {string} name
-     * @param {string} css
      */
     registerCss(name: string, css: string): void;
     /**
@@ -52,8 +50,6 @@ declare class Themes {
     registerUrl(name: string, input: string): void;
     /**
      * Register rule
-     * @param {string} name
-     * @param {object} rules
      */
     registerRules(name: string, rules: {
         [selector: string]: {
@@ -68,25 +64,18 @@ declare class Themes {
     select(name: string): void;
     /**
      * Update a theme
-     * @param {string} name
      */
     update(name: string): void;
     /**
      * Inject all themes into contents
-     * @param {Contents} contents
      */
     inject(contents: Contents): void;
     /**
      * Add Theme to contents
-     * @param {string} name
-     * @param {Contents} contents
      */
     add(name: string, contents: Contents): void;
     /**
      * Add override
-     * @param {string} name
-     * @param {string} value
-     * @param {boolean} priority
      */
     override(name: string, value: string, priority?: boolean): void;
     removeOverride(name: string): void;

@@ -10,7 +10,6 @@ type EventEmitterMethods = Pick<EventEmitter, 'on'>;
 
 /**
  * Handles saving and requesting files from local storage
- * @class
  * @param {string} name This should be the name of the application for modals
  * @param {function} [requester]
  * @param {function} [resolver]
@@ -81,7 +80,6 @@ class Store implements EventEmitterMethods {
 
   /**
    * Add online and offline event listeners
-   * @private
    */
   private addListeners() {
     this._status = this.status.bind(this);

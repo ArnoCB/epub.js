@@ -1,20 +1,5 @@
 import Hook from './utils/hook';
-export interface SectionItem {
-    idref: string;
-    index: number;
-    cfiBase: string;
-    href: string;
-    url?: string;
-    canonical?: string;
-    properties?: Array<string>;
-    linear?: string;
-    next: () => Section | undefined;
-    prev: () => Section | undefined;
-}
-interface Match {
-    cfi: string;
-    excerpt: string;
-}
+import type { SectionItem, Match } from './types';
 /**
  * Represents a Section of the Book
  *

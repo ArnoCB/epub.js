@@ -1,13 +1,7 @@
 import EpubCFI from './epubcfi';
-export interface PageListItem {
-    href: string;
-    page: string;
-    cfi?: string;
-    packageUrl?: string;
-}
+import type { PageListItem } from './types';
 /**
  * Page List Parser
- * @param {document} [xml]
  */
 declare class PageList {
     pages: string[];
@@ -26,9 +20,6 @@ declare class PageList {
     parse(xml: Document): PageListItem[] | undefined;
     /**
      * Parse a Nav PageList
-     * @private
-     * @param  {node} navHtml
-     * @return {PageList.item[]} list
      */
     private parseNav;
     parseNcx(navXml: Element): PageListItem[];
@@ -43,8 +34,6 @@ declare class PageList {
     private process;
     /**
      * Get a PageList result from a EpubCFI
-     * @param  {string} cfi EpubCFI String
-     * @return {number} page
      */
     pageFromCfi(cfi: string): number;
     /**

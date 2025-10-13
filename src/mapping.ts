@@ -1,19 +1,13 @@
 import Contents from './contents';
 import EpubCFI from './epubcfi';
 import Layout from './layout';
+import { Axis } from './types';
 import { nodeBounds } from './utils/core';
-
-export interface ViewParameter {
-  contents: Contents;
-  section: {
-    cfiBase: string;
-  };
-  document: Document;
-}
+import type { Direction } from './types';
+import type { ViewParameter } from './types/mapping';
 
 /**
  * Map text locations to CFI ranges
- * @param {Layout} layout Layout to apply
  * @param {string} [direction="ltr"] Text direction
  * @param {string} [axis="horizontal"] vertical or horizontal axis
  * @param {boolean} [dev] toggle developer highlighting
@@ -21,15 +15,10 @@ export interface ViewParameter {
 export class Mapping {
   layout: Layout;
   horizontal: boolean;
-  direction: string;
+  direction: Direction;
   _dev: boolean;
 
-  constructor(
-    layout: Layout,
-    direction?: string,
-    axis?: 'horizontal' | 'vertical',
-    dev = false
-  ) {
+  constructor(layout: Layout, direction?: Direction, axis?: Axis, dev = false) {
     this.layout = layout;
     this.horizontal = axis === 'horizontal' ? true : false;
     this.direction = direction || 'ltr';
@@ -42,7 +31,6 @@ export class Mapping {
   section(view: ViewParameter) {
     const ranges = this.findRanges(view);
     const map = this.rangeListToCfiList(view.section.cfiBase, ranges);
-
     return map;
   }
 
@@ -52,9 +40,7 @@ export class Mapping {
   page(contents: Contents, cfiBase: string, start: number, end: number) {
     const root = contents && contents.document ? contents.document.body : false;
 
-    if (!root) {
-      return;
-    }
+    if (!root) return;
 
     const result = this.rangePairToCfiPair(cfiBase, {
       start: this.findStart(root, start, end),
@@ -152,13 +138,8 @@ export class Mapping {
 
   /**
    * Find Start Range
-   * @private
-   * @param {Node} root root node
-   * @param {number} start position to start at
-   * @param {number} end position to end at
-   * @return {Range}
    */
-  findStart(root: Node, start: number, end: number) {
+  private findStart(root: Node, start: number, end: number) {
     const stack = [root];
     let $el;
     let found;

@@ -1,17 +1,7 @@
 import Rendition from './rendition';
 import Url from './utils/url';
 import Contents from './contents';
-
-type Theme = {
-  rules?: {
-    [selector: string]:
-      | { [property: string]: string }
-      | { [property: string]: string }[];
-  };
-  url?: string;
-  serialized?: string;
-  injected?: boolean;
-};
+import type { Theme } from './types/themes';
 
 /**
  * Themes to apply to displayed content
@@ -159,8 +149,6 @@ class Themes {
 
   /**
    * Register a theme by passing its css as string
-   * @param {string} name
-   * @param {string} css
    */
   registerCss(name: string, css: string) {
     if (this._themes === undefined) {
@@ -200,8 +188,6 @@ class Themes {
 
   /**
    * Register rule
-   * @param {string} name
-   * @param {object} rules
    */
   registerRules(
     name: string,
@@ -254,7 +240,6 @@ class Themes {
 
   /**
    * Update a theme
-   * @param {string} name
    */
   update(name: string) {
     if (!this.rendition || !this.rendition.getContents) {
@@ -274,7 +259,6 @@ class Themes {
 
   /**
    * Inject all themes into contents
-   * @param {Contents} contents
    */
   inject(contents: Contents) {
     const links: string[] = [];
@@ -305,8 +289,6 @@ class Themes {
 
   /**
    * Add Theme to contents
-   * @param {string} name
-   * @param {Contents} contents
    */
   add(name: string, contents: Contents) {
     const theme: Theme | undefined = this._themes
@@ -330,9 +312,6 @@ class Themes {
 
   /**
    * Add override
-   * @param {string} name
-   * @param {string} value
-   * @param {boolean} priority
    */
   override(name: string, value: string, priority: boolean = false) {
     if (!this.rendition || !this.rendition.getContents) {

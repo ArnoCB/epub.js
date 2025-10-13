@@ -1,9 +1,10 @@
-import type { DisplayedLocation, RenditionHooks, RenditionOptions } from './types';
+import type { RenditionOptions } from './types';
+import type { DisplayedLocation, RenditionHooks, Flow, Spread } from './types';
 import EventEmitter from 'event-emitter';
 import { defer } from './utils/core';
 import EpubCFI from './epubcfi';
 import Queue from './utils/queue';
-import Layout, { Flow, Spread } from './layout';
+import Layout from './layout';
 import Themes from './themes';
 import Annotations from './annotations';
 import Book from './book';
@@ -11,12 +12,12 @@ import { View } from './managers/helpers/views';
 import Contents from './contents';
 import { ViewManager } from './managers/helpers/snap';
 import { ViewManagerConstructor } from './managers/helpers/snap';
+import { Direction } from './types/common';
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 /**
  * Displays an Epub as a series of Views for each Section.
  * Requires Manager and View class to handle specifics of rendering
  * the section content.
- * @class
  * @param {Book} book
  * @param {object} [options]
  * @param {number} [options.width]
@@ -64,7 +65,6 @@ export declare class Rendition implements EventEmitterMethods {
     /**
      * Call to attach the container to an element in the dom
      * Container must be attached before rendering can begin
-     * @return {Promise}
      */
     attachTo(element: HTMLElement | string): Promise<unknown>;
     /**
@@ -122,6 +122,8 @@ export declare class Rendition implements EventEmitterMethods {
     prev(): Promise<unknown>;
     /**
      * Determine the Layout properties from metadata and settings
+     *
+     * @link http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
      */
     private determineLayoutProperties;
     /**
@@ -131,24 +133,16 @@ export declare class Rendition implements EventEmitterMethods {
     flow(flow: Flow): void;
     /**
      * Adjust the layout of the rendition to reflowable or pre-paginated
-     * @param  {object} settings
      */
-    layout(settings: {
-        layout?: string;
-        spread?: Spread;
-        minSpreadWidth?: number;
-        direction?: string;
-        flow?: Flow;
-    }): Layout | undefined;
+    layout(settings: RenditionOptions): Layout | undefined;
     /**
      * Adjust if the rendition uses spreads
-     * @param  {int} [min] min width to use spreads at
      */
     spread(spread: Spread, min: number): void;
     /**
      * Adjust the direction of the rendition
      */
-    direction(dir: string): void;
+    direction(dir: Direction): void;
     /**
      * Report the current location
      * @fires relocated
@@ -162,7 +156,6 @@ export declare class Rendition implements EventEmitterMethods {
     /**
      * Creates a Rendition#locationRange from location
      * passed by the Manager
-     * @returns {displayedLocation}
      */
     private located;
     /**
@@ -179,16 +172,12 @@ export declare class Rendition implements EventEmitterMethods {
     private triggerViewEvent;
     /**
      * Emit a selection event's CFI Range passed from a a view
-     * @private
-     * @param  {string} cfirange
      */
-    triggerSelectedEvent(cfirange: string, contents: Contents): void;
+    private triggerSelectedEvent;
     /**
      * Emit a markClicked event with the cfiRange and data from a mark
-     * @private
-     * @param  {EpubCFI} cfirange
      */
-    triggerMarkEvent(cfiRange: EpubCFI | string, data: object, contents: Contents): void;
+    private triggerMarkEvent;
     /**
      * Hook to adjust images to fit in columns
      */

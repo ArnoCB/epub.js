@@ -1,11 +1,7 @@
 import EpubCFI from './epubcfi';
 import Hook from './utils/hook';
-import Section, { SectionItem } from './section';
-import type { PackagingSpineItem, PackagingManifestObject } from './types';
-type UnpackingSpineItem = PackagingSpineItem & Partial<Omit<SectionItem, 'next' | 'prev'>> & {
-    next?: () => Section | undefined;
-    prev?: () => Section | undefined;
-};
+import Section from './section';
+import type { PackagingManifestObject, UnpackingSpineItem } from './types';
 import Packaging from './packaging';
 import { ResolverFunction } from './resources';
 /**

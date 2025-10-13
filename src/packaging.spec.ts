@@ -1,5 +1,5 @@
 // Setup polyfills for Node.js environment
-import type { Flow } from './layout';
+import type { Flow } from './types';
 import { TextEncoder, TextDecoder } from 'util';
 import Packaging from './packaging';
 Object.assign(global, { TextDecoder, TextEncoder });

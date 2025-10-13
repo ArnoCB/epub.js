@@ -1,23 +1,4 @@
-export interface NavItem {
-    id: string;
-    href: string;
-    label: string;
-    subitems: NavItem[];
-    parent?: string;
-}
-export interface LandmarkItem {
-    href: string;
-    label: string;
-    type?: string;
-}
-export interface RawNavItem {
-    title: string;
-    children?: RawNavItem[];
-    id?: string;
-    href?: string;
-    parent?: string;
-    [key: string]: unknown;
-}
+import type { NavItem, LandmarkItem, RawNavItem } from './types/navigation';
 /**
  * Navigation Parser
  * @param {document} xml navigation html / xhtml / ncx

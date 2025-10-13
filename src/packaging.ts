@@ -7,14 +7,13 @@ import type {
   ExtendedManifestItem,
   ExtendedNavItem,
   PackagingParseResult,
+  RawNavItem,
+  Flow,
 } from './types';
-import type { RawNavItem } from './navigation';
-import { Flow } from './layout';
 import { indexOfElementNode } from './utils/helpers';
 
 /**
  * Open Packaging Format Parser
- * @param {document} packageDocument OPF XML
  */
 class Packaging {
   manifest: PackagingManifestObject = {};

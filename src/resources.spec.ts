@@ -1,7 +1,4 @@
-import type {
-  PackagingManifestObject,
-  PackagingManifestItem,
-} from './packaging';
+import type { PackagingManifestObject, PackagingManifestItem } from './types';
 import Resources from './resources';
 
 // Global mocks setup before any imports

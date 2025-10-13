@@ -1,16 +1,9 @@
 import EpubCFI from './epubcfi';
 import { querySelectorByType, indexOfSorted, locationOf } from './utils/core';
-
-export interface PageListItem {
-  href: string;
-  page: string;
-  cfi?: string;
-  packageUrl?: string;
-}
+import type { PageListItem } from './types';
 
 /**
  * Page List Parser
- * @param {document} [xml]
  */
 class PageList {
   public pages: string[] = [];
@@ -49,9 +42,6 @@ class PageList {
 
   /**
    * Parse a Nav PageList
-   * @private
-   * @param  {node} navHtml
-   * @return {PageList.item[]} list
    */
   private parseNav(navHtml: Element): PageListItem[] {
     const navElement = querySelectorByType(navHtml, 'nav', 'page-list');
@@ -152,8 +142,6 @@ class PageList {
 
   /**
    * Get a PageList result from a EpubCFI
-   * @param  {string} cfi EpubCFI String
-   * @return {number} page
    */
   pageFromCfi(cfi: string): number {
     let pg = -1;
@@ -222,7 +210,6 @@ class PageList {
     this.locations = [];
     this.epubcfi = undefined;
     this.pageList = undefined;
-
     this.toc = undefined;
     this.ncx = undefined;
   }

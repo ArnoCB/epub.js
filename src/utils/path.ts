@@ -5,7 +5,6 @@ import path from 'path-webpack';
  *
  * Uses a polyfill for Nodejs path: https://nodejs.org/api/path.html
  * @param	pathString	a url string (relative or absolute)
- * @class
  */
 class Path {
   private _path: string;

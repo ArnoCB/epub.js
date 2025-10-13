@@ -4,11 +4,11 @@ import Snap from '../helpers/snap';
 import { EVENTS } from '../../utils/constants';
 import { debounce } from '../../utils/helpers';
 import { ViewManager } from '../helpers/snap';
-import { Axis, Flow } from '../../layout';
 import Section from '../../section';
 import { View } from '../helpers/views';
 import EventEmitter from 'event-emitter';
 import IframeView from '../views/iframe';
+import type { Flow, Axis } from '../../types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 
@@ -235,7 +235,6 @@ class ContinuousViewManager
         visible.push(view);
       } else {
         this.q.enqueue(view.destroy.bind(view));
-        // console.log("hidden " + view.index, view.displayed);
 
         clearTimeout(this.trimTimeout);
         this.trimTimeout = setTimeout(() => {

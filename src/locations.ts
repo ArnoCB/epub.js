@@ -6,18 +6,7 @@ import EventEmitter from 'event-emitter';
 import Spine from './spine';
 import Section from './section';
 import SpineItem from './section';
-
-type RequestFunction<T = unknown> = (
-  pathOrUrl: string,
-  ...args: unknown[]
-) => Promise<T>;
-
-interface CustomRange {
-  startContainer: Node | undefined;
-  startOffset: number | undefined;
-  endContainer: Node | undefined;
-  endOffset: number | undefined;
-}
+import type { RequestFunction, CustomRange } from './types';
 
 /**
  * Find Locations for a Book

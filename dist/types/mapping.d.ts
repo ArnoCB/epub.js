@@ -1,15 +1,10 @@
 import Contents from './contents';
 import Layout from './layout';
-export interface ViewParameter {
-    contents: Contents;
-    section: {
-        cfiBase: string;
-    };
-    document: Document;
-}
+import { Axis } from './types';
+import type { Direction } from './types';
+import type { ViewParameter } from './types/mapping';
 /**
  * Map text locations to CFI ranges
- * @param {Layout} layout Layout to apply
  * @param {string} [direction="ltr"] Text direction
  * @param {string} [axis="horizontal"] vertical or horizontal axis
  * @param {boolean} [dev] toggle developer highlighting
@@ -17,9 +12,9 @@ export interface ViewParameter {
 export declare class Mapping {
     layout: Layout;
     horizontal: boolean;
-    direction: string;
+    direction: Direction;
     _dev: boolean;
-    constructor(layout: Layout, direction?: string, axis?: 'horizontal' | 'vertical', dev?: boolean);
+    constructor(layout: Layout, direction?: Direction, axis?: Axis, dev?: boolean);
     /**
      * Find CFI pairs for entire section at once
      */
@@ -44,13 +39,8 @@ export declare class Mapping {
     }[];
     /**
      * Find Start Range
-     * @private
-     * @param {Node} root root node
-     * @param {number} start position to start at
-     * @param {number} end position to end at
-     * @return {Range}
      */
-    findStart(root: Node, start: number, end: number): Range;
+    private findStart;
     /**
      * Find End Range
      */

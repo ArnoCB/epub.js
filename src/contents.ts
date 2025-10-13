@@ -7,14 +7,7 @@ import { EPUBJS_VERSION, EVENTS, DOM_EVENTS } from './utils/constants';
 import Layout from './layout';
 import Section from './section';
 import type { Viewport } from './types/viewport';
-
-export type StylesheetRules =
-  | [string, ...[string, string, boolean?][]][]
-  | {
-      [selector: string]:
-        | { [property: string]: string }
-        | { [property: string]: string }[];
-    };
+import { Axis, Direction } from './types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
 
@@ -906,16 +899,11 @@ class Contents implements EventEmitterMethods {
    * @private
    */
   onSelectionChange() {
-    console.log('[Contents] Selection change detected');
     if (this.selectionEndTimeout) {
       clearTimeout(this.selectionEndTimeout);
     }
     this.selectionEndTimeout = setTimeout(() => {
       const selection = this.window!.getSelection();
-      console.log('[Contents] Triggering selected event after timeout', {
-        hasSelection: !!selection,
-        selectionText: selection?.toString().trim().substring(0, 50),
-      });
       this.triggerSelectedEvent(selection);
     }, 250);
   }
@@ -925,58 +913,20 @@ class Contents implements EventEmitterMethods {
    * @private
    */
   triggerSelectedEvent(selection: Selection | null) {
-    console.log('[Contents] triggerSelectedEvent called', {
-      hasSelection: !!selection,
-      rangeCount: selection?.rangeCount,
-      cfiBase: this.cfiBase,
-    });
-
     let range, cfirange;
 
     if (selection && selection.rangeCount > 0) {
       range = selection.getRangeAt(0);
-      console.log('[Contents] Range found', {
-        collapsed: range.collapsed,
-        startContainer: range.startContainer,
-        endContainer: range.endContainer,
-        startOffset: range.startOffset,
-        endOffset: range.endOffset,
-        commonAncestor: range.commonAncestorContainer,
-      });
-
       if (!range.collapsed) {
         try {
-          console.log(
-            '[Contents] About to generate CFI with cfiBase:',
-            this.cfiBase
-          );
-          console.log('[Contents] Range details:', {
-            startContainerNodeName: range.startContainer.nodeName,
-            startContainerTextContent:
-              range.startContainer.textContent?.substring(0, 50),
-            endContainerNodeName: range.endContainer.nodeName,
-            endContainerTextContent: range.endContainer.textContent?.substring(
-              0,
-              50
-            ),
-          });
-
           // cfirange = this.section.cfiFromRange(range);
           cfirange = new EpubCFI(range, this.cfiBase).toString();
-          console.log('[Contents] CFI generated successfully:', cfirange);
           this.emit(EVENTS.CONTENTS.SELECTED, cfirange);
           this.emit(EVENTS.CONTENTS.SELECTED_RANGE, range);
-          console.log('[Contents] ✅ Emitted CONTENTS.SELECTED events');
         } catch (e) {
           console.error('[Contents] ❌ Error generating CFI from range:', e);
         }
-      } else {
-        console.log(
-          '[Contents] Range is collapsed, not emitting selection event'
-        );
       }
-    } else {
-      console.log('[Contents] No valid selection found');
     }
   }
 
@@ -1029,17 +979,13 @@ class Contents implements EventEmitterMethods {
 
   /**
    * Apply columns to the contents for pagination
-   * @param {number} width
-   * @param {number} height
-   * @param {number} columnWidth
-   * @param {number} gap
    */
   columns(
     width: number,
     height: number,
     columnWidth: number,
     gap: number,
-    dir: string
+    dir: Direction
   ) {
     const COLUMN_AXIS = prefixed('column-axis');
     const COLUMN_GAP = prefixed('column-gap');
@@ -1047,7 +993,7 @@ class Contents implements EventEmitterMethods {
     const COLUMN_FILL = prefixed('column-fill');
 
     const writingModeValue = this.writingMode();
-    const axis =
+    const axis: Axis =
       typeof writingModeValue === 'string' &&
       writingModeValue.indexOf('vertical') === 0
         ? 'vertical'

@@ -1,19 +1,17 @@
 import EpubCFI from './epubcfi';
 import Hook from './utils/hook';
-import Section, { SectionItem } from './section';
-import type { PackagingSpineItem, PackagingManifestObject } from './types';
+import Section from './section';
+import type {
+  PackagingSpineItem,
+  PackagingManifestObject,
+  SectionItem,
+  UnpackingSpineItem,
+} from './types';
 import {
   replaceBase,
   replaceCanonical,
   replaceMeta,
 } from './utils/replacements';
-
-// Type for spine items during unpacking - starts as PackagingSpineItem but gets extended
-type UnpackingSpineItem = PackagingSpineItem &
-  Partial<Omit<SectionItem, 'next' | 'prev'>> & {
-    next?: () => Section | undefined;
-    prev?: () => Section | undefined;
-  };
 import Packaging from './packaging';
 import { ResolverFunction } from './resources';
 

@@ -4,25 +4,7 @@ import Hook from './utils/hook';
 import { sprint } from './utils/core';
 import Request from './utils/request';
 
-// Define the actual item structure that gets passed to Section constructor
-export interface SectionItem {
-  idref: string;
-  index: number;
-  cfiBase: string;
-  href: string;
-  url?: string;
-  canonical?: string;
-  properties?: Array<string>;
-  linear?: string;
-  next: () => Section | undefined;
-  prev: () => Section | undefined;
-}
-
-// Define the Match interface for search results
-interface Match {
-  cfi: string;
-  excerpt: string;
-}
+import type { SectionItem, Match } from './types';
 
 /**
  * Represents a Section of the Book

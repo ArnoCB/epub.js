@@ -14,15 +14,15 @@ import Contents from '../../contents';
 import { EVENTS } from '../../utils/constants';
 import { Pane as OriginalPane, Highlight, Underline, Mark } from 'marks-pane';
 import { View } from '../helpers/views';
-import Layout, { Axis, Flow } from 'src/layout';
+import Layout from 'src/layout';
 import Section from 'src/section';
+import type { Flow, Axis } from 'src/types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 
 interface ExtendedIFrameElement extends HTMLIFrameElement {
   allowTransparency?: string;
   seamless?: string;
-  // Add other custom attributes here
 }
 
 // Subclass Pane to inject custom SVG styling
@@ -656,21 +656,10 @@ class IframeView implements View, EventEmitterMethods {
    * Ensures Contents object exists for highlighting/underlining - works for both normal and prerendered views
    */
   private ensureContentsForMarking(): boolean {
-    if (this.contents) {
-      console.log(
-        '[IframeView] Contents already exists, proceeding with highlighting'
-      );
-      return true;
-    }
-
-    console.log(
-      '[IframeView] No Contents object found, checking if this is a prerendered view'
-    );
+    if (this.contents) return true;
 
     // For prerendered views, try to create Contents on-the-fly
     if (this.iframe && this.iframe.contentDocument && this.section) {
-      console.log('[IframeView] Creating Contents for prerendered view');
-
       try {
         const contents = this.setupContentsForHighlighting(
           this.iframe,
@@ -683,9 +672,6 @@ class IframeView implements View, EventEmitterMethods {
           this.document = this.iframe.contentDocument;
           this.contents = contents;
 
-          console.log(
-            '[IframeView] Successfully created Contents for prerendered view'
-          );
           return true;
         } else {
           console.warn(

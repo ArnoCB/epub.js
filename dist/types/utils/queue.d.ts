@@ -1,7 +1,6 @@
 import { requestAnimationFrame } from './core';
 /**
  * Queue for handling tasks one at a time
- * @class
  * @param {scope} context what this will resolve to in the tasks
  */
 interface QueuedTask<T = unknown> {

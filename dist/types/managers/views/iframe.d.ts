@@ -4,8 +4,9 @@ import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import { Pane as OriginalPane, Mark } from 'marks-pane';
 import { View } from '../helpers/views';
-import Layout, { Axis, Flow } from 'src/layout';
+import Layout from 'src/layout';
 import Section from 'src/section';
+import type { Flow, Axis } from 'src/types';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 interface ExtendedIFrameElement extends HTMLIFrameElement {
     allowTransparency?: string;

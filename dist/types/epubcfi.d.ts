@@ -1,28 +1,4 @@
-interface CustomRange {
-    startContainer: Node;
-    startOffset: number;
-    endContainer: Node;
-    endOffset: number;
-}
-interface CFIStep {
-    type: 'element' | 'text';
-    index: number;
-    id?: string | null;
-    tagName?: string | null;
-}
-interface CFITerminal {
-    offset: number | null;
-    assertion: string | null;
-}
-interface CFIComponent {
-    steps: CFIStep[];
-    terminal: CFITerminal;
-}
-interface CFIRange {
-    path: CFIComponent;
-    start: CFIComponent;
-    end: CFIComponent;
-}
+import type { CustomRange, CFIStep, CFITerminal, CFIComponent, CFIRange } from './types';
 /**
  * Parsing and creation of EpubCFIs: http://www.idpf.org/epub/linking/cfi/epub-cfi.html
  *

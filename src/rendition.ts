@@ -1,16 +1,19 @@
+import { buildEnrichedLocationPoint } from './utils/location-helpers';
+import type { RenditionOptions } from './types';
 import type {
   LocationPoint,
   DisplayedLocation,
   RenditionHooks,
-  RenditionOptions,
+  Flow,
+  Spread,
 } from './types';
-
 import EventEmitter from 'event-emitter';
 import { defer, isFloat } from './utils/core';
+import type { LayoutProperties } from './types/rendition';
 import Hook from './utils/hook';
 import EpubCFI from './epubcfi';
 import Queue from './utils/queue';
-import Layout, { Flow, Spread } from './layout';
+import Layout from './layout';
 import Themes from './themes';
 import Annotations from './annotations';
 import { EVENTS, DOM_EVENTS } from './utils/constants';
@@ -21,6 +24,7 @@ import { ViewManager } from './managers/helpers/snap';
 import { ViewManagerConstructor } from './managers/helpers/snap';
 import DefaultViewManager from './managers/default';
 import { PreRenderingViewManager } from './managers/prerendering';
+import { Direction } from './types/common';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 
@@ -28,7 +32,6 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
  * Displays an Epub as a series of Views for each Section.
  * Requires Manager and View class to handle specifics of rendering
  * the section content.
- * @class
  * @param {Book} book
  * @param {object} [options]
  * @param {number} [options.width]
@@ -90,9 +93,6 @@ export class Rendition implements EventEmitterMethods {
       ...options,
     };
 
-    // Manager creation moved to start() method - no conditional creation here!
-    // Event listeners will be set up in start() after manager is created
-
     this.hooks = {
       display: new Hook(this),
       serialize: new Hook(this),
@@ -121,46 +121,11 @@ export class Rendition implements EventEmitterMethods {
       this.book.spine.hooks.content.register(this.injectScript.bind(this));
     }
 
-    /**
-     * @member {Themes} themes
-     * @memberof Rendition
-     */
     this.themes = new Themes(this);
 
-    /**
-     * @member {Annotations} annotations
-     * @memberof Rendition
-     */
     this.annotations = new Annotations(this);
 
     this.epubcfi = new EpubCFI();
-
-    /**
-     * A Rendered Location Range
-     * @typedef location
-     * @type {Object}
-     * @property {object} start
-     * @property {string} start.index
-     * @property {string} start.href
-     * @property {object} start.displayed
-     * @property {EpubCFI} start.cfi
-     * @property {number} start.location
-     * @property {number} start.percentage
-     * @property {number} start.displayed.page
-     * @property {number} start.displayed.total
-     * @property {object} end
-     * @property {string} end.index
-     * @property {string} end.href
-     * @property {object} end.displayed
-     * @property {EpubCFI} end.cfi
-     * @property {number} end.location
-     * @property {number} end.percentage
-     * @property {number} end.displayed.page
-     * @property {number} end.displayed.total
-     * @property {boolean} atStart
-     * @property {boolean} atEnd
-     * @memberof Rendition
-     */
 
     this.location = null;
 
@@ -266,15 +231,11 @@ export class Rendition implements EventEmitterMethods {
       // Add spine to manager options if using PreRenderingViewManager
       if (this.settings.usePreRendering) {
         const spineItems = this.book.spine?.spineItems || [];
-        console.log(
-          '[Rendition] Passing spine to PreRenderingViewManager:',
-          spineItems.length,
-          'sections'
-        );
         const preRenderingOptions = {
           ...baseManagerOptions,
           spine: spineItems,
         };
+
         this.manager = new ManagerClass(preRenderingOptions);
       } else {
         this.manager = new ManagerClass(baseManagerOptions);
@@ -342,7 +303,6 @@ export class Rendition implements EventEmitterMethods {
   /**
    * Call to attach the container to an element in the dom
    * Container must be attached before rendering can begin
-   * @return {Promise}
    */
   attachTo(element: HTMLElement | string): Promise<unknown> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -359,9 +319,6 @@ export class Rendition implements EventEmitterMethods {
 
         if (hasPreRendering && this.book.spine) {
           const sections = this.book.spine.spineItems || [];
-          console.log(
-            `[Rendition] Auto-starting pre-rendering for ${sections.length} sections`
-          );
 
           // Start pre-rendering in the background (don't block attachTo)
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -644,19 +601,14 @@ export class Rendition implements EventEmitterMethods {
       });
   }
 
-  //-- http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
   /**
    * Determine the Layout properties from metadata and settings
+   *
+   * @link http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
    */
-  private determineLayoutProperties(metadata: {
-    layout?: string;
-    spread?: string;
-    orientation?: string;
-    flow?: Flow;
-    direction?: string;
-    minSpreadWidth?: number;
-    viewport?: string;
-  }) {
+  private determineLayoutProperties(
+    metadata: LayoutProperties
+  ): LayoutProperties {
     const layout = this.settings.layout || metadata.layout || 'reflowable';
     const spread = this.settings.spread || metadata.spread || 'auto';
     const orientation =
@@ -718,15 +670,8 @@ export class Rendition implements EventEmitterMethods {
 
   /**
    * Adjust the layout of the rendition to reflowable or pre-paginated
-   * @param  {object} settings
    */
-  layout(settings: {
-    layout?: string;
-    spread?: Spread;
-    minSpreadWidth?: number;
-    direction?: string;
-    flow?: Flow;
-  }) {
+  layout(settings: RenditionOptions) {
     if (settings) {
       this._layout = new Layout(settings);
       this._layout.spread(settings.spread!, this.settings.minSpreadWidth!);
@@ -747,7 +692,6 @@ export class Rendition implements EventEmitterMethods {
 
   /**
    * Adjust if the rendition uses spreads
-   * @param  {int} [min] min width to use spreads at
    */
   spread(spread: Spread, min: number) {
     this.settings.spread = spread;
@@ -768,7 +712,7 @@ export class Rendition implements EventEmitterMethods {
   /**
    * Adjust the direction of the rendition
    */
-  direction(dir: string) {
+  direction(dir: Direction) {
     this.settings.direction = dir || 'ltr';
 
     if (this.manager) {
@@ -789,7 +733,6 @@ export class Rendition implements EventEmitterMethods {
   reportLocation() {
     return this.q.enqueue(() => {
       requestAnimationFrame(() => {
-        const ts = new Date().toISOString();
         const pageLocations = this.manager.currentLocation();
         if (
           pageLocations &&
@@ -816,32 +759,7 @@ export class Rendition implements EventEmitterMethods {
           }
 
           this.location = located;
-
-          /**
-           * @event relocated
-           * @type {displayedLocation}
-           * @memberof Rendition
-           */
-          try {
-            // push to global trace if present
-            try {
-              const g = globalThis as typeof globalThis & {
-                __navTrace?: unknown[];
-              };
-              if (g && g.__navTrace) {
-                g.__navTrace.push({
-                  ts: ts,
-                  event: 'relocated',
-                  details: this.location,
-                });
-              }
-            } catch {
-              // ignore
-            }
-            this.emit(EVENTS.RENDITION.RELOCATED, this.location);
-          } catch {
-            // emit may throw in tests; ignore
-          }
+          this.emit(EVENTS.RENDITION.RELOCATED, this.location);
         }
       });
     });
@@ -857,68 +775,17 @@ export class Rendition implements EventEmitterMethods {
   /**
    * Creates a Rendition#locationRange from location
    * passed by the Manager
-   * @returns {displayedLocation}
    */
   private located(location: LocationPoint[]): DisplayedLocation | null {
-    if (!location.length) {
-      return null;
-    }
+    if (!location.length) return null;
+
     const start: LocationPoint = location[0];
     const end: LocationPoint = location[location.length - 1];
 
     const located: DisplayedLocation = {
-      start: {
-        index: start.index,
-        href: start.href,
-        cfi: start.mapping?.start ?? '',
-        displayed: {
-          page: start.pages?.[0] ?? 1,
-          total: start.totalPages ?? 0,
-        },
-      },
-      end: {
-        index: end.index,
-        href: end.href,
-        cfi: end.mapping?.end ?? '',
-        displayed: {
-          page: end.pages?.[end.pages?.length - 1] ?? 1,
-          total: end.totalPages ?? 0,
-        },
-      },
+      start: buildEnrichedLocationPoint(start, 'start', this.book),
+      end: buildEnrichedLocationPoint(end, 'end', this.book),
     };
-
-    const locationStart = start.mapping?.start
-      ? this.book.locations!.locationFromCfi(start.mapping.start)
-      : null;
-
-    const locationEnd = end.mapping?.end
-      ? this.book.locations!.locationFromCfi(end.mapping.end)
-      : null;
-
-    if (locationStart !== null) {
-      located.start.location = locationStart;
-      located.start.percentage =
-        this.book.locations!.percentageFromLocation(locationStart);
-    }
-    if (locationEnd !== null) {
-      located.end.location = locationEnd;
-      located.end.percentage =
-        this.book.locations!.percentageFromLocation(locationEnd);
-    }
-
-    const pageStart = start.mapping?.start
-      ? this.book.pageList!.pageFromCfi(start.mapping.start)
-      : -1;
-    const pageEnd = end.mapping?.end
-      ? this.book.pageList!.pageFromCfi(end.mapping.end)
-      : -1;
-
-    if (pageStart !== -1) {
-      located.start.page = pageStart;
-    }
-    if (pageEnd !== -1) {
-      located.end.page = pageEnd;
-    }
 
     if (
       end.index === this.book.spine!.last()?.index &&
@@ -970,38 +837,19 @@ export class Rendition implements EventEmitterMethods {
 
   /**
    * Emit a selection event's CFI Range passed from a a view
-   * @private
-   * @param  {string} cfirange
    */
-  triggerSelectedEvent(cfirange: string, contents: Contents) {
-    /**
-     * Emit that a text selection has occurred
-     * @event selected
-     * @param {string} cfirange
-     * @param {Contents} contents
-     * @memberof Rendition
-     */
+  private triggerSelectedEvent(cfirange: string, contents: Contents) {
     this.emit(EVENTS.RENDITION.SELECTED, cfirange, contents);
   }
 
   /**
    * Emit a markClicked event with the cfiRange and data from a mark
-   * @private
-   * @param  {EpubCFI} cfirange
    */
-  triggerMarkEvent(
+  private triggerMarkEvent(
     cfiRange: EpubCFI | string,
     data: object,
     contents: Contents
   ) {
-    /**
-     * Emit that a mark was clicked
-     * @event markClicked
-     * @param {EpubCFI} cfirange
-     * @param {object} data
-     * @param {Contents} contents
-     * @memberof Rendition
-     */
     this.emit(EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
   }
 
