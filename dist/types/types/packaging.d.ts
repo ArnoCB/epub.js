@@ -1,0 +1,86 @@
+import type { RawNavItem } from '../navigation';
+import type { Flow } from '../layout';
+
+export interface PackagingMetadataObject {
+  title: string;
+  creator: string;
+  description: string;
+  pubdate: string;
+  publisher: string;
+  identifier: string;
+  language: string;
+  rights: string;
+  modified_date: string;
+  layout: string;
+  orientation: string;
+  flow: Flow;
+  viewport: string;
+  spread: string;
+  direction: string;
+}
+
+export interface PackagingSpineItem {
+  id?: string;
+  idref: string;
+  linear: string;
+  properties: Array<string>;
+  index: number;
+}
+
+export interface PackagingManifestItem {
+  href: string;
+  type: string;
+  properties: Array<string>;
+  overlay?: string;
+}
+
+export interface PackagingManifestObject {
+  [key: string]: PackagingManifestItem;
+}
+
+export type ExtendedManifestItem = PackagingManifestItem & {
+  rel?: string[];
+  [key: string]: unknown;
+};
+
+export type ManifestNavItem = {
+  id?: string;
+  title?: string;
+  href: string;
+  label?: string;
+};
+
+export type PackagingManifestJson = {
+  metadata: PackagingMetadataObject;
+  readingOrder?: PackagingSpineItem[];
+  spine?: PackagingSpineItem[];
+  resources: ExtendedManifestItem[];
+  toc?: ManifestNavItem[];
+};
+
+export interface Packaging {
+  manifest: PackagingManifestObject;
+  navPath: string;
+  ncxPath: string;
+  coverPath: string;
+  spineNodeIndex: number;
+  spine: PackagingSpineItem[];
+  metadata: PackagingMetadataObject;
+  toc?: RawNavItem[] | Document;
+  uniqueIdentifier: string;
+  pageList?: Document | null;
+  baseUrl?: string;
+  basePath?: string;
+}
+
+// ExtendedNavItem type is only used locally, so define it here
+export type ExtendedNavItem = NavItem & {
+  title: string;
+  [key: string]: unknown;
+};
+
+// Extended types for JSON loading with additional properties
+export type ExtendedManifestItem = PackagingManifestItem & {
+  rel?: string[];
+  [key: string]: unknown;
+};
