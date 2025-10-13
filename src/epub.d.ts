@@ -1,5 +1,5 @@
 import Book from './book.js';
-import type BookType from '../types/book';
+import type { BookType } from './types/book';
 import Rendition from './rendition.js';
 import CFI from './epubcfi';
 import Contents from './contents.js';

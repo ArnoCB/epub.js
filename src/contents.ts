@@ -6,7 +6,7 @@ import { replaceLinks } from './utils/replacements';
 import { EPUBJS_VERSION, EVENTS, DOM_EVENTS } from './utils/constants';
 import Layout from './layout';
 import Section from './section';
-import { Viewport } from './types/viewport';
+import type { Viewport } from './types/viewport';
 
 export type StylesheetRules =
   | [string, ...[string, string, boolean?][]][]
