@@ -16,7 +16,6 @@ export declare const requestAnimationFrame: (((callback: FrameRequestCallback) =
 export declare function uuid(): string;
 /**
  * Gets the height of a document
- * @returns {number} height
  * @memberof Core
  */
 export declare function documentHeight(): number;

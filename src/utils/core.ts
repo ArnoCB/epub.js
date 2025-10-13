@@ -41,7 +41,6 @@ export function uuid(): string {
 
 /**
  * Gets the height of a document
- * @returns {number} height
  * @memberof Core
  */
 export function documentHeight() {

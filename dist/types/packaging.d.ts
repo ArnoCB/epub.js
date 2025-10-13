@@ -1,39 +1,5 @@
-import type { PackagingManifestJson } from './types/packaging';
+import type { PackagingManifestJson, PackagingMetadataObject, PackagingSpineItem, PackagingManifestObject } from './types/packaging';
 import type { RawNavItem } from './navigation';
-import { Flow } from './layout';
-export interface PackagingMetadataObject {
-    title: string;
-    creator: string;
-    description: string;
-    pubdate: string;
-    publisher: string;
-    identifier: string;
-    language: string;
-    rights: string;
-    modified_date: string;
-    layout: string;
-    orientation: string;
-    flow: Flow;
-    viewport: string;
-    spread: string;
-    direction: string;
-}
-export interface PackagingSpineItem {
-    id?: string;
-    idref: string;
-    linear: string;
-    properties: Array<string>;
-    index: number;
-}
-export interface PackagingManifestItem {
-    href: string;
-    type: string;
-    properties: Array<string>;
-    overlay?: string;
-}
-export interface PackagingManifestObject {
-    [key: string]: PackagingManifestItem;
-}
 /**
  * Gets the index of a node in its parent
  * @memberof Core

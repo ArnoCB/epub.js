@@ -1,31 +1,15 @@
 import type { PackagingManifestJson } from './types/packaging';
-import type { PackagingManifestObject } from './packaging';
+import type { PackagingManifestObject } from './types/packaging';
 import EventEmitter from 'event-emitter';
-export type BookOptions = {
-    requestMethod?: (url: string, type?: string, withCredentials?: boolean, headers?: Record<string, string>) => Promise<string | Blob | JSON | Document | XMLDocument>;
-    requestCredentials?: boolean;
-    requestHeaders?: Record<string, string>;
-    encoding?: 'binary' | 'base64';
-    replacements?: 'base64' | 'blobUrl' | 'none';
-    canonical?: (path: string) => string;
-    openAs?: string;
-    keepAbsoluteUrl?: boolean;
-    store?: string | false;
-    [key: string]: unknown;
-};
+import type { BookOptions } from './types/book';
 import { defer } from './utils/core';
-import Url from './utils/url';
-import Path from './utils/path';
 import Spine from './spine';
 import Locations from './locations';
-import Container from './container';
 import Packaging from './packaging';
 import Navigation from './navigation';
 import Resources from './resources';
 import PageList from './pagelist';
-import Rendition from './rendition';
-import Archive from './archive';
-import Store from './store';
+import Rendition, { RenditionOptions } from './rendition';
 import DisplayOptions from './displayoptions';
 import { Section } from './section';
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
@@ -78,21 +62,21 @@ declare class Book implements EventEmitterMethods {
     } | undefined;
     isRendered: boolean;
     ready: Promise<unknown[]>;
-    request: (url: string, type: string, withCredentials?: boolean, headers?: Record<string, string>) => Promise<string | Blob | JSON | Document | XMLDocument>;
-    spine: Spine | undefined;
+    private request;
+    spine: Spine;
     locations: Locations | undefined;
     navigation: Navigation | undefined;
     pageList: PageList | undefined;
-    url: Url | undefined;
-    path: Path | undefined;
+    private url;
+    private path;
     private archived;
-    archive: Archive | undefined;
-    storage: Store | undefined;
-    resources: Resources | undefined;
-    rendition: Rendition | undefined;
-    packaging: Packaging | undefined;
-    container: Container | undefined;
-    displayOptions: DisplayOptions | undefined;
+    private archive;
+    private storage;
+    private resources;
+    private rendition;
+    private packaging;
+    private container;
+    private displayOptions;
     cover: string | undefined;
     package: Packaging | undefined;
     constructor(url?: string | Blob | ArrayBuffer | undefined, options?: BookOptions);
@@ -134,14 +118,10 @@ declare class Book implements EventEmitterMethods {
     canonical(path: string): string;
     /**
      * Determine the type of they input passed to open
-     * @private
-     * @param  {string} input
-     * @return {string}  binary | directory | epub | opf
      */
-    determineType(input: string | Blob | ArrayBuffer): string;
+    private determineType;
     /**
      * unpack the contents of the Books packaging
-     * @param {Packaging} packaging object
      */
     private unpack;
     /**
@@ -155,11 +135,8 @@ declare class Book implements EventEmitterMethods {
     section(target: string): Section | null;
     /**
      * Sugar to render a book to an element
-     * @param  {element | string} element element or string to add a rendition to
-     * @param  {object} [options]
-     * @return {Rendition}
      */
-    renderTo(element: HTMLElement | string, options?: object): Rendition;
+    renderTo(element: HTMLElement | string, options?: RenditionOptions): Rendition;
     /**
      * Set if request should use withCredentials
      */

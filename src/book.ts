@@ -2,28 +2,9 @@ import type { PackagingManifestJson } from './types/packaging';
 import type {
   PackagingManifestObject,
   PackagingMetadataObject,
-} from './packaging';
+} from './types/packaging';
 import EventEmitter from 'event-emitter';
-
-// Options for creating/opening a Book
-export type BookOptions = {
-  requestMethod?: (
-    url: string,
-    type?: string,
-    withCredentials?: boolean,
-    headers?: Record<string, string>
-  ) => Promise<string | Blob | JSON | Document | XMLDocument>;
-  requestCredentials?: boolean;
-  requestHeaders?: Record<string, string>;
-  encoding?: 'binary' | 'base64';
-  replacements?: 'base64' | 'blobUrl' | 'none';
-  canonical?: (path: string) => string;
-  openAs?: string;
-  keepAbsoluteUrl?: boolean;
-  store?: string | false;
-  [key: string]: unknown;
-};
-
+import type { BookOptions } from './types/book';
 import { extend, defer } from './utils/core';
 import Url from './utils/url';
 import Path from './utils/path';
@@ -34,7 +15,7 @@ import Packaging from './packaging';
 import Navigation from './navigation';
 import Resources from './resources';
 import PageList from './pagelist';
-import Rendition from './rendition';
+import Rendition, { RenditionOptions } from './rendition';
 import Archive, { type ArchiveRequestTypeMap } from './archive';
 import request from './utils/request';
 import EpubCFI from './epubcfi';
@@ -55,7 +36,9 @@ const INPUT_TYPE = {
   OPF: 'opf',
   MANIFEST: 'json',
   DIRECTORY: 'directory',
-};
+} as const;
+
+type InputType = (typeof INPUT_TYPE)[keyof typeof INPUT_TYPE];
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 
@@ -115,29 +98,28 @@ class Book implements EventEmitterMethods {
   isRendered: boolean = false;
 
   ready: Promise<unknown[]>;
-  request: (
+  private request: (
     url: string,
     type: string,
     withCredentials?: boolean,
     headers?: Record<string, string>
   ) => Promise<string | Blob | JSON | Document | XMLDocument>;
-  spine: Spine | undefined;
+  spine: Spine;
 
   locations: Locations | undefined;
   navigation: Navigation | undefined;
   pageList: PageList | undefined;
 
-  url: Url | undefined;
-  path: Path | undefined;
+  private url: Url | undefined;
+  private path: Path | undefined;
   private archived: boolean = false;
-  archive: Archive | undefined;
-
-  storage: Store | undefined;
-  resources: Resources | undefined;
-  rendition: Rendition | undefined;
-  packaging: Packaging | undefined;
-  container: Container | undefined;
-  displayOptions: DisplayOptions | undefined;
+  private archive: Archive | undefined;
+  private storage: Store | undefined;
+  private resources: Resources | undefined;
+  private rendition: Rendition | undefined;
+  private packaging: Packaging | undefined;
+  private container: Container | undefined;
+  private displayOptions: DisplayOptions | undefined;
 
   cover: string | undefined;
 
@@ -174,10 +156,6 @@ class Book implements EventEmitterMethods {
     // Promises
     this.opening = new defer();
 
-    /**
-     * @member {promise} opened returns after the book is loaded
-     * @memberof Book
-     */
     this.opened = this.opening.promise;
 
     this.loading = {
@@ -220,98 +198,19 @@ class Book implements EventEmitterMethods {
       this.loaded.packaging,
     ]);
 
-    /**
-     * @member {method} request
-     * @memberof Book
-     * @private
-     */
     this.request = this.settings.requestMethod || request;
-
-    /**
-     * @member {Spine} spine
-     * @memberof Book
-     */
     this.spine = new Spine();
-
-    /**
-     * @member {Locations} locations
-     * @memberof Book
-     */
     this.locations = new Locations(this.spine, (path) => this.load(path));
-
-    /**
-     * @member {Navigation} navigation
-     * @memberof Book
-     */
     this.navigation = undefined;
-
-    /**
-     * @member {PageList} pagelist
-     * @memberof Book
-     */
     this.pageList = undefined;
-
-    /**
-     * @member {Url} url
-     * @memberof Book
-     * @private
-     */
     this.url = undefined;
-
-    /**
-     * @member {Path} path
-     * @memberof Book
-     * @private
-     */
     this.path = undefined;
-
-    /**
-     * @member {Archive} archive
-     * @memberof Book
-     * @private
-     */
     this.archive = undefined;
-
-    /**
-     * @member {Store} storage
-     * @memberof Book
-     * @private
-     */
     this.storage = undefined;
-
-    /**
-     * @member {Resources} resources
-     * @memberof Book
-     * @private
-     */
     this.resources = undefined;
-
-    /**
-     * @member {Rendition} rendition
-     * @memberof Book
-     * @private
-     */
     this.rendition = undefined;
-
-    /**
-     * @member {Container} container
-     * @memberof Book
-     * @private
-     */
     this.container = undefined;
-
-    /**
-     * @member {Packaging} packaging
-     * @memberof Book
-     * @private
-     */
     this.packaging = undefined;
-
-    /**
-     * @member {DisplayOptions} displayOptions
-     * @memberof DisplayOptions
-     * @private
-     */
     this.displayOptions = undefined;
 
     // this.toc = undefined;
@@ -445,7 +344,6 @@ class Book implements EventEmitterMethods {
   private async openManifest(url: string): Promise<void> {
     this.path = new Path(url);
     return this.load<string>(url).then((json) => {
-      console.log('[Book] opening manifest clears packaging', url);
       this.packaging = new Packaging();
       const manifestObj: PackagingManifestJson = JSON.parse(json);
       this.packaging.load(manifestObj);
@@ -505,9 +403,8 @@ class Book implements EventEmitterMethods {
    * Resolve a path to it's absolute position in the Book
    */
   resolve(path: string, absolute?: boolean): string | undefined {
-    if (!path) {
-      return;
-    }
+    if (!path) return;
+
     let resolved = path;
     const isAbsolute =
       typeof path === 'string' &&
@@ -549,11 +446,8 @@ class Book implements EventEmitterMethods {
 
   /**
    * Determine the type of they input passed to open
-   * @private
-   * @param  {string} input
-   * @return {string}  binary | directory | epub | opf
    */
-  determineType(input: string | Blob | ArrayBuffer): string {
+  private determineType(input: string | Blob | ArrayBuffer): InputType {
     if (this.settings.encoding === 'base64') {
       return INPUT_TYPE.BASE64;
     }
@@ -566,26 +460,27 @@ class Book implements EventEmitterMethods {
       if (extension) {
         extension = extension.replace(/\?.*$/, '');
       }
-      if (!extension) {
-        return INPUT_TYPE.DIRECTORY;
+
+      switch (extension) {
+        case undefined:
+        case '':
+          return INPUT_TYPE.DIRECTORY;
+        case 'epub':
+          return INPUT_TYPE.EPUB;
+        case 'opf':
+          return INPUT_TYPE.OPF;
+        case 'json':
+          return INPUT_TYPE.MANIFEST;
+        default:
+          return INPUT_TYPE.BINARY;
       }
-      if (extension === 'epub') {
-        return INPUT_TYPE.EPUB;
-      }
-      if (extension === 'opf') {
-        return INPUT_TYPE.OPF;
-      }
-      if (extension === 'json') {
-        return INPUT_TYPE.MANIFEST;
-      }
-      // Default to binary for unknown extensions
-      return INPUT_TYPE.BINARY;
     }
 
     // Robust type checks for Blob and ArrayBuffer
     if (typeof Blob !== 'undefined' && input instanceof Blob) {
       return INPUT_TYPE.BINARY;
     }
+
     if (typeof ArrayBuffer !== 'undefined' && input instanceof ArrayBuffer) {
       return INPUT_TYPE.BINARY;
     }
@@ -596,7 +491,6 @@ class Book implements EventEmitterMethods {
 
   /**
    * unpack the contents of the Books packaging
-   * @param {Packaging} packaging object
    */
   private unpack(packaging: Packaging) {
     this.packaging = packaging;
@@ -719,11 +613,11 @@ class Book implements EventEmitterMethods {
 
   /**
    * Sugar to render a book to an element
-   * @param  {element | string} element element or string to add a rendition to
-   * @param  {object} [options]
-   * @return {Rendition}
    */
-  renderTo(element: HTMLElement | string, options?: object): Rendition {
+  renderTo(
+    element: HTMLElement | string,
+    options?: RenditionOptions
+  ): Rendition {
     this.rendition = new Rendition(this, options!);
     this.rendition.attachTo(element);
     return this.rendition;
@@ -838,21 +732,13 @@ class Book implements EventEmitterMethods {
    * Get the cover url
    */
   async coverUrl(): Promise<string | null> {
-    return this.loaded!.cover.then(() => {
-      if (!this.cover) {
-        return null;
-      }
+    await this.loaded?.cover;
 
-      if (this.archived) {
-        if (this.archive === undefined) {
-          return null;
-        }
+    if (!this.cover) return null;
+    if (this.archived && this.archive)
+      return this.archive.createUrl(this.cover);
 
-        return this.archive.createUrl(this.cover);
-      } else {
-        return this.cover;
-      }
-    });
+    return this.archived ? null : this.cover;
   }
 
   /**
@@ -930,6 +816,7 @@ class Book implements EventEmitterMethods {
     this.rendition?.destroy();
     this.displayOptions?.destroy();
 
+    // @ts-expect-error this is only at destroy time
     this.spine = undefined;
     this.locations = undefined;
     this.pageList = undefined;
@@ -946,7 +833,6 @@ class Book implements EventEmitterMethods {
   }
 }
 
-//-- Enable binding events to book
 EventEmitter(Book.prototype);
 
 export default Book;
