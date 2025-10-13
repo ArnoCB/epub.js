@@ -6,15 +6,6 @@ Object.assign(global, { TextDecoder, TextEncoder });
 
 import { JSDOM } from 'jsdom';
 
-// Mock the core utils
-jest.mock('./utils/core', () => ({
-  // ...existing code...
-  qsap: jest.fn((doc, selector, ns) => {
-    // Mock namespaced querySelectorAll
-    return Array.from(doc.querySelectorAll(selector));
-  }),
-}));
-
 /**
  * Helper function to create a mock package.opf document
  */
