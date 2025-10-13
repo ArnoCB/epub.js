@@ -33,7 +33,7 @@ declare class Archive {
     /**
      * Get a base64 encoded result from Archive by Url
      */
-    asyncgetBase64(url: string, mimeType?: string): Promise<string>;
+    getBase64(url: string, mimeType?: string): Promise<string>;
     /**
      * Create a Url from an unarchived item
      */

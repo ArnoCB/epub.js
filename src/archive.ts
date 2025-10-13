@@ -176,7 +176,7 @@ class Archive {
   /**
    * Get a base64 encoded result from Archive by Url
    */
-  asyncgetBase64(url: string, mimeType?: string) {
+  async getBase64(url: string, mimeType?: string) {
     const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
     const entry = this.getZip().file(decodededUrl);
 

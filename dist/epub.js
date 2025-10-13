@@ -625,6 +625,7 @@ function requireCore() {
   core.parents = parents;
   core.filterChildren = filterChildren;
   core.getParentByTagName = getParentByTagName;
+  core.getValidOrDefault = getValidOrDefault;
   /**
    * Vendor prefixed requestAnimationFrame
    * @returns {function} requestAnimationFrame
@@ -1116,6 +1117,16 @@ function requireCore() {
     }
   }
   core.defer = defer;
+  /**
+   * Returns a valid value from allowed options or a default if invalid/missing
+   */
+  function getValidOrDefault(value, allowed, defaultValue) {
+    const allowedValues = Array.isArray(allowed) ? allowed : Object.values(allowed);
+    if (typeof value === 'string' && allowedValues.includes(value)) {
+      return value;
+    }
+    return defaultValue;
+  }
   return core;
 }
 
@@ -3282,7 +3293,6 @@ function requireSection() {
       /**
        * Reconciles the current chapters layout properties with
        * the global layout properties.
-       * @return layoutProperties Object with layout properties
        */
       reconcileLayoutSettings(globalLayout) {
         //-- Get the global defaults
@@ -3322,8 +3332,6 @@ function requireSection() {
         this.unload();
         this.hooks.serialize.clear();
         this.hooks.content.clear();
-        // Note: The object itself will be garbage collected when all references are removed
-        // No need to clear primitive properties or create type conflicts
       }
     }
     exports.Section = Section;
@@ -4539,6 +4547,51 @@ function requireHelpers() {
   return helpers;
 }
 
+var epubEnums = {};
+
+var hasRequiredEpubEnums;
+function requireEpubEnums() {
+  if (hasRequiredEpubEnums) return epubEnums;
+  hasRequiredEpubEnums = 1;
+  Object.defineProperty(epubEnums, "__esModule", {
+    value: true
+  });
+  epubEnums.DEFAULT_SPREAD = epubEnums.Spread = epubEnums.DEFAULT_ORIENTATION = epubEnums.Orientation = epubEnums.DEFAULT_LAYOUT_TYPE = epubEnums.LayoutType = epubEnums.DEFAULT_FLOW = epubEnums.Flow = epubEnums.DEFAULT_DIRECTION = epubEnums.Direction = void 0;
+  epubEnums.Direction = {
+    ltr: 'ltr',
+    rtl: 'rtl'
+  };
+  epubEnums.DEFAULT_DIRECTION = 'ltr';
+  epubEnums.Flow = {
+    paginated: 'paginated',
+    scrolled: 'scrolled',
+    'scrolled-continuous': 'scrolled-continuous',
+    'scrolled-doc': 'scrolled-doc',
+    auto: 'auto'
+  };
+  epubEnums.DEFAULT_FLOW = 'auto';
+  epubEnums.LayoutType = {
+    reflowable: 'reflowable',
+    'pre-paginated': 'pre-paginated'
+  };
+  epubEnums.DEFAULT_LAYOUT_TYPE = 'reflowable';
+  epubEnums.Orientation = {
+    auto: 'auto',
+    landscape: 'landscape',
+    portrait: 'portrait'
+  };
+  epubEnums.DEFAULT_ORIENTATION = 'auto';
+  epubEnums.Spread = {
+    auto: 'auto',
+    none: 'none',
+    landscape: 'landscape',
+    portrait: 'portrait',
+    both: 'both'
+  };
+  epubEnums.DEFAULT_SPREAD = 'auto';
+  return epubEnums;
+}
+
 var hasRequiredPackaging;
 function requirePackaging() {
   if (hasRequiredPackaging) return packaging;
@@ -4547,6 +4600,9 @@ function requirePackaging() {
     value: true
   });
   const helpers_1 = requireHelpers();
+  const core_1 = requireCore();
+  const epub_enums_1 = requireEpubEnums();
+  // Add similar imports for ORIENTATIONS and SPREADS if you have them
   /**
    * Open Packaging Format Parser
    */
@@ -4591,7 +4647,8 @@ function requirePackaging() {
       this.spine = this.parseSpine(spineNode);
       this.uniqueIdentifier = this.findUniqueIdentifier(packageDocument);
       this.metadata = this.parseMetadata(metadataNode);
-      this.metadata.direction = spineNode.getAttribute('page-progression-direction') || 'ltr';
+      const dir = spineNode.getAttribute('page-progression-direction');
+      this.metadata.direction = dir === 'ltr' || dir === 'rtl' ? dir : 'ltr';
       return {
         metadata: this.metadata,
         spine: this.spine,
@@ -4604,8 +4661,6 @@ function requirePackaging() {
     }
     /**
      * Parse Metadata
-     * @param  {Element} xml
-     * @return {PackagingMetadataObject} metadata
      */
     parseMetadata(xml) {
       return {
@@ -4618,12 +4673,12 @@ function requirePackaging() {
         language: this.getElementText(xml, 'language'),
         rights: this.getElementText(xml, 'rights'),
         modified_date: this.getPropertyText(xml, 'dcterms:modified'),
-        layout: this.getPropertyText(xml, 'rendition:layout'),
-        orientation: this.getPropertyText(xml, 'rendition:orientation'),
-        flow: this.getPropertyText(xml, 'rendition:flow'),
+        layout: (0, core_1.getValidOrDefault)(this.getPropertyText(xml, 'rendition:layout'), epub_enums_1.LayoutType, epub_enums_1.DEFAULT_LAYOUT_TYPE),
+        orientation: (0, core_1.getValidOrDefault)(this.getPropertyText(xml, 'rendition:orientation'), epub_enums_1.Orientation, epub_enums_1.DEFAULT_ORIENTATION),
+        flow: (0, core_1.getValidOrDefault)(this.getPropertyText(xml, 'rendition:flow'), epub_enums_1.Flow, epub_enums_1.DEFAULT_FLOW),
         viewport: this.getPropertyText(xml, 'rendition:viewport'),
-        spread: this.getPropertyText(xml, 'rendition:spread'),
-        direction: '' // Will be set later from spine element
+        spread: (0, core_1.getValidOrDefault)(this.getPropertyText(xml, 'rendition:spread'), epub_enums_1.Spread, epub_enums_1.DEFAULT_SPREAD),
+        direction: epub_enums_1.DEFAULT_DIRECTION // Will be set later from spine element, set default here
       };
     }
     /**
@@ -5314,7 +5369,6 @@ function requireResources() {
     const path_1 = __importDefault(requirePath());
     /**
      * Handle Package Resources
-     * @class
      * @param {Manifest} manifest
      * @param {object} [options]
      * @param {string} [options.replacements="base64"]
@@ -8783,23 +8837,16 @@ var marksPane_esm = /*#__PURE__*/Object.freeze({
 
 var require$$5$1 = /*@__PURE__*/getAugmentedNamespace(marksPane_esm);
 
-var hasRequiredIframe;
-function requireIframe() {
-  if (hasRequiredIframe) return iframe;
-  hasRequiredIframe = 1;
-  var __importDefault = iframe && iframe.__importDefault || function (mod) {
-    return mod && mod.__esModule ? mod : {
-      "default": mod
-    };
-  };
-  Object.defineProperty(iframe, "__esModule", {
+var styledPane = {};
+
+var hasRequiredStyledPane;
+function requireStyledPane() {
+  if (hasRequiredStyledPane) return styledPane;
+  hasRequiredStyledPane = 1;
+  Object.defineProperty(styledPane, "__esModule", {
     value: true
   });
-  const event_emitter_1 = __importDefault(requireEventEmitter());
-  const core_1 = requireCore();
-  const epubcfi_1 = __importDefault(requireEpubcfi());
-  const contents_1 = __importDefault(requireContents());
-  const constants_1 = requireConstants();
+  styledPane.StyledPane = void 0;
   const marks_pane_1 = require$$5$1;
   // Subclass Pane to inject custom SVG styling
   class StyledPane extends marks_pane_1.Pane {
@@ -8822,6 +8869,29 @@ function requireIframe() {
       }
     }
   }
+  styledPane.StyledPane = StyledPane;
+  return styledPane;
+}
+
+var hasRequiredIframe;
+function requireIframe() {
+  if (hasRequiredIframe) return iframe;
+  hasRequiredIframe = 1;
+  var __importDefault = iframe && iframe.__importDefault || function (mod) {
+    return mod && mod.__esModule ? mod : {
+      "default": mod
+    };
+  };
+  Object.defineProperty(iframe, "__esModule", {
+    value: true
+  });
+  const event_emitter_1 = __importDefault(requireEventEmitter());
+  const core_1 = requireCore();
+  const epubcfi_1 = __importDefault(requireEpubcfi());
+  const contents_1 = __importDefault(requireContents());
+  const constants_1 = requireConstants();
+  const marks_pane_1 = require$$5$1;
+  const styled_pane_1 = requireStyledPane();
   class IframeView {
     constructor(section, options = {}) {
       this.added = false;
@@ -8888,7 +8958,7 @@ function requireIframe() {
       element.style.overflow = 'hidden';
       element.style.position = 'relative';
       element.style.display = 'block';
-      if (axis && axis == 'horizontal') {
+      if (axis && axis === 'horizontal') {
         element.style.flex = 'none';
       } else {
         element.style.flex = 'initial';
@@ -8950,7 +9020,7 @@ function requireIframe() {
     createContainer() {
       return document.createElement('div');
     }
-    render(request) {
+    async render(request) {
       this.create();
       // Fit to size of the container, apply padding
       this.size();
@@ -9424,7 +9494,7 @@ function requireIframe() {
         throw new Error('Iframe not defined');
       }
       if (!this.pane) {
-        this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
+        this.pane = new styled_pane_1.StyledPane(this.iframe, this.element, this.settings.transparency);
       }
       const m = new marks_pane_1.Highlight(range, className, data, attributes);
       const h = this.pane.addMark(m);
@@ -9462,7 +9532,7 @@ function requireIframe() {
         throw new Error('Iframe not defined');
       }
       if (!this.pane) {
-        this.pane = new StyledPane(this.iframe, this.element, this.settings.transparency);
+        this.pane = new styled_pane_1.StyledPane(this.iframe, this.element, this.settings.transparency);
       }
       const m = new marks_pane_1.Underline(range, className, data, attributes);
       const h = this.pane.addMark(m);
@@ -15806,14 +15876,13 @@ function requireArchive() {
           throw err;
         });
       } else {
-        console.error('[Archive] getBlob: file not found', url);
         return Promise.reject({
           message: 'File not found in the epub: ' + url,
           stack: new Error().stack
         });
       }
     }
-    getText(url) {
+    async getText(url) {
       const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
       const entry = this.getZip().file(decodededUrl);
       if (entry) {
@@ -15824,7 +15893,6 @@ function requireArchive() {
           throw err;
         });
       } else {
-        console.error('[Archive] getText: file not found', url);
         return Promise.reject({
           message: 'File not found in the epub: ' + url,
           stack: new Error().stack
@@ -15834,7 +15902,7 @@ function requireArchive() {
     /**
      * Get a base64 encoded result from Archive by Url
      */
-    getBase64(url, mimeType) {
+    async getBase64(url, mimeType) {
       const decodededUrl = decodeURIComponent(url.slice(1)); // Remove first slash
       const entry = this.getZip().file(decodededUrl);
       if (entry) {
@@ -19146,6 +19214,7 @@ function requireBook() {
   const store_1 = __importDefault(requireStore());
   const displayoptions_1 = __importDefault(requireDisplayoptions());
   const constants_1 = requireConstants();
+  const epub_enums_1 = requireEpubEnums();
   const CONTAINER_PATH = 'META-INF/container.xml';
   const IBOOKS_DISPLAY_OPTIONS_PATH = 'META-INF/com.apple.ibooks.display-options.xml';
   const INPUT_TYPE = {
@@ -19462,19 +19531,15 @@ function requireBook() {
     unpack(packaging) {
       this.packaging = packaging;
       this.loading.packaging.resolve(this.packaging);
-      if (this.packaging.metadata.layout === '') {
-        // rendition:layout not set - check display options if book is pre-paginated
-        this.load(this.url?.resolve(IBOOKS_DISPLAY_OPTIONS_PATH) ?? '').then(xml => {
-          this.displayOptions = new displayoptions_1.default(xml);
-          this.loading.displayOptions.resolve(this.displayOptions);
-        }).catch(() => {
-          this.displayOptions = new displayoptions_1.default();
-          this.loading.displayOptions.resolve(this.displayOptions);
-        });
-      } else {
+      // Always attempt to load iBooks display options
+      this.load(this.url?.resolve(IBOOKS_DISPLAY_OPTIONS_PATH) ?? '').then(xml => {
+        this.displayOptions = new displayoptions_1.default(xml);
+        this.applyDisplayOptionsOverrides(this.displayOptions);
+        this.loading.displayOptions.resolve(this.displayOptions);
+      }).catch(() => {
         this.displayOptions = new displayoptions_1.default();
         this.loading.displayOptions.resolve(this.displayOptions);
-      }
+      });
       this.spine?.unpack(this.packaging, (path, absolute) => this.resolve(path, absolute) ?? '', path => this.canonical(path) ?? '');
       this.resources = new resources_1.default(this.packaging.manifest, {
         archive: this.archive,
@@ -19683,6 +19748,24 @@ function requireBook() {
     key(identifier) {
       const ident = identifier || this.packaging?.metadata.identifier || this.url?.filename;
       return `epubjs:${constants_1.EPUBJS_VERSION}:${ident}`;
+    }
+    /**
+     * Apply iBooks display options overrides to packaging metadata
+     */
+    applyDisplayOptionsOverrides(displayOptions) {
+      if (!this.packaging || !this.packaging.metadata) return;
+      // fixedLayout: 'true'|'false' (maps to layout)
+      if (displayOptions.fixedLayout === 'true') {
+        this.packaging.metadata.layout = 'pre-paginated';
+      } else if (displayOptions.fixedLayout === 'false') {
+        this.packaging.metadata.layout = 'reflowable';
+      }
+      // orientationLock: 'landscape'|'portrait' (maps to orientation)
+      if (displayOptions.orientationLock === 'landscape' || displayOptions.orientationLock === 'portrait') {
+        this.packaging.metadata.orientation = displayOptions.orientationLock;
+      }
+      // openToSpread: use getValidOrDefault for type safety
+      this.packaging.metadata.spread = (0, core_1.getValidOrDefault)(displayOptions.openToSpread, epub_enums_1.Spread, epub_enums_1.DEFAULT_SPREAD);
     }
     /**
      * Destroy the Book and all associated objects
