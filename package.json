@@ -4,7 +4,7 @@
   "description": "Parse and Render Epubs",
   "main": "dist/epub.js",
   "module": "dist/epub.js",
-  "types": "types/index.d.ts",
+  "types": "lib/types/index.d.ts",
   "repository": "https://github.com/ArnoCB/epub.js",
   "scripts": {
     "build:utils": "tsc -p tsconfig.json",

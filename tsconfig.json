@@ -5,7 +5,7 @@
     "declaration": true,
     "rootDir": "src",
     "outDir": "lib",
-    "declarationDir": "types",
+    "declarationDir": "lib/types",
     "strict": true,
     "sourceMap": true,
     "esModuleInterop": true,

@@ -1,13 +1,13 @@
 import { View } from './managers/helpers/views';
 type MarkType = 'highlight' | 'underline' | 'mark';
 type AnnotationData = {
-    type: MarkType;
-    cfiRange: string;
-    data: Record<string, string>;
-    sectionIndex: number;
-    cb: undefined | ((annotation: Annotation) => void);
-    className: string | undefined;
-    styles: Record<string, string> | undefined;
+  type: MarkType;
+  cfiRange: string;
+  data: Record<string, string>;
+  sectionIndex: number;
+  cb: undefined | ((annotation: Annotation) => void);
+  className: string | undefined;
+  styles: Record<string, string> | undefined;
 };
 /**
  * Annotation object
@@ -23,34 +23,51 @@ type AnnotationData = {
  * @returns {Annotation} annotation
  */
 declare class Annotation {
-    type: MarkType;
-    cfiRange: string;
-    data: Record<string, string>;
-    sectionIndex: number;
-    mark: HTMLElement | undefined;
-    _markInternal: HTMLElement | Node | {
+  type: MarkType;
+  cfiRange: string;
+  data: Record<string, string>;
+  sectionIndex: number;
+  mark: HTMLElement | undefined;
+  _markInternal:
+    | HTMLElement
+    | Node
+    | {
         element: HTMLElement;
-    } | null | undefined;
-    cb: undefined | ((annotation: Annotation) => void);
-    className: string | undefined;
-    styles: Record<string, string> | undefined;
-    emit: (event: string, ...args: unknown[]) => void;
-    constructor({ type, cfiRange, data, sectionIndex, cb, className, styles, }: AnnotationData);
-    /**
-     * Update stored data
-     */
-    update(data: Record<string, string>): void;
-    /**
-     * Add to a view
-     */
-    attach(view: View): Node | import("marks-pane", { with: { "resolution-mode": "import" } }).Mark | {
+      }
+    | null
+    | undefined;
+  cb: undefined | ((annotation: Annotation) => void);
+  className: string | undefined;
+  styles: Record<string, string> | undefined;
+  emit: (event: string, ...args: unknown[]) => void;
+  constructor({
+    type,
+    cfiRange,
+    data,
+    sectionIndex,
+    cb,
+    className,
+    styles,
+  }: AnnotationData);
+  /**
+   * Update stored data
+   */
+  update(data: Record<string, string>): void;
+  /**
+   * Add to a view
+   */
+  attach(view: View):
+    | Node
+    | import('marks-pane', { with: { 'resolution-mode': 'import' } }).Mark
+    | {
         element: HTMLElement;
         range: Range;
-    } | null;
-    /**
-     * Remove from a view
-     */
-    detach(view: View): void;
-    text(): void;
+      }
+    | null;
+  /**
+   * Remove from a view
+   */
+  detach(view: View): void;
+  text(): void;
 }
 export default Annotation;

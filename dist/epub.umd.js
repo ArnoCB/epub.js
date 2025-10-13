@@ -6337,6 +6337,126 @@
 
 	var annotations = {};
 
+	var annotation = {};
+
+	var hasRequiredAnnotation;
+	function requireAnnotation() {
+	  if (hasRequiredAnnotation) return annotation;
+	  hasRequiredAnnotation = 1;
+	  var __importDefault = annotation && annotation.__importDefault || function (mod) {
+	    return mod && mod.__esModule ? mod : {
+	      "default": mod
+	    };
+	  };
+	  Object.defineProperty(annotation, "__esModule", {
+	    value: true
+	  });
+	  const event_emitter_1 = __importDefault(requireEventEmitter());
+	  const constants_1 = requireConstants();
+	  /**
+	   * Annotation object
+	   * @class
+	   * @param {object} options
+	   * @param {string} options.type Type of annotation to add: "highlight", "underline", "mark"
+	   * @param {EpubCFI} options.cfiRange EpubCFI range to attach annotation to
+	   * @param {object} options.data Data to assign to annotation
+	   * @param {int} options.sectionIndex Index in the Spine of the Section annotation belongs to
+	   * @param {function} [options.cb] Callback after annotation is clicked
+	   * @param {string} className CSS class to assign to annotation
+	   * @param {object} styles CSS styles to assign to annotation
+	   * @returns {Annotation} annotation
+	   */
+	  class Annotation {
+	    constructor({
+	      type,
+	      cfiRange,
+	      data,
+	      sectionIndex,
+	      cb,
+	      className,
+	      styles
+	    }) {
+	      this.type = type;
+	      this.cfiRange = cfiRange;
+	      this.data = data;
+	      this.sectionIndex = sectionIndex;
+	      this.mark = undefined;
+	      this.cb = cb;
+	      this.className = className;
+	      this.styles = styles;
+	    }
+	    /**
+	     * Update stored data
+	     */
+	    update(data) {
+	      this.data = data;
+	    }
+	    /**
+	     * Add to a view
+	     */
+	    attach(view) {
+	      const {
+	        cfiRange,
+	        data,
+	        type,
+	        cb,
+	        className,
+	        styles
+	      } = this;
+	      let result;
+	      const cbWrapper = cb ? () => {
+	        cb(this);
+	      } : undefined;
+	      if (type === 'highlight') {
+	        result = view.highlight(cfiRange, data, cbWrapper, className, styles);
+	      } else if (type === 'underline') {
+	        result = view.underline(cfiRange, data, cbWrapper, className, styles);
+	      } else if (type === 'mark') {
+	        result = view.mark(cfiRange, data, cbWrapper);
+	      }
+	      if (typeof result === 'undefined') {
+	        throw new Error(`Failed to attach annotation of type ${type} to view`);
+	      }
+	      this._markInternal = result;
+	      if (result && typeof result === 'object' && 'element' in result) {
+	        this.mark = result.element;
+	      } else if (result instanceof HTMLElement) {
+	        this.mark = result;
+	      } else {
+	        this.mark = undefined;
+	      }
+	      this.emit(constants_1.EVENTS.ANNOTATION.ATTACH, result);
+	      return result;
+	    }
+	    /**
+	     * Remove from a view
+	     */
+	    detach(view) {
+	      const {
+	        cfiRange,
+	        type
+	      } = this;
+	      let result;
+	      if (view) {
+	        if (type === 'highlight') {
+	          result = view.unhighlight(cfiRange);
+	        } else if (type === 'underline') {
+	          result = view.ununderline(cfiRange);
+	        } else if (type === 'mark') {
+	          result = view.unmark(cfiRange);
+	        }
+	      }
+	      this.mark = undefined;
+	      this.emit(constants_1.EVENTS.ANNOTATION.DETACH, result);
+	      return result;
+	    }
+	    text() {}
+	  }
+	  (0, event_emitter_1.default)(Annotation.prototype);
+	  annotation.default = Annotation;
+	  return annotation;
+	}
+
 	var hasRequiredAnnotations;
 	function requireAnnotations() {
 	  if (hasRequiredAnnotations) return annotations;
@@ -6349,9 +6469,8 @@
 	  Object.defineProperty(annotations, "__esModule", {
 	    value: true
 	  });
-	  const event_emitter_1 = __importDefault(requireEventEmitter());
+	  const annotation_1 = __importDefault(requireAnnotation());
 	  const epubcfi_1 = __importDefault(requireEpubcfi());
-	  const constants_1 = requireConstants();
 	  /**
 	   * Handles managing adding & removing Annotations
 	   */
@@ -6373,7 +6492,7 @@
 	      const hash = encodeURI(cfiRange + type);
 	      const cfi = new epubcfi_1.default(cfiRange);
 	      const sectionIndex = cfi.spinePos;
-	      const annotation = new Annotation({
+	      const annotation = new annotation_1.default({
 	        type,
 	        cfiRange,
 	        data,
@@ -6398,8 +6517,6 @@
 	    }
 	    /**
 	     * Remove an annotation from store
-	     * @param {EpubCFI} cfiRange EpubCFI range the annotation is attached to
-	     * @param {string} type Type of annotation to add: "highlight", "underline", "mark"
 	     */
 	    remove(cfiRange, type) {
 	      const hash = encodeURI(cfiRange + type);
@@ -6493,115 +6610,6 @@
 	     */
 	    hide() {}
 	  }
-	  /**
-	   * Annotation object
-	   * @class
-	   * @param {object} options
-	   * @param {string} options.type Type of annotation to add: "highlight", "underline", "mark"
-	   * @param {EpubCFI} options.cfiRange EpubCFI range to attach annotation to
-	   * @param {object} options.data Data to assign to annotation
-	   * @param {int} options.sectionIndex Index in the Spine of the Section annotation belongs to
-	   * @param {function} [options.cb] Callback after annotation is clicked
-	   * @param {string} className CSS class to assign to annotation
-	   * @param {object} styles CSS styles to assign to annotation
-	   * @returns {Annotation} annotation
-	   */
-	  class Annotation {
-	    constructor({
-	      type,
-	      cfiRange,
-	      data,
-	      sectionIndex,
-	      cb,
-	      className,
-	      styles
-	    }) {
-	      this.type = type;
-	      this.cfiRange = cfiRange;
-	      this.data = data;
-	      this.sectionIndex = sectionIndex;
-	      this.mark = undefined;
-	      this.cb = cb;
-	      this.className = className;
-	      this.styles = styles;
-	    }
-	    /**
-	     * Update stored data
-	     */
-	    update(data) {
-	      this.data = data;
-	    }
-	    /**
-	     * Add to a view
-	     */
-	    attach(view) {
-	      const {
-	        cfiRange,
-	        data,
-	        type,
-	        cb,
-	        className,
-	        styles
-	      } = this;
-	      let result;
-	      // The view API expects DOM event handlers like (e: Event) => void.
-	      // User-provided callbacks on Annotation are typed as (annotation: Annotation) => void,
-	      // so wrap them into an Event handler that forwards the Annotation instance.
-	      const cbWrapper = cb ? () => {
-	        cb(this);
-	      } : undefined;
-	      console.log(`[Annotations] Attempting to add ${type} annotation with CFI: ${cfiRange}`);
-	      console.log(`[Annotations] Found view:`, view ? view.constructor.name : 'null');
-	      if (type === 'highlight') {
-	        console.log(`[Annotations] Calling view.highlight() on ${view ? view.constructor.name : 'null'}`);
-	        result = view.highlight(cfiRange, data, cbWrapper, className, styles);
-	        console.log(`[Annotations] view.highlight() returned:`, result);
-	      } else if (type === 'underline') {
-	        result = view.underline(cfiRange, data, cbWrapper, className, styles);
-	      } else if (type === 'mark') {
-	        result = view.mark(cfiRange, data, cbWrapper);
-	      }
-	      if (typeof result === 'undefined') {
-	        throw new Error(`Failed to attach annotation of type ${type} to view`);
-	      }
-	      this._markInternal = result;
-	      // Try to set a HTMLElement mark if possible
-	      if (result && typeof result === 'object' && 'element' in result) {
-	        // Mark object with element property
-	        this.mark = result.element;
-	      } else if (result instanceof HTMLElement) {
-	        this.mark = result;
-	      } else {
-	        this.mark = undefined;
-	      }
-	      this.emit(constants_1.EVENTS.ANNOTATION.ATTACH, result);
-	      return result;
-	    }
-	    /**
-	     * Remove from a view
-	     */
-	    detach(view) {
-	      const {
-	        cfiRange,
-	        type
-	      } = this;
-	      let result;
-	      if (view) {
-	        if (type === 'highlight') {
-	          result = view.unhighlight(cfiRange);
-	        } else if (type === 'underline') {
-	          result = view.ununderline(cfiRange);
-	        } else if (type === 'mark') {
-	          result = view.unmark(cfiRange);
-	        }
-	      }
-	      this.mark = undefined;
-	      this.emit(constants_1.EVENTS.ANNOTATION.DETACH, result);
-	      return result;
-	    }
-	    text() {}
-	  }
-	  (0, event_emitter_1.default)(Annotation.prototype);
 	  annotations.default = Annotations;
 	  return annotations;
 	}
@@ -12353,8 +12361,10 @@
 	      const chapters = Array.from(this.chapters.entries()).map(([href, chapter]) => ({
 	        href,
 	        attached: chapter.attached,
-	        width: chapter.width,
-	        height: chapter.height,
+	        ...{
+	          width: chapter.width,
+	          height: chapter.height
+	        },
 	        pageCount: chapter.pageCount,
 	        hasWhitePages: chapter.hasWhitePages,
 	        whitePageIndices: chapter.whitePageIndices
@@ -12576,18 +12586,13 @@
 	        chapter.preservedSrcdoc = iframe.srcdoc;
 	        // Wait briefly for iframe document to become available/complete before reading
 	        const ready = await waitForIframeReady(iframe, 1000);
-	        if (ready) {
-	          try {
-	            if (iframe.contentDocument?.documentElement) {
-	              chapter.preservedContent = iframe.contentDocument.documentElement.outerHTML;
-	            }
-	          } catch (e) {
-	            // reading may fail for cross-origin or other reasons
-	            console.debug('[BookPreRenderer] preserveChapterContent: could not read contentDocument after ready', e);
-	          }
+	        if (ready && iframe.contentDocument?.documentElement) {
+	          // Reading may fail for cross-origin or other reasons — let outer try handle it
+	          chapter.preservedContent = iframe.contentDocument.documentElement.outerHTML;
 	        }
-	      } catch (e) {
-	        console.debug('[BookPreRenderer] could not preserve iframe content:', e);
+	      } catch {
+	        // Only catch actual errors preserving iframe content
+	        console.error('Failed to preserve iframe content');
 	      }
 	    }
 	    /**
@@ -12637,9 +12642,7 @@
 	     */
 	    async tryRestoreContent(sectionHref) {
 	      const chapter = this.chapters.get(sectionHref);
-	      if (!chapter) {
-	        return false;
-	      }
+	      if (!chapter) return false;
 	      try {
 	        const restored = this.restoreChapterContent(chapter);
 	        // Validate iframe content after waiting a short while for loads
@@ -12676,15 +12679,10 @@
 	    }
 	    attachChapter(sectionHref) {
 	      const chapter = this.chapters.get(sectionHref);
-	      if (!chapter) {
-	        return null;
-	      }
+	      if (!chapter) return null;
 	      // If chapter is still being rendered, return null (let caller retry)
-	      if (this.renderingPromises.has(sectionHref)) {
-	        return null;
-	      }
+	      if (this.renderingPromises.has(sectionHref)) return null;
 	      if (chapter.attached) {
-	        console.debug('[BookPreRenderer] chapter already attached:', sectionHref);
 	        // Validate that the iframe still has content - sometimes iframe content gets cleared
 	        // especially with sandboxing or when elements are moved between containers
 	        try {
@@ -12704,7 +12702,6 @@
 	          }
 	        } catch (e) {
 	          console.warn('[BookPreRenderer] error validating attached chapter content:', sectionHref, e);
-	          // Don't return early - let it go through attachment process
 	        }
 	      }
 	      try {
@@ -12732,33 +12729,25 @@
 	        const displayWrapper = document.createElement('div');
 	        displayWrapper.classList.add('epub-view');
 	        // For paginated content, set wrapper to full width so container can detect scrollable content
-	        const isPaginated = this.viewSettings.layout?._flow === 'paginated';
-	        if (isPaginated) {
-	          // Set wrapper to full paginated width so container scrollWidth reflects actual content
-	          displayWrapper.style.width = chapter.width + 'px';
-	          displayWrapper.style.height = chapter.height + 'px';
-	          displayWrapper.style.overflow = 'hidden'; // Hide content outside viewport like DefaultViewManager
-	        } else {
-	          // For scrolled content, use container dimensions
-	          displayWrapper.style.width = chapter.width + 'px';
-	          displayWrapper.style.height = chapter.height + 'px';
-	          displayWrapper.style.overflow = 'hidden';
-	        }
+	        const dims = {
+	          width: chapter.width,
+	          height: chapter.height
+	        };
+	        displayWrapper.style.width = dims.width + 'px';
+	        displayWrapper.style.height = dims.height + 'px';
+	        displayWrapper.style.overflow = 'hidden';
 	        displayWrapper.style.position = 'relative';
 	        displayWrapper.style.display = 'block';
 	        // Create a new iframe for display
 	        const newIframe = document.createElement('iframe');
 	        newIframe.scrolling = 'no';
 	        newIframe.style.border = 'none';
-	        if (isPaginated) {
-	          // For paginated content, set iframe to full width to show all pages
-	          newIframe.style.width = chapter.width + 'px';
-	          newIframe.style.height = chapter.height + 'px';
-	        } else {
-	          // For scrolled content, use container dimensions
-	          newIframe.style.width = chapter.width + 'px';
-	          newIframe.style.height = chapter.height + 'px';
-	        }
+	        const iframeDims = {
+	          width: chapter.width,
+	          height: chapter.height
+	        };
+	        newIframe.style.width = iframeDims.width + 'px';
+	        newIframe.style.height = iframeDims.height + 'px';
 	        newIframe.sandbox = 'allow-same-origin';
 	        if (this.viewSettings.allowScriptedContent) {
 	          newIframe.sandbox += ' allow-scripts';
@@ -12816,8 +12805,6 @@
 	        displayWrapper.style.height = this.viewSettings.height + 'px';
 	        newIframe.style.width = this.viewSettings.width + 'px';
 	        newIframe.style.height = this.viewSettings.height + 'px';
-	        // The pre-rendered content should already be formatted correctly for the container dimensions
-	        // No need for additional formatting since we fixed the pre-rendering phase
 	        // Add essential IframeView methods to the cloned view for proper layout support
 	        const originalExpand = clonedView.expand?.bind(clonedView);
 	        clonedView.expand = () => {
@@ -12869,21 +12856,6 @@
 	          preservedContent: chapter.preservedContent,
 	          pageMap: chapter.pageMap
 	        };
-	        // Conservative validation: check readyState and lengths if possible and log
-	        try {
-	          const ready = newIframe.contentDocument?.readyState;
-	          const bodyTextLen = newIframe.contentDocument?.body?.textContent?.trim()?.length || 0;
-	          const bodyHtmlLen = newIframe.contentDocument?.body?.innerHTML?.trim()?.length || 0;
-	          console.debug(`[BookPreRenderer] clone post-create diagnostics for ${sectionHref}: ready=${ready} textLen=${bodyTextLen} htmlLen=${bodyHtmlLen}`);
-	        } catch (e) {
-	          console.debug(`[BookPreRenderer] cannot inspect clone iframe post-create: ${e}`);
-	        }
-	        // Log when srcdoc was used
-	        if (chapter.preservedSrcdoc) {
-	          console.log(`[BookPreRenderer] clone srcdoc set for ${sectionHref}`);
-	        } else if (chapter.preservedContent) {
-	          console.log(`[BookPreRenderer] clone preservedContent writer scheduled for ${sectionHref}`);
-	        }
 	        // Notify listeners about the cloned view being available (non-destructive)
 	        try {
 	          // Emit DISPLAYED once the clone iframe reports loaded/ready.
@@ -13007,14 +12979,12 @@
 	    }
 	    detachChapter(sectionHref) {
 	      const chapter = this.chapters.get(sectionHref);
-	      if (!chapter || !chapter.attached) {
-	        return null;
-	      }
+	      if (!chapter || !chapter.attached) return null;
 	      // Remove from whatever container it's currently in
 	      if (chapter.element.parentNode) {
 	        chapter.element.parentNode.removeChild(chapter.element);
 	      }
-	      // HYBRID APPROACH: Store in unattached storage instead of offscreen container
+	      // Store in unattached storage instead of offscreen container
 	      this.unattachedStorage.appendChild(chapter.element);
 	      chapter.attached = false;
 	      this.emit(constants_1.EVENTS.VIEWS.HIDDEN, chapter.view);
@@ -13046,12 +13016,7 @@
 	        // Resolve any per-chapter deferred indicating pageNumbers have been assigned
 	        try {
 	          if (chapter.pageNumbersDeferred) {
-	            try {
-	              chapter.pageNumbersDeferred.resolve();
-	            } catch {
-	              // ignore
-	            }
-	            // Clean up the deferred to avoid double-resolution
+	            chapter.pageNumbersDeferred.resolve();
 	            delete chapter.pageNumbersDeferred;
 	          }
 	        } catch {
@@ -13060,7 +13025,6 @@
 	      }
 	    }
 	    destroy() {
-	      console.log('[BookPreRenderer] destroying pre-renderer');
 	      this.chapters.forEach(chapter => {
 	        if (chapter.element.parentNode) {
 	          chapter.element.parentNode.removeChild(chapter.element);
