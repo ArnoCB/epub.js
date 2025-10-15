@@ -1,7 +1,7 @@
 import { extend } from './utils/core';
 import { EVENTS } from './utils/constants';
 import EventEmitter from 'event-emitter';
-import { Section } from './utils/replacements';
+import Section from './section';
 import Contents from './contents';
 import type { Flow, Spread, Axis } from './types/common';
 import type { LayoutSettings, LayoutProps } from './types/layout';

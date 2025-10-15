@@ -3490,6 +3490,7 @@
 	    Object.defineProperty(exports, "__esModule", {
 	      value: true
 	    });
+	    exports.Spine = void 0;
 	    const epubcfi_1 = __importDefault(requireEpubcfi());
 	    const hook_1 = __importDefault(requireHook());
 	    const section_1 = __importDefault(requireSection());
@@ -3713,6 +3714,7 @@
 	        this.length = undefined;
 	      }
 	    }
+	    exports.Spine = Spine;
 	    exports.default = Spine;
 	    module.exports = Spine;
 	  })(spine$1, spine$1.exports);
