@@ -8960,9 +8960,7 @@
 	      return element;
 	    }
 	    create() {
-	      if (this.iframe) {
-	        return this.iframe;
-	      }
+	      if (this.iframe) return this.iframe;
 	      if (!this.element) {
 	        this.element = this.createContainer();
 	      }
@@ -9221,10 +9219,9 @@
 	    }
 	    load(contents) {
 	      const loading = new core_1.defer();
-	      const loaded = loading.promise;
 	      if (!this.iframe) {
 	        loading.reject(new Error('No Iframe Available'));
-	        return loaded;
+	        return loading.promise;
 	      }
 	      this.iframe.onload = event => {
 	        this.onLoad(event, loading);
@@ -9233,21 +9230,23 @@
 	        this.blobUrl = (0, core_1.createBlobUrl)(contents, 'application/xhtml+xml');
 	        this.iframe.src = this.blobUrl;
 	        this.element.appendChild(this.iframe);
-	      } else if (this.settings.method === 'srcdoc') {
+	        return loading.promise;
+	      }
+	      if (this.settings.method === 'srcdoc') {
 	        this.iframe.srcdoc = contents;
 	        this.element.appendChild(this.iframe);
-	      } else {
-	        this.element.appendChild(this.iframe);
-	        this.document = this.iframe.contentDocument ?? undefined;
-	        if (!this.document) {
-	          loading.reject(new Error('No Document Available'));
-	          return loaded;
-	        }
-	        this.iframe.contentDocument?.open();
-	        this.iframe.contentDocument?.write(contents);
-	        this.iframe.contentDocument?.close();
+	        return loading.promise;
 	      }
-	      return loaded;
+	      this.element.appendChild(this.iframe);
+	      this.document = this.iframe.contentDocument ?? undefined;
+	      if (!this.document) {
+	        loading.reject(new Error('No Document Available'));
+	        return loading.promise;
+	      }
+	      this.iframe.contentDocument?.open();
+	      this.iframe.contentDocument?.write(contents);
+	      this.iframe.contentDocument?.close();
+	      return loading.promise;
 	    }
 	    /**
 	     * Essential setup for Contents object - used by both normal onLoad and prerendering
@@ -9299,21 +9298,19 @@
 	            this.document = this.iframe.contentDocument;
 	            this.contents = contents;
 	            return true;
-	          } else {
-	            console.warn('[IframeView] Failed to create Contents for prerendered view - helper returned null');
-	            return false;
 	          }
+	          console.warn('[IframeView] Failed to create Contents for prerendered view - helper returned null');
+	          return false;
 	        } catch (e) {
 	          console.warn('[IframeView] Error creating Contents for prerendered view:', e);
 	          return false;
 	        }
-	      } else {
-	        console.warn('[IframeView] Cannot create Contents - missing iframe, document, or section', {
-	          hasIframe: !!this.iframe,
-	          hasDocument: !!(this.iframe && this.iframe.contentDocument),
-	          hasSection: !!this.section
-	        });
 	      }
+	      console.warn('[IframeView] Cannot create Contents - missing iframe, document, or section', {
+	        hasIframe: !!this.iframe,
+	        hasDocument: !!(this.iframe && this.iframe.contentDocument),
+	        hasSection: !!this.section
+	      });
 	      return false;
 	    }
 	    onLoad(event, promise) {
@@ -9458,13 +9455,7 @@
 	      return this.elementBounds;
 	    }
 	    highlight(cfiRange, data = {}, cb, className = 'epubjs-hl', styles = {}) {
-	      if (!this.ensureContentsForMarking()) {
-	        return;
-	      }
-	      // Ensure we have contents at this point
-	      if (!this.contents) {
-	        return;
-	      }
+	      if (!this.ensureContentsForMarking()) return;
 	      let attributes;
 	      if (this.settings.transparency) {
 	        attributes = Object.assign({
@@ -9479,6 +9470,7 @@
 	          'mix-blend-mode': 'multiply'
 	        }, styles);
 	      }
+	      // this.contents is ensured to be defined by ensureContentsForMarking
 	      const range = this.contents.range(cfiRange);
 	      const emitter = () => {
 	        this.emit(constants_1.EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
@@ -9509,9 +9501,7 @@
 	      return h;
 	    }
 	    underline(cfiRange, data = {}, cb, className = 'epubjs-ul', styles = {}) {
-	      if (!this.ensureContentsForMarking()) {
-	        return;
-	      }
+	      if (!this.ensureContentsForMarking()) return;
 	      const attributes = Object.assign({
 	        stroke: 'black',
 	        'stroke-opacity': '0.3',

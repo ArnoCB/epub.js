@@ -977,7 +977,9 @@ class IframeView implements View, EventEmitterMethods {
     data: Record<string, string> = {},
     cb?: (e: Event) => void
   ): { element: HTMLElement; range: Range } | Node | null {
-    if (!this.ensureContentsForMarking()) return;
+    if (!this.contents) {
+      return null;
+    }
 
     if (cfiRange in this.marks) {
       const item = this.marks[cfiRange];
@@ -1173,7 +1175,6 @@ class IframeView implements View, EventEmitterMethods {
 
       this.iframe = undefined;
       this.contents = undefined;
-
       this._textWidth = undefined;
       this._textHeight = undefined;
     }
