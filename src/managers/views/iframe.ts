@@ -16,12 +16,15 @@ import { Highlight, Underline, Mark } from 'marks-pane';
 import { View } from '../helpers/views';
 import Layout from '../../layout';
 import Section from '../../section';
-import type { Axis } from '../../types';
 import { StyledPane } from './styled-pane';
+import type {
+  Axis,
+  ExtendedIFrameElement,
+  IframeViewSettings,
+  MarkElementMap,
+} from '../../types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
-
-import type { ExtendedIFrameElement, IframeViewSettings } from '../../types';
 
 class IframeView implements View, EventEmitterMethods {
   emit!: EventEmitter['emit'];
@@ -57,20 +60,8 @@ class IframeView implements View, EventEmitterMethods {
   resizing: boolean = false;
   _expanding: boolean = false;
   pane: StyledPane | undefined;
-  highlights: {
-    [key: string]: {
-      mark: Mark;
-      element: HTMLElement;
-      listeners: Array<(e: Event) => void>;
-    };
-  } = {};
-  underlines: {
-    [key: string]: {
-      mark: Mark;
-      element: HTMLElement;
-      listeners: Array<(e: Event) => void>;
-    };
-  } = {};
+  highlights: MarkElementMap = {};
+  underlines: MarkElementMap = {};
 
   marks: {
     [key: string]: {
@@ -172,9 +163,7 @@ class IframeView implements View, EventEmitterMethods {
   }
 
   create() {
-    if (this.iframe) {
-      return this.iframe;
-    }
+    if (this.iframe) return this.iframe;
 
     if (!this.element) {
       this.element = this.createContainer();
@@ -195,9 +184,11 @@ class IframeView implements View, EventEmitterMethods {
 
     // sandbox
     this.iframe.sandbox = 'allow-same-origin';
+
     if (this.settings.allowScriptedContent) {
       this.iframe.sandbox += ' allow-scripts';
     }
+
     if (this.settings.allowPopups) {
       this.iframe.sandbox += ' allow-popups';
     }
@@ -407,6 +398,7 @@ class IframeView implements View, EventEmitterMethods {
       if (!this.layout) throw new Error('Layout not defined');
 
       width = this.contents.textWidth();
+
       if (this.layout?.pageWidth && width % this.layout.pageWidth > 0) {
         width =
           Math.ceil(width / this.layout.pageWidth) * this.layout.pageWidth;
@@ -509,9 +501,7 @@ class IframeView implements View, EventEmitterMethods {
     });
 
     this.onResize(this, size);
-
     this.emit(EVENTS.VIEWS.RESIZED, size);
-
     this.prevBounds = size;
 
     this.elementBounds = bounds(this.element);
@@ -519,11 +509,10 @@ class IframeView implements View, EventEmitterMethods {
 
   load(contents: string): Promise<Contents> {
     const loading = new defer<Contents>();
-    const loaded = loading.promise;
 
     if (!this.iframe) {
       loading.reject(new Error('No Iframe Available'));
-      return loaded;
+      return loading.promise;
     }
 
     this.iframe.onload = (event) => {
@@ -534,25 +523,28 @@ class IframeView implements View, EventEmitterMethods {
       this.blobUrl = createBlobUrl(contents, 'application/xhtml+xml');
       this.iframe.src = this.blobUrl!;
       this.element.appendChild(this.iframe);
-    } else if (this.settings.method === 'srcdoc') {
-      this.iframe.srcdoc = contents;
-      this.element.appendChild(this.iframe);
-    } else {
-      this.element.appendChild(this.iframe);
-
-      this.document = this.iframe.contentDocument ?? undefined;
-
-      if (!this.document) {
-        loading.reject(new Error('No Document Available'));
-        return loaded;
-      }
-
-      this.iframe.contentDocument?.open();
-      this.iframe.contentDocument?.write(contents);
-      this.iframe.contentDocument?.close();
+      return loading.promise;
     }
 
-    return loaded;
+    if (this.settings.method === 'srcdoc') {
+      this.iframe.srcdoc = contents;
+      this.element.appendChild(this.iframe);
+      return loading.promise;
+    }
+
+    this.element.appendChild(this.iframe);
+    this.document = this.iframe.contentDocument ?? undefined;
+
+    if (!this.document) {
+      loading.reject(new Error('No Document Available'));
+      return loading.promise;
+    }
+
+    this.iframe.contentDocument?.open();
+    this.iframe.contentDocument?.write(contents);
+    this.iframe.contentDocument?.close();
+
+    return loading.promise;
   }
 
   /**
@@ -627,29 +619,31 @@ class IframeView implements View, EventEmitterMethods {
           this.contents = contents;
 
           return true;
-        } else {
-          console.warn(
-            '[IframeView] Failed to create Contents for prerendered view - helper returned null'
-          );
-          return false;
         }
+
+        console.warn(
+          '[IframeView] Failed to create Contents for prerendered view - helper returned null'
+        );
+
+        return false;
       } catch (e) {
         console.warn(
           '[IframeView] Error creating Contents for prerendered view:',
           e
         );
+
         return false;
       }
-    } else {
-      console.warn(
-        '[IframeView] Cannot create Contents - missing iframe, document, or section',
-        {
-          hasIframe: !!this.iframe,
-          hasDocument: !!(this.iframe && this.iframe.contentDocument),
-          hasSection: !!this.section,
-        }
-      );
     }
+
+    console.warn(
+      '[IframeView] Cannot create Contents - missing iframe, document, or section',
+      {
+        hasIframe: !!this.iframe,
+        hasDocument: !!(this.iframe && this.iframe.contentDocument),
+        hasSection: !!this.section,
+      }
+    );
 
     return false;
   }
@@ -857,16 +851,10 @@ class IframeView implements View, EventEmitterMethods {
     className = 'epubjs-hl',
     styles = {}
   ): Mark | undefined {
-    if (!this.ensureContentsForMarking()) {
-      return;
-    }
-
-    // Ensure we have contents at this point
-    if (!this.contents) {
-      return;
-    }
+    if (!this.ensureContentsForMarking()) return;
 
     let attributes;
+
     if (this.settings.transparency) {
       attributes = Object.assign(
         { fill: 'yellow', 'fill-opacity': '1.0', 'mix-blend-mode': 'normal' },
@@ -879,7 +867,8 @@ class IframeView implements View, EventEmitterMethods {
       );
     }
 
-    const range = this.contents.range(cfiRange);
+    // this.contents is ensured to be defined by ensureContentsForMarking
+    const range = this.contents!.range(cfiRange);
 
     const emitter = () => {
       this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
@@ -930,9 +919,8 @@ class IframeView implements View, EventEmitterMethods {
     className = 'epubjs-ul',
     styles = {}
   ) {
-    if (!this.ensureContentsForMarking()) {
-      return;
-    }
+    if (!this.ensureContentsForMarking()) return;
+
     const attributes = Object.assign(
       {
         stroke: 'black',
@@ -941,6 +929,7 @@ class IframeView implements View, EventEmitterMethods {
       },
       styles
     );
+
     const range = this.contents!.range(cfiRange);
     const emitter = () => {
       this.emit(EVENTS.VIEWS.MARK_CLICKED, cfiRange, data);
@@ -988,9 +977,7 @@ class IframeView implements View, EventEmitterMethods {
     data: Record<string, string> = {},
     cb?: (e: Event) => void
   ): { element: HTMLElement; range: Range } | Node | null {
-    if (!this.contents) {
-      return null;
-    }
+    if (!this.ensureContentsForMarking()) return;
 
     if (cfiRange in this.marks) {
       const item = this.marks[cfiRange];

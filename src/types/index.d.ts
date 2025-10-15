@@ -25,3 +25,4 @@ export * from './view-settings';
 export * from './inline-view';
 export * from './iframe-view';
 export * from './resources';
+export * from './mark-element-map';

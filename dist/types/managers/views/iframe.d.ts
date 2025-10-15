@@ -6,10 +6,9 @@ import { Mark } from 'marks-pane';
 import { View } from '../helpers/views';
 import Layout from '../../layout';
 import Section from '../../section';
-import type { Axis } from '../../types';
 import { StyledPane } from './styled-pane';
+import type { Axis, ExtendedIFrameElement, IframeViewSettings, MarkElementMap } from '../../types';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
-import type { ExtendedIFrameElement, IframeViewSettings } from '../../types';
 declare class IframeView implements View, EventEmitterMethods {
     emit: EventEmitter['emit'];
     on: EventEmitter['on'];
@@ -40,20 +39,8 @@ declare class IframeView implements View, EventEmitterMethods {
     resizing: boolean;
     _expanding: boolean;
     pane: StyledPane | undefined;
-    highlights: {
-        [key: string]: {
-            mark: Mark;
-            element: HTMLElement;
-            listeners: Array<(e: Event) => void>;
-        };
-    };
-    underlines: {
-        [key: string]: {
-            mark: Mark;
-            element: HTMLElement;
-            listeners: Array<(e: Event) => void>;
-        };
-    };
+    highlights: MarkElementMap;
+    underlines: MarkElementMap;
     marks: {
         [key: string]: {
             element: HTMLElement;
