@@ -1,5 +1,5 @@
 import type { Axis, Flow, Direction } from './common';
-import type { Layout } from './layout';
+import type Layout from '../layout';
 
 export interface ExtendedIFrameElement extends HTMLIFrameElement {
   allowTransparency?: string;
