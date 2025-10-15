@@ -26,7 +26,7 @@ import DefaultViewManager from './managers/default';
 import { PreRenderingViewManager } from './managers/prerendering';
 import { Direction } from './types/common';
 
-type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
+type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 
 /**
  * Displays an Epub as a series of Views for each Section.
@@ -52,6 +52,9 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
  */
 export class Rendition implements EventEmitterMethods {
   emit!: EventEmitter['emit'];
+  on!: EventEmitter['on'];
+  off!: EventEmitter['off'];
+  once!: EventEmitter['once'];
 
   settings: RenditionOptions;
   book: Book;

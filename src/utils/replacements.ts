@@ -1,10 +1,5 @@
 import Url from './url';
-
-export interface Section {
-  url?: string;
-  canonical?: string;
-  idref?: string;
-}
+import Section from '../section';
 
 export function replaceBase(doc: Document, section: Section): void {
   let base;

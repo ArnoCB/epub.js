@@ -4,7 +4,7 @@
   "description": "Parse and Render Epubs",
   "main": "dist/epub.js",
   "module": "dist/epub.js",
-  "types": "dist/types/index.d.ts",
+  "types": "index.d.ts",
   "repository": "https://github.com/ArnoCB/epub.js",
   "scripts": {
     "build:utils": "tsc -p tsconfig.json",
@@ -22,14 +22,13 @@
     "docs:md": "documentation build src/index.ts -f md -o documentation/md/API.md",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
-    "precommit": "npm run lint && npm run format && npm run prebuild && npm run build:utils && npm run build:lib && npm run test",
+    "precommit": "npm run lint && npm run format && npm run build:utils && npm run build:lib && npm run test",
     "start": "webpack-dev-server --inline --d",
     "build": "NODE_ENV=production webpack --progress",
     "minify": "NODE_ENV=production MINIMIZE=true webpack --progress",
     "watch": "babel --watch -d lib/ src/",
     "dev:prepare": "npm run compile && npm run build && npm run minify",
-    "prepare": "husky install",
-    "prebuild": "rm -rf dist/types && mkdir -p dist/types/types && cp -R src/types/* dist/types/types"
+    "prepare": "husky install"
   },
   "author": "fchasen@gmail.com",
   "license": "BSD-2-Clause",

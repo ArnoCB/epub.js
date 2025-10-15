@@ -11,7 +11,7 @@ import Book from './book';
 import { View } from './managers/helpers/views';
 import Contents from './contents';
 import { Direction } from './types/common';
-type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
+type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 /**
  * Displays an Epub as a series of Views for each Section.
  * Requires Manager and View class to handle specifics of rendering
@@ -36,6 +36,9 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
  */
 export declare class Rendition implements EventEmitterMethods {
     emit: EventEmitter['emit'];
+    on: EventEmitter['on'];
+    off: EventEmitter['off'];
+    once: EventEmitter['once'];
     settings: RenditionOptions;
     book: Book;
     hooks: RenditionHooks;

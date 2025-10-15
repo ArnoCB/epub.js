@@ -1,8 +1,4 @@
-export interface Section {
-    url?: string;
-    canonical?: string;
-    idref?: string;
-}
+import Section from '../section';
 export declare function replaceBase(doc: Document, section: Section): void;
 export declare function replaceCanonical(doc: Document, section: Section): void;
 export declare function replaceMeta(doc: Document, section: Section): void;
