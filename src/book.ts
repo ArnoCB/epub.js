@@ -1,6 +1,7 @@
 import type {
   ArchiveRequestTypeMap,
   BookOptions,
+  BookRequestFunction,
   PackagingManifestJson,
   PackagingManifestObject,
   PackagingMetadataObject,
@@ -42,24 +43,12 @@ const INPUT_TYPE = {
 } as const;
 
 type InputType = (typeof INPUT_TYPE)[keyof typeof INPUT_TYPE];
-
 type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 
 /**
  * An Epub representation with methods for the loading, parsing and manipulation
  * of its contents.
- * @param {string} [url]
- * @param {object} [options]
- * @param {method} [options.requestMethod] a request function to use instead of the default
- * @param {boolean} [options.requestCredentials=undefined] send the xhr request withCredentials
- * @param {object} [options.requestHeaders=undefined] send the xhr request headers
- * @param {string} [options.encoding=binary] optional to pass 'binary' or base64' for archived Epubs
- * @param {string} [options.replacements=none] use base64, blobUrl, or none for replacing assets in archived Epubs
- * @param {method} [options.canonical] optional function to determine canonical urls for a path
- * @param {string} [options.openAs] optional string to determine the input type
- * @param {boolean} [options.keepAbsoluteUrl=false] whether to keep the absolute URL when opening
- * @param {string} [options.store=false] cache the contents in local storage, value should be the name of the reader
- * @returns {Book}
+ *
  * @example new Book("/path/to/book.epub", {})
  * @example new Book({ replacements: "blobUrl" })
  */
@@ -100,12 +89,7 @@ class Book implements EventEmitterMethods {
   isRendered: boolean = false;
 
   ready: Promise<unknown[]>;
-  private request: (
-    url: string,
-    type: string,
-    withCredentials?: boolean,
-    headers?: Record<string, string>
-  ) => Promise<string | Blob | JSON | Document | XMLDocument>;
+  private request: BookRequestFunction;
   spine: Spine;
 
   locations: Locations | undefined;
@@ -157,7 +141,6 @@ class Book implements EventEmitterMethods {
 
     // Promises
     this.opening = new defer();
-
     this.opened = this.opening.promise;
 
     this.loading = {
@@ -242,51 +225,52 @@ class Book implements EventEmitterMethods {
       return input.arrayBuffer().then((buffer) => this.open(buffer, what));
     }
 
-    if (type === INPUT_TYPE.BINARY) {
-      this.archived = true;
-      this.url = new Url('/', '');
-      opening = this.openEpub(input as ArrayBuffer);
-    } else if (type === INPUT_TYPE.BASE64) {
-      this.archived = true;
-      this.url = new Url('/', '');
-      opening = this.openEpub(input as ArrayBuffer, type);
-    } else if (type === INPUT_TYPE.EPUB) {
-      this.archived = true;
-      this.url = new Url('/', '');
-      if (typeof input === 'string') {
-        opening = this.request(
-          input,
-          'binary',
-          this.settings.requestCredentials,
-          this.settings.requestHeaders
-        ).then((data) => {
-          if (data instanceof ArrayBuffer) {
-            return this.openEpub(data);
-          }
-          throw new Error('Expected ArrayBuffer for openEpub');
-        });
-      } else {
-        throw new Error('Input must be a string for request');
-      }
-    } else if (type == INPUT_TYPE.OPF) {
-      this.url = new Url(input as string);
-      if (this.settings.keepAbsoluteUrl) {
-        opening = this.openPackaging(input as string);
-      } else {
-        opening = this.openPackaging(this.url.Path.toString());
-      }
-    } else if (type == INPUT_TYPE.MANIFEST) {
-      this.url = new Url(input as string);
-      if (this.settings.keepAbsoluteUrl) {
-        opening = this.openManifest(input as string);
-      } else {
-        opening = this.openManifest(this.url.Path.toString());
-      }
-    } else {
-      this.url = new Url(input as string);
-      opening = this.openContainer(CONTAINER_PATH).then((packagePath) =>
-        this.openPackaging(packagePath)
-      );
+    switch (type) {
+      case INPUT_TYPE.BINARY:
+      case INPUT_TYPE.BASE64:
+        this.archived = true;
+        this.url = new Url('/', '');
+        opening = this.openEpub(
+          input as ArrayBuffer,
+          type === INPUT_TYPE.BASE64 ? type : undefined
+        );
+        break;
+      case INPUT_TYPE.EPUB:
+        this.archived = true;
+        this.url = new Url('/', '');
+        if (typeof input === 'string') {
+          opening = this.request(
+            input,
+            'binary',
+            this.settings.requestCredentials,
+            this.settings.requestHeaders
+          ).then((data) => {
+            if (data instanceof ArrayBuffer) {
+              return this.openEpub(data);
+            }
+            throw new Error('Expected ArrayBuffer for openEpub');
+          });
+        } else {
+          throw new Error('Input must be a string for request');
+        }
+        break;
+      case INPUT_TYPE.OPF:
+        this.url = new Url(input as string);
+        opening = this.settings.keepAbsoluteUrl
+          ? this.openPackaging(input as string)
+          : this.openPackaging(this.url.Path.toString());
+        break;
+      case INPUT_TYPE.MANIFEST:
+        this.url = new Url(input as string);
+        opening = this.settings.keepAbsoluteUrl
+          ? this.openManifest(input as string)
+          : this.openManifest(this.url.Path.toString());
+        break;
+      default:
+        this.url = new Url(input as string);
+        opening = this.openContainer(CONTAINER_PATH).then((packagePath) =>
+          this.openPackaging(packagePath)
+        );
     }
 
     return opening;
@@ -473,7 +457,6 @@ class Book implements EventEmitterMethods {
       }
     }
 
-    // Robust type checks for Blob and ArrayBuffer
     if (typeof Blob !== 'undefined' && input instanceof Blob) {
       return INPUT_TYPE.BINARY;
     }
@@ -482,7 +465,6 @@ class Book implements EventEmitterMethods {
       return INPUT_TYPE.BINARY;
     }
 
-    // Fallback for unknown types
     return INPUT_TYPE.BINARY;
   }
 
@@ -650,19 +632,17 @@ class Book implements EventEmitterMethods {
    * Store the epubs contents
    */
   private store(name: string): Store {
-    // Use "blobUrl" or "base64" for replacements
     const replacementsSetting =
       this.settings.replacements && this.settings.replacements !== 'none';
-    // Save original url
     const originalUrl = this.url;
-    // Save original request method
     const requester = this.settings.requestMethod || request.bind(this);
-    // Create new Store
+
     this.storage = new Store(
       name,
       requester,
       (path: string, absolute?: boolean) => this.resolve(path, absolute) ?? ''
     );
+
     // Replace request method to go through store
     this.request = (url, type, withCredentials = false, headers = {}) => {
       return this.storage!.request(url, type, withCredentials, headers);
@@ -682,6 +662,7 @@ class Book implements EventEmitterMethods {
           return Promise.reject(new Error(`Unsupported archive type: ${type}`));
         };
       }
+
       // Substitute hook
       const substituteResources = (output: string, section: Section) => {
         if (this.resources) {
@@ -706,6 +687,7 @@ class Book implements EventEmitterMethods {
               this.spine.hooks.serialize.register(substituteResources);
             }
           });
+
           this.storage.on('online', () => {
             this.url = originalUrl;
             if (this.spine?.hooks?.serialize) {
@@ -760,14 +742,10 @@ class Book implements EventEmitterMethods {
     const item = this.spine.get(cfi.spinePos);
     const _request = this.load;
 
-    if (!item) {
-      return Promise.reject('CFI could not be found');
-    }
+    if (!item) return Promise.reject('CFI could not be found');
 
     return item.load(_request).then(function () {
-      if (!item.document) {
-        return null;
-      }
+      if (!item.document) return null;
 
       return cfi.toRange(item.document);
     });
@@ -780,6 +758,7 @@ class Book implements EventEmitterMethods {
   key(identifier?: string): string {
     const ident =
       identifier || this.packaging?.metadata.identifier || this.url?.filename;
+
     return `epubjs:${EPUBJS_VERSION}:${ident}`;
   }
 

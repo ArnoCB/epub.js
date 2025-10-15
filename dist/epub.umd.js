@@ -3163,7 +3163,6 @@
 	       */
 	      render(_request) {
 	        const rendering = new core_1.defer();
-	        const rendered = rendering.promise;
 	        this.load(_request).then(contents => {
 	          const serializer = new XMLSerializer();
 	          this.output = serializer.serializeToString(contents);
@@ -3175,15 +3174,15 @@
 	        }).catch(error => {
 	          rendering.reject(error);
 	        });
-	        return rendered;
+	        return rendering.promise;
 	      }
 	      /**
 	       * Find a string in a section using node-by-node searching.
 	       * This method searches within individual text nodes, making it suitable
 	       * for simple text searches. For more advanced cross-element searching,
 	       * consider using the search() method instead.
-	       * @param  {string} _query The query string to find
-	       * @return {Match[]} A list of matches, with form {cfi, excerpt}
+	       * @param _query The query string to find
+	       * @return list of matches, with form {cfi, excerpt}
 	       */
 	      find(_query) {
 	        const matches = [];
@@ -3521,9 +3520,6 @@
 	      }
 	      /**
 	       * Unpack items from a opf into spine items
-	       * @param  {Packaging} _package
-	       * @param  {method} resolver URL resolver
-	       * @param  {method} canonical Resolve canonical url
 	       */
 	      unpack(_package, resolver, canonical) {
 	        this.items = _package.spine;
@@ -4008,7 +4004,7 @@
 	     * @param  {int} chars how many chars to split on
 	     * @return {Promise<Array<string>>} locations
 	     */
-	    generate(chars) {
+	    async generate(chars) {
 	      if (chars) {
 	        this.break = chars;
 	      }
@@ -4040,7 +4036,7 @@
 	        endOffset: undefined
 	      };
 	    }
-	    process(section) {
+	    async process(section) {
 	      // Section.load resolves with the section contents (an Element), not the full Document
 	      return section.load(this.request).then(contents => {
 	        const completed = new core_1.defer();
@@ -4137,12 +4133,10 @@
 	    }
 	    /**
 	     * Load all of sections in the book to generate locations
-	     * @param  {string} startCfi start position
-	     * @param  {int} wordCount how many words to split on
+	     * @param  wordCount how many words to split on
 	     * @param  {int} count result count
-	     * @return {object} locations
 	     */
-	    generateFromWords(startCfi, wordCount, count) {
+	    async generateFromWords(startCfi, wordCount, count) {
 	      const start = startCfi ? new epubcfi_1.default(startCfi) : undefined;
 	      if (this.q === undefined) {
 	        throw new Error('Queue is not defined');
@@ -4351,7 +4345,6 @@
 	    }
 	    /**
 	     * Load locations from JSON
-	     * @param {json} locations
 	     */
 	    load(locations) {
 	      if (typeof locations === 'string') {
@@ -4415,6 +4408,7 @@
 	      return this._locations?.length ?? 0;
 	    }
 	    destroy() {
+	      // @ts-expect-error this is only at destroy time
 	      this.spine = undefined;
 	      // @ts-expect-error this is only at destroy time
 	      this.request = undefined;
@@ -5465,36 +5459,34 @@
 	          return this.settings.archive.createUrl(url, {
 	            base64: this.settings.replacements === 'base64'
 	          });
-	        } else {
-	          if (!this.settings.request) {
-	            throw new Error(`Request method is not defined`);
-	          }
-	          if (this.settings.replacements === 'base64') {
-	            return this.settings.request(url, 'blob').then(response => {
-	              if (!(response instanceof Blob)) {
-	                throw new Error('Expected Blob response for base64 conversion');
-	              }
-	              return (0, core_1.blob2base64)(response);
-	            }).then(base64String => {
-	              const dataUrl = (0, core_1.createBase64Url)(base64String, mimeType);
-	              if (!dataUrl) {
-	                throw new Error('Failed to create base64 URL');
-	              }
-	              return dataUrl;
-	            });
-	          } else {
-	            return this.settings.request(url, 'blob').then(response => {
-	              if (!(response instanceof Blob)) {
-	                throw new Error('Expected Blob response for blob URL creation');
-	              }
-	              const blobUrl = (0, core_1.createBlobUrl)(response, mimeType);
-	              if (!blobUrl) {
-	                throw new Error('Failed to create blob URL');
-	              }
-	              return blobUrl;
-	            });
-	          }
 	        }
+	        if (!this.settings.request) {
+	          throw new Error(`Request method is not defined`);
+	        }
+	        if (this.settings.replacements === 'base64') {
+	          return this.settings.request(url, 'blob').then(response => {
+	            if (!(response instanceof Blob)) {
+	              throw new Error('Expected Blob response for base64 conversion');
+	            }
+	            return (0, core_1.blob2base64)(response);
+	          }).then(base64String => {
+	            const dataUrl = (0, core_1.createBase64Url)(base64String, mimeType);
+	            if (!dataUrl) {
+	              throw new Error('Failed to create base64 URL');
+	            }
+	            return dataUrl;
+	          });
+	        }
+	        return this.settings.request(url, 'blob').then(response => {
+	          if (!(response instanceof Blob)) {
+	            throw new Error('Expected Blob response for blob URL creation');
+	          }
+	          const blobUrl = (0, core_1.createBlobUrl)(response, mimeType);
+	          if (!blobUrl) {
+	            throw new Error('Failed to create blob URL');
+	          }
+	          return blobUrl;
+	        });
 	      }
 	      /**
 	       * Create blob urls for all the assets
@@ -6172,9 +6164,7 @@
 	      this.rendition.hooks.content.register(this.overrides.bind(this));
 	    }
 	    register(...args) {
-	      if (args.length === 0) {
-	        return;
-	      }
+	      if (args.length === 0) return;
 	      // themes.register({ light: {...}, dark: {...} })
 	      if (args.length === 1 && typeof args[0] === 'object' && !Array.isArray(args[0]) && args[0] !== null && !(args[0] instanceof String)) {
 	        return this.registerThemes(args[0]);
@@ -6203,9 +6193,7 @@
 	     * @example themes.register({ "body": { "color": "purple"}})
 	     */
 	    default(theme) {
-	      if (!theme) {
-	        return;
-	      }
+	      if (!theme) return;
 	      if (typeof theme === 'string') {
 	        return this.registerUrl('default', theme);
 	      }
@@ -6215,7 +6203,6 @@
 	    }
 	    /**
 	     * Register themes object
-	     * @param {object} themes
 	     */
 	    registerThemes(themes) {
 	      for (const theme in themes) {
@@ -6765,9 +6752,7 @@
 	  const epubcfi_1 = __importDefault(requireEpubcfi());
 	  const core_1 = requireCore();
 	  /**
-	   * Map text locations to CFI ranges
-	   * @param {string} [direction="ltr"] Text direction
-	   * @param {string} [axis="horizontal"] vertical or horizontal axis
+	   * Map text locations to CFI range
 	   * @param {boolean} [dev] toggle developer highlighting
 	   */
 	  class Mapping {
@@ -6880,34 +6865,34 @@
 	            right = this.horizontal ? elPos.right : elPos.bottom;
 	            if (left >= start && left <= end) {
 	              return node;
-	            } else if (right > start) {
-	              return node;
-	            } else {
-	              $prev = node;
-	              stack.push(node);
 	            }
+	            if (right > start) {
+	              return node;
+	            }
+	            $prev = node;
+	            stack.push(node);
 	          } else if (this.horizontal && this.direction === 'rtl') {
 	            left = elPos.left;
 	            right = elPos.right;
 	            if (right <= end && right >= start) {
 	              return node;
-	            } else if (left < end) {
-	              return node;
-	            } else {
-	              $prev = node;
-	              stack.push(node);
 	            }
+	            if (left < end) {
+	              return node;
+	            }
+	            $prev = node;
+	            stack.push(node);
 	          } else {
 	            top = elPos.top;
 	            bottom = elPos.bottom;
 	            if (top >= start && top <= end) {
 	              return node;
-	            } else if (bottom > start) {
-	              return node;
-	            } else {
-	              $prev = node;
-	              stack.push(node);
 	            }
+	            if (bottom > start) {
+	              return node;
+	            }
+	            $prev = node;
+	            stack.push(node);
 	          }
 	        });
 	        if (found) {
@@ -6937,34 +6922,34 @@
 	            right = Math.round(elPos.right);
 	            if (left > end && $prev) {
 	              return $prev;
-	            } else if (right > end) {
-	              return node;
-	            } else {
-	              $prev = node;
-	              stack.push(node);
 	            }
+	            if (right > end) {
+	              return node;
+	            }
+	            $prev = node;
+	            stack.push(node);
 	          } else if (this.horizontal && this.direction === 'rtl') {
 	            left = Math.round(this.horizontal ? elPos.left : elPos.top);
 	            right = Math.round(this.horizontal ? elPos.right : elPos.bottom);
 	            if (right < start && $prev) {
 	              return $prev;
-	            } else if (left < start) {
-	              return node;
-	            } else {
-	              $prev = node;
-	              stack.push(node);
 	            }
+	            if (left < start) {
+	              return node;
+	            }
+	            $prev = node;
+	            stack.push(node);
 	          } else {
 	            top = Math.round(elPos.top);
 	            bottom = Math.round(elPos.bottom);
 	            if (top > end && $prev) {
 	              return $prev;
-	            } else if (bottom > end) {
-	              return node;
-	            } else {
-	              $prev = node;
-	              stack.push(node);
 	            }
+	            if (bottom > end) {
+	              return node;
+	            }
+	            $prev = node;
+	            stack.push(node);
 	          }
 	        });
 	        if (found) {
@@ -7022,7 +7007,8 @@
 	          right = pos.right;
 	          if (left > end && prev) {
 	            return prev;
-	          } else if (right > end) {
+	          }
+	          if (right > end) {
 	            return range;
 	          }
 	        } else if (this.horizontal && this.direction === 'rtl') {
@@ -7030,7 +7016,8 @@
 	          right = pos.right;
 	          if (right < start && prev) {
 	            return prev;
-	          } else if (left < start) {
+	          }
+	          if (left < start) {
 	            return range;
 	          }
 	        } else {
@@ -7038,7 +7025,8 @@
 	          bottom = pos.bottom;
 	          if (top > end && prev) {
 	            return prev;
-	          } else if (bottom > end) {
+	          }
+	          if (bottom > end) {
 	            return range;
 	          }
 	        }
@@ -18986,19 +18974,19 @@
 	     * Handle the response from request
 	     */
 	    handleResponse(response, type) {
-	      let r;
-	      if (type == 'json') {
-	        r = JSON.parse(response);
-	      } else if ((0, core_1.isXml)(type)) {
-	        r = (0, core_1.parse)(response, 'text/xml');
-	      } else if (type == 'xhtml') {
-	        r = (0, core_1.parse)(response, 'application/xhtml+xml');
-	      } else if (type == 'html' || type == 'htm') {
-	        r = (0, core_1.parse)(response, 'text/html');
-	      } else {
-	        r = response;
+	      if (type === 'json') {
+	        return JSON.parse(response);
 	      }
-	      return r;
+	      if ((0, core_1.isXml)(type)) {
+	        return (0, core_1.parse)(response, 'text/xml');
+	      }
+	      if (type === 'xhtml') {
+	        return (0, core_1.parse)(response, 'application/xhtml+xml');
+	      }
+	      if (type === 'html' || type === 'htm') {
+	        return (0, core_1.parse)(response, 'text/html');
+	      }
+	      return response;
 	    }
 	    /**
 	     * Get a Blob from Storage by Url
@@ -19015,11 +19003,8 @@
 	    }
 	    /**
 	     * Get Text from Storage by Url
-	     * @param  {string} url
-	     * @param  {string} [mimeType]
-	     * @return {Promise<string | undefined>}
 	     */
-	    getText(url, mimeType) {
+	    async getText(url, mimeType) {
 	      const encodedUrl = window.encodeURIComponent(url);
 	      mimeType = mimeType || mime_1.default.lookup(url);
 	      return this.storage.getItem(encodedUrl).then(function (uint8array) {
@@ -19040,7 +19025,7 @@
 	     * Get a base64 encoded result from Storage by Url
 	     * @return base64 encoded
 	     */
-	    getBase64(url, mimeType) {
+	    async getBase64(url, mimeType) {
 	      const encodedUrl = window.encodeURIComponent(url);
 	      mimeType = mimeType || mime_1.default.lookup(url);
 	      return this.storage.getItem(encodedUrl).then(uint8array => {
@@ -19063,41 +19048,25 @@
 	    createUrl(url, options) {
 	      const deferred = new core_1.defer();
 	      const _URL = window.URL || window.webkitURL;
-	      let tempUrl;
-	      let response;
 	      const useBase64 = options && options.base64;
 	      if (url in this.urlCache) {
 	        deferred.resolve(this.urlCache[url]);
 	        return deferred.promise;
 	      }
-	      if (useBase64) {
-	        response = this.getBase64(url);
-	        if (response) {
-	          response.then(tempUrl => {
-	            if (tempUrl) {
-	              this.urlCache[url] = tempUrl;
-	              deferred.resolve(tempUrl);
-	            }
-	          });
-	        }
-	      } else {
-	        response = this.getBlob(url);
-	        if (response) {
-	          response.then(blob => {
-	            if (blob) {
-	              tempUrl = _URL.createObjectURL(blob);
-	              this.urlCache[url] = tempUrl;
-	              deferred.resolve(tempUrl);
-	            }
-	          });
-	        }
-	      }
+	      const response = useBase64 ? this.getBase64(url) : this.getBlob(url);
 	      if (!response) {
 	        deferred.reject({
 	          message: 'File not found in storage: ' + url,
 	          stack: new Error().stack
 	        });
+	        return deferred.promise;
 	      }
+	      response.then(result => {
+	        if (!result) return;
+	        const tempUrl = typeof result === 'string' ? result : _URL.createObjectURL(result);
+	        this.urlCache[url] = tempUrl;
+	        deferred.resolve(tempUrl);
+	      });
 	      return deferred.promise;
 	    }
 	    /**
@@ -19234,18 +19203,7 @@
 	  /**
 	   * An Epub representation with methods for the loading, parsing and manipulation
 	   * of its contents.
-	   * @param {string} [url]
-	   * @param {object} [options]
-	   * @param {method} [options.requestMethod] a request function to use instead of the default
-	   * @param {boolean} [options.requestCredentials=undefined] send the xhr request withCredentials
-	   * @param {object} [options.requestHeaders=undefined] send the xhr request headers
-	   * @param {string} [options.encoding=binary] optional to pass 'binary' or base64' for archived Epubs
-	   * @param {string} [options.replacements=none] use base64, blobUrl, or none for replacing assets in archived Epubs
-	   * @param {method} [options.canonical] optional function to determine canonical urls for a path
-	   * @param {string} [options.openAs] optional string to determine the input type
-	   * @param {boolean} [options.keepAbsoluteUrl=false] whether to keep the absolute URL when opening
-	   * @param {string} [options.store=false] cache the contents in local storage, value should be the name of the reader
-	   * @returns {Book}
+	   *
 	   * @example new Book("/path/to/book.epub", {})
 	   * @example new Book({ replacements: "blobUrl" })
 	   */
@@ -19336,44 +19294,38 @@
 	      if (input instanceof Blob) {
 	        return input.arrayBuffer().then(buffer => this.open(buffer, what));
 	      }
-	      if (type === INPUT_TYPE.BINARY) {
-	        this.archived = true;
-	        this.url = new url_1.default('/', '');
-	        opening = this.openEpub(input);
-	      } else if (type === INPUT_TYPE.BASE64) {
-	        this.archived = true;
-	        this.url = new url_1.default('/', '');
-	        opening = this.openEpub(input, type);
-	      } else if (type === INPUT_TYPE.EPUB) {
-	        this.archived = true;
-	        this.url = new url_1.default('/', '');
-	        if (typeof input === 'string') {
-	          opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(data => {
-	            if (data instanceof ArrayBuffer) {
-	              return this.openEpub(data);
-	            }
-	            throw new Error('Expected ArrayBuffer for openEpub');
-	          });
-	        } else {
-	          throw new Error('Input must be a string for request');
-	        }
-	      } else if (type == INPUT_TYPE.OPF) {
-	        this.url = new url_1.default(input);
-	        if (this.settings.keepAbsoluteUrl) {
-	          opening = this.openPackaging(input);
-	        } else {
-	          opening = this.openPackaging(this.url.Path.toString());
-	        }
-	      } else if (type == INPUT_TYPE.MANIFEST) {
-	        this.url = new url_1.default(input);
-	        if (this.settings.keepAbsoluteUrl) {
-	          opening = this.openManifest(input);
-	        } else {
-	          opening = this.openManifest(this.url.Path.toString());
-	        }
-	      } else {
-	        this.url = new url_1.default(input);
-	        opening = this.openContainer(CONTAINER_PATH).then(packagePath => this.openPackaging(packagePath));
+	      switch (type) {
+	        case INPUT_TYPE.BINARY:
+	        case INPUT_TYPE.BASE64:
+	          this.archived = true;
+	          this.url = new url_1.default('/', '');
+	          opening = this.openEpub(input, type === INPUT_TYPE.BASE64 ? type : undefined);
+	          break;
+	        case INPUT_TYPE.EPUB:
+	          this.archived = true;
+	          this.url = new url_1.default('/', '');
+	          if (typeof input === 'string') {
+	            opening = this.request(input, 'binary', this.settings.requestCredentials, this.settings.requestHeaders).then(data => {
+	              if (data instanceof ArrayBuffer) {
+	                return this.openEpub(data);
+	              }
+	              throw new Error('Expected ArrayBuffer for openEpub');
+	            });
+	          } else {
+	            throw new Error('Input must be a string for request');
+	          }
+	          break;
+	        case INPUT_TYPE.OPF:
+	          this.url = new url_1.default(input);
+	          opening = this.settings.keepAbsoluteUrl ? this.openPackaging(input) : this.openPackaging(this.url.Path.toString());
+	          break;
+	        case INPUT_TYPE.MANIFEST:
+	          this.url = new url_1.default(input);
+	          opening = this.settings.keepAbsoluteUrl ? this.openManifest(input) : this.openManifest(this.url.Path.toString());
+	          break;
+	        default:
+	          this.url = new url_1.default(input);
+	          opening = this.openContainer(CONTAINER_PATH).then(packagePath => this.openPackaging(packagePath));
 	      }
 	      return opening;
 	    }
@@ -19521,14 +19473,12 @@
 	            return INPUT_TYPE.BINARY;
 	        }
 	      }
-	      // Robust type checks for Blob and ArrayBuffer
 	      if (typeof Blob !== 'undefined' && input instanceof Blob) {
 	        return INPUT_TYPE.BINARY;
 	      }
 	      if (typeof ArrayBuffer !== 'undefined' && input instanceof ArrayBuffer) {
 	        return INPUT_TYPE.BINARY;
 	      }
-	      // Fallback for unknown types
 	      return INPUT_TYPE.BINARY;
 	    }
 	    /**
@@ -19654,13 +19604,9 @@
 	     * Store the epubs contents
 	     */
 	    store(name) {
-	      // Use "blobUrl" or "base64" for replacements
 	      const replacementsSetting = this.settings.replacements && this.settings.replacements !== 'none';
-	      // Save original url
 	      const originalUrl = this.url;
-	      // Save original request method
 	      const requester = this.settings.requestMethod || request_1.default.bind(this);
-	      // Create new Store
 	      this.storage = new store_1.default(name, requester, (path, absolute) => this.resolve(path, absolute) ?? '');
 	      // Replace request method to go through store
 	      this.request = (url, type, withCredentials = false, headers = {}) => {
@@ -19737,13 +19683,9 @@
 	      }
 	      const item = this.spine.get(cfi.spinePos);
 	      const _request = this.load;
-	      if (!item) {
-	        return Promise.reject('CFI could not be found');
-	      }
+	      if (!item) return Promise.reject('CFI could not be found');
 	      return item.load(_request).then(function () {
-	        if (!item.document) {
-	          return null;
-	        }
+	        if (!item.document) return null;
 	        return cfi.toRange(item.document);
 	      });
 	    }

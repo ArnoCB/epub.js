@@ -7,21 +7,12 @@ import {
   PackagingManifestItem,
   PackagingManifestObject,
 } from './types/packaging';
+import type {
+  ResourcesOptions,
+  ResolverFunction,
+  BookRequestFunction,
+} from './types';
 import Archive from './archive';
-
-export interface ResourcesOptions {
-  replacements?: string;
-  archive?: Archive;
-  resolver: ResolverFunction;
-  request: (
-    url: string,
-    type: string,
-    withCredentials?: boolean,
-    headers?: Record<string, string>
-  ) => Promise<Blob | string | JSON | Document | XMLDocument>;
-}
-
-export type ResolverFunction = (path: string, absolute?: boolean) => string;
 
 /**
  * Handle Package Resources
@@ -36,12 +27,7 @@ class Resources {
     replacements?: string;
     archive?: Archive;
     resolver: ResolverFunction;
-    request: (
-      url: string,
-      type: string,
-      withCredentials?: boolean,
-      headers?: Record<string, string>
-    ) => Promise<Blob | string | JSON | Document | XMLDocument>;
+    request: BookRequestFunction;
   };
   manifest: undefined | PackagingManifestObject;
   resources: undefined | Array<PackagingManifestItem>;
@@ -154,40 +140,40 @@ class Resources {
       return this.settings.archive.createUrl(url, {
         base64: this.settings.replacements === 'base64',
       });
-    } else {
-      if (!this.settings.request) {
-        throw new Error(`Request method is not defined`);
-      }
-
-      if (this.settings.replacements === 'base64') {
-        return this.settings
-          .request(url, 'blob')
-          .then((response) => {
-            if (!(response instanceof Blob)) {
-              throw new Error('Expected Blob response for base64 conversion');
-            }
-            return blob2base64(response);
-          })
-          .then((base64String: string) => {
-            const dataUrl = createBase64Url(base64String, mimeType);
-            if (!dataUrl) {
-              throw new Error('Failed to create base64 URL');
-            }
-            return dataUrl;
-          });
-      } else {
-        return this.settings.request(url, 'blob').then((response) => {
-          if (!(response instanceof Blob)) {
-            throw new Error('Expected Blob response for blob URL creation');
-          }
-          const blobUrl = createBlobUrl(response, mimeType);
-          if (!blobUrl) {
-            throw new Error('Failed to create blob URL');
-          }
-          return blobUrl;
-        });
-      }
     }
+
+    if (!this.settings.request) {
+      throw new Error(`Request method is not defined`);
+    }
+
+    if (this.settings.replacements === 'base64') {
+      return this.settings
+        .request(url, 'blob')
+        .then((response) => {
+          if (!(response instanceof Blob)) {
+            throw new Error('Expected Blob response for base64 conversion');
+          }
+          return blob2base64(response);
+        })
+        .then((base64String: string) => {
+          const dataUrl = createBase64Url(base64String, mimeType);
+          if (!dataUrl) {
+            throw new Error('Failed to create base64 URL');
+          }
+          return dataUrl;
+        });
+    }
+
+    return this.settings.request(url, 'blob').then((response) => {
+      if (!(response instanceof Blob)) {
+        throw new Error('Expected Blob response for blob URL creation');
+      }
+      const blobUrl = createBlobUrl(response, mimeType);
+      if (!blobUrl) {
+        throw new Error('Failed to create blob URL');
+      }
+      return blobUrl;
+    });
   }
 
   /**
@@ -365,6 +351,7 @@ class Resources {
    */
   substitute(content: string, url?: string) {
     let relUrls;
+
     if (url) {
       relUrls = this.relativeTo(url);
     } else {

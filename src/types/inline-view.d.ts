@@ -1,5 +1,5 @@
 import { Axis } from './common';
-import type { Layout } from './layout';
+import type Layout from '../layout';
 
 export interface InlineViewOptions {
   ignoreClass?: string;

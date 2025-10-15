@@ -1,6 +1,7 @@
 import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
 import Resources from './resources';
+import type { BookRequestFunction } from './types/book';
 type EventEmitterMethods = Pick<EventEmitter, 'on'>;
 /**
  * Handles saving and requesting files from local storage
@@ -13,12 +14,12 @@ declare class Store implements EventEmitterMethods {
     storage: typeof localforage | undefined;
     urlCache: Record<string, string>;
     name: string;
-    requester: (url: string, type: string, withCredentials?: boolean, headers?: Record<string, string>) => Promise<Blob | string | JSON | Document | XMLDocument>;
+    requester: BookRequestFunction;
     resolver: (path: string, absolute?: boolean) => string;
     online: boolean;
     emit: (event: string, ...args: unknown[]) => void;
     private _status;
-    constructor(name: string, requester: (url: string, type: string, withCredentials?: boolean, headers?: Record<string, string>) => Promise<Blob | string | JSON | Document | XMLDocument>, resolver: (path: string, absolute?: boolean) => string);
+    constructor(name: string, requester: BookRequestFunction, resolver: (path: string, absolute?: boolean) => string);
     /**
      * Checks to see if localForage exists in global namspace,
      * Requires localForage if it isn't there
@@ -70,9 +71,6 @@ declare class Store implements EventEmitterMethods {
     getBlob(url: string, mimeType?: string): Promise<Blob | undefined>;
     /**
      * Get Text from Storage by Url
-     * @param  {string} url
-     * @param  {string} [mimeType]
-     * @return {Promise<string | undefined>}
      */
     getText(url: string, mimeType?: string): Promise<string | undefined>;
     /**

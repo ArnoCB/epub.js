@@ -2,6 +2,7 @@ import Rendition from './rendition';
 import Url from './utils/url';
 import Contents from './contents';
 import type { Theme } from './types/themes';
+import type { StylesheetRules } from './types/css';
 
 /**
  * Themes to apply to displayed content
@@ -16,11 +17,7 @@ class Themes {
       }
     | undefined = {
     default: {
-      rules: {} as {
-        [selector: string]:
-          | { [property: string]: string }
-          | { [property: string]: string }[];
-      },
+      rules: {} as StylesheetRules,
       url: '',
       serialized: '',
       injected: false,
@@ -53,9 +50,8 @@ class Themes {
   register(theme: string): void;
   register(theme: object): void;
   register(...args: [unknown?, unknown?]): void {
-    if (args.length === 0) {
-      return;
-    }
+    if (args.length === 0) return;
+
     // themes.register({ light: {...}, dark: {...} })
     if (
       args.length === 1 &&
@@ -66,6 +62,7 @@ class Themes {
     ) {
       return this.registerThemes(args[0] as { [key: string]: object });
     }
+
     // themes.register("light", "http://example.com/light.css")
     if (
       args.length === 2 &&
@@ -74,20 +71,14 @@ class Themes {
     ) {
       return this.registerUrl(args[0], args[1]);
     }
+
     // themes.register("light", { body: { color: "purple" } })
     if (
       args.length === 2 &&
       typeof args[0] === 'string' &&
       typeof args[1] === 'object'
     ) {
-      return this.registerRules(
-        args[0],
-        args[1] as {
-          [selector: string]:
-            | { [property: string]: string }
-            | { [property: string]: string }[];
-        }
-      );
+      return this.registerRules(args[0], args[1] as StylesheetRules);
     }
     // themes.register("http://example.com/default.css")
     if (args.length === 1 && typeof args[0] === 'string') {
@@ -106,42 +97,27 @@ class Themes {
    * @example themes.register({ "body": { "color": "purple"}})
    */
   default(theme: string | object) {
-    if (!theme) {
-      return;
-    }
+    if (!theme) return;
+
     if (typeof theme === 'string') {
       return this.registerUrl('default', theme);
     }
+
     if (typeof theme === 'object') {
-      return this.registerRules(
-        'default',
-        theme as {
-          [selector: string]:
-            | { [property: string]: string }
-            | { [property: string]: string }[];
-        }
-      );
+      return this.registerRules('default', theme as StylesheetRules);
     }
   }
 
   /**
    * Register themes object
-   * @param {object} themes
    */
-  registerThemes(themes: { [key: string]: unknown }) {
+  registerThemes(themes: { [key: string]: Theme }) {
     for (const theme in themes) {
       if (Object.prototype.hasOwnProperty.call(themes, theme)) {
         if (typeof themes[theme] === 'string') {
           this.registerUrl(theme, themes[theme]);
         } else {
-          this.registerRules(
-            theme,
-            themes[theme] as {
-              [selector: string]:
-                | { [property: string]: string }
-                | { [property: string]: string }[];
-            }
-          );
+          this.registerRules(theme, themes[theme] as StylesheetRules);
         }
       }
     }
@@ -189,14 +165,7 @@ class Themes {
   /**
    * Register rule
    */
-  registerRules(
-    name: string,
-    rules: {
-      [selector: string]:
-        | { [property: string]: string }
-        | { [property: string]: string }[];
-    }
-  ) {
+  registerRules(name: string, rules: StylesheetRules) {
     if (this._themes === undefined) {
       throw new Error(
         'Themes are not initialized. Please ensure that the Themes class is instantiated with a Rendition instance.'
@@ -330,6 +299,7 @@ class Themes {
       value: value,
       priority: priority === true,
     };
+
     const override = this._overrides[name];
 
     if (Array.isArray(contents)) {

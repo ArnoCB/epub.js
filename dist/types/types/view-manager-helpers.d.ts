@@ -4,7 +4,7 @@
  * Used by view manager helpers and related logic.
  */
 
-import type { Layout } from '../layout';
+import type Layout from '../layout';
 import type { Stage } from './stage';
 import type { Views } from './views';
 import type { Section } from '../section';

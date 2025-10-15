@@ -4,9 +4,7 @@ import { Axis } from './types';
 import type { Direction } from './types';
 import type { ViewParameter } from './types/mapping';
 /**
- * Map text locations to CFI ranges
- * @param {string} [direction="ltr"] Text direction
- * @param {string} [axis="horizontal"] vertical or horizontal axis
+ * Map text locations to CFI range
  * @param {boolean} [dev] toggle developer highlighting
  */
 export declare class Mapping {
@@ -71,6 +69,6 @@ export declare class Mapping {
     /**
      * Set the axis for mapping
      */
-    axis(axis: 'horizontal' | 'vertical'): boolean;
+    axis(axis: Axis): boolean;
 }
 export default Mapping;

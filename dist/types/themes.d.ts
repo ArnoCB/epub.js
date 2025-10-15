@@ -1,5 +1,7 @@
 import Rendition from './rendition';
 import Contents from './contents';
+import type { Theme } from './types/themes';
+import type { StylesheetRules } from './types/css';
 /**
  * Themes to apply to displayed content
  * @class
@@ -35,10 +37,9 @@ declare class Themes {
     default(theme: string | object): void;
     /**
      * Register themes object
-     * @param {object} themes
      */
     registerThemes(themes: {
-        [key: string]: unknown;
+        [key: string]: Theme;
     }): void;
     /**
      * Register a theme by passing its css as string
@@ -51,13 +52,7 @@ declare class Themes {
     /**
      * Register rule
      */
-    registerRules(name: string, rules: {
-        [selector: string]: {
-            [property: string]: string;
-        } | {
-            [property: string]: string;
-        }[];
-    }): void;
+    registerRules(name: string, rules: StylesheetRules): void;
     /**
      * Select a theme
      */

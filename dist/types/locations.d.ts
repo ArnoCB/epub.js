@@ -7,7 +7,7 @@ import type { RequestFunction, OptionalCustomRange } from './types';
  * Find Locations for a Book
  */
 export declare class Locations {
-    spine: Spine | undefined;
+    spine: Spine;
     request: RequestFunction<Document>;
     pause: number | undefined;
     q: Queue | undefined;
@@ -33,10 +33,8 @@ export declare class Locations {
     parse(contents: Element, cfiBase: string, chars?: number): string[];
     /**
      * Load all of sections in the book to generate locations
-     * @param  {string} startCfi start position
-     * @param  {int} wordCount how many words to split on
+     * @param  wordCount how many words to split on
      * @param  {int} count result count
-     * @return {object} locations
      */
     generateFromWords(startCfi: string, wordCount: number, count: number): Promise<{
         cfi: string;
@@ -73,7 +71,6 @@ export declare class Locations {
     cfiFromPercentage(percentage: number): string;
     /**
      * Load locations from JSON
-     * @param {json} locations
      */
     load(locations: string | string[]): string[];
     /**

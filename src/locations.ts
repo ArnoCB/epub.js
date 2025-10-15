@@ -12,7 +12,7 @@ import type { RequestFunction, OptionalCustomRange } from './types';
  * Find Locations for a Book
  */
 export class Locations {
-  spine: Spine | undefined;
+  spine: Spine;
   request: RequestFunction<Document>;
   pause: number | undefined;
 
@@ -52,7 +52,7 @@ export class Locations {
    * @param  {int} chars how many chars to split on
    * @return {Promise<Array<string>>} locations
    */
-  generate(chars: number): Promise<Array<string> | undefined> {
+  async generate(chars: number): Promise<Array<string> | undefined> {
     if (chars) {
       this.break = chars;
     }
@@ -93,7 +93,7 @@ export class Locations {
     };
   }
 
-  process(section: Section) {
+  async process(section: Section) {
     // Section.load resolves with the section contents (an Element), not the full Document
     return section.load(this.request).then((contents: unknown) => {
       const completed = new defer();
@@ -211,12 +211,10 @@ export class Locations {
 
   /**
    * Load all of sections in the book to generate locations
-   * @param  {string} startCfi start position
-   * @param  {int} wordCount how many words to split on
+   * @param  wordCount how many words to split on
    * @param  {int} count result count
-   * @return {object} locations
    */
-  generateFromWords(startCfi: string, wordCount: number, count: number) {
+  async generateFromWords(startCfi: string, wordCount: number, count: number) {
     const start = startCfi ? new EpubCFI(startCfi) : undefined;
 
     if (this.q === undefined) {
@@ -347,6 +345,7 @@ export class Locations {
           return false;
         }
       }
+
       if (
         node.nodeType !== 3 ||
         !node.textContent ||
@@ -356,6 +355,7 @@ export class Locations {
           return false;
         }
       }
+
       const len = this.countWords(node.textContent);
       let dist;
       let pos = 0;
@@ -501,7 +501,6 @@ export class Locations {
 
   /**
    * Load locations from JSON
-   * @param {json} locations
    */
   load(locations: string | string[]): string[] {
     if (typeof locations === 'string') {
@@ -577,6 +576,7 @@ export class Locations {
   }
 
   destroy() {
+    // @ts-expect-error this is only at destroy time
     this.spine = undefined;
     // @ts-expect-error this is only at destroy time
     this.request = undefined;

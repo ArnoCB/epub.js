@@ -15,18 +15,7 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 /**
  * An Epub representation with methods for the loading, parsing and manipulation
  * of its contents.
- * @param {string} [url]
- * @param {object} [options]
- * @param {method} [options.requestMethod] a request function to use instead of the default
- * @param {boolean} [options.requestCredentials=undefined] send the xhr request withCredentials
- * @param {object} [options.requestHeaders=undefined] send the xhr request headers
- * @param {string} [options.encoding=binary] optional to pass 'binary' or base64' for archived Epubs
- * @param {string} [options.replacements=none] use base64, blobUrl, or none for replacing assets in archived Epubs
- * @param {method} [options.canonical] optional function to determine canonical urls for a path
- * @param {string} [options.openAs] optional string to determine the input type
- * @param {boolean} [options.keepAbsoluteUrl=false] whether to keep the absolute URL when opening
- * @param {string} [options.store=false] cache the contents in local storage, value should be the name of the reader
- * @returns {Book}
+ *
  * @example new Book("/path/to/book.epub", {})
  * @example new Book({ replacements: "blobUrl" })
  */

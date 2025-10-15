@@ -2,7 +2,7 @@
  * Unified ViewSettings type for all view-related configuration in epub.js
  */
 import type { Axis, Flow, Direction } from './common';
-import type { Layout } from '../layout';
+import type Layout from '../layout';
 
 export interface ViewSettings {
   ignoreClass?: string;

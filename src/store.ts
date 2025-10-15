@@ -5,6 +5,7 @@ import Path from './utils/path';
 import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
 import Resources from './resources';
+import type { BookRequestFunction } from './types/book';
 
 type EventEmitterMethods = Pick<EventEmitter, 'on'>;
 
@@ -19,12 +20,7 @@ class Store implements EventEmitterMethods {
   storage: typeof localforage | undefined;
   urlCache: Record<string, string> = {};
   name: string;
-  requester: (
-    url: string,
-    type: string,
-    withCredentials?: boolean,
-    headers?: Record<string, string>
-  ) => Promise<Blob | string | JSON | Document | XMLDocument>;
+  requester: BookRequestFunction;
   resolver: (path: string, absolute?: boolean) => string;
   online = true;
   emit!: (event: string, ...args: unknown[]) => void;
@@ -32,12 +28,7 @@ class Store implements EventEmitterMethods {
 
   constructor(
     name: string,
-    requester: (
-      url: string,
-      type: string,
-      withCredentials?: boolean,
-      headers?: Record<string, string>
-    ) => Promise<Blob | string | JSON | Document | XMLDocument>,
+    requester: BookRequestFunction,
     resolver: (path: string, absolute?: boolean) => string
   ) {
     this.storage = undefined;
@@ -235,21 +226,23 @@ class Store implements EventEmitterMethods {
    * Handle the response from request
    */
   private handleResponse(response: string | Blob, type: string) {
-    let r;
-
-    if (type == 'json') {
-      r = JSON.parse(response as string);
-    } else if (isXml(type)) {
-      r = parse(response as string, 'text/xml');
-    } else if (type == 'xhtml') {
-      r = parse(response as string, 'application/xhtml+xml');
-    } else if (type == 'html' || type == 'htm') {
-      r = parse(response as string, 'text/html');
-    } else {
-      r = response;
+    if (type === 'json') {
+      return JSON.parse(response as string);
     }
 
-    return r;
+    if (isXml(type)) {
+      return parse(response as string, 'text/xml');
+    }
+
+    if (type === 'xhtml') {
+      return parse(response as string, 'application/xhtml+xml');
+    }
+
+    if (type === 'html' || type === 'htm') {
+      return parse(response as string, 'text/html');
+    }
+
+    return response;
   }
 
   /**
@@ -271,11 +264,8 @@ class Store implements EventEmitterMethods {
 
   /**
    * Get Text from Storage by Url
-   * @param  {string} url
-   * @param  {string} [mimeType]
-   * @return {Promise<string | undefined>}
    */
-  getText(url: string, mimeType?: string): Promise<string | undefined> {
+  async getText(url: string, mimeType?: string): Promise<string | undefined> {
     const encodedUrl = window.encodeURIComponent(url);
 
     mimeType = mimeType || mime.lookup(url);
@@ -304,7 +294,7 @@ class Store implements EventEmitterMethods {
    * Get a base64 encoded result from Storage by Url
    * @return base64 encoded
    */
-  getBase64(url: string, mimeType?: string): Promise<string | undefined> {
+  async getBase64(url: string, mimeType?: string): Promise<string | undefined> {
     const encodedUrl = window.encodeURIComponent(url);
 
     mimeType = mimeType || mime.lookup(url);
@@ -333,8 +323,6 @@ class Store implements EventEmitterMethods {
   createUrl(url: string, options: { base64?: boolean }): Promise<string> {
     const deferred = new defer<string>();
     const _URL = window.URL || window.webkitURL;
-    let tempUrl;
-    let response;
     const useBase64 = options && options.base64;
 
     if (url in this.urlCache) {
@@ -342,37 +330,28 @@ class Store implements EventEmitterMethods {
       return deferred.promise;
     }
 
-    if (useBase64) {
-      response = this.getBase64(url);
-
-      if (response) {
-        response.then((tempUrl: string | undefined) => {
-          if (tempUrl) {
-            this.urlCache[url] = tempUrl;
-            deferred.resolve(tempUrl);
-          }
-        });
-      }
-    } else {
-      response = this.getBlob(url);
-
-      if (response) {
-        response.then((blob: Blob | undefined) => {
-          if (blob) {
-            tempUrl = _URL.createObjectURL(blob);
-            this.urlCache[url] = tempUrl;
-            deferred.resolve(tempUrl);
-          }
-        });
-      }
-    }
+    const response = useBase64 ? this.getBase64(url) : this.getBlob(url);
 
     if (!response) {
       deferred.reject({
         message: 'File not found in storage: ' + url,
         stack: new Error().stack,
       });
+
+      return deferred.promise;
     }
+
+    response.then((result: string | Blob | undefined) => {
+      if (!result) return;
+
+      const tempUrl =
+        typeof result === 'string'
+          ? result
+          : _URL.createObjectURL(result as Blob);
+
+      this.urlCache[url] = tempUrl;
+      deferred.resolve(tempUrl);
+    });
 
     return deferred.promise;
   }

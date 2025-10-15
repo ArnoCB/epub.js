@@ -91,7 +91,6 @@ export class Section {
    */
   render(_request?: (url: string) => Promise<Document>) {
     const rendering = new defer();
-    const rendered = rendering.promise;
 
     this.load(_request)
       .then((contents: unknown) => {
@@ -109,7 +108,7 @@ export class Section {
         rendering.reject(error);
       });
 
-    return rendered;
+    return rendering.promise;
   }
 
   /**
@@ -117,8 +116,8 @@ export class Section {
    * This method searches within individual text nodes, making it suitable
    * for simple text searches. For more advanced cross-element searching,
    * consider using the search() method instead.
-   * @param  {string} _query The query string to find
-   * @return {Match[]} A list of matches, with form {cfi, excerpt}
+   * @param _query The query string to find
+   * @return list of matches, with form {cfi, excerpt}
    */
   find(_query: string): Match[] {
     const matches: Match[] = [];

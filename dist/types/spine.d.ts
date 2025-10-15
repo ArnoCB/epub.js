@@ -3,7 +3,7 @@ import Hook from './utils/hook';
 import Section from './section';
 import type { PackagingManifestObject, UnpackingSpineItem } from './types';
 import Packaging from './packaging';
-import { ResolverFunction } from './resources';
+import { ResolverFunction } from './types';
 /**
  * A collection of Spine Items
  */
@@ -25,9 +25,6 @@ declare class Spine {
     constructor();
     /**
      * Unpack items from a opf into spine items
-     * @param  {Packaging} _package
-     * @param  {method} resolver URL resolver
-     * @param  {method} canonical Resolve canonical url
      */
     unpack(_package: Packaging, resolver: ResolverFunction, canonical: ResolverFunction): void;
     /**

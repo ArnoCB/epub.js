@@ -4,10 +4,8 @@
  * Used by view-renderer and related logic.
  */
 
-import type { Axis } from './common';
-import type { Direction } from './common';
-import type { Layout } from '../layout';
-import type { Flow } from './index';
+import type { Axis, Direction, Flow } from './common';
+import type Layout from '../layout';
 
 export interface ViewRendererSettings {
   ignoreClass?: string;

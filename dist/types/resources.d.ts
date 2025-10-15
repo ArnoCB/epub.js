@@ -1,12 +1,6 @@
 import { PackagingManifestItem, PackagingManifestObject } from './types/packaging';
+import type { ResourcesOptions, ResolverFunction, BookRequestFunction } from './types';
 import Archive from './archive';
-export interface ResourcesOptions {
-    replacements?: string;
-    archive?: Archive;
-    resolver: ResolverFunction;
-    request: (url: string, type: string, withCredentials?: boolean, headers?: Record<string, string>) => Promise<Blob | string | JSON | Document | XMLDocument>;
-}
-export type ResolverFunction = (path: string, absolute?: boolean) => string;
 /**
  * Handle Package Resources
  * @param {Manifest} manifest
@@ -20,7 +14,7 @@ declare class Resources {
         replacements?: string;
         archive?: Archive;
         resolver: ResolverFunction;
-        request: (url: string, type: string, withCredentials?: boolean, headers?: Record<string, string>) => Promise<Blob | string | JSON | Document | XMLDocument>;
+        request: BookRequestFunction;
     };
     manifest: undefined | PackagingManifestObject;
     resources: undefined | Array<PackagingManifestItem>;

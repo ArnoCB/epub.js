@@ -7,9 +7,7 @@ import type { Direction } from './types';
 import type { ViewParameter } from './types/mapping';
 
 /**
- * Map text locations to CFI ranges
- * @param {string} [direction="ltr"] Text direction
- * @param {string} [axis="horizontal"] vertical or horizontal axis
+ * Map text locations to CFI range
  * @param {boolean} [dev] toggle developer highlighting
  */
 export class Mapping {
@@ -161,36 +159,42 @@ export class Mapping {
 
           if (left >= start && left <= end) {
             return node;
-          } else if (right > start) {
-            return node;
-          } else {
-            $prev = node;
-            stack.push(node);
           }
+
+          if (right > start) {
+            return node;
+          }
+
+          $prev = node;
+          stack.push(node);
         } else if (this.horizontal && this.direction === 'rtl') {
           left = elPos.left;
           right = elPos.right;
 
           if (right <= end && right >= start) {
             return node;
-          } else if (left < end) {
-            return node;
-          } else {
-            $prev = node;
-            stack.push(node);
           }
+
+          if (left < end) {
+            return node;
+          }
+
+          $prev = node;
+          stack.push(node);
         } else {
           top = elPos.top;
           bottom = elPos.bottom;
 
           if (top >= start && top <= end) {
             return node;
-          } else if (bottom > start) {
-            return node;
-          } else {
-            $prev = node;
-            stack.push(node);
           }
+
+          if (bottom > start) {
+            return node;
+          }
+
+          $prev = node;
+          stack.push(node);
         }
       });
 
@@ -228,36 +232,42 @@ export class Mapping {
 
           if (left > end && $prev) {
             return $prev;
-          } else if (right > end) {
-            return node;
-          } else {
-            $prev = node;
-            stack.push(node);
           }
+
+          if (right > end) {
+            return node;
+          }
+
+          $prev = node;
+          stack.push(node);
         } else if (this.horizontal && this.direction === 'rtl') {
           left = Math.round(this.horizontal ? elPos.left : elPos.top);
           right = Math.round(this.horizontal ? elPos.right : elPos.bottom);
 
           if (right < start && $prev) {
             return $prev;
-          } else if (left < start) {
-            return node;
-          } else {
-            $prev = node;
-            stack.push(node);
           }
+
+          if (left < start) {
+            return node;
+          }
+
+          $prev = node;
+          stack.push(node);
         } else {
           top = Math.round(elPos.top);
           bottom = Math.round(elPos.bottom);
 
           if (top > end && $prev) {
             return $prev;
-          } else if (bottom > end) {
-            return node;
-          } else {
-            $prev = node;
-            stack.push(node);
           }
+
+          if (bottom > end) {
+            return node;
+          }
+
+          $prev = node;
+          stack.push(node);
         }
       });
 
@@ -328,7 +338,9 @@ export class Mapping {
 
         if (left > end && prev) {
           return prev;
-        } else if (right > end) {
+        }
+
+        if (right > end) {
           return range;
         }
       } else if (this.horizontal && this.direction === 'rtl') {
@@ -337,7 +349,9 @@ export class Mapping {
 
         if (right < start && prev) {
           return prev;
-        } else if (left < start) {
+        }
+
+        if (left < start) {
           return range;
         }
       } else {
@@ -346,7 +360,9 @@ export class Mapping {
 
         if (top > end && prev) {
           return prev;
-        } else if (bottom > end) {
+        }
+
+        if (bottom > end) {
           return range;
         }
       }
@@ -445,10 +461,11 @@ export class Mapping {
   /**
    * Set the axis for mapping
    */
-  axis(axis: 'horizontal' | 'vertical'): boolean {
+  axis(axis: Axis): boolean {
     if (axis) {
       this.horizontal = axis === 'horizontal' ? true : false;
     }
+
     return this.horizontal;
   }
 }

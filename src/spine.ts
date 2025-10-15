@@ -13,7 +13,7 @@ import {
   replaceMeta,
 } from './utils/replacements';
 import Packaging from './packaging';
-import { ResolverFunction } from './resources';
+import { ResolverFunction } from './types';
 
 /**
  * A collection of Spine Items
@@ -50,9 +50,6 @@ class Spine {
 
   /**
    * Unpack items from a opf into spine items
-   * @param  {Packaging} _package
-   * @param  {method} resolver URL resolver
-   * @param  {method} canonical Resolve canonical url
    */
   unpack(
     _package: Packaging,
@@ -106,6 +103,7 @@ class Spine {
           }
           return;
         };
+
         item.next = () => {
           let nextIndex = item.index;
           while (nextIndex < this.spineItems.length - 1) {
