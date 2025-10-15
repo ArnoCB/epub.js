@@ -24,5 +24,7 @@ export * from './src/managers';
 export * from './src/types';
 export * from './src/utils';
 
+export { default } from './src/epub';
+
 // @todo: fix the type clashes with these enums
 // export * from './src/enums';

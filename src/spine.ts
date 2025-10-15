@@ -18,7 +18,7 @@ import { ResolverFunction } from './types';
 /**
  * A collection of Spine Items
  */
-class Spine {
+export class Spine {
   spineItems: Section[] = [];
   spineByHref: Record<string, number> = {};
   spineById: Record<string, number> = {};
