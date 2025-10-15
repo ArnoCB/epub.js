@@ -1,0 +1,91 @@
+import Rendition from './rendition';
+import Contents from './contents';
+import type { Theme } from './types/themes';
+import type { StylesheetRules } from './types/css';
+/**
+ * Themes to apply to displayed content
+ * @class
+ * @param {Rendition} rendition
+ */
+declare class Themes {
+    rendition: Rendition | undefined;
+    private _themes;
+    private _overrides;
+    private _current;
+    private _injected;
+    constructor(rendition: Rendition);
+    /**
+     * Add themes to be used by a rendition
+     * @param {object | Array<object> | string}
+     * @example themes.register("light", "http://example.com/light.css")
+     * @example themes.register("light", { "body": { "color": "purple"}})
+     * @example themes.register({ "light" : {...}, "dark" : {...}})
+     */
+    register(theme: {
+        [key: string]: object;
+    }): void;
+    register(name: string, url: string): void;
+    register(name: string, rules: object): void;
+    register(theme: string): void;
+    register(theme: object): void;
+    /**
+     * Add a default theme to be used by a rendition
+     * @param {object | string} theme
+     * @example themes.register("http://example.com/default.css")
+     * @example themes.register({ "body": { "color": "purple"}})
+     */
+    default(theme: string | object): void;
+    /**
+     * Register themes object
+     */
+    registerThemes(themes: {
+        [key: string]: Theme;
+    }): void;
+    /**
+     * Register a theme by passing its css as string
+     */
+    registerCss(name: string, css: string): void;
+    /**
+     * Register a url
+     */
+    registerUrl(name: string, input: string): void;
+    /**
+     * Register rule
+     */
+    registerRules(name: string, rules: StylesheetRules): void;
+    /**
+     * Select a theme
+     */
+    select(name: string): void;
+    /**
+     * Update a theme
+     */
+    update(name: string): void;
+    /**
+     * Inject all themes into contents
+     */
+    inject(contents: Contents): void;
+    /**
+     * Add Theme to contents
+     */
+    add(name: string, contents: Contents): void;
+    /**
+     * Add override
+     */
+    override(name: string, value: string, priority?: boolean): void;
+    removeOverride(name: string): void;
+    /**
+     * Add all overrides
+     */
+    overrides(contents: Contents): void;
+    /**
+     * Adjust the font size of a rendition
+     */
+    fontSize(size: number | string): void;
+    /**
+     * Adjust the font-family of a rendition
+     */
+    font(f: string): void;
+    destroy(): void;
+}
+export default Themes;

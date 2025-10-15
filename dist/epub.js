@@ -6412,6 +6412,7 @@ function requireAnnotation() {
   Object.defineProperty(annotation, "__esModule", {
     value: true
   });
+  annotation.Annotation = void 0;
   const event_emitter_1 = __importDefault(requireEventEmitter());
   const constants_1 = requireConstants();
   /**
@@ -6512,6 +6513,7 @@ function requireAnnotation() {
     }
     text() {}
   }
+  annotation.Annotation = Annotation;
   (0, event_emitter_1.default)(Annotation.prototype);
   annotation.default = Annotation;
   return annotation;
@@ -6529,6 +6531,7 @@ function requireAnnotations() {
   Object.defineProperty(annotations, "__esModule", {
     value: true
   });
+  annotations.Annotations = void 0;
   const annotation_1 = __importDefault(requireAnnotation());
   const epubcfi_1 = __importDefault(requireEpubcfi());
   /**
@@ -6670,6 +6673,7 @@ function requireAnnotations() {
      */
     hide() {}
   }
+  annotations.Annotations = Annotations;
   annotations.default = Annotations;
   return annotations;
 }

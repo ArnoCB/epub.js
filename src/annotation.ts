@@ -15,7 +15,7 @@ import type { MarkType, AnnotationData } from './types';
  * @param {object} styles CSS styles to assign to annotation
  * @returns {Annotation} annotation
  */
-class Annotation {
+export class Annotation {
   public type: MarkType;
   public cfiRange: string;
   public data: Record<string, string>;

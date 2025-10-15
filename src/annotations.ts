@@ -7,7 +7,7 @@ import type { MarkType } from './types';
 /**
  * Handles managing adding & removing Annotations
  */
-class Annotations {
+export class Annotations {
   public rendition: Rendition;
   public highlights: Array<Annotation> = [];
   public underlines: Array<Annotation> = [];
