@@ -155,6 +155,11 @@ export declare class Rendition implements EventEmitterMethods {
      */
     currentLocation(): import("./types").PageLocation[];
     /**
+     * Get a Range from a Visible CFI
+     * (Used outside of this package)
+     */
+    getRange(cfi: string, ignoreClass: string): Range | undefined;
+    /**
      * Creates a Rendition#locationRange from location
      * passed by the Manager
      */

@@ -3,6 +3,13 @@ import Layout from './layout';
 import Rendition from './rendition';
 import { RenditionOptions, ViewManager } from './types';
 
+// Helper to mock EpubCFI with a custom spinePos
+function mockEpubCFIWithSpinePos(spinePos: number) {
+  jest.mock('./epubcfi', () => {
+    return jest.fn().mockImplementation(() => ({ spinePos }));
+  });
+}
+
 // Mocks for dependencies
 jest.mock('./themes', () =>
   jest.fn().mockImplementation(() => ({
@@ -175,4 +182,45 @@ describe('Rendition', () => {
   });
 
   // Add more tests for public methods as needed
+});
+
+describe('Rendition.getRange', () => {
+  it('returns the correct range for a matching view', () => {
+    jest.resetModules();
+    jest.doMock('./epubcfi', () => {
+      return jest.fn().mockImplementation(() => ({ spinePos: 1 }));
+    });
+    const { default: EpubCFI } = require('./epubcfi');
+    const fakeRange = document.createRange();
+    const mockCfi = 'epubcfi(/6/2[chapter1]!/4/1:0)';
+    const mockIgnoreClass = 'ignore';
+    const mockContents = { range: jest.fn().mockReturnValue(fakeRange) };
+    const mockView = { index: 1, contents: mockContents };
+    const mockViews = [mockView];
+    const book = createBookMock();
+    const { default: Rendition } = require('./rendition');
+    const rendition = new Rendition(book, {});
+    rendition.manager = { visible: () => mockViews } as any;
+    const result = rendition.getRange(mockCfi, mockIgnoreClass);
+    expect(result).toBe(fakeRange);
+    expect(mockContents.range).toHaveBeenCalledWith(
+      expect.any(Object),
+      mockIgnoreClass
+    );
+  });
+
+  it('returns undefined if no matching view is found', () => {
+    jest.resetModules();
+    jest.doMock('./epubcfi', () => {
+      return jest.fn().mockImplementation(() => ({ spinePos: 2 }));
+    });
+    const { default: EpubCFI } = require('./epubcfi');
+    const mockCfi = 'epubcfi(/6/2[chapter1]!/4/1:0)';
+    const mockIgnoreClass = 'ignore';
+    const book = createBookMock();
+    const rendition = new Rendition(book, {});
+    rendition.manager = { visible: () => [{ index: 1, contents: {} }] } as any;
+    const result = rendition.getRange(mockCfi, mockIgnoreClass);
+    expect(result).toBeUndefined();
+  });
 });

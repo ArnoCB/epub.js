@@ -13201,7 +13201,7 @@ function requireRendition() {
     /**
      * Go to the next "page" in the rendition
      */
-    next() {
+    async next() {
       const queuePromise = this.q.enqueue(this.manager.next.bind(this.manager));
       return queuePromise.then(result => {
         this.reportLocation();
@@ -13349,6 +13349,21 @@ function requireRendition() {
      */
     currentLocation() {
       return this.manager.currentLocation();
+    }
+    /**
+     * Get a Range from a Visible CFI
+     * (Used outside of this package)
+     */
+    getRange(cfi, ignoreClass) {
+      const _cfi = new epubcfi_1.default(cfi);
+      const found = this.manager.visible().filter(function (view) {
+        if (_cfi.spinePos === view.index) return true;
+      });
+      // Should only ever return 1 item
+      if (found.length) {
+        return found[0].contents.range(_cfi, ignoreClass);
+      }
+      return undefined;
     }
     /**
      * Creates a Rendition#locationRange from location

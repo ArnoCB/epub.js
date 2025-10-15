@@ -65,4 +65,5 @@ export interface ViewManager {
   direction: (dir?: string) => void;
   currentLocation: () => PageLocation[];
   getContents(): Contents[];
+  visible(): View[];
 }
