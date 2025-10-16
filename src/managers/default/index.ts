@@ -12,14 +12,17 @@ import { Section } from '../../section';
 import { Contents } from '../../epub';
 import { ViewRenderer } from '../helpers/view-renderer';
 import type { Axis, Direction, Flow } from '../../enums';
-import { DefaultViewManagerSettings, PageLocation } from '../../types';
-
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
-
-class DefaultViewManager implements ViewManager, EventEmitterMethods {
-  on!: EventEmitter['on'];
-  off!: EventEmitter['off'];
-  emit!: EventEmitter['emit'];
+import {
+  DefaultViewManagerSettings,
+  PageLocation,
+  EventEmitterMethods,
+} from '../../types';
+class DefaultViewManager
+  implements ViewManager, Pick<EventEmitterMethods, 'emit' | 'on' | 'off'>
+{
+  on!: EventEmitterMethods['on'];
+  off!: EventEmitterMethods['off'];
+  emit!: EventEmitterMethods['emit'];
 
   settings: DefaultViewManagerSettings;
   viewSettings: { [key: string]: unknown };

@@ -208,7 +208,7 @@ class Snap implements EventEmitterMethods {
     this._onTouchEnd = undefined;
 
     if (this._afterDisplayed) {
-      this.manager.off(EVENTS.MANAGERS.ADDED, (...args: unknown[]) => {
+      this.manager.off!(EVENTS.MANAGERS.ADDED, (...args: unknown[]) => {
         this._afterDisplayed?.(args[0] as View);
       });
     }

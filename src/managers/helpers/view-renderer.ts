@@ -1,7 +1,7 @@
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
 import { View } from './views';
-import { extend } from '../../utils/core';
+import { extend } from '../../utils';
 import type { ViewRendererSettings, RenderingOptions } from '../../types';
 
 /**

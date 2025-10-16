@@ -5,8 +5,11 @@ import type {
   ViewManager,
   ViewManagerConstructor,
   RenditionOptions,
+  LayoutProps,
+  LayoutProperties,
 } from './types';
 import EventEmitter from 'event-emitter';
+import { EventEmitterMethods } from './types';
 import {
   defer,
   isFloat,
@@ -14,7 +17,6 @@ import {
   DOM_EVENTS,
   buildEnrichedLocationPoint,
 } from './utils';
-import type { LayoutProperties } from './types/rendition';
 import Hook from './utils/hook';
 import EpubCFI from './epubcfi';
 import Queue from './utils/queue';
@@ -27,8 +29,6 @@ import Contents from './contents';
 import DefaultViewManager from './managers/default';
 import { PreRenderingViewManager } from './managers/prerendering';
 import type { Direction, Flow, Spread } from './enums';
-
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 
 /**
  * Displays an Epub as a series of Views for each Section.
@@ -53,10 +53,10 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
  * @param {boolean} [options.allowPopups=false] enable opening popup in content
  */
 export class Rendition implements EventEmitterMethods {
-  emit!: EventEmitter['emit'];
-  on!: EventEmitter['on'];
-  off!: EventEmitter['off'];
-  once!: EventEmitter['once'];
+  emit!: EventEmitterMethods['emit'];
+  on!: EventEmitterMethods['on'];
+  off!: EventEmitterMethods['off'];
+  once!: EventEmitterMethods['once'];
 
   settings: RenditionOptions;
   book: Book;
@@ -353,8 +353,6 @@ export class Rendition implements EventEmitterMethods {
 
       /**
        * Emit that rendering has attached to an element
-       * @event attached
-       * @memberof Rendition
        */
       this.emit(EVENTS.RENDITION.ATTACHED);
     });
@@ -430,9 +428,6 @@ export class Rendition implements EventEmitterMethods {
 
         /**
          * Emit that a section has been displayed
-         * @event displayed
-         * @param {Section} section
-         * @memberof Rendition
          */
         this.emit(EVENTS.RENDITION.DISPLAYED, section);
         this.reportLocation();
@@ -440,9 +435,6 @@ export class Rendition implements EventEmitterMethods {
       (err: Error) => {
         /**
          * Emit that has been an error displaying
-         * @event displayError
-         * @param {Section} section
-         * @memberof Rendition
          */
         this.emit(EVENTS.RENDITION.DISPLAY_ERROR, err);
       }
@@ -478,13 +470,6 @@ export class Rendition implements EventEmitterMethods {
     this.hooks.render.trigger(view, this).then(() => {
       if (view.contents) {
         this.hooks.content.trigger(view.contents, this).then(() => {
-          /**
-           * Emit that a section has been rendered
-           * @event rendered
-           * @param {Section} section
-           * @param {View} view
-           * @memberof Rendition
-           */
           this.emit(EVENTS.RENDITION.RENDERED, view.section, view);
         });
       } else {
@@ -513,14 +498,6 @@ export class Rendition implements EventEmitterMethods {
    * Report resize events and display the last seen location
    */
   private onResized(size: { width: number; height: number }, epubcfi: string) {
-    /**
-     * Emit that the rendition has been resized
-     * @event resized
-     * @param {number} width
-     * @param {height} height
-     * @param {string} epubcfi (optional)
-     * @memberof Rendition
-     */
     this.emit(
       EVENTS.RENDITION.RESIZED,
       {
@@ -683,9 +660,12 @@ export class Rendition implements EventEmitterMethods {
 
       // this.mapping = new Mapping(this._layout.props);
 
-      this._layout.on(EVENTS.LAYOUT.UPDATED, (props, changed) => {
-        this.emit(EVENTS.RENDITION.LAYOUT, props, changed);
-      });
+      this._layout.on(
+        EVENTS.LAYOUT.UPDATED,
+        (props: LayoutProps, changed: Partial<LayoutProps>) => {
+          this.emit(EVENTS.RENDITION.LAYOUT, props, changed);
+        }
+      );
     }
 
     if (this.manager && this._layout) {

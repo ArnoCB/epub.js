@@ -9759,7 +9759,7 @@ function requireViewRenderer() {
   });
   viewRenderer.ViewRenderer = void 0;
   const iframe_1 = __importDefault(requireIframe());
-  const core_1 = requireCore();
+  const utils_1 = requireUtils();
   /**
    * ViewRenderer - Centralized view creation and rendering logic
    *
@@ -9777,7 +9777,7 @@ function requireViewRenderer() {
      * Create a new view for a section with optional rendering options
      */
     createView(section, options = {}) {
-      const viewSettings = (0, core_1.extend)(this.settings, {
+      const viewSettings = (0, utils_1.extend)(this.settings, {
         forceRight: options.forceRight || false
       });
       const view = new iframe_1.default(section, viewSettings);
@@ -9861,7 +9861,7 @@ function requireViewRenderer() {
      * Update renderer settings
      */
     updateSettings(newSettings) {
-      this.settings = (0, core_1.extend)(this.settings, newSettings);
+      this.settings = (0, utils_1.extend)(this.settings, newSettings);
     }
     /**
      * Get current settings
@@ -11470,7 +11470,7 @@ function requirePrerenderer() {
     value: true
   });
   prerenderer.BookPreRenderer = void 0;
-  const core_1 = requireCore();
+  const utils_1 = requireUtils();
   const event_emitter_1 = __importDefault(requireEventEmitter());
   const constants_1 = requireConstants();
   const view_renderer_1 = requireViewRenderer();
@@ -11680,7 +11680,7 @@ function requirePrerenderer() {
         await this.renderingPromises.get(href);
         return this.chapters.get(href);
       }
-      const rendering = new core_1.defer();
+      const rendering = new utils_1.defer();
       const view = this.createView(section);
       const chapter = {
         section,
@@ -11695,7 +11695,7 @@ function requirePrerenderer() {
         whitePageIndices: []
       };
       // Prepare a per-chapter deferred that resolves when pageNumbers are assigned
-      const pageNumbersDeferred = new core_1.defer();
+      const pageNumbersDeferred = new utils_1.defer();
       chapter.pageNumbersDeferred = pageNumbersDeferred;
       chapter.pageNumbersAssigned = pageNumbersDeferred.promise;
       this.chapters.set(href, chapter);
@@ -13066,8 +13066,6 @@ function requireRendition() {
         }
         /**
          * Emit that rendering has attached to an element
-         * @event attached
-         * @memberof Rendition
          */
         this.emit(utils_1.EVENTS.RENDITION.ATTACHED);
       });
@@ -13125,18 +13123,12 @@ function requireRendition() {
         this.displaying = undefined;
         /**
          * Emit that a section has been displayed
-         * @event displayed
-         * @param {Section} section
-         * @memberof Rendition
          */
         this.emit(utils_1.EVENTS.RENDITION.DISPLAYED, section);
         this.reportLocation();
       }, err => {
         /**
          * Emit that has been an error displaying
-         * @event displayError
-         * @param {Section} section
-         * @memberof Rendition
          */
         this.emit(utils_1.EVENTS.RENDITION.DISPLAY_ERROR, err);
       });
@@ -13160,13 +13152,6 @@ function requireRendition() {
       this.hooks.render.trigger(view, this).then(() => {
         if (view.contents) {
           this.hooks.content.trigger(view.contents, this).then(() => {
-            /**
-             * Emit that a section has been rendered
-             * @event rendered
-             * @param {Section} section
-             * @param {View} view
-             * @memberof Rendition
-             */
             this.emit(utils_1.EVENTS.RENDITION.RENDERED, view.section, view);
           });
         } else {
@@ -13193,14 +13178,6 @@ function requireRendition() {
      * Report resize events and display the last seen location
      */
     onResized(size, epubcfi) {
-      /**
-       * Emit that the rendition has been resized
-       * @event resized
-       * @param {number} width
-       * @param {height} height
-       * @param {string} epubcfi (optional)
-       * @memberof Rendition
-       */
       this.emit(utils_1.EVENTS.RENDITION.RESIZED, {
         width: size.width,
         height: size.height

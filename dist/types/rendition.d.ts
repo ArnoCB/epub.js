@@ -1,5 +1,5 @@
 import type { DisplayedLocation, RenditionHooks, ViewManager, ViewManagerConstructor, RenditionOptions } from './types';
-import EventEmitter from 'event-emitter';
+import { EventEmitterMethods } from './types';
 import { defer } from './utils';
 import EpubCFI from './epubcfi';
 import Queue from './utils/queue';
@@ -10,7 +10,6 @@ import Book from './book';
 import Views, { View } from './managers/helpers/views';
 import Contents from './contents';
 import type { Direction, Flow, Spread } from './enums';
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 /**
  * Displays an Epub as a series of Views for each Section.
  * Requires Manager and View class to handle specifics of rendering
@@ -34,10 +33,10 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
  * @param {boolean} [options.allowPopups=false] enable opening popup in content
  */
 export declare class Rendition implements EventEmitterMethods {
-    emit: EventEmitter['emit'];
-    on: EventEmitter['on'];
-    off: EventEmitter['off'];
-    once: EventEmitter['once'];
+    emit: EventEmitterMethods['emit'];
+    on: EventEmitterMethods['on'];
+    off: EventEmitterMethods['off'];
+    once: EventEmitterMethods['once'];
     settings: RenditionOptions;
     book: Book;
     hooks: RenditionHooks;

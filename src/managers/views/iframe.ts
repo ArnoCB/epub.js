@@ -23,14 +23,13 @@ import type {
   MarkElementMap,
 } from '../../types';
 import type { Axis } from '../../enums';
-
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
+import type { EventEmitterMethods } from '../../types';
 
 class IframeView implements View, EventEmitterMethods {
-  emit!: EventEmitter['emit'];
-  on!: EventEmitter['on'];
-  off!: EventEmitter['off'];
-  once!: EventEmitter['once'];
+  emit!: EventEmitterMethods['emit'];
+  on!: EventEmitterMethods['on'];
+  off!: EventEmitterMethods['off'];
+  once!: EventEmitterMethods['once'];
 
   settings: IframeViewSettings;
 

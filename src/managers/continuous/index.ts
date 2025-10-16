@@ -5,16 +5,13 @@ import { EVENTS } from '../../utils/constants';
 import { debounce } from '../../utils/helpers';
 import Section from '../../section';
 import { View } from '../helpers/views';
-import EventEmitter from 'event-emitter';
 import IframeView from '../views/iframe';
 import type { DefaultViewManagerSettings, ViewManager } from '../../types';
 import type { Flow, Axis } from '../../enums';
-
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
-
+import type { EventEmitterMethods } from '../../types';
 class ContinuousViewManager
   extends DefaultViewManager
-  implements ViewManager, EventEmitterMethods
+  implements ViewManager, Pick<EventEmitterMethods, 'emit' | 'on' | 'off'>
 {
   trimTimeout: NodeJS.Timeout | undefined;
   snapper: Snap | undefined;

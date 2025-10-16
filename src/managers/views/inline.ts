@@ -16,13 +16,13 @@ import { EVENTS } from '../../utils/constants';
 import Layout from '../../layout';
 import { View } from '../helpers/views';
 import Section from '../../section';
+import type { EventEmitterMethods } from '../../types';
 
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 class InlineView implements EventEmitterMethods, View {
-  emit!: EventEmitter['emit'];
-  on!: EventEmitter['on'];
-  off!: EventEmitter['off'];
-  once!: EventEmitter['once'];
+  emit!: EventEmitterMethods['emit'];
+  on!: EventEmitterMethods['on'];
+  off!: EventEmitterMethods['off'];
+  once!: EventEmitterMethods['once'];
   settings: InlineViewSettings;
   frame: HTMLDivElement | undefined;
   id: string;

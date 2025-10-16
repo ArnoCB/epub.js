@@ -1,12 +1,11 @@
 import { extend } from './utils/core';
 import { EVENTS } from './utils/constants';
 import EventEmitter from 'event-emitter';
+import { EventEmitterMethods } from './types';
 import Section from './section';
 import Contents from './contents';
 import { Flow, Axis, Spread } from './enums';
 import type { LayoutSettings, LayoutProps } from './types';
-
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
 
 /**
  * Figures out the CSS values to apply for a layout
@@ -15,7 +14,7 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
  * @param {number} [settings.minSpreadWidth=800]
  * @param {boolean} [settings.evenSpreads=false]
  */
-class Layout implements EventEmitterMethods {
+class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
   settings: LayoutSettings;
   name: string;
   _spread: boolean;
@@ -31,8 +30,8 @@ class Layout implements EventEmitterMethods {
   columnWidth: number;
   gap: number;
   props: LayoutProps;
-  emit!: EventEmitter['emit'];
-  on!: EventEmitter['on'];
+  emit!: EventEmitterMethods['emit'];
+  on!: EventEmitterMethods['on'];
 
   constructor(settings: LayoutSettings) {
     // Set default direction if not provided

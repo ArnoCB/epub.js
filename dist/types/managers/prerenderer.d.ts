@@ -1,11 +1,10 @@
 import type { ViewSettings, PreRenderingStatus } from '../types';
 import { Section } from '../section';
-import EventEmitter from 'event-emitter';
-import type { PreRenderedChapter } from '../types/pre-rendered-chapter';
+import type { EventEmitterMethods, PreRenderedChapter } from '../types';
 export declare class BookPreRenderer {
-    on: EventEmitter['on'];
-    off: EventEmitter['off'];
-    emit: EventEmitter['emit'];
+    on: EventEmitterMethods['on'];
+    off: EventEmitterMethods['off'];
+    emit: EventEmitterMethods['emit'];
     private offscreenContainer;
     private unattachedStorage;
     private viewSettings;

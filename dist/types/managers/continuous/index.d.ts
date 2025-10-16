@@ -3,12 +3,11 @@ import DefaultViewManager from '../default';
 import Snap from '../helpers/snap';
 import Section from '../../section';
 import { View } from '../helpers/views';
-import EventEmitter from 'event-emitter';
 import IframeView from '../views/iframe';
 import type { DefaultViewManagerSettings, ViewManager } from '../../types';
 import type { Flow } from '../../enums';
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
-declare class ContinuousViewManager extends DefaultViewManager implements ViewManager, EventEmitterMethods {
+import type { EventEmitterMethods } from '../../types';
+declare class ContinuousViewManager extends DefaultViewManager implements ViewManager, Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
     trimTimeout: NodeJS.Timeout | undefined;
     snapper: Snap | undefined;
     scrollDeltaVert: number;

@@ -1,17 +1,16 @@
 import type { InlineViewOptions, InlineViewSettings } from '../../types';
 import type { Axis } from '../../enums';
-import EventEmitter from 'event-emitter';
 import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import Layout from '../../layout';
 import { View } from '../helpers/views';
 import Section from '../../section';
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
+import type { EventEmitterMethods } from '../../types';
 declare class InlineView implements EventEmitterMethods, View {
-    emit: EventEmitter['emit'];
-    on: EventEmitter['on'];
-    off: EventEmitter['off'];
-    once: EventEmitter['once'];
+    emit: EventEmitterMethods['emit'];
+    on: EventEmitterMethods['on'];
+    off: EventEmitterMethods['off'];
+    once: EventEmitterMethods['once'];
     settings: InlineViewSettings;
     frame: HTMLDivElement | undefined;
     id: string;

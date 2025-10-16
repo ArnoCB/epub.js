@@ -2,17 +2,17 @@ import Section from '../../section';
 import Contents from '../../contents';
 import Layout from '../../layout';
 import { Mark } from 'marks-pane';
-import EventEmitter from 'event-emitter';
+import { EventEmitterMethods } from '../../types';
 
 type CanonicalViewConstructor =
   typeof import('../../types/canonical-view').default;
 type CanonicalViewInstance = InstanceType<CanonicalViewConstructor>;
 
 export type View = CanonicalViewInstance & {
-  on: EventEmitter['on'];
-  emit: EventEmitter['emit'];
-  off: EventEmitter['off'];
-  once: EventEmitter['once'];
+  on: EventEmitterMethods['on'];
+  emit: EventEmitterMethods['emit'];
+  off: EventEmitterMethods['off'];
+  once: EventEmitterMethods['once'];
   // Runtime-only properties used throughout the codebase
   element: HTMLElement;
   displayed: boolean;

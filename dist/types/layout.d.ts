@@ -1,9 +1,8 @@
-import EventEmitter from 'event-emitter';
+import { EventEmitterMethods } from './types';
 import Section from './section';
 import Contents from './contents';
 import { Flow, Axis, Spread } from './enums';
 import type { LayoutSettings, LayoutProps } from './types';
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
 /**
  * Figures out the CSS values to apply for a layout
  * @param {string} [settings.layout='reflowable']
@@ -11,7 +10,7 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
  * @param {number} [settings.minSpreadWidth=800]
  * @param {boolean} [settings.evenSpreads=false]
  */
-declare class Layout implements EventEmitterMethods {
+declare class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
     settings: LayoutSettings;
     name: string;
     _spread: boolean;
@@ -27,8 +26,8 @@ declare class Layout implements EventEmitterMethods {
     columnWidth: number;
     gap: number;
     props: LayoutProps;
-    emit: EventEmitter['emit'];
-    on: EventEmitter['on'];
+    emit: EventEmitterMethods['emit'];
+    on: EventEmitterMethods['on'];
     constructor(settings: LayoutSettings);
     /**
      * Switch the flow between paginated and scrolled

@@ -4,7 +4,7 @@ import type {
   ViewSettings,
   PreRenderingStatus,
 } from '../types';
-import { defer } from '../utils/core';
+import { defer } from '../utils';
 import { Section } from '../section';
 import { View } from './helpers/views';
 import Layout from '../layout';
@@ -13,13 +13,13 @@ import { EVENTS } from '../utils/constants';
 import { ViewRenderer } from './helpers/view-renderer';
 import Contents from '../contents';
 import { CfiResolver } from './helpers/cfi-resolver';
-import type { PreRenderedChapter } from '../types/pre-rendered-chapter';
 import { PageMapGenerator } from './helpers/page-map-generator';
+import type { EventEmitterMethods, PreRenderedChapter } from '../types';
 
 export class BookPreRenderer {
-  on!: EventEmitter['on'];
-  off!: EventEmitter['off'];
-  emit!: EventEmitter['emit'];
+  on!: EventEmitterMethods['on'];
+  off!: EventEmitterMethods['off'];
+  emit!: EventEmitterMethods['emit'];
 
   // private container: HTMLElement;
   private offscreenContainer: HTMLElement;

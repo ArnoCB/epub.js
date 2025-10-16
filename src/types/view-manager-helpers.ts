@@ -10,15 +10,16 @@ import type { Section } from '../section';
 import type { Axis, Flow } from '../enums';
 import type { PageLocation } from '.';
 import type { Contents } from '../epub';
-import type EventEmitter from 'event-emitter';
+import type { EventEmitterMethods } from '.';
 
 export interface ViewManagerConstructor extends ViewManager {
   new (options: { [key: string]: unknown }): ViewManager;
 }
 
 export interface ViewManager {
-  on(event: string, listener: (...args: unknown[]) => void): EventEmitter;
-  off(event: string, listener: (...args: unknown[]) => void): EventEmitter;
+  // on(event: string, listener: (...args: unknown[]) => void): EventEmitterMethods;
+  // off(event: string, listener: (...args: unknown[]) => void): EventEmitterMethods;
+
   settings: {
     infinite?: boolean;
     hidden?: boolean;
@@ -42,7 +43,8 @@ export interface ViewManager {
   isPaginated?: boolean;
   overflow?: unknown;
   views: Views;
-  on(event: string, listener: (...args: unknown[]) => void): EventEmitter;
+  on: EventEmitterMethods['on'];
+  off: EventEmitterMethods['off'];
   container?: HTMLElement;
   display: (
     section: Section,
