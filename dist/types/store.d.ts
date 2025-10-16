@@ -1,4 +1,3 @@
-import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
 import Resources from './resources';
 import type { BookRequestFunction, EventEmitterMethods } from './types';
@@ -7,7 +6,7 @@ import type { BookRequestFunction, EventEmitterMethods } from './types';
  * @param name This should be the name of the application for modals
  */
 declare class Store implements Pick<EventEmitterMethods, 'on'> {
-    on: EventEmitter['on'];
+    on: EventEmitterMethods['on'];
     storage: typeof localforage | undefined;
     urlCache: Record<string, string>;
     name: string;

@@ -1,5 +1,4 @@
-import { PackagingManifestItem, PackagingManifestObject } from './types/packaging';
-import type { ResourcesOptions, ResolverFunction, BookRequestFunction } from './types';
+import type { ResourcesOptions, ResolverFunction, BookRequestFunction, PackagingManifestItem, PackagingManifestObject } from './types';
 import Archive from './archive';
 /**
  * Handle Package Resources

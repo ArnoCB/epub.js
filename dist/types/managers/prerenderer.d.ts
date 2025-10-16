@@ -1,6 +1,5 @@
-import type { ViewSettings, PreRenderingStatus } from '../types';
+import type { ViewSettings, PreRenderingStatus, EventEmitterMethods, PreRenderedChapter } from '../types';
 import { Section } from '../section';
-import type { EventEmitterMethods, PreRenderedChapter } from '../types';
 export declare class BookPreRenderer {
     on: EventEmitterMethods['on'];
     off: EventEmitterMethods['off'];

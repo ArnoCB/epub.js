@@ -12,7 +12,7 @@ import type { BookRequestFunction, EventEmitterMethods } from './types';
  * @param name This should be the name of the application for modals
  */
 class Store implements Pick<EventEmitterMethods, 'on'> {
-  on!: EventEmitter['on'];
+  on!: EventEmitterMethods['on'];
   storage: typeof localforage | undefined;
   urlCache: Record<string, string> = {};
   name: string;

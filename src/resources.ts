@@ -7,14 +7,12 @@ import {
 import Url from './utils/url';
 import mime from './utils/mime';
 import Path from './utils/path';
-import {
-  PackagingManifestItem,
-  PackagingManifestObject,
-} from './types/packaging';
 import type {
   ResourcesOptions,
   ResolverFunction,
   BookRequestFunction,
+  PackagingManifestItem,
+  PackagingManifestObject,
 } from './types';
 import Archive from './archive';
 

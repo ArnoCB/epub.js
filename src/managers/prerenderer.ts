@@ -3,6 +3,8 @@ import type {
   ChapterDimensions,
   ViewSettings,
   PreRenderingStatus,
+  EventEmitterMethods,
+  PreRenderedChapter,
 } from '../types';
 import { defer } from '../utils';
 import { Section } from '../section';
@@ -14,7 +16,6 @@ import { ViewRenderer } from './helpers/view-renderer';
 import Contents from '../contents';
 import { CfiResolver } from './helpers/cfi-resolver';
 import { PageMapGenerator } from './helpers/page-map-generator';
-import type { EventEmitterMethods, PreRenderedChapter } from '../types';
 
 export class BookPreRenderer {
   on!: EventEmitterMethods['on'];
