@@ -2,10 +2,8 @@
  * Types for layout settings and computed layout properties in epub.js
  *
  * These types are used for layout configuration and computed layout results.
- *
- * @see src/layout.ts
  */
-import type { LayoutType, Spread, Flow, Direction } from './common';
+import type { LayoutType, Spread, Flow, Direction } from '../enums';
 
 export type LayoutSettings = {
   layout?: LayoutType;

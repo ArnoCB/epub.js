@@ -55,7 +55,7 @@ export class Annotations {
 
     const views = this.rendition.views();
 
-    views.forEach((view) => {
+    views!.forEach((view) => {
       if (annotation.sectionIndex === view.index) {
         annotation.attach(view);
       }
@@ -77,7 +77,7 @@ export class Annotations {
         return;
       }
 
-      const views = this.rendition.views();
+      const views = this.rendition.views()!;
 
       views.forEach((view) => {
         this._removeFromAnnotationBySectionIndex(annotation.sectionIndex, hash);

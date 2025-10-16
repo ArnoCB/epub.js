@@ -8,6 +8,7 @@ import type {
   RenditionOptions,
 } from './types';
 import EventEmitter from 'event-emitter';
+import type { EventEmitterMethods } from './types';
 import { extend, defer, getValidOrDefault } from './utils/core';
 import Url from './utils/url';
 import Path from './utils/path';
@@ -43,7 +44,6 @@ const INPUT_TYPE = {
 } as const;
 
 type InputType = (typeof INPUT_TYPE)[keyof typeof INPUT_TYPE];
-type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 
 /**
  * An Epub representation with methods for the loading, parsing and manipulation
@@ -52,8 +52,8 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
  * @example new Book("/path/to/book.epub", {})
  * @example new Book({ replacements: "blobUrl" })
  */
-class Book implements EventEmitterMethods {
-  emit!: EventEmitter['emit'];
+class Book implements Pick<EventEmitterMethods, 'emit'> {
+  emit!: EventEmitterMethods['emit'];
   settings: BookOptions = {};
   opening: defer<this>;
   opened: Promise<this> | undefined;

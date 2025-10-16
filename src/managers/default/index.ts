@@ -11,12 +11,8 @@ import Layout from '../../layout';
 import { Section } from '../../section';
 import { Contents } from '../../epub';
 import { ViewRenderer } from '../helpers/view-renderer';
-import {
-  Axis,
-  Flow,
-  DefaultViewManagerSettings,
-  PageLocation,
-} from '../../types';
+import type { Axis, Direction, Flow } from '../../enums';
+import { DefaultViewManagerSettings, PageLocation } from '../../types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 
@@ -1626,7 +1622,7 @@ class DefaultViewManager implements ViewManager, EventEmitterMethods {
   }
 
   direction(dir = 'ltr') {
-    this.settings.direction = dir;
+    this.settings.direction = dir as Direction;
     this.stage?.direction(dir);
     this.viewSettings.direction = dir;
     this.updateLayout();

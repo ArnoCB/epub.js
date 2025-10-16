@@ -1,3 +1,4 @@
+export * from './event-emitter-methods';
 export * from './book';
 export * from './canonical-view';
 export * from './chapter-page-info';
@@ -7,7 +8,6 @@ export * from './viewport';
 export * from './rendition';
 export * from './annotation';
 export * from './archive';
-export * from './common';
 export * from './layout';
 export * from './mapping';
 export * from './navigation';

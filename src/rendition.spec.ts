@@ -180,8 +180,6 @@ describe('Rendition', () => {
     rendition.destroy();
     expect(rendition.book).toBeUndefined();
   });
-
-  // Add more tests for public methods as needed
 });
 
 describe('Rendition.getRange', () => {
@@ -203,10 +201,7 @@ describe('Rendition.getRange', () => {
     rendition.manager = { visible: () => mockViews } as any;
     const result = rendition.getRange(mockCfi, mockIgnoreClass);
     expect(result).toBe(fakeRange);
-    expect(mockContents.range).toHaveBeenCalledWith(
-      expect.any(Object),
-      mockIgnoreClass
-    );
+    expect(mockContents.range).toHaveBeenCalledWith(mockCfi, mockIgnoreClass);
   });
 
   it('returns undefined if no matching view is found', () => {
@@ -221,6 +216,6 @@ describe('Rendition.getRange', () => {
     const rendition = new Rendition(book, {});
     rendition.manager = { visible: () => [{ index: 1, contents: {} }] } as any;
     const result = rendition.getRange(mockCfi, mockIgnoreClass);
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
   });
 });

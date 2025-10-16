@@ -72,7 +72,7 @@ export type ViewConstructor = new (
   options: Record<string, unknown>
 ) => View;
 
-class Views {
+export class Views {
   container: HTMLElement;
   _views: View[];
   length: number;

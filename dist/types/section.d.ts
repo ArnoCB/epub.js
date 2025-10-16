@@ -1,5 +1,6 @@
 import Hook from './utils/hook';
-import type { SectionItem, Match, Orientation, Spread, LayoutType, SectionLayoutSettings } from './types';
+import type { SectionItem, Match, SectionLayoutSettings } from './types';
+import type { Orientation, Spread, LayoutType } from './enums';
 /**
  * Represents a Section of the Book
  *

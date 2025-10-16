@@ -5,7 +5,7 @@
  */
 
 import type Layout from '../layout';
-import type { Axis } from './common';
+import type { Axis, Direction } from '../enums';
 
 export type DefaultViewManagerSettings = {
   layout: Layout;

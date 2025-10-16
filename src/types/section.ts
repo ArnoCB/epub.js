@@ -6,7 +6,7 @@
  * @see src/section.ts
  */
 import type { Section } from '../section';
-import type { LayoutType, Spread, Orientation } from './common';
+import type { LayoutType, Spread, Orientation } from '../enums';
 
 // Layout settings for a section, including required and dynamic keys
 export type SectionLayoutSettings = {

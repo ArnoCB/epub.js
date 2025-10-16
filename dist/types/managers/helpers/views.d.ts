@@ -54,7 +54,7 @@ export type View = CanonicalViewInstance & {
     destroy: () => void;
 };
 export type ViewConstructor = new (section: Section, options: Record<string, unknown>) => View;
-declare class Views {
+export declare class Views {
     container: HTMLElement;
     _views: View[];
     length: number;

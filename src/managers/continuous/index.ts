@@ -7,12 +7,8 @@ import Section from '../../section';
 import { View } from '../helpers/views';
 import EventEmitter from 'event-emitter';
 import IframeView from '../views/iframe';
-import type {
-  Flow,
-  Axis,
-  DefaultViewManagerSettings,
-  ViewManager,
-} from '../../types';
+import type { DefaultViewManagerSettings, ViewManager } from '../../types';
+import type { Flow, Axis } from '../../enums';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 

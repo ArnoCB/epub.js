@@ -3,8 +3,8 @@ import { EVENTS } from './utils/constants';
 import EventEmitter from 'event-emitter';
 import Section from './section';
 import Contents from './contents';
-import type { Flow, Spread, Axis } from './types/common';
-import type { LayoutSettings, LayoutProps } from './types/layout';
+import { Flow, Axis, Spread } from './enums';
+import type { LayoutSettings, LayoutProps } from './types';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
 

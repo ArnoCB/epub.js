@@ -1,13 +1,12 @@
-import { Axis } from '../../types';
+import { Axis } from '../../enums';
 import {
   uuid,
   isNumber,
   isElement,
   windowBounds,
   extend,
-} from '../../utils/core';
-
-import { throttle } from '../../utils/helpers';
+  throttle,
+} from '../../utils';
 
 interface Padding {
   left?: string;
@@ -23,7 +22,7 @@ type StageOptions = {
   [key: string]: unknown;
 };
 
-class Stage {
+export class Stage {
   settings: StageOptions;
   id: string;
   container: HTMLElement;

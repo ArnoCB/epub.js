@@ -1,4 +1,4 @@
-import type { Mark } from './mark';
+import type { Mark } from 'marks-pane';
 
 export type MarkElementMap = {
   [key: string]: {

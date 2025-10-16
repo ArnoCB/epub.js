@@ -3,14 +3,8 @@ import EpubCFI from './epubcfi';
 import Hook from './utils/hook';
 import { sprint } from './utils/core';
 import Request from './utils/request';
-import type {
-  SectionItem,
-  Match,
-  Orientation,
-  Spread,
-  LayoutType,
-  SectionLayoutSettings,
-} from './types';
+import type { SectionItem, Match, SectionLayoutSettings } from './types';
+import type { Orientation, Spread, LayoutType } from './enums';
 
 /**
  * Represents a Section of the Book

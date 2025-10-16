@@ -7,11 +7,7 @@ import type {
   SectionItem,
   UnpackingSpineItem,
 } from './types';
-import {
-  replaceBase,
-  replaceCanonical,
-  replaceMeta,
-} from './utils/replacements';
+import { replaceBase, replaceCanonical, replaceMeta } from './utils';
 import Packaging from './packaging';
 import { ResolverFunction } from './types';
 

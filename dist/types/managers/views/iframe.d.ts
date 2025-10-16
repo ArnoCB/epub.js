@@ -7,7 +7,8 @@ import { View } from '../helpers/views';
 import Layout from '../../layout';
 import Section from '../../section';
 import { StyledPane } from './styled-pane';
-import type { Axis, ExtendedIFrameElement, IframeViewSettings, MarkElementMap } from '../../types';
+import type { ExtendedIFrameElement, IframeViewSettings, MarkElementMap } from '../../types';
+import type { Axis } from '../../enums';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 declare class IframeView implements View, EventEmitterMethods {
     emit: EventEmitter['emit'];

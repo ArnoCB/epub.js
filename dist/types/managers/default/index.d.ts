@@ -8,7 +8,8 @@ import Layout from '../../layout';
 import { Section } from '../../section';
 import { Contents } from '../../epub';
 import { ViewRenderer } from '../helpers/view-renderer';
-import { Axis, Flow, DefaultViewManagerSettings, PageLocation } from '../../types';
+import type { Axis, Flow } from '../../enums';
+import { DefaultViewManagerSettings, PageLocation } from '../../types';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 declare class DefaultViewManager implements ViewManager, EventEmitterMethods {
     on: EventEmitter['on'];

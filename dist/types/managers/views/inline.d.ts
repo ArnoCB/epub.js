@@ -1,11 +1,12 @@
-import type { Axis, InlineViewOptions, InlineViewSettings } from '../../types';
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
+import type { InlineViewOptions, InlineViewSettings } from '../../types';
+import type { Axis } from '../../enums';
 import EventEmitter from 'event-emitter';
 import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import Layout from '../../layout';
 import { View } from '../helpers/views';
 import Section from '../../section';
+type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 declare class InlineView implements EventEmitterMethods, View {
     emit: EventEmitter['emit'];
     on: EventEmitter['on'];

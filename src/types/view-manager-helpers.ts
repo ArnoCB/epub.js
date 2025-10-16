@@ -5,11 +5,10 @@
  */
 
 import type Layout from '../layout';
-import type { Stage } from './stage';
-import type { Views } from './views';
+import type { Stage, Views, View } from '../managers';
 import type { Section } from '../section';
-import type { Axis, Flow } from '../types';
-import type { PageLocation } from '../types/view-manager';
+import type { Axis, Flow } from '../enums';
+import type { PageLocation } from '.';
 import type { Contents } from '../epub';
 import type EventEmitter from 'event-emitter';
 

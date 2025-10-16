@@ -2,8 +2,8 @@ import EventEmitter from 'event-emitter';
 import EpubCFI from './epubcfi';
 import Layout from './layout';
 import Section from './section';
-import type { Viewport } from './types/viewport';
-import { Direction } from './types';
+import type { Viewport } from './types';
+import { Direction } from './enums';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
 /**
  * Handles DOM manipulation, queries and events for View contents

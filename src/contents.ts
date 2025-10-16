@@ -1,22 +1,28 @@
 import EventEmitter from 'event-emitter';
-import { isNumber, prefixed, borders, defaults } from './utils/core';
+import { EventEmitterMethods } from './types';
+import {
+  isNumber,
+  prefixed,
+  borders,
+  defaults,
+  EPUBJS_VERSION,
+  EVENTS,
+  DOM_EVENTS,
+} from './utils';
 import EpubCFI from './epubcfi';
 import Mapping from './mapping';
 import { replaceLinks } from './utils/replacements';
-import { EPUBJS_VERSION, EVENTS, DOM_EVENTS } from './utils/constants';
 import Layout from './layout';
 import Section from './section';
-import type { Viewport } from './types/viewport';
-import { Axis, Direction } from './types';
-
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on'>;
+import type { Viewport } from './types';
+import { Axis, Direction } from './enums';
 
 /**
  * Handles DOM manipulation, queries and events for View contents
  */
-class Contents implements EventEmitterMethods {
-  emit!: EventEmitter['emit'];
-  on!: EventEmitter['on'];
+class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
+  emit!: EventEmitterMethods['emit'];
+  on!: EventEmitterMethods['on'];
   document: Document;
   documentElement: HTMLElement;
   content: HTMLElement;

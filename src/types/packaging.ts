@@ -5,7 +5,7 @@ import type {
   Flow,
   Spread,
   Direction,
-} from './common';
+} from '../enums';
 
 export interface PackagingMetadataObject {
   title: string;

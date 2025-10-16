@@ -1,4 +1,4 @@
-import { Axis } from './common';
+import { Axis } from '../enums';
 import type Layout from '../layout';
 
 export interface InlineViewOptions {

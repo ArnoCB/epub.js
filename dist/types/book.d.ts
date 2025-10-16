@@ -1,5 +1,5 @@
 import type { BookOptions, PackagingManifestJson, PackagingManifestObject, RenditionOptions } from './types';
-import EventEmitter from 'event-emitter';
+import type { EventEmitterMethods } from './types';
 import { defer } from './utils/core';
 import Path from './utils/path';
 import Spine from './spine';
@@ -11,7 +11,6 @@ import PageList from './pagelist';
 import Rendition from './rendition';
 import DisplayOptions from './displayoptions';
 import { Section } from './section';
-type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
 /**
  * An Epub representation with methods for the loading, parsing and manipulation
  * of its contents.
@@ -19,8 +18,8 @@ type EventEmitterMethods = Pick<EventEmitter, 'emit'>;
  * @example new Book("/path/to/book.epub", {})
  * @example new Book({ replacements: "blobUrl" })
  */
-declare class Book implements EventEmitterMethods {
-    emit: EventEmitter['emit'];
+declare class Book implements Pick<EventEmitterMethods, 'emit'> {
+    emit: EventEmitterMethods['emit'];
     settings: BookOptions;
     opening: defer<this>;
     opened: Promise<this> | undefined;

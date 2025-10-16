@@ -1,4 +1,4 @@
-import { Axis } from '../../types';
+import { Axis } from '../../enums';
 interface Padding {
     left?: string;
     right?: string;
@@ -11,7 +11,7 @@ type StageOptions = {
     direction?: string;
     [key: string]: unknown;
 };
-declare class Stage {
+export declare class Stage {
     settings: StageOptions;
     id: string;
     container: HTMLElement;

@@ -18,11 +18,11 @@ import Layout from '../../layout';
 import Section from '../../section';
 import { StyledPane } from './styled-pane';
 import type {
-  Axis,
   ExtendedIFrameElement,
   IframeViewSettings,
   MarkElementMap,
 } from '../../types';
+import type { Axis } from '../../enums';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 

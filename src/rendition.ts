@@ -1,16 +1,19 @@
-import { buildEnrichedLocationPoint } from './utils/location-helpers';
-import type { RenditionOptions } from './types';
 import type {
   LocationPoint,
   DisplayedLocation,
   RenditionHooks,
-  Flow,
-  Spread,
   ViewManager,
   ViewManagerConstructor,
+  RenditionOptions,
 } from './types';
 import EventEmitter from 'event-emitter';
-import { defer, isFloat } from './utils/core';
+import {
+  defer,
+  isFloat,
+  EVENTS,
+  DOM_EVENTS,
+  buildEnrichedLocationPoint,
+} from './utils';
 import type { LayoutProperties } from './types/rendition';
 import Hook from './utils/hook';
 import EpubCFI from './epubcfi';
@@ -18,13 +21,12 @@ import Queue from './utils/queue';
 import Layout from './layout';
 import Themes from './themes';
 import Annotations from './annotations';
-import { EVENTS, DOM_EVENTS } from './utils/constants';
 import Book from './book';
-import { View } from './managers/helpers/views';
+import Views, { View } from './managers/helpers/views';
 import Contents from './contents';
 import DefaultViewManager from './managers/default';
 import { PreRenderingViewManager } from './managers/prerendering';
-import { Direction } from './types/common';
+import type { Direction, Flow, Spread } from './enums';
 
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 
@@ -779,18 +781,18 @@ export class Rendition implements EventEmitterMethods {
    * Get a Range from a Visible CFI
    * (Used outside of this package)
    */
-  getRange(cfi: string, ignoreClass: string): Range | undefined {
+  getRange(cfi: string, ignoreClass?: string): Range | null {
     const _cfi = new EpubCFI(cfi);
     const found = this.manager.visible().filter(function (view) {
       if (_cfi.spinePos === view.index) return true;
     });
 
     // Should only ever return 1 item
-    if (found.length) {
-      return found[0].contents.range(_cfi, ignoreClass);
+    if (found.length > 0) {
+      return found[0].contents!.range(cfi, ignoreClass);
     }
 
-    return undefined;
+    return null;
   }
 
   /**
@@ -947,9 +949,9 @@ export class Rendition implements EventEmitterMethods {
     }
   }
 
-  views(): View[] {
+  views(): Views | undefined {
     const views = this.manager ? this.manager.views : undefined;
-    return views || ([] as View[]);
+    return views;
   }
 
   /**

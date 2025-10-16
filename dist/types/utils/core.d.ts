@@ -3,33 +3,24 @@
  */
 /**
  * Vendor prefixed requestAnimationFrame
- * @returns {function} requestAnimationFrame
- * @memberof Core
  */
 export declare const requestAnimationFrame: (((callback: FrameRequestCallback) => number) & typeof globalThis.requestAnimationFrame) | undefined;
 /**
  * Generates a UUID
  * based on: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
- * @memberof Core
  */
 export declare function uuid(): string;
 /**
  * Gets the height of a document
- * @memberof Core
  */
 export declare function documentHeight(): number;
 /**
  * Checks if a node is an element
- * @memberof Core
  */
 export declare function isElement(obj: Node | undefined): obj is Element;
-/**
- * @memberof Core
- */
 export declare function isNumber(n: unknown): n is number;
 /**
  * Checks if a value is a float
- * @memberof Core
  */
 export declare function isFloat(n: unknown): boolean;
 /**
@@ -39,33 +30,24 @@ export declare function isFloat(n: unknown): boolean;
 export declare function prefixed(unprefixed: string): string;
 /**
  * Apply defaults to an object
- * @param {object} obj
- * @returns {object}
- * @memberof Core
  */
 export declare function defaults<T extends object>(obj: T, ...sources: Partial<T>[]): T;
 /**
  * Extend properties of an object
- * @param {object} target
- * @returns {object}
- * @memberof Core
  */
 export declare function extend<T extends object, S extends object>(target: T, ...sources: S[]): T & S;
 /**
  * Fast quicksort insert for sorted array -- based on:
  *  http://stackoverflow.com/questions/1344500/efficient-way-to-insert-a-number-into-a-sorted-array-of-numbers
- * @memberof Core
  */
 export declare function insert<T>(item: T, array: T[], compareFunction?: (a: T, b: T) => number): number;
 /**
  * Finds where something would fit into a sorted array
- * @memberof Core
  */
 export declare function locationOf<T>(item: T, array: T[], compareFunction?: (a: T, b: T) => number, _start?: number, _end?: number): number;
 /**
  * Finds index of something in a sorted array
  * Returns -1 if not found
- * @memberof Core
  */
 export declare function indexOfSorted<T>(item: T, array: T[], compareFunction?: (a: T, b: T) => number, _start?: number, _end?: number): number;
 /**
@@ -82,7 +64,6 @@ export declare function bounds(el: Element): {
 /**
  * Find the bounds of an element
  * taking padding, margin and borders into account
- * @memberof Core
  */
 export declare function borders(el: Element): {
     width: number;
@@ -129,8 +110,6 @@ export declare function createBlob(content: BlobPart, mime: string): Blob;
 export declare function createBlobUrl(content: BlobPart, mime: string): string | undefined;
 /**
  * Remove a blob url
- * @param {string} url
- * @memberof Core
  */
 export declare function revokeBlobUrl(url: string): void;
 /**
@@ -172,7 +151,6 @@ export declare function treeWalker(root: Element, func: (node: Node) => void, fi
 export declare function walk(node: Node, callback: (node: Node) => boolean): boolean;
 /**
  * Convert a blob to a base64 encoded string
- * @memberof Core
  */
 export declare function blob2base64(blob: Blob): Promise<string>;
 /**
@@ -180,13 +158,10 @@ export declare function blob2base64(blob: Blob): Promise<string>;
  * @param {element} html
  * @param element element type to find
  * @param type epub type to find
- * @memberof Core
  */
 export declare function querySelectorByType(html: Element, element: string, type: string): Element | null;
 /**
  * Find direct descendents of an element
-
- * @memberof Core
  */
 export declare function findChildren(el: Element): ChildNode[];
 /**

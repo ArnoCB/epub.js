@@ -5,7 +5,8 @@ import Section from '../../section';
 import { View } from '../helpers/views';
 import EventEmitter from 'event-emitter';
 import IframeView from '../views/iframe';
-import type { Flow, DefaultViewManagerSettings, ViewManager } from '../../types';
+import type { DefaultViewManagerSettings, ViewManager } from '../../types';
+import type { Flow } from '../../enums';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
 declare class ContinuousViewManager extends DefaultViewManager implements ViewManager, EventEmitterMethods {
     trimTimeout: NodeJS.Timeout | undefined;

@@ -1,5 +1,5 @@
-import type { Archive } from './archive';
-import type { BookRequestFunction } from './types';
+import type Archive from '../archive';
+import type { BookRequestFunction } from './book';
 
 export type ResolverFunction = (path: string, absolute?: boolean) => string;
 

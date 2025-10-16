@@ -8,7 +8,6 @@ import type {
   ExtendedNavItem,
   PackagingParseResult,
   RawNavItem,
-  Flow,
 } from './types';
 import { indexOfElementNode } from './utils/helpers';
 import { getValidOrDefault } from './utils/core';
@@ -19,7 +18,7 @@ import {
   DEFAULT_ORIENTATION,
   Spread,
   DEFAULT_SPREAD,
-  Flow as FlowEnum,
+  Flow,
   DEFAULT_FLOW,
   DEFAULT_DIRECTION,
 } from './enums/epub-enums';
@@ -121,7 +120,7 @@ class Packaging {
       ) as Orientation,
       flow: getValidOrDefault(
         this.getPropertyText(xml, 'rendition:flow'),
-        FlowEnum,
+        Flow,
         DEFAULT_FLOW
       ) as Flow,
       viewport: this.getPropertyText(xml, 'rendition:viewport'),

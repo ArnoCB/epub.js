@@ -628,8 +628,6 @@ function requireCore() {
   core.getValidOrDefault = getValidOrDefault;
   /**
    * Vendor prefixed requestAnimationFrame
-   * @returns {function} requestAnimationFrame
-   * @memberof Core
    */
   core.requestAnimationFrame = typeof window !== 'undefined' ? window.requestAnimationFrame : undefined;
   let _URL;
@@ -643,7 +641,6 @@ function requireCore() {
   /**
    * Generates a UUID
    * based on: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-   * @memberof Core
    */
   function uuid() {
     let d = new Date().getTime();
@@ -656,27 +653,21 @@ function requireCore() {
   }
   /**
    * Gets the height of a document
-   * @memberof Core
    */
   function documentHeight() {
     return Math.max(document.documentElement.clientHeight, document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight, document.documentElement.offsetHeight);
   }
   /**
    * Checks if a node is an element
-   * @memberof Core
    */
   function isElement(obj) {
     return !!(obj && obj.nodeType === Node.ELEMENT_NODE);
   }
-  /**
-   * @memberof Core
-   */
   function isNumber(n) {
     return typeof n === 'number' && isFinite(n);
   }
   /**
    * Checks if a value is a float
-   * @memberof Core
    */
   function isFloat(n) {
     if (typeof n === 'number') {
@@ -710,9 +701,6 @@ function requireCore() {
   }
   /**
    * Apply defaults to an object
-   * @param {object} obj
-   * @returns {object}
-   * @memberof Core
    */
   function defaults(obj, ...sources) {
     for (const source of sources) {
@@ -725,9 +713,6 @@ function requireCore() {
   }
   /**
    * Extend properties of an object
-   * @param {object} target
-   * @returns {object}
-   * @memberof Core
    */
   function extend(target, ...sources) {
     sources.forEach(function (source) {
@@ -741,7 +726,6 @@ function requireCore() {
   /**
    * Fast quicksort insert for sorted array -- based on:
    *  http://stackoverflow.com/questions/1344500/efficient-way-to-insert-a-number-into-a-sorted-array-of-numbers
-   * @memberof Core
    */
   function insert(item, array, compareFunction) {
     const location = locationOf(item, array, compareFunction);
@@ -750,7 +734,6 @@ function requireCore() {
   }
   /**
    * Finds where something would fit into a sorted array
-   * @memberof Core
    */
   function locationOf(item, array, compareFunction, _start, _end) {
     const start = _start ?? 0;
@@ -781,7 +764,6 @@ function requireCore() {
   /**
    * Finds index of something in a sorted array
    * Returns -1 if not found
-   * @memberof Core
    */
   function indexOfSorted(item, array, compareFunction, _start, _end) {
     const start = _start ?? 0;
@@ -836,7 +818,6 @@ function requireCore() {
   /**
    * Find the bounds of an element
    * taking padding, margin and borders into account
-   * @memberof Core
    */
   function borders(el) {
     const style = window.getComputedStyle(el);
@@ -922,8 +903,6 @@ function requireCore() {
   }
   /**
    * Remove a blob url
-   * @param {string} url
-   * @memberof Core
    */
   function revokeBlobUrl(url) {
     if (!_URL) return;
@@ -1013,7 +992,6 @@ function requireCore() {
   }
   /**
    * Convert a blob to a base64 encoded string
-   * @memberof Core
    */
   function blob2base64(blob) {
     return new Promise(function (resolve) {
@@ -1029,14 +1007,12 @@ function requireCore() {
    * @param {element} html
    * @param element element type to find
    * @param type epub type to find
-   * @memberof Core
    */
   function querySelectorByType(html, element, type) {
     return html.querySelector(`${element}[*|type="${type}"]`);
   }
   /**
    * Find direct descendents of an element
-  	 * @memberof Core
    */
   function findChildren(el) {
     const result = [];
@@ -3340,6 +3316,548 @@ function requireSection() {
   return section$1.exports;
 }
 
+var utils = {};
+
+var constants = {};
+
+var hasRequiredConstants;
+function requireConstants() {
+  if (hasRequiredConstants) return constants;
+  hasRequiredConstants = 1;
+  Object.defineProperty(constants, "__esModule", {
+    value: true
+  });
+  constants.EVENTS = constants.DOM_EVENTS = constants.EPUBJS_VERSION = void 0;
+  constants.EPUBJS_VERSION = '0.3';
+  // Dom events to listen for
+  constants.DOM_EVENTS = ['keydown', 'keyup', 'keypressed', 'mouseup', 'mousedown', 'mousemove', 'click', 'touchend', 'touchstart', 'touchmove'];
+  constants.EVENTS = {
+    BOOK: {
+      OPEN_FAILED: 'openFailed'
+    },
+    CONTENTS: {
+      EXPAND: 'expand',
+      RESIZE: 'resize',
+      SELECTED: 'selected',
+      SELECTED_RANGE: 'selectedRange',
+      LINK_CLICKED: 'linkClicked'
+    },
+    LOCATIONS: {
+      CHANGED: 'changed'
+    },
+    MANAGERS: {
+      RESIZE: 'resize',
+      RESIZED: 'resized',
+      ORIENTATION_CHANGE: 'orientationchange',
+      ADDED: 'added',
+      SCROLL: 'scroll',
+      SCROLLED: 'scrolled',
+      REMOVED: 'removed'
+    },
+    VIEWS: {
+      AXIS: 'axis',
+      WRITING_MODE: 'writingMode',
+      LOAD_ERROR: 'loaderror',
+      RENDERED: 'rendered',
+      RESIZED: 'resized',
+      DISPLAYED: 'displayed',
+      SHOWN: 'shown',
+      HIDDEN: 'hidden',
+      MARK_CLICKED: 'markClicked'
+    },
+    RENDITION: {
+      STARTED: 'started',
+      ATTACHED: 'attached',
+      DISPLAYED: 'displayed',
+      DISPLAY_ERROR: 'displayerror',
+      RENDERED: 'rendered',
+      REMOVED: 'removed',
+      RESIZED: 'resized',
+      ORIENTATION_CHANGE: 'orientationchange',
+      LOCATION_CHANGED: 'locationChanged',
+      RELOCATED: 'relocated',
+      MARK_CLICKED: 'markClicked',
+      SELECTED: 'selected',
+      LAYOUT: 'layout'
+    },
+    LAYOUT: {
+      UPDATED: 'updated'
+    },
+    ANNOTATION: {
+      ATTACH: 'attach',
+      DETACH: 'detach'
+    }
+  };
+  return constants;
+}
+
+var helpers = {};
+
+var hasRequiredHelpers;
+function requireHelpers() {
+  if (hasRequiredHelpers) return helpers;
+  hasRequiredHelpers = 1;
+  Object.defineProperty(helpers, "__esModule", {
+    value: true
+  });
+  helpers.indexOfElementNode = indexOfElementNode;
+  helpers.debounce = debounce;
+  helpers.throttle = throttle;
+  /**
+   * Gets the index of a node in its parent
+   */
+  function indexOfNode(node, typeId) {
+    const parent = node.parentNode;
+    if (!parent) {
+      return -1;
+    }
+    const children = parent.childNodes;
+    let sib;
+    let index = -1;
+    for (let i = 0; i < children.length; i++) {
+      sib = children[i];
+      if (sib.nodeType === typeId) {
+        index++;
+      }
+      if (sib == node) break;
+    }
+    return index;
+  }
+  function indexOfElementNode(elementNode) {
+    return indexOfNode(elementNode, 1);
+  }
+  /**
+   * Creates a debounced function that delays invoking the provided function
+   * until after the specified wait time has elapsed since the last invocation.
+   */
+  function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+  /**
+   * Creates a throttled function that only invokes the provided function
+   * at most once per every specified wait time.
+   */
+  function throttle(func, wait) {
+    let lastCall = 0;
+    return function (...args) {
+      const now = Date.now();
+      if (now - lastCall >= wait) {
+        lastCall = now;
+        func.apply(this, args);
+      }
+    };
+  }
+  return helpers;
+}
+
+var locationHelpers = {};
+
+var hasRequiredLocationHelpers;
+function requireLocationHelpers() {
+  if (hasRequiredLocationHelpers) return locationHelpers;
+  hasRequiredLocationHelpers = 1;
+  Object.defineProperty(locationHelpers, "__esModule", {
+    value: true
+  });
+  locationHelpers.buildEnrichedLocationPoint = buildEnrichedLocationPoint;
+  locationHelpers.enrichLocationSide = enrichLocationSide;
+  locationHelpers.buildLocationPoint = buildLocationPoint;
+  function buildEnrichedLocationPoint(point, side, book) {
+    const base = buildLocationPoint(point, side);
+    enrichLocationSide(side, point, base, book);
+    return base;
+  }
+  /**
+   * Enriches a DisplayedLocation side (start or end) with location, percentage, and page info.
+   */
+  function enrichLocationSide(side, point, locatedSide, book) {
+    // Location and percentage
+    const cfi = point.mapping?.[side];
+    if (cfi && book.locations) {
+      const location = book.locations.locationFromCfi(cfi);
+      if (location !== null) {
+        locatedSide.location = location;
+        locatedSide.percentage = book.locations.percentageFromLocation(location);
+      }
+    }
+    // Page
+    if (cfi && book.pageList) {
+      const page = book.pageList.pageFromCfi(cfi);
+      if (page !== -1) {
+        locatedSide.page = page;
+      }
+    }
+  }
+  /**
+   * Builds a DisplayedLocation sub-object (start or end) from a LocationPoint and side ('start' | 'end').
+   */
+  function buildLocationPoint(point, side) {
+    return {
+      index: point.index,
+      href: point.href,
+      cfi: point.mapping?.[side] ?? '',
+      displayed: {
+        page: side === 'start' ? point.pages?.[0] ?? 1 : point.pages?.[point.pages?.length - 1] ?? 1,
+        total: point.totalPages ?? 0
+      }
+    };
+  }
+  return locationHelpers;
+}
+
+var mime = {};
+
+var hasRequiredMime;
+function requireMime() {
+  if (hasRequiredMime) return mime;
+  hasRequiredMime = 1;
+  /**
+   * From Zip.js, by Gildas Lormeau
+   * edited down
+   */
+  Object.defineProperty(mime, "__esModule", {
+    value: true
+  });
+  const table = {
+    application: {
+      ecmascript: ['es', 'ecma'],
+      javascript: 'js',
+      ogg: 'ogx',
+      pdf: 'pdf',
+      postscript: ['ps', 'ai', 'eps', 'epsi', 'epsf', 'eps2', 'eps3'],
+      'rdf+xml': 'rdf',
+      smil: ['smi', 'smil'],
+      'xhtml+xml': ['xhtml', 'xht'],
+      xml: ['xml', 'xsl', 'xsd', 'opf', 'ncx'],
+      zip: 'zip',
+      'x-httpd-eruby': 'rhtml',
+      'x-latex': 'latex',
+      'x-maker': ['frm', 'maker', 'frame', 'fm', 'fb', 'book', 'fbdoc'],
+      'x-object': 'o',
+      'x-shockwave-flash': ['swf', 'swfl'],
+      'x-silverlight': 'scr',
+      'epub+zip': 'epub',
+      'font-tdpfr': 'pfr',
+      'inkml+xml': ['ink', 'inkml'],
+      json: 'json',
+      'jsonml+json': 'jsonml',
+      'mathml+xml': 'mathml',
+      'metalink+xml': 'metalink',
+      mp4: 'mp4s',
+      // "oebps-package+xml" : "opf",
+      'omdoc+xml': 'omdoc',
+      oxps: 'oxps',
+      'vnd.amazon.ebook': 'azw',
+      widget: 'wgt',
+      // "x-dtbncx+xml" : "ncx",
+      'x-dtbook+xml': 'dtb',
+      'x-dtbresource+xml': 'res',
+      'x-font-bdf': 'bdf',
+      'x-font-ghostscript': 'gsf',
+      'x-font-linux-psf': 'psf',
+      'x-font-otf': 'otf',
+      'x-font-pcf': 'pcf',
+      'x-font-snf': 'snf',
+      'x-font-ttf': ['ttf', 'ttc'],
+      'x-font-type1': ['pfa', 'pfb', 'pfm', 'afm'],
+      'x-font-woff': 'woff',
+      'x-mobipocket-ebook': ['prc', 'mobi'],
+      'x-mspublisher': 'pub',
+      'x-nzb': 'nzb',
+      'x-tgif': 'obj',
+      'xaml+xml': 'xaml',
+      'xml-dtd': 'dtd',
+      'xproc+xml': 'xpl',
+      'xslt+xml': 'xslt',
+      'internet-property-stream': 'acx',
+      'x-compress': 'z',
+      'x-compressed': 'tgz',
+      'x-gzip': 'gz'
+    },
+    audio: {
+      flac: 'flac',
+      midi: ['mid', 'midi', 'kar', 'rmi'],
+      mpeg: ['mpga', 'mpega', 'mp2', 'mp3', 'm4a', 'mp2a', 'm2a', 'm3a'],
+      mpegurl: 'm3u',
+      ogg: ['oga', 'ogg', 'spx'],
+      'x-aiff': ['aif', 'aiff', 'aifc'],
+      'x-ms-wma': 'wma',
+      'x-wav': 'wav',
+      adpcm: 'adp',
+      mp4: 'mp4a',
+      webm: 'weba',
+      'x-aac': 'aac',
+      'x-caf': 'caf',
+      'x-matroska': 'mka',
+      'x-pn-realaudio-plugin': 'rmp',
+      xm: 'xm',
+      mid: ['mid', 'rmi']
+    },
+    image: {
+      gif: 'gif',
+      ief: 'ief',
+      jpeg: ['jpeg', 'jpg', 'jpe'],
+      pcx: 'pcx',
+      png: 'png',
+      'svg+xml': ['svg', 'svgz'],
+      tiff: ['tiff', 'tif'],
+      'x-icon': 'ico',
+      bmp: 'bmp',
+      webp: 'webp',
+      'x-pict': ['pic', 'pct'],
+      'x-tga': 'tga',
+      'cis-cod': 'cod'
+    },
+    text: {
+      'cache-manifest': ['manifest', 'appcache'],
+      css: 'css',
+      csv: 'csv',
+      html: ['html', 'htm', 'shtml', 'stm'],
+      mathml: 'mml',
+      plain: ['txt', 'text', 'brf', 'conf', 'def', 'list', 'log', 'in', 'bas'],
+      richtext: 'rtx',
+      'tab-separated-values': 'tsv',
+      'x-bibtex': 'bib'
+    },
+    video: {
+      mpeg: ['mpeg', 'mpg', 'mpe', 'm1v', 'm2v', 'mp2', 'mpa', 'mpv2'],
+      mp4: ['mp4', 'mp4v', 'mpg4'],
+      quicktime: ['qt', 'mov'],
+      ogg: 'ogv',
+      'vnd.mpegurl': ['mxu', 'm4u'],
+      'x-flv': 'flv',
+      'x-la-asf': ['lsf', 'lsx'],
+      'x-mng': 'mng',
+      'x-ms-asf': ['asf', 'asx', 'asr'],
+      'x-ms-wm': 'wm',
+      'x-ms-wmv': 'wmv',
+      'x-ms-wmx': 'wmx',
+      'x-ms-wvx': 'wvx',
+      'x-msvideo': 'avi',
+      'x-sgi-movie': 'movie',
+      'x-matroska': ['mpv', 'mkv', 'mk3d', 'mks'],
+      '3gpp2': '3g2',
+      h261: 'h261',
+      h263: 'h263',
+      h264: 'h264',
+      jpeg: 'jpgv',
+      jpm: ['jpm', 'jpgm'],
+      mj2: ['mj2', 'mjp2'],
+      'vnd.ms-playready.media.pyv': 'pyv',
+      'vnd.uvvu.mp4': ['uvu', 'uvvu'],
+      'vnd.vivo': 'viv',
+      webm: 'webm',
+      'x-f4v': 'f4v',
+      'x-m4v': 'm4v',
+      'x-ms-vob': 'vob',
+      'x-smv': 'smv'
+    }
+  };
+  const mimeTypes = function () {
+    let type, subtype, val, index;
+    const mimeTypes = {};
+    for (type in table) {
+      if (Object.prototype.hasOwnProperty.call(table, type)) {
+        for (subtype in table[type]) {
+          if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
+            val = table[type][subtype];
+            if (typeof val == 'string') {
+              mimeTypes[val] = type + '/' + subtype;
+            } else {
+              for (index = 0; index < val.length; index++) {
+                mimeTypes[val[index]] = type + '/' + subtype;
+              }
+            }
+          }
+        }
+      }
+    }
+    return mimeTypes;
+  }();
+  const defaultValue = 'text/plain';
+  function lookup(filename) {
+    if (!filename) return defaultValue;
+    const ext = filename.split('.').pop();
+    if (!ext) return defaultValue;
+    return mimeTypes[ext.toLowerCase()] || defaultValue;
+  }
+  mime.default = {
+    lookup
+  };
+  return mime;
+}
+
+var queue$1 = {};
+
+var hasRequiredQueue;
+function requireQueue() {
+  if (hasRequiredQueue) return queue$1;
+  hasRequiredQueue = 1;
+  Object.defineProperty(queue$1, "__esModule", {
+    value: true
+  });
+  const core_1 = requireCore();
+  class Queue {
+    /**
+     * End the queue
+     */
+    stop() {
+      this._q = [];
+      this.running = false;
+      this.paused = true;
+    }
+    constructor(context) {
+      this._q = [];
+      this.context = context;
+      this.tick = core_1.requestAnimationFrame;
+      this.running = false;
+      this.paused = false;
+    }
+    /**
+     * Add an item to the queue
+     */
+    enqueue(...args) {
+      const taskOrPromise = args.shift();
+      if (!taskOrPromise) {
+        throw new Error('No Task Provided');
+      }
+      if (typeof taskOrPromise === 'function') {
+        // Always execute with the queue's context
+        const promise = new Promise((resolve, reject) => {
+          this._q.push({
+            task: async (...taskArgs) => {
+              try {
+                // Use Function.prototype.apply to set context
+                const result = await taskOrPromise.apply(this.context, taskArgs);
+                resolve(result);
+                return result;
+              } catch (err) {
+                reject(err);
+                throw err;
+              }
+            },
+            args: args
+          });
+          if (this.paused == false && !this.running) {
+            this.run();
+          }
+        });
+        return promise;
+      } else if (isPromise(taskOrPromise)) {
+        const promise = taskOrPromise;
+        this._q.push({
+          promise
+        });
+        if (this.paused == false && !this.running) {
+          this.run();
+        }
+        return promise;
+      } else {
+        // If not a function or promise, wrap as resolved promise
+        const promise = Promise.resolve(taskOrPromise);
+        this._q.push({
+          promise
+        });
+        if (this.paused == false && !this.running) {
+          this.run();
+        }
+        return promise;
+      }
+    }
+    /**
+     * Run one item
+     */
+    // Run All Immediately
+    dump() {
+      while (this._q.length) {
+        this.dequeue();
+      }
+    }
+    /**
+     * Run all tasks sequentially, at convince
+     */
+    run() {
+      if (!this.running) {
+        this.running = true;
+        this._deferredPromise = new Promise(resolve => {
+          this._resolveDeferred = resolve;
+        });
+      }
+      if (this.tick) {
+        this.tick.call(globalThis, () => {
+          if (this._q.length) {
+            this.dequeue().then(() => {
+              this.run();
+            });
+          } else {
+            if (this._resolveDeferred) this._resolveDeferred(undefined);
+            this.running = undefined;
+          }
+        });
+      }
+      return this._deferredPromise;
+    }
+    /**
+     * Run one item
+     */
+    dequeue() {
+      if (this._q.length && !this.paused) {
+        const inwait = this._q.shift();
+        if (!inwait) return Promise.resolve(undefined);
+        const task = inwait.task;
+        const args = Array.isArray(inwait.args) ? inwait.args : [];
+        if (task) {
+          try {
+            const result = task.apply(this.context, args);
+            if (isPromise(result)) {
+              return result.then(value => {
+                if (inwait.resolve) inwait.resolve(value);
+                return value;
+              }, err => {
+                if (inwait.reject) inwait.reject(err);
+                return undefined;
+              });
+            } else {
+              if (inwait.resolve) inwait.resolve(result);
+              return inwait.promise ?? Promise.resolve(result);
+            }
+          } catch (err) {
+            if (inwait.reject) inwait.reject(err);
+            return Promise.resolve(undefined);
+          }
+        } else if (inwait.promise) {
+          return inwait.promise;
+        }
+      }
+      return Promise.resolve(undefined);
+    }
+    clear() {
+      this._q = [];
+    }
+    /**
+     * Get the number of tasks in the queue
+     */
+    length() {
+      return this._q.length;
+    }
+    /**
+     * Pause a running queue
+     */
+    pause() {
+      this.paused = true;
+    }
+  }
+  function isPromise(value) {
+    return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
+  }
+  queue$1.default = Queue;
+  return queue$1;
+}
+
 var replacements = {};
 
 var hasRequiredReplacements;
@@ -3469,6 +3987,104 @@ function requireReplacements() {
   return replacements;
 }
 
+var scrolltype = {};
+
+var hasRequiredScrolltype;
+function requireScrolltype() {
+  if (hasRequiredScrolltype) return scrolltype;
+  hasRequiredScrolltype = 1;
+  Object.defineProperty(scrolltype, "__esModule", {
+    value: true
+  });
+  scrolltype.default = scrollType;
+  scrolltype.createDefiner = createDefiner;
+  // Detect RTL scroll type
+  // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
+  function scrollType() {
+    let type = 'reverse';
+    const definer = createDefiner();
+    document.body.appendChild(definer);
+    if (definer.scrollLeft > 0) {
+      type = 'default';
+    } else {
+      // Modern browsers: always use scrollIntoView logic
+      definer.children[0].children[1].scrollIntoView();
+      if (definer.scrollLeft < 0) {
+        type = 'negative';
+      }
+    }
+    document.body.removeChild(definer);
+    return type;
+  }
+  function createDefiner() {
+    const definer = document.createElement('div');
+    definer.dir = 'rtl';
+    definer.style.position = 'fixed';
+    definer.style.width = '1px';
+    definer.style.height = '1px';
+    definer.style.top = '0px';
+    definer.style.left = '0px';
+    definer.style.overflow = 'hidden';
+    const innerDiv = document.createElement('div');
+    innerDiv.style.width = '2px';
+    const spanA = document.createElement('span');
+    spanA.style.width = '1px';
+    spanA.style.display = 'inline-block';
+    const spanB = document.createElement('span');
+    spanB.style.width = '1px';
+    spanB.style.display = 'inline-block';
+    innerDiv.appendChild(spanA);
+    innerDiv.appendChild(spanB);
+    definer.appendChild(innerDiv);
+    return definer;
+  }
+  return scrolltype;
+}
+
+var hasRequiredUtils;
+function requireUtils() {
+  if (hasRequiredUtils) return utils;
+  hasRequiredUtils = 1;
+  (function (exports) {
+
+    var __createBinding = utils && utils.__createBinding || (Object.create ? function (o, m, k, k2) {
+      if (k2 === undefined) k2 = k;
+      var desc = Object.getOwnPropertyDescriptor(m, k);
+      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = {
+          enumerable: true,
+          get: function () {
+            return m[k];
+          }
+        };
+      }
+      Object.defineProperty(o, k2, desc);
+    } : function (o, m, k, k2) {
+      if (k2 === undefined) k2 = k;
+      o[k2] = m[k];
+    });
+    var __exportStar = utils && utils.__exportStar || function (m, exports) {
+      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+    };
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    __exportStar(requireConstants(), exports);
+    __exportStar(requireCore(), exports);
+    __exportStar(requireHelpers(), exports);
+    __exportStar(requireHook(), exports);
+    __exportStar(requireLocationHelpers(), exports);
+    __exportStar(requireMime(), exports);
+    __exportStar(requirePath(), exports);
+    __exportStar(requireQueue(), exports);
+    __exportStar(requireReplacements(), exports);
+    __exportStar(requireRequest(), exports);
+    __exportStar(requireScrolltype(), exports);
+    __exportStar(requireUrl(), exports);
+  })(utils);
+  return utils;
+}
+
 var spine = spine$1.exports;
 var hasRequiredSpine;
 function requireSpine() {
@@ -3488,7 +4104,7 @@ function requireSpine() {
     const epubcfi_1 = __importDefault(requireEpubcfi());
     const hook_1 = __importDefault(requireHook());
     const section_1 = __importDefault(requireSection());
-    const replacements_1 = requireReplacements();
+    const utils_1 = requireUtils();
     /**
      * A collection of Spine Items
      */
@@ -3509,9 +4125,9 @@ function requireSpine() {
         this.baseUrl = undefined;
         this.length = undefined;
         // Register replacements
-        this.hooks.content.register(replacements_1.replaceBase);
-        this.hooks.content.register(replacements_1.replaceCanonical);
-        this.hooks.content.register(replacements_1.replaceMeta);
+        this.hooks.content.register(utils_1.replaceBase);
+        this.hooks.content.register(utils_1.replaceCanonical);
+        this.hooks.content.register(utils_1.replaceMeta);
       }
       /**
        * Unpack items from a opf into spine items
@@ -3716,246 +4332,6 @@ function requireSpine() {
 }
 
 var locations = {};
-
-var queue$1 = {};
-
-var hasRequiredQueue;
-function requireQueue() {
-  if (hasRequiredQueue) return queue$1;
-  hasRequiredQueue = 1;
-  Object.defineProperty(queue$1, "__esModule", {
-    value: true
-  });
-  const core_1 = requireCore();
-  class Queue {
-    /**
-     * End the queue
-     */
-    stop() {
-      this._q = [];
-      this.running = false;
-      this.paused = true;
-    }
-    constructor(context) {
-      this._q = [];
-      this.context = context;
-      this.tick = core_1.requestAnimationFrame;
-      this.running = false;
-      this.paused = false;
-    }
-    /**
-     * Add an item to the queue
-     */
-    enqueue(...args) {
-      const taskOrPromise = args.shift();
-      if (!taskOrPromise) {
-        throw new Error('No Task Provided');
-      }
-      if (typeof taskOrPromise === 'function') {
-        // Always execute with the queue's context
-        const promise = new Promise((resolve, reject) => {
-          this._q.push({
-            task: async (...taskArgs) => {
-              try {
-                // Use Function.prototype.apply to set context
-                const result = await taskOrPromise.apply(this.context, taskArgs);
-                resolve(result);
-                return result;
-              } catch (err) {
-                reject(err);
-                throw err;
-              }
-            },
-            args: args
-          });
-          if (this.paused == false && !this.running) {
-            this.run();
-          }
-        });
-        return promise;
-      } else if (isPromise(taskOrPromise)) {
-        const promise = taskOrPromise;
-        this._q.push({
-          promise
-        });
-        if (this.paused == false && !this.running) {
-          this.run();
-        }
-        return promise;
-      } else {
-        // If not a function or promise, wrap as resolved promise
-        const promise = Promise.resolve(taskOrPromise);
-        this._q.push({
-          promise
-        });
-        if (this.paused == false && !this.running) {
-          this.run();
-        }
-        return promise;
-      }
-    }
-    /**
-     * Run one item
-     */
-    // Run All Immediately
-    dump() {
-      while (this._q.length) {
-        this.dequeue();
-      }
-    }
-    /**
-     * Run all tasks sequentially, at convince
-     */
-    run() {
-      if (!this.running) {
-        this.running = true;
-        this._deferredPromise = new Promise(resolve => {
-          this._resolveDeferred = resolve;
-        });
-      }
-      if (this.tick) {
-        this.tick.call(globalThis, () => {
-          if (this._q.length) {
-            this.dequeue().then(() => {
-              this.run();
-            });
-          } else {
-            if (this._resolveDeferred) this._resolveDeferred(undefined);
-            this.running = undefined;
-          }
-        });
-      }
-      return this._deferredPromise;
-    }
-    /**
-     * Run one item
-     */
-    dequeue() {
-      if (this._q.length && !this.paused) {
-        const inwait = this._q.shift();
-        if (!inwait) return Promise.resolve(undefined);
-        const task = inwait.task;
-        const args = Array.isArray(inwait.args) ? inwait.args : [];
-        if (task) {
-          try {
-            const result = task.apply(this.context, args);
-            if (isPromise(result)) {
-              return result.then(value => {
-                if (inwait.resolve) inwait.resolve(value);
-                return value;
-              }, err => {
-                if (inwait.reject) inwait.reject(err);
-                return undefined;
-              });
-            } else {
-              if (inwait.resolve) inwait.resolve(result);
-              return inwait.promise ?? Promise.resolve(result);
-            }
-          } catch (err) {
-            if (inwait.reject) inwait.reject(err);
-            return Promise.resolve(undefined);
-          }
-        } else if (inwait.promise) {
-          return inwait.promise;
-        }
-      }
-      return Promise.resolve(undefined);
-    }
-    clear() {
-      this._q = [];
-    }
-    /**
-     * Get the number of tasks in the queue
-     */
-    length() {
-      return this._q.length;
-    }
-    /**
-     * Pause a running queue
-     */
-    pause() {
-      this.paused = true;
-    }
-  }
-  function isPromise(value) {
-    return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
-  }
-  queue$1.default = Queue;
-  return queue$1;
-}
-
-var constants = {};
-
-var hasRequiredConstants;
-function requireConstants() {
-  if (hasRequiredConstants) return constants;
-  hasRequiredConstants = 1;
-  Object.defineProperty(constants, "__esModule", {
-    value: true
-  });
-  constants.EVENTS = constants.DOM_EVENTS = constants.EPUBJS_VERSION = void 0;
-  constants.EPUBJS_VERSION = '0.3';
-  // Dom events to listen for
-  constants.DOM_EVENTS = ['keydown', 'keyup', 'keypressed', 'mouseup', 'mousedown', 'mousemove', 'click', 'touchend', 'touchstart', 'touchmove'];
-  constants.EVENTS = {
-    BOOK: {
-      OPEN_FAILED: 'openFailed'
-    },
-    CONTENTS: {
-      EXPAND: 'expand',
-      RESIZE: 'resize',
-      SELECTED: 'selected',
-      SELECTED_RANGE: 'selectedRange',
-      LINK_CLICKED: 'linkClicked'
-    },
-    LOCATIONS: {
-      CHANGED: 'changed'
-    },
-    MANAGERS: {
-      RESIZE: 'resize',
-      RESIZED: 'resized',
-      ORIENTATION_CHANGE: 'orientationchange',
-      ADDED: 'added',
-      SCROLL: 'scroll',
-      SCROLLED: 'scrolled',
-      REMOVED: 'removed'
-    },
-    VIEWS: {
-      AXIS: 'axis',
-      WRITING_MODE: 'writingMode',
-      LOAD_ERROR: 'loaderror',
-      RENDERED: 'rendered',
-      RESIZED: 'resized',
-      DISPLAYED: 'displayed',
-      SHOWN: 'shown',
-      HIDDEN: 'hidden',
-      MARK_CLICKED: 'markClicked'
-    },
-    RENDITION: {
-      STARTED: 'started',
-      ATTACHED: 'attached',
-      DISPLAYED: 'displayed',
-      DISPLAY_ERROR: 'displayerror',
-      RENDERED: 'rendered',
-      REMOVED: 'removed',
-      RESIZED: 'resized',
-      ORIENTATION_CHANGE: 'orientationchange',
-      LOCATION_CHANGED: 'locationChanged',
-      RELOCATED: 'relocated',
-      MARK_CLICKED: 'markClicked',
-      SELECTED: 'selected',
-      LAYOUT: 'layout'
-    },
-    LAYOUT: {
-      UPDATED: 'updated'
-    },
-    ANNOTATION: {
-      ATTACH: 'attach',
-      DETACH: 'detach'
-    }
-  };
-  return constants;
-}
 
 var hasRequiredLocations;
 function requireLocations() {
@@ -4480,84 +4856,37 @@ function requireContainer() {
 
 var packaging = {};
 
-var helpers = {};
-
-var hasRequiredHelpers;
-function requireHelpers() {
-  if (hasRequiredHelpers) return helpers;
-  hasRequiredHelpers = 1;
-  Object.defineProperty(helpers, "__esModule", {
-    value: true
-  });
-  helpers.indexOfElementNode = indexOfElementNode;
-  helpers.debounce = debounce;
-  helpers.throttle = throttle;
-  /**
-   * Gets the index of a node in its parent
-   */
-  function indexOfNode(node, typeId) {
-    const parent = node.parentNode;
-    if (!parent) {
-      return -1;
-    }
-    const children = parent.childNodes;
-    let sib;
-    let index = -1;
-    for (let i = 0; i < children.length; i++) {
-      sib = children[i];
-      if (sib.nodeType === typeId) {
-        index++;
-      }
-      if (sib == node) break;
-    }
-    return index;
-  }
-  function indexOfElementNode(elementNode) {
-    return indexOfNode(elementNode, 1);
-  }
-  /**
-   * Creates a debounced function that delays invoking the provided function
-   * until after the specified wait time has elapsed since the last invocation.
-   */
-  function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-  }
-  /**
-   * Creates a throttled function that only invokes the provided function
-   * at most once per every specified wait time.
-   */
-  function throttle(func, wait) {
-    let lastCall = 0;
-    return function (...args) {
-      const now = Date.now();
-      if (now - lastCall >= wait) {
-        lastCall = now;
-        func.apply(this, args);
-      }
-    };
-  }
-  return helpers;
-}
-
 var epubEnums = {};
 
 var hasRequiredEpubEnums;
 function requireEpubEnums() {
   if (hasRequiredEpubEnums) return epubEnums;
   hasRequiredEpubEnums = 1;
+  /**
+   * Central type and enumroot for epub.js
+   *
+   * All shared types (layout, direction, orientation, etc.) from the epub specification
+   * should be defined or re-exported here.
+   *
+   * @see http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
+   */
   Object.defineProperty(epubEnums, "__esModule", {
     value: true
   });
   epubEnums.DEFAULT_SPREAD = epubEnums.Spread = epubEnums.DEFAULT_ORIENTATION = epubEnums.Orientation = epubEnums.DEFAULT_LAYOUT_TYPE = epubEnums.LayoutType = epubEnums.DEFAULT_FLOW = epubEnums.Flow = epubEnums.DEFAULT_DIRECTION = epubEnums.Direction = void 0;
+  /**
+   * Reading direction for EPUB content.
+   * @see http://www.idpf.org/epub/301/spec/epub-publications.html#sec-docs-dir
+   */
   epubEnums.Direction = {
     ltr: 'ltr',
     rtl: 'rtl'
   };
   epubEnums.DEFAULT_DIRECTION = 'ltr';
+  /**
+   * Flow type for EPUB content rendering.
+   * @see http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
+   */
   epubEnums.Flow = {
     paginated: 'paginated',
     scrolled: 'scrolled',
@@ -4566,17 +4895,30 @@ function requireEpubEnums() {
     auto: 'auto'
   };
   epubEnums.DEFAULT_FLOW = 'auto';
+  /**
+   * Layout type for EPUB rendition.
+   * @see http://www.idpf.org/epub/301/spec/epub-publications.html#rendition-layout
+   * Allowed: 'reflowable' | 'pre-paginated'. Default: 'reflowable'.
+   */
   epubEnums.LayoutType = {
     reflowable: 'reflowable',
     'pre-paginated': 'pre-paginated'
   };
   epubEnums.DEFAULT_LAYOUT_TYPE = 'reflowable';
+  /**
+   * Orientation for fixed-layout or viewport settings.
+   * @see http://www.idpf.org/epub/301/spec/epub-publications.html#meta-elem-viewport
+   */
   epubEnums.Orientation = {
     auto: 'auto',
     landscape: 'landscape',
     portrait: 'portrait'
   };
   epubEnums.DEFAULT_ORIENTATION = 'auto';
+  /**
+   * Spread type for EPUB content rendering.
+   * @see http://www.idpf.org/epub/301/spec/epub-publications.html#meta-properties-rendering
+   */
   epubEnums.Spread = {
     auto: 'auto',
     none: 'none',
@@ -5161,188 +5503,6 @@ function requireNavigation() {
 
 var resources$1 = {exports: {}};
 
-var mime = {};
-
-var hasRequiredMime;
-function requireMime() {
-  if (hasRequiredMime) return mime;
-  hasRequiredMime = 1;
-  /**
-   * From Zip.js, by Gildas Lormeau
-   * edited down
-   */
-  Object.defineProperty(mime, "__esModule", {
-    value: true
-  });
-  const table = {
-    application: {
-      ecmascript: ['es', 'ecma'],
-      javascript: 'js',
-      ogg: 'ogx',
-      pdf: 'pdf',
-      postscript: ['ps', 'ai', 'eps', 'epsi', 'epsf', 'eps2', 'eps3'],
-      'rdf+xml': 'rdf',
-      smil: ['smi', 'smil'],
-      'xhtml+xml': ['xhtml', 'xht'],
-      xml: ['xml', 'xsl', 'xsd', 'opf', 'ncx'],
-      zip: 'zip',
-      'x-httpd-eruby': 'rhtml',
-      'x-latex': 'latex',
-      'x-maker': ['frm', 'maker', 'frame', 'fm', 'fb', 'book', 'fbdoc'],
-      'x-object': 'o',
-      'x-shockwave-flash': ['swf', 'swfl'],
-      'x-silverlight': 'scr',
-      'epub+zip': 'epub',
-      'font-tdpfr': 'pfr',
-      'inkml+xml': ['ink', 'inkml'],
-      json: 'json',
-      'jsonml+json': 'jsonml',
-      'mathml+xml': 'mathml',
-      'metalink+xml': 'metalink',
-      mp4: 'mp4s',
-      // "oebps-package+xml" : "opf",
-      'omdoc+xml': 'omdoc',
-      oxps: 'oxps',
-      'vnd.amazon.ebook': 'azw',
-      widget: 'wgt',
-      // "x-dtbncx+xml" : "ncx",
-      'x-dtbook+xml': 'dtb',
-      'x-dtbresource+xml': 'res',
-      'x-font-bdf': 'bdf',
-      'x-font-ghostscript': 'gsf',
-      'x-font-linux-psf': 'psf',
-      'x-font-otf': 'otf',
-      'x-font-pcf': 'pcf',
-      'x-font-snf': 'snf',
-      'x-font-ttf': ['ttf', 'ttc'],
-      'x-font-type1': ['pfa', 'pfb', 'pfm', 'afm'],
-      'x-font-woff': 'woff',
-      'x-mobipocket-ebook': ['prc', 'mobi'],
-      'x-mspublisher': 'pub',
-      'x-nzb': 'nzb',
-      'x-tgif': 'obj',
-      'xaml+xml': 'xaml',
-      'xml-dtd': 'dtd',
-      'xproc+xml': 'xpl',
-      'xslt+xml': 'xslt',
-      'internet-property-stream': 'acx',
-      'x-compress': 'z',
-      'x-compressed': 'tgz',
-      'x-gzip': 'gz'
-    },
-    audio: {
-      flac: 'flac',
-      midi: ['mid', 'midi', 'kar', 'rmi'],
-      mpeg: ['mpga', 'mpega', 'mp2', 'mp3', 'm4a', 'mp2a', 'm2a', 'm3a'],
-      mpegurl: 'm3u',
-      ogg: ['oga', 'ogg', 'spx'],
-      'x-aiff': ['aif', 'aiff', 'aifc'],
-      'x-ms-wma': 'wma',
-      'x-wav': 'wav',
-      adpcm: 'adp',
-      mp4: 'mp4a',
-      webm: 'weba',
-      'x-aac': 'aac',
-      'x-caf': 'caf',
-      'x-matroska': 'mka',
-      'x-pn-realaudio-plugin': 'rmp',
-      xm: 'xm',
-      mid: ['mid', 'rmi']
-    },
-    image: {
-      gif: 'gif',
-      ief: 'ief',
-      jpeg: ['jpeg', 'jpg', 'jpe'],
-      pcx: 'pcx',
-      png: 'png',
-      'svg+xml': ['svg', 'svgz'],
-      tiff: ['tiff', 'tif'],
-      'x-icon': 'ico',
-      bmp: 'bmp',
-      webp: 'webp',
-      'x-pict': ['pic', 'pct'],
-      'x-tga': 'tga',
-      'cis-cod': 'cod'
-    },
-    text: {
-      'cache-manifest': ['manifest', 'appcache'],
-      css: 'css',
-      csv: 'csv',
-      html: ['html', 'htm', 'shtml', 'stm'],
-      mathml: 'mml',
-      plain: ['txt', 'text', 'brf', 'conf', 'def', 'list', 'log', 'in', 'bas'],
-      richtext: 'rtx',
-      'tab-separated-values': 'tsv',
-      'x-bibtex': 'bib'
-    },
-    video: {
-      mpeg: ['mpeg', 'mpg', 'mpe', 'm1v', 'm2v', 'mp2', 'mpa', 'mpv2'],
-      mp4: ['mp4', 'mp4v', 'mpg4'],
-      quicktime: ['qt', 'mov'],
-      ogg: 'ogv',
-      'vnd.mpegurl': ['mxu', 'm4u'],
-      'x-flv': 'flv',
-      'x-la-asf': ['lsf', 'lsx'],
-      'x-mng': 'mng',
-      'x-ms-asf': ['asf', 'asx', 'asr'],
-      'x-ms-wm': 'wm',
-      'x-ms-wmv': 'wmv',
-      'x-ms-wmx': 'wmx',
-      'x-ms-wvx': 'wvx',
-      'x-msvideo': 'avi',
-      'x-sgi-movie': 'movie',
-      'x-matroska': ['mpv', 'mkv', 'mk3d', 'mks'],
-      '3gpp2': '3g2',
-      h261: 'h261',
-      h263: 'h263',
-      h264: 'h264',
-      jpeg: 'jpgv',
-      jpm: ['jpm', 'jpgm'],
-      mj2: ['mj2', 'mjp2'],
-      'vnd.ms-playready.media.pyv': 'pyv',
-      'vnd.uvvu.mp4': ['uvu', 'uvvu'],
-      'vnd.vivo': 'viv',
-      webm: 'webm',
-      'x-f4v': 'f4v',
-      'x-m4v': 'm4v',
-      'x-ms-vob': 'vob',
-      'x-smv': 'smv'
-    }
-  };
-  const mimeTypes = function () {
-    let type, subtype, val, index;
-    const mimeTypes = {};
-    for (type in table) {
-      if (Object.prototype.hasOwnProperty.call(table, type)) {
-        for (subtype in table[type]) {
-          if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
-            val = table[type][subtype];
-            if (typeof val == 'string') {
-              mimeTypes[val] = type + '/' + subtype;
-            } else {
-              for (index = 0; index < val.length; index++) {
-                mimeTypes[val[index]] = type + '/' + subtype;
-              }
-            }
-          }
-        }
-      }
-    }
-    return mimeTypes;
-  }();
-  const defaultValue = 'text/plain';
-  function lookup(filename) {
-    if (!filename) return defaultValue;
-    const ext = filename.split('.').pop();
-    if (!ext) return defaultValue;
-    return mimeTypes[ext.toLowerCase()] || defaultValue;
-  }
-  mime.default = {
-    lookup
-  };
-  return mime;
-}
-
 var resources = resources$1.exports;
 var hasRequiredResources;
 function requireResources() {
@@ -5358,8 +5518,7 @@ function requireResources() {
     Object.defineProperty(exports, "__esModule", {
       value: true
     });
-    const replacements_1 = requireReplacements();
-    const core_1 = requireCore();
+    const utils_1 = requireUtils();
     const url_1 = __importDefault(requireUrl());
     const mime_1 = __importDefault(requireMime());
     const path_1 = __importDefault(requirePath());
@@ -5464,9 +5623,9 @@ function requireResources() {
             if (!(response instanceof Blob)) {
               throw new Error('Expected Blob response for base64 conversion');
             }
-            return (0, core_1.blob2base64)(response);
+            return (0, utils_1.blob2base64)(response);
           }).then(base64String => {
-            const dataUrl = (0, core_1.createBase64Url)(base64String, mimeType);
+            const dataUrl = (0, utils_1.createBase64Url)(base64String, mimeType);
             if (!dataUrl) {
               throw new Error('Failed to create base64 URL');
             }
@@ -5477,7 +5636,7 @@ function requireResources() {
           if (!(response instanceof Blob)) {
             throw new Error('Expected Blob response for blob URL creation');
           }
-          const blobUrl = (0, core_1.createBlobUrl)(response, mimeType);
+          const blobUrl = (0, utils_1.createBlobUrl)(response, mimeType);
           if (!blobUrl) {
             throw new Error('Failed to create blob URL');
           }
@@ -5567,12 +5726,12 @@ function requireResources() {
           // Ensure text is a string (it should be when request type is 'text')
           const textContent = typeof text === 'string' ? text : String(text);
           // Replacements in the css text
-          const processedText = (0, replacements_1.substitute)(textContent, relUrls, this.replacementUrls || []);
+          const processedText = (0, utils_1.substitute)(textContent, relUrls, this.replacementUrls || []);
           // Get the new url
           if (this.settings.replacements === 'base64') {
-            newUrl = (0, core_1.createBase64Url)(processedText, 'text/css');
+            newUrl = (0, utils_1.createBase64Url)(processedText, 'text/css');
           } else {
-            newUrl = (0, core_1.createBlobUrl)(processedText, 'text/css');
+            newUrl = (0, utils_1.createBlobUrl)(processedText, 'text/css');
           }
           return newUrl;
         }, () => {
@@ -5626,7 +5785,7 @@ function requireResources() {
         } else {
           relUrls = this.urls || [];
         }
-        return (0, replacements_1.substitute)(content, relUrls, this.replacementUrls || []);
+        return (0, utils_1.substitute)(content, relUrls, this.replacementUrls || []);
       }
       destroy() {
         // Clear all properties for cleanup
@@ -5853,61 +6012,6 @@ function requirePagelist() {
 }
 
 var rendition = {};
-
-var locationHelpers = {};
-
-var hasRequiredLocationHelpers;
-function requireLocationHelpers() {
-  if (hasRequiredLocationHelpers) return locationHelpers;
-  hasRequiredLocationHelpers = 1;
-  Object.defineProperty(locationHelpers, "__esModule", {
-    value: true
-  });
-  locationHelpers.buildEnrichedLocationPoint = buildEnrichedLocationPoint;
-  locationHelpers.enrichLocationSide = enrichLocationSide;
-  locationHelpers.buildLocationPoint = buildLocationPoint;
-  function buildEnrichedLocationPoint(point, side, book) {
-    const base = buildLocationPoint(point, side);
-    enrichLocationSide(side, point, base, book);
-    return base;
-  }
-  /**
-   * Enriches a DisplayedLocation side (start or end) with location, percentage, and page info.
-   */
-  function enrichLocationSide(side, point, locatedSide, book) {
-    // Location and percentage
-    const cfi = point.mapping?.[side];
-    if (cfi && book.locations) {
-      const location = book.locations.locationFromCfi(cfi);
-      if (location !== null) {
-        locatedSide.location = location;
-        locatedSide.percentage = book.locations.percentageFromLocation(location);
-      }
-    }
-    // Page
-    if (cfi && book.pageList) {
-      const page = book.pageList.pageFromCfi(cfi);
-      if (page !== -1) {
-        locatedSide.page = page;
-      }
-    }
-  }
-  /**
-   * Builds a DisplayedLocation sub-object (start or end) from a LocationPoint and side ('start' | 'end').
-   */
-  function buildLocationPoint(point, side) {
-    return {
-      index: point.index,
-      href: point.href,
-      cfi: point.mapping?.[side] ?? '',
-      displayed: {
-        page: side === 'start' ? point.pages?.[0] ?? 1 : point.pages?.[point.pages?.length - 1] ?? 1,
-        total: point.totalPages ?? 0
-      }
-    };
-  }
-  return locationHelpers;
-}
 
 var layout = {};
 
@@ -6680,60 +6784,6 @@ function requireAnnotations() {
 
 var _default = {};
 
-var scrolltype = {};
-
-var hasRequiredScrolltype;
-function requireScrolltype() {
-  if (hasRequiredScrolltype) return scrolltype;
-  hasRequiredScrolltype = 1;
-  Object.defineProperty(scrolltype, "__esModule", {
-    value: true
-  });
-  scrolltype.default = scrollType;
-  scrolltype.createDefiner = createDefiner;
-  // Detect RTL scroll type
-  // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
-  function scrollType() {
-    let type = 'reverse';
-    const definer = createDefiner();
-    document.body.appendChild(definer);
-    if (definer.scrollLeft > 0) {
-      type = 'default';
-    } else {
-      // Modern browsers: always use scrollIntoView logic
-      definer.children[0].children[1].scrollIntoView();
-      if (definer.scrollLeft < 0) {
-        type = 'negative';
-      }
-    }
-    document.body.removeChild(definer);
-    return type;
-  }
-  function createDefiner() {
-    const definer = document.createElement('div');
-    definer.dir = 'rtl';
-    definer.style.position = 'fixed';
-    definer.style.width = '1px';
-    definer.style.height = '1px';
-    definer.style.top = '0px';
-    definer.style.left = '0px';
-    definer.style.overflow = 'hidden';
-    const innerDiv = document.createElement('div');
-    innerDiv.style.width = '2px';
-    const spanA = document.createElement('span');
-    spanA.style.width = '1px';
-    spanA.style.display = 'inline-block';
-    const spanB = document.createElement('span');
-    spanB.style.width = '1px';
-    spanB.style.display = 'inline-block';
-    innerDiv.appendChild(spanA);
-    innerDiv.appendChild(spanB);
-    definer.appendChild(innerDiv);
-    return definer;
-  }
-  return scrolltype;
-}
-
 var mapping = {};
 
 var hasRequiredMapping;
@@ -7124,12 +7174,12 @@ function requireStage() {
   Object.defineProperty(stage, "__esModule", {
     value: true
   });
-  const core_1 = requireCore();
-  const helpers_1 = requireHelpers();
+  stage.Stage = void 0;
+  const utils_1 = requireUtils();
   class Stage {
     constructor(_options) {
       this.settings = _options || {};
-      this.id = 'epubjs-container-' + (0, core_1.uuid)();
+      this.id = 'epubjs-container-' + (0, utils_1.uuid)();
       this.container = this.create(this.settings);
       if (this.settings.hidden) {
         this.wrapper = this.wrap(this.container);
@@ -7145,11 +7195,11 @@ function requireStage() {
       const overflow = options.overflow || false;
       const axis = options.axis || 'vertical';
       const direction = options.direction;
-      (0, core_1.extend)(this.settings, options);
-      if (options.height && (0, core_1.isNumber)(options.height)) {
+      (0, utils_1.extend)(this.settings, options);
+      if (options.height && (0, utils_1.isNumber)(options.height)) {
         height = options.height + 'px';
       }
-      if (options.width && (0, core_1.isNumber)(options.width)) {
+      if (options.width && (0, utils_1.isNumber)(options.width)) {
         width = options.width + 'px';
       }
       // Create new container element
@@ -7208,7 +7258,7 @@ function requireStage() {
     }
     getElement(_element) {
       let element;
-      if (typeof _element !== 'string' && (0, core_1.isElement)(_element)) {
+      if (typeof _element !== 'string' && (0, utils_1.isElement)(_element)) {
         element = _element;
       } else if (typeof _element === 'string') {
         element = document.getElementById(_element);
@@ -7241,8 +7291,8 @@ function requireStage() {
     onResize(func) {
       // Only listen to window for resize event if width and height are not fixed.
       // This applies if it is set to a percent or auto.
-      if (!(0, core_1.isNumber)(this.settings.width) || !(0, core_1.isNumber)(this.settings.height)) {
-        this.resizeFunc = (0, helpers_1.throttle)(func, 50);
+      if (!(0, utils_1.isNumber)(this.settings.width) || !(0, utils_1.isNumber)(this.settings.height)) {
+        this.resizeFunc = (0, utils_1.throttle)(func, 50);
         window.addEventListener('resize', this.resizeFunc, false);
       }
     }
@@ -7265,7 +7315,7 @@ function requireStage() {
           this.container.style.width = width + 'px';
         }
       } else {
-        if ((0, core_1.isNumber)(width)) {
+        if ((0, utils_1.isNumber)(width)) {
           this.container.style.width = width + 'px';
         } else {
           this.container.style.width = width;
@@ -7278,16 +7328,16 @@ function requireStage() {
           this.container.style.height = height + 'px';
         }
       } else {
-        if ((0, core_1.isNumber)(height)) {
+        if ((0, utils_1.isNumber)(height)) {
           this.container.style.height = height + 'px';
         } else {
           this.container.style.height = height;
         }
       }
-      if (!(0, core_1.isNumber)(width)) {
+      if (!(0, utils_1.isNumber)(width)) {
         width = String(this.container.clientWidth);
       }
-      if (!(0, core_1.isNumber)(height)) {
+      if (!(0, utils_1.isNumber)(height)) {
         height = String(this.container.clientHeight);
       }
       this.containerStyles = window.getComputedStyle(this.container);
@@ -7298,7 +7348,7 @@ function requireStage() {
         bottom: String(parseFloat(this.containerStyles.paddingBottom) || 0)
       };
       // Bounds not set, get them from window
-      const _windowBounds = (0, core_1.windowBounds)();
+      const _windowBounds = (0, utils_1.windowBounds)();
       const bodyStyles = window.getComputedStyle(document.body);
       const bodyPadding = {
         left: String(parseFloat(bodyStyles.paddingLeft) || 0),
@@ -7331,7 +7381,7 @@ function requireStage() {
         box = this.container && this.container.getBoundingClientRect();
       }
       if (!box || !box.width || !box.height) {
-        return (0, core_1.windowBounds)();
+        return (0, utils_1.windowBounds)();
       } else {
         return box;
       }
@@ -7406,6 +7456,7 @@ function requireStage() {
       }
     }
   }
+  stage.Stage = Stage;
   stage.default = Stage;
   return stage;
 }
@@ -7419,6 +7470,7 @@ function requireViews() {
   Object.defineProperty(views, "__esModule", {
     value: true
   });
+  views.Views = void 0;
   class Views {
     constructor(container) {
       this.container = container;
@@ -7572,6 +7624,7 @@ function requireViews() {
       this.hidden = true;
     }
   }
+  views.Views = Views;
   views.default = Views;
   return views;
 }
@@ -7595,11 +7648,10 @@ function requireContents() {
     value: true
   });
   const event_emitter_1 = __importDefault(requireEventEmitter());
-  const core_1 = requireCore();
+  const utils_1 = requireUtils();
   const epubcfi_1 = __importDefault(requireEpubcfi());
   const mapping_1 = __importDefault(requireMapping());
   const replacements_1 = requireReplacements();
-  const constants_1 = requireConstants();
   /**
    * Handles DOM manipulation, queries and events for View contents
    */
@@ -7623,14 +7675,14 @@ function requireContents() {
       this.window = this.document.defaultView;
       this.sectionIndex = sectionIndex || 0;
       this.cfiBase = cfiBase || '';
-      this.epubReadingSystem('epub.js', constants_1.EPUBJS_VERSION);
+      this.epubReadingSystem('epub.js', utils_1.EPUBJS_VERSION);
       this.listeners();
     }
     /**
      * Get DOM events that are listened for and passed along
      */
     static get listenedEvents() {
-      return constants_1.DOM_EVENTS;
+      return utils_1.DOM_EVENTS;
     }
     /**
      * Get or Set width
@@ -7638,7 +7690,7 @@ function requireContents() {
     width(w) {
       // var frame = this.documentElement;
       const frame = this.content;
-      if (w && (0, core_1.isNumber)(w)) {
+      if (w && (0, utils_1.isNumber)(w)) {
         w = w + 'px';
       }
       if (w) {
@@ -7655,7 +7707,7 @@ function requireContents() {
     height(h) {
       // var frame = this.documentElement;
       const frame = this.content;
-      if (h && (0, core_1.isNumber)(h)) {
+      if (h && (0, utils_1.isNumber)(h)) {
         h = h + 'px';
       }
       if (h) {
@@ -7671,7 +7723,7 @@ function requireContents() {
      */
     contentWidth(w) {
       const content = this.content || this.document.body;
-      if (w && (0, core_1.isNumber)(w)) {
+      if (w && (0, utils_1.isNumber)(w)) {
         w = w + 'px';
       }
       if (w) {
@@ -7686,7 +7738,7 @@ function requireContents() {
      */
     contentHeight(h) {
       const content = this.content || this.document.body;
-      if (h && (0, core_1.isNumber)(h)) {
+      if (h && (0, utils_1.isNumber)(h)) {
         h = h + 'px';
       }
       if (h) {
@@ -7701,7 +7753,7 @@ function requireContents() {
       let width;
       const range = this.document.createRange();
       const content = this.content || this.document.body;
-      const border = (0, core_1.borders)(content);
+      const border = (0, utils_1.borders)(content);
       // Select the contents of frame
       range.selectNodeContents(content);
       // get the width of the text content
@@ -7834,7 +7886,7 @@ function requireContents() {
           parsed.scalable = _scalable[1];
         }
       }
-      const settings = (0, core_1.defaults)(options || {}, parsed);
+      const settings = (0, utils_1.defaults)(options || {}, parsed);
       if (options) {
         if (settings.width) {
           newContent.push('width=' + settings.width);
@@ -7874,7 +7926,7 @@ function requireContents() {
      * Event emitter for when the contents has expanded
      */
     expand() {
-      this.emit(constants_1.EVENTS.CONTENTS.EXPAND);
+      this.emit(utils_1.EVENTS.CONTENTS.EXPAND);
     }
     /**
      * Add DOM listeners
@@ -7920,7 +7972,7 @@ function requireContents() {
         if (this.onResize) {
           this.onResize(this._size);
         }
-        this.emit(constants_1.EVENTS.CONTENTS.RESIZE, this._size);
+        this.emit(utils_1.EVENTS.CONTENTS.RESIZE, this._size);
       }
     }
     /**
@@ -8234,7 +8286,7 @@ function requireContents() {
         return;
       }
       this._triggerEvent = this.triggerEvent.bind(this);
-      constants_1.DOM_EVENTS.forEach(eventName => {
+      utils_1.DOM_EVENTS.forEach(eventName => {
         this.document.addEventListener(eventName, this._triggerEvent, false);
       });
     }
@@ -8245,7 +8297,7 @@ function requireContents() {
       if (!this.document) {
         return;
       }
-      constants_1.DOM_EVENTS.forEach(eventName => {
+      utils_1.DOM_EVENTS.forEach(eventName => {
         this.document.removeEventListener(eventName, this._triggerEvent, false);
       });
       this._triggerEvent = undefined;
@@ -8303,8 +8355,8 @@ function requireContents() {
           try {
             // cfirange = this.section.cfiFromRange(range);
             cfirange = new epubcfi_1.default(range, this.cfiBase).toString();
-            this.emit(constants_1.EVENTS.CONTENTS.SELECTED, cfirange);
-            this.emit(constants_1.EVENTS.CONTENTS.SELECTED_RANGE, range);
+            this.emit(utils_1.EVENTS.CONTENTS.SELECTED, cfirange);
+            this.emit(utils_1.EVENTS.CONTENTS.SELECTED_RANGE, range);
           } catch (e) {
             console.error('[Contents] ❌ Error generating CFI from range:', e);
           }
@@ -8356,10 +8408,10 @@ function requireContents() {
      * Apply columns to the contents for pagination
      */
     columns(width, height, columnWidth, gap, dir) {
-      const COLUMN_AXIS = (0, core_1.prefixed)('column-axis');
-      const COLUMN_GAP = (0, core_1.prefixed)('column-gap');
-      const COLUMN_WIDTH = (0, core_1.prefixed)('column-width');
-      const COLUMN_FILL = (0, core_1.prefixed)('column-fill');
+      const COLUMN_AXIS = (0, utils_1.prefixed)('column-axis');
+      const COLUMN_GAP = (0, utils_1.prefixed)('column-gap');
+      const COLUMN_WIDTH = (0, utils_1.prefixed)('column-width');
+      const COLUMN_FILL = (0, utils_1.prefixed)('column-fill');
       const writingModeValue = this.writingMode();
       const axis = typeof writingModeValue === 'string' && writingModeValue.indexOf('vertical') === 0 ? 'vertical' : 'horizontal';
       this.layoutStyle('paginated');
@@ -8473,14 +8525,14 @@ function requireContents() {
      */
     linksHandler() {
       (0, replacements_1.replaceLinks)(this.content, href => {
-        this.emit(constants_1.EVENTS.CONTENTS.LINK_CLICKED, href);
+        this.emit(utils_1.EVENTS.CONTENTS.LINK_CLICKED, href);
       });
     }
     /**
      * Set the writingMode of the text
      */
     writingMode(mode) {
-      const WRITING_MODE = (0, core_1.prefixed)('writing-mode');
+      const WRITING_MODE = (0, utils_1.prefixed)('writing-mode');
       if (mode !== undefined) {
         this.content.style.setProperty(WRITING_MODE, mode);
         return;
@@ -12778,16 +12830,14 @@ function requireRendition() {
     value: true
   });
   rendition.Rendition = void 0;
-  const location_helpers_1 = requireLocationHelpers();
   const event_emitter_1 = __importDefault(requireEventEmitter());
-  const core_1 = requireCore();
+  const utils_1 = requireUtils();
   const hook_1 = __importDefault(requireHook());
   const epubcfi_1 = __importDefault(requireEpubcfi());
   const queue_1 = __importDefault(requireQueue());
   const layout_1 = __importDefault(requireLayout());
   const themes_1 = __importDefault(requireThemes());
   const annotations_1 = __importDefault(requireAnnotations());
-  const constants_1 = requireConstants();
   const default_1 = __importDefault(require_default());
   const prerendering_1 = requirePrerendering();
   /**
@@ -12865,7 +12915,7 @@ function requireRendition() {
       this.location = null;
       // Hold queue until book is opened
       this.q.enqueue(this.book.opened);
-      this.starting = new core_1.defer();
+      this.starting = new utils_1.defer();
       /**
        * @member {promise} started returns after the rendition has started
        * @memberof Rendition
@@ -12946,20 +12996,20 @@ function requireRendition() {
         this.View = this.settings.view;
       }
       // Set up manager event listeners now that manager is created
-      this.manager.on(constants_1.EVENTS.MANAGERS.ADDED, (...args) => {
+      this.manager.on(utils_1.EVENTS.MANAGERS.ADDED, (...args) => {
         const view = args[0];
         this.afterDisplayed(view);
       });
-      this.manager.on(constants_1.EVENTS.MANAGERS.REMOVED, (...args) => {
+      this.manager.on(utils_1.EVENTS.MANAGERS.REMOVED, (...args) => {
         const view = args[0];
         this.afterRemoved(view);
       });
-      this.manager.on(constants_1.EVENTS.MANAGERS.RESIZED, (...args) => {
+      this.manager.on(utils_1.EVENTS.MANAGERS.RESIZED, (...args) => {
         const size = args[0];
         const epubcfi = args[1];
         this.onResized(size, epubcfi);
       });
-      this.manager.on(constants_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, (...args) => {
+      this.manager.on(utils_1.EVENTS.MANAGERS.ORIENTATION_CHANGE, (...args) => {
         const orientation = args[0];
         this.onOrientationChange(orientation);
       });
@@ -12970,13 +13020,13 @@ function requireRendition() {
       this.layout(this.settings.globalLayoutProperties);
       // Manager event listeners are already set up above after manager creation
       // Listen for scroll changes
-      this.manager.on(constants_1.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
+      this.manager.on(utils_1.EVENTS.MANAGERS.SCROLLED, this.reportLocation.bind(this));
       /**
        * Emit that rendering has started
        * @event started
        * @memberof Rendition
        */
-      this.emit(constants_1.EVENTS.RENDITION.STARTED);
+      this.emit(utils_1.EVENTS.RENDITION.STARTED);
       // Start processing queue
       this.starting.resolve();
     }
@@ -13019,7 +13069,7 @@ function requireRendition() {
          * @event attached
          * @memberof Rendition
          */
-        this.emit(constants_1.EVENTS.RENDITION.ATTACHED);
+        this.emit(utils_1.EVENTS.RENDITION.ATTACHED);
       });
     }
     /**
@@ -13047,13 +13097,13 @@ function requireRendition() {
         console.error('[Rendition] display called without a book');
         return Promise.resolve(false);
       }
-      const displaying = new core_1.defer();
+      const displaying = new utils_1.defer();
       const displayed = displaying.promise;
       this.displaying = displaying;
       // Check if this is a book percentage
       // Coerce non-string targets to strings for string-based checks below
       const targetStr = typeof target === 'string' ? target : String(target);
-      if (this.book.locations && this.book.locations.length() && (0, core_1.isFloat)(targetStr)) {
+      if (this.book.locations && this.book.locations.length() && (0, utils_1.isFloat)(targetStr)) {
         target = this.book.locations.cfiFromPercentage(parseFloat(targetStr));
       }
       if (!this.book.spine) {
@@ -13079,7 +13129,7 @@ function requireRendition() {
          * @param {Section} section
          * @memberof Rendition
          */
-        this.emit(constants_1.EVENTS.RENDITION.DISPLAYED, section);
+        this.emit(utils_1.EVENTS.RENDITION.DISPLAYED, section);
         this.reportLocation();
       }, err => {
         /**
@@ -13088,7 +13138,7 @@ function requireRendition() {
          * @param {Section} section
          * @memberof Rendition
          */
-        this.emit(constants_1.EVENTS.RENDITION.DISPLAY_ERROR, err);
+        this.emit(utils_1.EVENTS.RENDITION.DISPLAY_ERROR, err);
       });
       return displayed;
     }
@@ -13103,7 +13153,7 @@ function requireRendition() {
       // style `on` method. Guard before wiring event handlers to avoid runtime
       // TypeErrors (see prerendered views created by BookPreRenderer).
       if (typeof view.on === 'function') {
-        view.on(constants_1.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
+        view.on(utils_1.EVENTS.VIEWS.MARK_CLICKED, (cfiRange, data) => this.triggerMarkEvent(cfiRange, data, view.contents));
       } else {
         console.debug('[Rendition] view does not implement .on, skipping MARK_CLICKED wiring for', view.section?.href);
       }
@@ -13117,10 +13167,10 @@ function requireRendition() {
              * @param {View} view
              * @memberof Rendition
              */
-            this.emit(constants_1.EVENTS.RENDITION.RENDERED, view.section, view);
+            this.emit(utils_1.EVENTS.RENDITION.RENDERED, view.section, view);
           });
         } else {
-          this.emit(constants_1.EVENTS.RENDITION.RENDERED, view.section, view);
+          this.emit(utils_1.EVENTS.RENDITION.RENDERED, view.section, view);
         }
       });
     }
@@ -13136,7 +13186,7 @@ function requireRendition() {
          * @param {View} view
          * @memberof Rendition
          */
-        this.emit(constants_1.EVENTS.RENDITION.REMOVED, view.section, view);
+        this.emit(utils_1.EVENTS.RENDITION.REMOVED, view.section, view);
       });
     }
     /**
@@ -13151,7 +13201,7 @@ function requireRendition() {
        * @param {string} epubcfi (optional)
        * @memberof Rendition
        */
-      this.emit(constants_1.EVENTS.RENDITION.RESIZED, {
+      this.emit(utils_1.EVENTS.RENDITION.RESIZED, {
         width: size.width,
         height: size.height
       }, epubcfi);
@@ -13175,7 +13225,7 @@ function requireRendition() {
        * @param {string} orientation
        * @memberof Rendition
        */
-      this.emit(constants_1.EVENTS.RENDITION.ORIENTATION_CHANGE, orientation);
+      this.emit(utils_1.EVENTS.RENDITION.ORIENTATION_CHANGE, orientation);
     }
     /**
      * Trigger a resize of the views
@@ -13274,8 +13324,8 @@ function requireRendition() {
         this._layout = new layout_1.default(settings);
         this._layout.spread(settings.spread, this.settings.minSpreadWidth);
         // this.mapping = new Mapping(this._layout.props);
-        this._layout.on(constants_1.EVENTS.LAYOUT.UPDATED, (props, changed) => {
-          this.emit(constants_1.EVENTS.RENDITION.LAYOUT, props, changed);
+        this._layout.on(utils_1.EVENTS.LAYOUT.UPDATED, (props, changed) => {
+          this.emit(utils_1.EVENTS.RENDITION.LAYOUT, props, changed);
         });
       }
       if (this.manager && this._layout) {
@@ -13339,7 +13389,7 @@ function requireRendition() {
               return;
             }
             this.location = located;
-            this.emit(constants_1.EVENTS.RENDITION.RELOCATED, this.location);
+            this.emit(utils_1.EVENTS.RENDITION.RELOCATED, this.location);
           }
         });
       });
@@ -13360,10 +13410,10 @@ function requireRendition() {
         if (_cfi.spinePos === view.index) return true;
       });
       // Should only ever return 1 item
-      if (found.length) {
-        return found[0].contents.range(_cfi, ignoreClass);
+      if (found.length > 0) {
+        return found[0].contents.range(cfi, ignoreClass);
       }
-      return undefined;
+      return null;
     }
     /**
      * Creates a Rendition#locationRange from location
@@ -13374,8 +13424,8 @@ function requireRendition() {
       const start = location[0];
       const end = location[location.length - 1];
       const located = {
-        start: (0, location_helpers_1.buildEnrichedLocationPoint)(start, 'start', this.book),
-        end: (0, location_helpers_1.buildEnrichedLocationPoint)(end, 'end', this.book)
+        start: (0, utils_1.buildEnrichedLocationPoint)(start, 'start', this.book),
+        end: (0, utils_1.buildEnrichedLocationPoint)(end, 'end', this.book)
       };
       if (end.index === this.book.spine.last()?.index && located.end.displayed.page >= located.end.displayed.total) {
         located.atEnd = true;
@@ -13398,10 +13448,10 @@ function requireRendition() {
      * Pass the events from a view's Contents
      */
     passEvents(contents) {
-      constants_1.DOM_EVENTS.forEach(e => {
+      utils_1.DOM_EVENTS.forEach(e => {
         contents.on(e, ev => this.triggerViewEvent(ev, contents));
       });
-      contents.on(constants_1.EVENTS.CONTENTS.SELECTED, e => {
+      contents.on(utils_1.EVENTS.CONTENTS.SELECTED, e => {
         this.triggerSelectedEvent(e, contents);
       });
     }
@@ -13415,13 +13465,13 @@ function requireRendition() {
      * Emit a selection event's CFI Range passed from a a view
      */
     triggerSelectedEvent(cfirange, contents) {
-      this.emit(constants_1.EVENTS.RENDITION.SELECTED, cfirange, contents);
+      this.emit(utils_1.EVENTS.RENDITION.SELECTED, cfirange, contents);
     }
     /**
      * Emit a markClicked event with the cfiRange and data from a mark
      */
     triggerMarkEvent(cfiRange, data, contents) {
-      this.emit(constants_1.EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
+      this.emit(utils_1.EVENTS.RENDITION.MARK_CLICKED, cfiRange, data, contents);
     }
     /**
      * Hook to adjust images to fit in columns
@@ -13469,7 +13519,7 @@ function requireRendition() {
      */
     handleLinks(contents) {
       if (contents) {
-        contents.on(constants_1.EVENTS.CONTENTS.LINK_CLICKED, href => {
+        contents.on(utils_1.EVENTS.CONTENTS.LINK_CLICKED, href => {
           const relative = this.book.path.relative(href);
           this.display(relative);
         });
@@ -13477,7 +13527,7 @@ function requireRendition() {
     }
     views() {
       const views = this.manager ? this.manager.views : undefined;
-      return views || [];
+      return views;
     }
     /**
      * Hook to handle injecting stylesheet before
@@ -18811,7 +18861,7 @@ function requireStore() {
   Object.defineProperty(store, "__esModule", {
     value: true
   });
-  const core_1 = requireCore();
+  const utils_1 = requireUtils();
   const request_1 = __importDefault(requireRequest());
   const mime_1 = __importDefault(requireMime());
   const path_1 = __importDefault(requirePath());
@@ -18961,7 +19011,7 @@ function requireStore() {
         response = this.getText(url);
       }
       return response.then(r => {
-        const deferred = new core_1.defer();
+        const deferred = new utils_1.defer();
         let result;
         if (r) {
           result = this.handleResponse(r, type);
@@ -18982,14 +19032,14 @@ function requireStore() {
       if (type === 'json') {
         return JSON.parse(response);
       }
-      if ((0, core_1.isXml)(type)) {
-        return (0, core_1.parse)(response, 'text/xml');
+      if ((0, utils_1.isXml)(type)) {
+        return (0, utils_1.parse)(response, 'text/xml');
       }
       if (type === 'xhtml') {
-        return (0, core_1.parse)(response, 'application/xhtml+xml');
+        return (0, utils_1.parse)(response, 'application/xhtml+xml');
       }
       if (type === 'html' || type === 'htm') {
-        return (0, core_1.parse)(response, 'text/html');
+        return (0, utils_1.parse)(response, 'text/html');
       }
       return response;
     }
@@ -19013,7 +19063,7 @@ function requireStore() {
       const encodedUrl = window.encodeURIComponent(url);
       mimeType = mimeType || mime_1.default.lookup(url);
       return this.storage.getItem(encodedUrl).then(function (uint8array) {
-        const deferred = new core_1.defer();
+        const deferred = new utils_1.defer();
         const reader = new FileReader();
         if (!uint8array) return;
         const blob = new Blob([uint8array], {
@@ -19034,7 +19084,7 @@ function requireStore() {
       const encodedUrl = window.encodeURIComponent(url);
       mimeType = mimeType || mime_1.default.lookup(url);
       return this.storage.getItem(encodedUrl).then(uint8array => {
-        const deferred = new core_1.defer();
+        const deferred = new utils_1.defer();
         const reader = new FileReader();
         if (!uint8array) return;
         const blob = new Blob([uint8array], {
@@ -19051,7 +19101,7 @@ function requireStore() {
      * Create a Url from a stored item
      */
     createUrl(url, options) {
-      const deferred = new core_1.defer();
+      const deferred = new utils_1.defer();
       const _URL = window.URL || window.webkitURL;
       const useBase64 = options && options.base64;
       if (url in this.urlCache) {

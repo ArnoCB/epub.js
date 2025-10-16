@@ -1,7 +1,6 @@
 import Contents from './contents';
 import Layout from './layout';
-import { Axis } from './types';
-import type { Direction } from './types';
+import { Axis, Direction } from './enums';
 import type { ViewParameter } from './types/mapping';
 /**
  * Map text locations to CFI range

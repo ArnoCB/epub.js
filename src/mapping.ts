@@ -1,9 +1,8 @@
 import Contents from './contents';
 import EpubCFI from './epubcfi';
 import Layout from './layout';
-import { Axis } from './types';
+import { Axis, Direction } from './enums';
 import { nodeBounds } from './utils/core';
-import type { Direction } from './types';
 import type { ViewParameter } from './types/mapping';
 
 /**

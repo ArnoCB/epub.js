@@ -1,6 +1,6 @@
 import type Section from '../section';
 import type { View } from '../managers/helpers/views';
-import type { defer } from '../utils/core';
+import type { defer } from '../utils';
 import type { PageMapEntry } from './page-map-entry';
 
 export interface PreRenderedChapter {

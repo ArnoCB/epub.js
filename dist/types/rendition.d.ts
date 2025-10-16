@@ -1,16 +1,15 @@
-import type { RenditionOptions } from './types';
-import type { DisplayedLocation, RenditionHooks, Flow, Spread, ViewManager, ViewManagerConstructor } from './types';
+import type { DisplayedLocation, RenditionHooks, ViewManager, ViewManagerConstructor, RenditionOptions } from './types';
 import EventEmitter from 'event-emitter';
-import { defer } from './utils/core';
+import { defer } from './utils';
 import EpubCFI from './epubcfi';
 import Queue from './utils/queue';
 import Layout from './layout';
 import Themes from './themes';
 import Annotations from './annotations';
 import Book from './book';
-import { View } from './managers/helpers/views';
+import Views, { View } from './managers/helpers/views';
 import Contents from './contents';
-import { Direction } from './types/common';
+import type { Direction, Flow, Spread } from './enums';
 type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off' | 'once'>;
 /**
  * Displays an Epub as a series of Views for each Section.
@@ -158,7 +157,7 @@ export declare class Rendition implements EventEmitterMethods {
      * Get a Range from a Visible CFI
      * (Used outside of this package)
      */
-    getRange(cfi: string, ignoreClass: string): Range | undefined;
+    getRange(cfi: string, ignoreClass?: string): Range | null;
     /**
      * Creates a Rendition#locationRange from location
      * passed by the Manager
@@ -192,7 +191,7 @@ export declare class Rendition implements EventEmitterMethods {
      * Hook to handle link clicks in rendered content
      */
     private handleLinks;
-    views(): View[];
+    views(): Views | undefined;
     /**
      * Hook to handle injecting stylesheet before
      * a Section is serialized

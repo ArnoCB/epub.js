@@ -4,7 +4,7 @@
  * Used by view-renderer and related logic.
  */
 
-import type { Axis, Direction, Flow } from './common';
+import type { Axis, Direction, Flow } from '../enums';
 import type Layout from '../layout';
 
 export interface ViewRendererSettings {

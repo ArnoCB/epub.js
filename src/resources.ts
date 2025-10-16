@@ -1,5 +1,9 @@
-import { substitute } from './utils/replacements';
-import { createBase64Url, createBlobUrl, blob2base64 } from './utils/core';
+import {
+  createBase64Url,
+  createBlobUrl,
+  blob2base64,
+  substitute,
+} from './utils';
 import Url from './utils/url';
 import mime from './utils/mime';
 import Path from './utils/path';

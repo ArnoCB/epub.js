@@ -1,5 +1,5 @@
 // Setup polyfills for Node.js environment
-import type { Direction, Flow, LayoutType, Orientation, Spread } from './types';
+import type { Direction, Flow, LayoutType, Orientation, Spread } from './enums';
 import { TextEncoder, TextDecoder } from 'util';
 import Packaging from './packaging';
 Object.assign(global, { TextDecoder, TextEncoder });

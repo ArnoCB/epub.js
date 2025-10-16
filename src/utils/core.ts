@@ -4,8 +4,6 @@
 
 /**
  * Vendor prefixed requestAnimationFrame
- * @returns {function} requestAnimationFrame
- * @memberof Core
  */
 export const requestAnimationFrame =
   typeof window !== 'undefined' ? window.requestAnimationFrame : undefined;
@@ -23,7 +21,6 @@ if (typeof URL !== 'undefined') {
 /**
  * Generates a UUID
  * based on: http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
- * @memberof Core
  */
 export function uuid(): string {
   let d = new Date().getTime();
@@ -40,7 +37,6 @@ export function uuid(): string {
 
 /**
  * Gets the height of a document
- * @memberof Core
  */
 export function documentHeight() {
   return Math.max(
@@ -54,22 +50,17 @@ export function documentHeight() {
 
 /**
  * Checks if a node is an element
- * @memberof Core
  */
 export function isElement(obj: Node | undefined): obj is Element {
   return !!(obj && obj.nodeType === Node.ELEMENT_NODE);
 }
 
-/**
- * @memberof Core
- */
 export function isNumber(n: unknown): n is number {
   return typeof n === 'number' && isFinite(n);
 }
 
 /**
  * Checks if a value is a float
- * @memberof Core
  */
 export function isFloat(n: unknown): boolean {
   if (typeof n === 'number') {
@@ -110,9 +101,6 @@ export function prefixed(unprefixed: string): string {
 
 /**
  * Apply defaults to an object
- * @param {object} obj
- * @returns {object}
- * @memberof Core
  */
 export function defaults<T extends object>(
   obj: T,
@@ -129,9 +117,6 @@ export function defaults<T extends object>(
 
 /**
  * Extend properties of an object
- * @param {object} target
- * @returns {object}
- * @memberof Core
  */
 export function extend<T extends object, S extends object>(
   target: T,
@@ -153,7 +138,6 @@ export function extend<T extends object, S extends object>(
 /**
  * Fast quicksort insert for sorted array -- based on:
  *  http://stackoverflow.com/questions/1344500/efficient-way-to-insert-a-number-into-a-sorted-array-of-numbers
- * @memberof Core
  */
 export function insert<T>(
   item: T,
@@ -167,7 +151,6 @@ export function insert<T>(
 
 /**
  * Finds where something would fit into a sorted array
- * @memberof Core
  */
 export function locationOf<T>(
   item: T,
@@ -210,7 +193,6 @@ export function locationOf<T>(
 /**
  * Finds index of something in a sorted array
  * Returns -1 if not found
- * @memberof Core
  */
 export function indexOfSorted<T>(
   item: T,
@@ -302,7 +284,6 @@ export function bounds(el: Element): { width: number; height: number } {
 /**
  * Find the bounds of an element
  * taking padding, margin and borders into account
- * @memberof Core
  */
 export function borders(el: Element): { width: number; height: number } {
   const style = window.getComputedStyle(el);
@@ -416,8 +397,6 @@ export function createBlobUrl(
 
 /**
  * Remove a blob url
- * @param {string} url
- * @memberof Core
  */
 export function revokeBlobUrl(url: string) {
   if (!_URL) return;
@@ -534,7 +513,6 @@ export function walk(node: Node, callback: (node: Node) => boolean): boolean {
 
 /**
  * Convert a blob to a base64 encoded string
- * @memberof Core
  */
 export function blob2base64(blob: Blob): Promise<string> {
   return new Promise(function (resolve) {
@@ -551,7 +529,6 @@ export function blob2base64(blob: Blob): Promise<string> {
  * @param {element} html
  * @param element element type to find
  * @param type epub type to find
- * @memberof Core
  */
 export function querySelectorByType(
   html: Element,
@@ -563,8 +540,6 @@ export function querySelectorByType(
 
 /**
  * Find direct descendents of an element
-
- * @memberof Core
  */
 export function findChildren(el: Element): ChildNode[] {
   const result: ChildNode[] = [];

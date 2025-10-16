@@ -1,4 +1,4 @@
-import type { Axis, Flow, Direction } from './common';
+import type { Axis, Flow, Direction } from '../enums';
 import type Layout from '../layout';
 
 export interface ExtendedIFrameElement extends HTMLIFrameElement {

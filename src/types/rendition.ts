@@ -1,12 +1,13 @@
-// Layout-related properties for metadata and settings
 import type {
   Flow,
   Spread,
   Direction,
   Orientation,
   LayoutType,
-} from './common';
+} from '../enums';
 import type Hook from '../utils/hook';
+import type { ViewManager } from './view-manager-helpers';
+import type { View } from '../managers';
 
 export type LayoutProperties = {
   layout?: LayoutType;

@@ -9,7 +9,8 @@
  * @see src/spine.ts
  */
 import type { PackagingSpineItem } from './packaging';
-import type { SectionItem, Section } from './section';
+import type { SectionItem } from './section';
+import type { Section } from '../section';
 
 export type UnpackingSpineItem = PackagingSpineItem &
   Partial<Omit<SectionItem, 'next' | 'prev'>> & {
