@@ -1,8 +1,7 @@
-import { EventEmitterMethods } from './types';
+import type { EventEmitterMethods, Viewport } from './types';
 import EpubCFI from './epubcfi';
 import Layout from './layout';
 import Section from './section';
-import type { Viewport } from './types';
 import { Direction } from './enums';
 /**
  * Handles DOM manipulation, queries and events for View contents

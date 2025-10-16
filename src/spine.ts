@@ -4,12 +4,12 @@ import Section from './section';
 import type {
   PackagingSpineItem,
   PackagingManifestObject,
+  ResolverFunction,
   SectionItem,
   UnpackingSpineItem,
 } from './types';
 import { replaceBase, replaceCanonical, replaceMeta } from './utils';
 import Packaging from './packaging';
-import { ResolverFunction } from './types';
 
 /**
  * A collection of Spine Items

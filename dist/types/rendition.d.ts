@@ -1,5 +1,4 @@
-import type { DisplayedLocation, RenditionHooks, ViewManager, ViewManagerConstructor, RenditionOptions } from './types';
-import { EventEmitterMethods } from './types';
+import type { DisplayedLocation, EventEmitterMethods, RenditionHooks, ViewManager, ViewManagerConstructor, RenditionOptions } from './types';
 import { defer } from './utils';
 import EpubCFI from './epubcfi';
 import Queue from './utils/queue';

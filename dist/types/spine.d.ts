@@ -1,9 +1,8 @@
 import EpubCFI from './epubcfi';
 import Hook from './utils/hook';
 import Section from './section';
-import type { PackagingManifestObject, UnpackingSpineItem } from './types';
+import type { PackagingManifestObject, ResolverFunction, UnpackingSpineItem } from './types';
 import Packaging from './packaging';
-import { ResolverFunction } from './types';
 /**
  * A collection of Spine Items
  */

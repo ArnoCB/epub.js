@@ -1,6 +1,7 @@
 import type {
   LocationPoint,
   DisplayedLocation,
+  EventEmitterMethods,
   RenditionHooks,
   ViewManager,
   ViewManagerConstructor,
@@ -9,7 +10,6 @@ import type {
   LayoutProperties,
 } from './types';
 import EventEmitter from 'event-emitter';
-import { EventEmitterMethods } from './types';
 import {
   defer,
   isFloat,

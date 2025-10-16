@@ -1,7 +1,6 @@
-import { sprint, locationOf, defer } from './utils/core';
+import { sprint, locationOf, defer, EVENTS } from './utils';
 import Queue from './utils/queue';
 import EpubCFI from './epubcfi';
-import { EVENTS } from './utils/constants';
 import EventEmitter from 'event-emitter';
 import Spine from './spine';
 import Section from './section';

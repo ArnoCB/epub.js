@@ -1,14 +1,12 @@
-import type { ViewManager } from '../../types';
-import EventEmitter from 'event-emitter';
+import type { ViewManager, EventEmitterMethods } from '../../types';
 import Layout from '../../layout';
 import { View } from './views';
 import Contents from '../../contents';
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
-declare class Snap implements EventEmitterMethods {
+declare class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
     private isTouchEvent;
-    emit: EventEmitter['emit'];
-    on: EventEmitter['on'];
-    off: EventEmitter['off'];
+    emit: EventEmitterMethods['emit'];
+    on: EventEmitterMethods['on'];
+    off: EventEmitterMethods['off'];
     touchCanceler: boolean;
     resizeCanceler: boolean;
     snapping: boolean;

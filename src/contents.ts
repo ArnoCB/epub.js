@@ -1,5 +1,5 @@
 import EventEmitter from 'event-emitter';
-import { EventEmitterMethods } from './types';
+import type { EventEmitterMethods, Viewport } from './types';
 import {
   isNumber,
   prefixed,
@@ -14,7 +14,6 @@ import Mapping from './mapping';
 import { replaceLinks } from './utils/replacements';
 import Layout from './layout';
 import Section from './section';
-import type { Viewport } from './types';
 import { Axis, Direction } from './enums';
 
 /**

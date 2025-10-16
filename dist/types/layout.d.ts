@@ -1,8 +1,7 @@
-import { EventEmitterMethods } from './types';
 import Section from './section';
 import Contents from './contents';
 import { Flow, Axis, Spread } from './enums';
-import type { LayoutSettings, LayoutProps } from './types';
+import type { EventEmitterMethods, LayoutSettings, LayoutProps } from './types';
 /**
  * Figures out the CSS values to apply for a layout
  * @param {string} [settings.layout='reflowable']

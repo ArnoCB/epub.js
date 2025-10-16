@@ -1,4 +1,4 @@
-import type { NavItem, LandmarkItem, RawNavItem } from './types/navigation';
+import type { NavItem, LandmarkItem, RawNavItem } from './types';
 
 /**
  * Navigation Parser

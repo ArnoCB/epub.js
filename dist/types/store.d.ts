@@ -1,15 +1,12 @@
 import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
 import Resources from './resources';
-import type { BookRequestFunction } from './types/book';
-type EventEmitterMethods = Pick<EventEmitter, 'on'>;
+import type { BookRequestFunction, EventEmitterMethods } from './types';
 /**
  * Handles saving and requesting files from local storage
- * @param {string} name This should be the name of the application for modals
- * @param {function} [requester]
- * @param {function} [resolver]
+ * @param name This should be the name of the application for modals
  */
-declare class Store implements EventEmitterMethods {
+declare class Store implements Pick<EventEmitterMethods, 'on'> {
     on: EventEmitter['on'];
     storage: typeof localforage | undefined;
     urlCache: Record<string, string>;

@@ -2,7 +2,7 @@ import Contents from './contents';
 import EpubCFI from './epubcfi';
 import Layout from './layout';
 import { Axis, Direction } from './enums';
-import { nodeBounds } from './utils/core';
+import { nodeBounds } from './utils';
 import type { ViewParameter } from './types/mapping';
 
 /**

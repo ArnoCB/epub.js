@@ -4346,10 +4346,9 @@ function requireLocations() {
     value: true
   });
   locations.Locations = void 0;
-  const core_1 = requireCore();
+  const utils_1 = requireUtils();
   const queue_1 = __importDefault(requireQueue());
   const epubcfi_1 = __importDefault(requireEpubcfi());
-  const constants_1 = requireConstants();
   const event_emitter_1 = __importDefault(requireEventEmitter());
   /**
    * Find Locations for a Book
@@ -4411,7 +4410,7 @@ function requireLocations() {
     async process(section) {
       // Section.load resolves with the section contents (an Element), not the full Document
       return section.load(this.request).then(contents => {
-        const completed = new core_1.defer();
+        const completed = new utils_1.defer();
         if (!contents) {
           // Nothing loaded for this section
           completed.resolve([]);
@@ -4492,7 +4491,7 @@ function requireLocations() {
         prev = textNode;
         return undefined;
       };
-      (0, core_1.sprint)(body, parser);
+      (0, utils_1.sprint)(body, parser);
       // Close remaining
       if (range && range.startContainer && prev) {
         range.endContainer = prev;
@@ -4543,7 +4542,7 @@ function requireLocations() {
       }
       // Section.load resolves with the section contents (an Element), not the full Document
       return section.load(this.request).then(contents => {
-        const completed = new core_1.defer();
+        const completed = new utils_1.defer();
         // Use documentElement for parseWords
         if (!contents) {
           completed.resolve([]);
@@ -4631,7 +4630,7 @@ function requireLocations() {
         }
         return undefined;
       };
-      (0, core_1.sprint)(body, parser);
+      (0, utils_1.sprint)(body, parser);
       return locations;
     }
     /**
@@ -4653,7 +4652,7 @@ function requireLocations() {
       if (this.epubcfi === undefined) {
         throw new Error('EpubCFI is not defined');
       }
-      const loc = (0, core_1.locationOf)(cfi, this._locations, this.epubcfi.compare);
+      const loc = (0, utils_1.locationOf)(cfi, this._locations, this.epubcfi.compare);
       if (this.total === undefined) {
         return -1;
       }
@@ -4757,7 +4756,7 @@ function requireLocations() {
       } else {
         loc = curr;
       }
-      this.emit(constants_1.EVENTS.LOCATIONS.CHANGED, {
+      this.emit(utils_1.EVENTS.LOCATIONS.CHANGED, {
         percentage: this.percentageFromLocation(loc)
       });
     }
@@ -6027,8 +6026,7 @@ function requireLayout() {
   Object.defineProperty(layout, "__esModule", {
     value: true
   });
-  const core_1 = requireCore();
-  const constants_1 = requireConstants();
+  const utils_1 = requireUtils();
   const event_emitter_1 = __importDefault(requireEventEmitter());
   /**
    * Figures out the CSS values to apply for a layout
@@ -6216,8 +6214,8 @@ function requireLayout() {
         }
       });
       if (Object.keys(props).length > 0) {
-        const newProps = (0, core_1.extend)(this.props, props);
-        this.emit(constants_1.EVENTS.LAYOUT.UPDATED, newProps, props);
+        const newProps = (0, utils_1.extend)(this.props, props);
+        this.emit(utils_1.EVENTS.LAYOUT.UPDATED, newProps, props);
       }
     }
   }
@@ -6800,7 +6798,7 @@ function requireMapping() {
   });
   mapping.Mapping = void 0;
   const epubcfi_1 = __importDefault(requireEpubcfi());
-  const core_1 = requireCore();
+  const utils_1 = requireUtils();
   /**
    * Map text locations to CFI range
    * @param {boolean} [dev] toggle developer highlighting
@@ -6909,7 +6907,7 @@ function requireMapping() {
         if (!$el) break;
         found = this.walk($el, node => {
           let left, right, top, bottom;
-          const elPos = (0, core_1.nodeBounds)(node);
+          const elPos = (0, utils_1.nodeBounds)(node);
           if (this.horizontal && this.direction === 'ltr') {
             left = this.horizontal ? elPos.left : elPos.top;
             right = this.horizontal ? elPos.right : elPos.bottom;
@@ -6966,7 +6964,7 @@ function requireMapping() {
         if (!$el) break;
         found = this.walk($el, node => {
           let left, right, top, bottom;
-          const elPos = (0, core_1.nodeBounds)(node);
+          const elPos = (0, utils_1.nodeBounds)(node);
           if (this.horizontal && this.direction === 'ltr') {
             left = Math.round(elPos.left);
             right = Math.round(elPos.right);
@@ -18846,9 +18844,7 @@ function requireStore() {
   const localforage_1 = __importDefault(require$$5);
   /**
    * Handles saving and requesting files from local storage
-   * @param {string} name This should be the name of the application for modals
-   * @param {function} [requester]
-   * @param {function} [resolver]
+   * @param name This should be the name of the application for modals
    */
   class Store {
     constructor(name, requester, resolver) {
@@ -19220,7 +19216,6 @@ function requireBook() {
   const epubcfi_1 = __importDefault(requireEpubcfi());
   const store_1 = __importDefault(requireStore());
   const displayoptions_1 = __importDefault(requireDisplayoptions());
-  const constants_1 = requireConstants();
   const epub_enums_1 = requireEpubEnums();
   const CONTAINER_PATH = 'META-INF/container.xml';
   const IBOOKS_DISPLAY_OPTIONS_PATH = 'META-INF/com.apple.ibooks.display-options.xml';
@@ -19308,7 +19303,7 @@ function requireBook() {
       if (url) {
         this.open(url, this.settings.openAs).catch(() => {
           const err = new Error('Cannot load book at ' + url);
-          this.emit(constants_1.EVENTS.BOOK.OPEN_FAILED, err);
+          this.emit(utils_1.EVENTS.BOOK.OPEN_FAILED, err);
         });
       }
     }
@@ -19727,7 +19722,7 @@ function requireBook() {
      */
     key(identifier) {
       const ident = identifier || this.packaging?.metadata.identifier || this.url?.filename;
-      return `epubjs:${constants_1.EPUBJS_VERSION}:${ident}`;
+      return `epubjs:${utils_1.EPUBJS_VERSION}:${ident}`;
     }
     /**
      * Apply iBooks display options overrides to packaging metadata
@@ -19851,14 +19846,14 @@ function requireEpub() {
   epub$1.Contents = contents_1.default;
   const utils = __importStar(requireCore());
   epub$1.utils = utils;
-  const constants_1 = requireConstants();
+  const utils_1 = requireUtils();
   const ePub = function (url, options) {
     return new book_1.default(url, options);
   };
   // Attach version and helpers like the original JS entry did
-  ePub.VERSION = constants_1.EPUBJS_VERSION;
+  ePub.VERSION = utils_1.EPUBJS_VERSION;
   if (typeof commonjsGlobal !== 'undefined') {
-    commonjsGlobal.EPUBJS_VERSION = constants_1.EPUBJS_VERSION;
+    commonjsGlobal.EPUBJS_VERSION = utils_1.EPUBJS_VERSION;
   }
   ePub.Book = book_1.default;
   ePub.Rendition = rendition_1.default;

@@ -1,4 +1,4 @@
-import type { ViewManager } from '../../types';
+import type { ViewManager, EventEmitterMethods } from '../../types';
 import { extend, defer } from '../../utils/core';
 import { EVENTS } from '../../utils/constants';
 import EventEmitter from 'event-emitter';
@@ -26,15 +26,13 @@ const EASING_EQUATIONS = {
   },
 };
 
-type EventEmitterMethods = Pick<EventEmitter, 'emit' | 'on' | 'off'>;
-
-class Snap implements EventEmitterMethods {
+class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
   private isTouchEvent(e: Event): boolean {
     return e instanceof TouchEvent;
   }
-  emit!: EventEmitter['emit'];
-  on!: EventEmitter['on'];
-  off!: EventEmitter['off'];
+  emit!: EventEmitterMethods['emit'];
+  on!: EventEmitterMethods['on'];
+  off!: EventEmitterMethods['off'];
 
   touchCanceler!: boolean;
   resizeCanceler!: boolean;
@@ -191,19 +189,19 @@ class Snap implements EventEmitterMethods {
 
     if (this._onTouchStart) {
       this.scroller.removeEventListener('touchstart', this._onTouchStart);
-      this.off('touchstart', this._onTouchStart);
+      this.off!('touchstart', this._onTouchStart);
     }
     this._onTouchStart = undefined;
 
     if (this._onTouchMove) {
       this.scroller.removeEventListener('touchmove', this._onTouchMove);
-      this.off('touchmove', this._onTouchMove);
+      this.off!('touchmove', this._onTouchMove);
     }
     this._onTouchMove = undefined;
 
     if (this._onTouchEnd) {
       this.scroller.removeEventListener('touchend', this._onTouchEnd);
-      this.off('touchend', this._onTouchEnd);
+      this.off!('touchend', this._onTouchEnd);
     }
     this._onTouchEnd = undefined;
 

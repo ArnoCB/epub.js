@@ -9,7 +9,13 @@ import type {
   RenditionOptions,
 } from './types';
 import EventEmitter from 'event-emitter';
-import { extend, defer, getValidOrDefault } from './utils';
+import {
+  extend,
+  defer,
+  getValidOrDefault,
+  EPUBJS_VERSION,
+  EVENTS,
+} from './utils';
 import Url from './utils/url';
 import Path from './utils/path';
 import Spine from './spine';
@@ -25,7 +31,6 @@ import request from './utils/request';
 import EpubCFI from './epubcfi';
 import Store from './store';
 import DisplayOptions from './displayoptions';
-import { EPUBJS_VERSION, EVENTS } from './utils/constants';
 import { Section } from './section';
 import JSZip from 'jszip';
 import { Spread, DEFAULT_SPREAD } from './enums/epub-enums';
