@@ -587,6 +587,81 @@
 		return eventEmitter.exports;
 	}
 
+	var utils = {};
+
+	var constants = {};
+
+	var hasRequiredConstants;
+	function requireConstants() {
+	  if (hasRequiredConstants) return constants;
+	  hasRequiredConstants = 1;
+	  Object.defineProperty(constants, "__esModule", {
+	    value: true
+	  });
+	  constants.EVENTS = constants.DOM_EVENTS = constants.EPUBJS_VERSION = void 0;
+	  constants.EPUBJS_VERSION = '0.3';
+	  // Dom events to listen for
+	  constants.DOM_EVENTS = ['keydown', 'keyup', 'keypressed', 'mouseup', 'mousedown', 'mousemove', 'click', 'touchend', 'touchstart', 'touchmove'];
+	  constants.EVENTS = {
+	    BOOK: {
+	      OPEN_FAILED: 'openFailed'
+	    },
+	    CONTENTS: {
+	      EXPAND: 'expand',
+	      RESIZE: 'resize',
+	      SELECTED: 'selected',
+	      SELECTED_RANGE: 'selectedRange',
+	      LINK_CLICKED: 'linkClicked'
+	    },
+	    LOCATIONS: {
+	      CHANGED: 'changed'
+	    },
+	    MANAGERS: {
+	      RESIZE: 'resize',
+	      RESIZED: 'resized',
+	      ORIENTATION_CHANGE: 'orientationchange',
+	      ADDED: 'added',
+	      SCROLL: 'scroll',
+	      SCROLLED: 'scrolled',
+	      REMOVED: 'removed'
+	    },
+	    VIEWS: {
+	      AXIS: 'axis',
+	      WRITING_MODE: 'writingMode',
+	      LOAD_ERROR: 'loaderror',
+	      RENDERED: 'rendered',
+	      RESIZED: 'resized',
+	      DISPLAYED: 'displayed',
+	      SHOWN: 'shown',
+	      HIDDEN: 'hidden',
+	      MARK_CLICKED: 'markClicked'
+	    },
+	    RENDITION: {
+	      STARTED: 'started',
+	      ATTACHED: 'attached',
+	      DISPLAYED: 'displayed',
+	      DISPLAY_ERROR: 'displayerror',
+	      RENDERED: 'rendered',
+	      REMOVED: 'removed',
+	      RESIZED: 'resized',
+	      ORIENTATION_CHANGE: 'orientationchange',
+	      LOCATION_CHANGED: 'locationChanged',
+	      RELOCATED: 'relocated',
+	      MARK_CLICKED: 'markClicked',
+	      SELECTED: 'selected',
+	      LAYOUT: 'layout'
+	    },
+	    LAYOUT: {
+	      UPDATED: 'updated'
+	    },
+	    ANNOTATION: {
+	      ATTACH: 'attach',
+	      DETACH: 'detach'
+	    }
+	  };
+	  return constants;
+	}
+
 	var core = {};
 
 	var hasRequiredCore;
@@ -1112,7 +1187,388 @@
 	  return core;
 	}
 
-	var url = {};
+	var helpers = {};
+
+	var hasRequiredHelpers;
+	function requireHelpers() {
+	  if (hasRequiredHelpers) return helpers;
+	  hasRequiredHelpers = 1;
+	  Object.defineProperty(helpers, "__esModule", {
+	    value: true
+	  });
+	  helpers.indexOfElementNode = indexOfElementNode;
+	  helpers.debounce = debounce;
+	  helpers.throttle = throttle;
+	  /**
+	   * Gets the index of a node in its parent
+	   */
+	  function indexOfNode(node, typeId) {
+	    const parent = node.parentNode;
+	    if (!parent) {
+	      return -1;
+	    }
+	    const children = parent.childNodes;
+	    let sib;
+	    let index = -1;
+	    for (let i = 0; i < children.length; i++) {
+	      sib = children[i];
+	      if (sib.nodeType === typeId) {
+	        index++;
+	      }
+	      if (sib == node) break;
+	    }
+	    return index;
+	  }
+	  function indexOfElementNode(elementNode) {
+	    return indexOfNode(elementNode, 1);
+	  }
+	  /**
+	   * Creates a debounced function that delays invoking the provided function
+	   * until after the specified wait time has elapsed since the last invocation.
+	   */
+	  function debounce(func, wait) {
+	    let timeout;
+	    return function (...args) {
+	      clearTimeout(timeout);
+	      timeout = setTimeout(() => func.apply(this, args), wait);
+	    };
+	  }
+	  /**
+	   * Creates a throttled function that only invokes the provided function
+	   * at most once per every specified wait time.
+	   */
+	  function throttle(func, wait) {
+	    let lastCall = 0;
+	    return function (...args) {
+	      const now = Date.now();
+	      if (now - lastCall >= wait) {
+	        lastCall = now;
+	        func.apply(this, args);
+	      }
+	    };
+	  }
+	  return helpers;
+	}
+
+	var hook = {};
+
+	var hasRequiredHook;
+	function requireHook() {
+	  if (hasRequiredHook) return hook;
+	  hasRequiredHook = 1;
+	  /**
+	   * Hooks allow for injecting functions that must all complete in order before finishing
+	   * They will execute in parallel but all must finish before continuing
+	   * Functions may return a promise if they are async.
+	   * @example this.content = new EPUBJS.Hook(this);
+	   */
+	  Object.defineProperty(hook, "__esModule", {
+	    value: true
+	  });
+	  class Hook {
+	    constructor(context) {
+	      this.context = context || this;
+	      this.hooks = [];
+	    }
+	    /**
+	     * Adds a function to be run before a hook completes
+	     * @example this.content.register(function(){...});
+	     */
+	    register(...tasks) {
+	      for (const task of tasks) {
+	        if (typeof task === 'function') {
+	          this.hooks.push(task);
+	        } else if (Array.isArray(task)) {
+	          for (const fn of task) {
+	            if (typeof fn === 'function') {
+	              this.hooks.push(fn);
+	            }
+	          }
+	        }
+	      }
+	    }
+	    /**
+	     * Removes a function
+	     * @example this.content.deregister(function(){...});
+	     */
+	    deregister(func) {
+	      const idx = this.hooks.indexOf(func);
+	      if (idx !== -1) {
+	        this.hooks.splice(idx, 1);
+	      }
+	    }
+	    /**
+	     * Triggers a hook to run all functions
+	     * @example this.content.trigger(args).then(function(){...});
+	     */
+	    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	    trigger(...args) {
+	      const context = this.context;
+	      const promises = [];
+	      this.hooks.forEach(task => {
+	        try {
+	          const executing = task.apply(context, args);
+	          if (executing && typeof executing === 'object' &&
+	          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	          typeof executing.then === 'function') {
+	            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	            promises.push(executing);
+	          }
+	        } catch (err) {
+	          console.log(err);
+	        }
+	        // Otherwise Task resolves immediately, continue
+	      });
+	      return Promise.all(promises);
+	    }
+	    // Adds a function to be run before a hook completes
+	    list() {
+	      return this.hooks;
+	    }
+	    clear() {
+	      return this.hooks = [];
+	    }
+	  }
+	  hook.default = Hook;
+	  return hook;
+	}
+
+	var locationHelpers = {};
+
+	var hasRequiredLocationHelpers;
+	function requireLocationHelpers() {
+	  if (hasRequiredLocationHelpers) return locationHelpers;
+	  hasRequiredLocationHelpers = 1;
+	  Object.defineProperty(locationHelpers, "__esModule", {
+	    value: true
+	  });
+	  locationHelpers.buildEnrichedLocationPoint = buildEnrichedLocationPoint;
+	  locationHelpers.enrichLocationSide = enrichLocationSide;
+	  locationHelpers.buildLocationPoint = buildLocationPoint;
+	  function buildEnrichedLocationPoint(point, side, book) {
+	    const base = buildLocationPoint(point, side);
+	    enrichLocationSide(side, point, base, book);
+	    return base;
+	  }
+	  /**
+	   * Enriches a DisplayedLocation side (start or end) with location, percentage, and page info.
+	   */
+	  function enrichLocationSide(side, point, locatedSide, book) {
+	    // Location and percentage
+	    const cfi = point.mapping?.[side];
+	    if (cfi && book.locations) {
+	      const location = book.locations.locationFromCfi(cfi);
+	      if (location !== null) {
+	        locatedSide.location = location;
+	        locatedSide.percentage = book.locations.percentageFromLocation(location);
+	      }
+	    }
+	    // Page
+	    if (cfi && book.pageList) {
+	      const page = book.pageList.pageFromCfi(cfi);
+	      if (page !== -1) {
+	        locatedSide.page = page;
+	      }
+	    }
+	  }
+	  /**
+	   * Builds a DisplayedLocation sub-object (start or end) from a LocationPoint and side ('start' | 'end').
+	   */
+	  function buildLocationPoint(point, side) {
+	    return {
+	      index: point.index,
+	      href: point.href,
+	      cfi: point.mapping?.[side] ?? '',
+	      displayed: {
+	        page: side === 'start' ? point.pages?.[0] ?? 1 : point.pages?.[point.pages?.length - 1] ?? 1,
+	        total: point.totalPages ?? 0
+	      }
+	    };
+	  }
+	  return locationHelpers;
+	}
+
+	var mime = {};
+
+	var hasRequiredMime;
+	function requireMime() {
+	  if (hasRequiredMime) return mime;
+	  hasRequiredMime = 1;
+	  /**
+	   * From Zip.js, by Gildas Lormeau
+	   * edited down
+	   */
+	  Object.defineProperty(mime, "__esModule", {
+	    value: true
+	  });
+	  const table = {
+	    application: {
+	      ecmascript: ['es', 'ecma'],
+	      javascript: 'js',
+	      ogg: 'ogx',
+	      pdf: 'pdf',
+	      postscript: ['ps', 'ai', 'eps', 'epsi', 'epsf', 'eps2', 'eps3'],
+	      'rdf+xml': 'rdf',
+	      smil: ['smi', 'smil'],
+	      'xhtml+xml': ['xhtml', 'xht'],
+	      xml: ['xml', 'xsl', 'xsd', 'opf', 'ncx'],
+	      zip: 'zip',
+	      'x-httpd-eruby': 'rhtml',
+	      'x-latex': 'latex',
+	      'x-maker': ['frm', 'maker', 'frame', 'fm', 'fb', 'book', 'fbdoc'],
+	      'x-object': 'o',
+	      'x-shockwave-flash': ['swf', 'swfl'],
+	      'x-silverlight': 'scr',
+	      'epub+zip': 'epub',
+	      'font-tdpfr': 'pfr',
+	      'inkml+xml': ['ink', 'inkml'],
+	      json: 'json',
+	      'jsonml+json': 'jsonml',
+	      'mathml+xml': 'mathml',
+	      'metalink+xml': 'metalink',
+	      mp4: 'mp4s',
+	      // "oebps-package+xml" : "opf",
+	      'omdoc+xml': 'omdoc',
+	      oxps: 'oxps',
+	      'vnd.amazon.ebook': 'azw',
+	      widget: 'wgt',
+	      // "x-dtbncx+xml" : "ncx",
+	      'x-dtbook+xml': 'dtb',
+	      'x-dtbresource+xml': 'res',
+	      'x-font-bdf': 'bdf',
+	      'x-font-ghostscript': 'gsf',
+	      'x-font-linux-psf': 'psf',
+	      'x-font-otf': 'otf',
+	      'x-font-pcf': 'pcf',
+	      'x-font-snf': 'snf',
+	      'x-font-ttf': ['ttf', 'ttc'],
+	      'x-font-type1': ['pfa', 'pfb', 'pfm', 'afm'],
+	      'x-font-woff': 'woff',
+	      'x-mobipocket-ebook': ['prc', 'mobi'],
+	      'x-mspublisher': 'pub',
+	      'x-nzb': 'nzb',
+	      'x-tgif': 'obj',
+	      'xaml+xml': 'xaml',
+	      'xml-dtd': 'dtd',
+	      'xproc+xml': 'xpl',
+	      'xslt+xml': 'xslt',
+	      'internet-property-stream': 'acx',
+	      'x-compress': 'z',
+	      'x-compressed': 'tgz',
+	      'x-gzip': 'gz'
+	    },
+	    audio: {
+	      flac: 'flac',
+	      midi: ['mid', 'midi', 'kar', 'rmi'],
+	      mpeg: ['mpga', 'mpega', 'mp2', 'mp3', 'm4a', 'mp2a', 'm2a', 'm3a'],
+	      mpegurl: 'm3u',
+	      ogg: ['oga', 'ogg', 'spx'],
+	      'x-aiff': ['aif', 'aiff', 'aifc'],
+	      'x-ms-wma': 'wma',
+	      'x-wav': 'wav',
+	      adpcm: 'adp',
+	      mp4: 'mp4a',
+	      webm: 'weba',
+	      'x-aac': 'aac',
+	      'x-caf': 'caf',
+	      'x-matroska': 'mka',
+	      'x-pn-realaudio-plugin': 'rmp',
+	      xm: 'xm',
+	      mid: ['mid', 'rmi']
+	    },
+	    image: {
+	      gif: 'gif',
+	      ief: 'ief',
+	      jpeg: ['jpeg', 'jpg', 'jpe'],
+	      pcx: 'pcx',
+	      png: 'png',
+	      'svg+xml': ['svg', 'svgz'],
+	      tiff: ['tiff', 'tif'],
+	      'x-icon': 'ico',
+	      bmp: 'bmp',
+	      webp: 'webp',
+	      'x-pict': ['pic', 'pct'],
+	      'x-tga': 'tga',
+	      'cis-cod': 'cod'
+	    },
+	    text: {
+	      'cache-manifest': ['manifest', 'appcache'],
+	      css: 'css',
+	      csv: 'csv',
+	      html: ['html', 'htm', 'shtml', 'stm'],
+	      mathml: 'mml',
+	      plain: ['txt', 'text', 'brf', 'conf', 'def', 'list', 'log', 'in', 'bas'],
+	      richtext: 'rtx',
+	      'tab-separated-values': 'tsv',
+	      'x-bibtex': 'bib'
+	    },
+	    video: {
+	      mpeg: ['mpeg', 'mpg', 'mpe', 'm1v', 'm2v', 'mp2', 'mpa', 'mpv2'],
+	      mp4: ['mp4', 'mp4v', 'mpg4'],
+	      quicktime: ['qt', 'mov'],
+	      ogg: 'ogv',
+	      'vnd.mpegurl': ['mxu', 'm4u'],
+	      'x-flv': 'flv',
+	      'x-la-asf': ['lsf', 'lsx'],
+	      'x-mng': 'mng',
+	      'x-ms-asf': ['asf', 'asx', 'asr'],
+	      'x-ms-wm': 'wm',
+	      'x-ms-wmv': 'wmv',
+	      'x-ms-wmx': 'wmx',
+	      'x-ms-wvx': 'wvx',
+	      'x-msvideo': 'avi',
+	      'x-sgi-movie': 'movie',
+	      'x-matroska': ['mpv', 'mkv', 'mk3d', 'mks'],
+	      '3gpp2': '3g2',
+	      h261: 'h261',
+	      h263: 'h263',
+	      h264: 'h264',
+	      jpeg: 'jpgv',
+	      jpm: ['jpm', 'jpgm'],
+	      mj2: ['mj2', 'mjp2'],
+	      'vnd.ms-playready.media.pyv': 'pyv',
+	      'vnd.uvvu.mp4': ['uvu', 'uvvu'],
+	      'vnd.vivo': 'viv',
+	      webm: 'webm',
+	      'x-f4v': 'f4v',
+	      'x-m4v': 'm4v',
+	      'x-ms-vob': 'vob',
+	      'x-smv': 'smv'
+	    }
+	  };
+	  const mimeTypes = function () {
+	    let type, subtype, val, index;
+	    const mimeTypes = {};
+	    for (type in table) {
+	      if (Object.prototype.hasOwnProperty.call(table, type)) {
+	        for (subtype in table[type]) {
+	          if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
+	            val = table[type][subtype];
+	            if (typeof val == 'string') {
+	              mimeTypes[val] = type + '/' + subtype;
+	            } else {
+	              for (index = 0; index < val.length; index++) {
+	                mimeTypes[val[index]] = type + '/' + subtype;
+	              }
+	            }
+	          }
+	        }
+	      }
+	    }
+	    return mimeTypes;
+	  }();
+	  const defaultValue = 'text/plain';
+	  function lookup(filename) {
+	    if (!filename) return defaultValue;
+	    const ext = filename.split('.').pop();
+	    if (!ext) return defaultValue;
+	    return mimeTypes[ext.toLowerCase()] || defaultValue;
+	  }
+	  mime.default = {
+	    lookup
+	  };
+	  return mime;
+	}
 
 	var path$1 = {};
 
@@ -1827,6 +2283,177 @@
 	  return path$1;
 	}
 
+	var queue$1 = {};
+
+	var hasRequiredQueue;
+	function requireQueue() {
+	  if (hasRequiredQueue) return queue$1;
+	  hasRequiredQueue = 1;
+	  Object.defineProperty(queue$1, "__esModule", {
+	    value: true
+	  });
+	  const core_1 = requireCore();
+	  class Queue {
+	    /**
+	     * End the queue
+	     */
+	    stop() {
+	      this._q = [];
+	      this.running = false;
+	      this.paused = true;
+	    }
+	    constructor(context) {
+	      this._q = [];
+	      this.context = context;
+	      this.tick = core_1.requestAnimationFrame;
+	      this.running = false;
+	      this.paused = false;
+	    }
+	    /**
+	     * Add an item to the queue
+	     */
+	    enqueue(...args) {
+	      const taskOrPromise = args.shift();
+	      if (!taskOrPromise) {
+	        throw new Error('No Task Provided');
+	      }
+	      if (typeof taskOrPromise === 'function') {
+	        // Always execute with the queue's context
+	        const promise = new Promise((resolve, reject) => {
+	          this._q.push({
+	            task: async (...taskArgs) => {
+	              try {
+	                // Use Function.prototype.apply to set context
+	                const result = await taskOrPromise.apply(this.context, taskArgs);
+	                resolve(result);
+	                return result;
+	              } catch (err) {
+	                reject(err);
+	                throw err;
+	              }
+	            },
+	            args: args
+	          });
+	          if (this.paused == false && !this.running) {
+	            this.run();
+	          }
+	        });
+	        return promise;
+	      } else if (isPromise(taskOrPromise)) {
+	        const promise = taskOrPromise;
+	        this._q.push({
+	          promise
+	        });
+	        if (this.paused == false && !this.running) {
+	          this.run();
+	        }
+	        return promise;
+	      } else {
+	        // If not a function or promise, wrap as resolved promise
+	        const promise = Promise.resolve(taskOrPromise);
+	        this._q.push({
+	          promise
+	        });
+	        if (this.paused == false && !this.running) {
+	          this.run();
+	        }
+	        return promise;
+	      }
+	    }
+	    /**
+	     * Run one item
+	     */
+	    // Run All Immediately
+	    dump() {
+	      while (this._q.length) {
+	        this.dequeue();
+	      }
+	    }
+	    /**
+	     * Run all tasks sequentially, at convince
+	     */
+	    run() {
+	      if (!this.running) {
+	        this.running = true;
+	        this._deferredPromise = new Promise(resolve => {
+	          this._resolveDeferred = resolve;
+	        });
+	      }
+	      if (this.tick) {
+	        this.tick.call(globalThis, () => {
+	          if (this._q.length) {
+	            this.dequeue().then(() => {
+	              this.run();
+	            });
+	          } else {
+	            if (this._resolveDeferred) this._resolveDeferred(undefined);
+	            this.running = undefined;
+	          }
+	        });
+	      }
+	      return this._deferredPromise;
+	    }
+	    /**
+	     * Run one item
+	     */
+	    dequeue() {
+	      if (this._q.length && !this.paused) {
+	        const inwait = this._q.shift();
+	        if (!inwait) return Promise.resolve(undefined);
+	        const task = inwait.task;
+	        const args = Array.isArray(inwait.args) ? inwait.args : [];
+	        if (task) {
+	          try {
+	            const result = task.apply(this.context, args);
+	            if (isPromise(result)) {
+	              return result.then(value => {
+	                if (inwait.resolve) inwait.resolve(value);
+	                return value;
+	              }, err => {
+	                if (inwait.reject) inwait.reject(err);
+	                return undefined;
+	              });
+	            } else {
+	              if (inwait.resolve) inwait.resolve(result);
+	              return inwait.promise ?? Promise.resolve(result);
+	            }
+	          } catch (err) {
+	            if (inwait.reject) inwait.reject(err);
+	            return Promise.resolve(undefined);
+	          }
+	        } else if (inwait.promise) {
+	          return inwait.promise;
+	        }
+	      }
+	      return Promise.resolve(undefined);
+	    }
+	    clear() {
+	      this._q = [];
+	    }
+	    /**
+	     * Get the number of tasks in the queue
+	     */
+	    length() {
+	      return this._q.length;
+	    }
+	    /**
+	     * Pause a running queue
+	     */
+	    pause() {
+	      this.paused = true;
+	    }
+	  }
+	  function isPromise(value) {
+	    return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
+	  }
+	  queue$1.default = Queue;
+	  return queue$1;
+	}
+
+	var replacements = {};
+
+	var url = {};
+
 	var hasRequiredUrl;
 	function requireUrl() {
 	  if (hasRequiredUrl) return url;
@@ -1921,6 +2548,356 @@
 	  }
 	  url.default = Url;
 	  return url;
+	}
+
+	var hasRequiredReplacements;
+	function requireReplacements() {
+	  if (hasRequiredReplacements) return replacements;
+	  hasRequiredReplacements = 1;
+	  var __importDefault = replacements && replacements.__importDefault || function (mod) {
+	    return mod && mod.__esModule ? mod : {
+	      "default": mod
+	    };
+	  };
+	  Object.defineProperty(replacements, "__esModule", {
+	    value: true
+	  });
+	  replacements.replaceBase = replaceBase;
+	  replacements.replaceCanonical = replaceCanonical;
+	  replacements.replaceMeta = replaceMeta;
+	  replacements.replaceLinks = replaceLinks;
+	  replacements.substitute = substitute;
+	  const url_1 = __importDefault(requireUrl());
+	  function replaceBase(doc, section) {
+	    let base;
+	    let url = section.url ?? '';
+	    const absolute = url.indexOf('://') > -1;
+	    if (!doc) {
+	      return;
+	    }
+	    const head = doc.querySelector('head');
+	    if (!head) return;
+	    base = head.querySelector('base');
+	    if (!base) {
+	      base = doc.createElement('base');
+	      head.insertBefore(base, head.firstChild);
+	    }
+	    // Fix for Safari (from or before 2019) crashing if the url doesn't have an origin
+	    if (!absolute && globalThis.window && globalThis.window.location) {
+	      url = globalThis.window.location.origin + url;
+	    }
+	    base.setAttribute('href', url);
+	  }
+	  function replaceCanonical(doc, section) {
+	    let link;
+	    const url = section.canonical;
+	    if (!doc) {
+	      return;
+	    }
+	    const head = doc.querySelector('head');
+	    if (!head) return;
+	    link = head.querySelector("link[rel='canonical']");
+	    if (link) {
+	      link.setAttribute('href', url ?? '');
+	    } else {
+	      link = doc.createElement('link');
+	      link.setAttribute('rel', 'canonical');
+	      link.setAttribute('href', url ?? '');
+	      head.appendChild(link);
+	    }
+	  }
+	  function replaceMeta(doc, section) {
+	    let meta;
+	    const id = section.idref;
+	    if (!doc) {
+	      return;
+	    }
+	    const head = doc.querySelector('head');
+	    if (!head) return;
+	    meta = head.querySelector("link[property='dc.identifier']");
+	    if (meta) {
+	      meta.setAttribute('content', id ?? '');
+	    } else {
+	      meta = doc.createElement('meta');
+	      meta.setAttribute('name', 'dc.identifier');
+	      meta.setAttribute('content', id ?? '');
+	      head.appendChild(meta);
+	    }
+	  }
+	  // TODO: move me to Contents
+	  function replaceLinks(contents, fn) {
+	    const links = contents.querySelectorAll('a[href]');
+	    if (!links.length) {
+	      return;
+	    }
+	    const base = contents.ownerDocument.documentElement.querySelector('base');
+	    const location = base ? base.getAttribute('href') ?? undefined : undefined;
+	    const replaceLink = function (link) {
+	      const href = link.getAttribute('href') ?? '';
+	      if (href.indexOf('mailto:') === 0) {
+	        return;
+	      }
+	      const absolute = href.indexOf('://') > -1;
+	      if (absolute) {
+	        link.setAttribute('target', '_blank');
+	      } else {
+	        let linkUrl;
+	        try {
+	          linkUrl = new url_1.default(href, location);
+	        } catch {
+	          // NOOP
+	        }
+	        link.onclick = function () {
+	          if (linkUrl && linkUrl.hash) {
+	            fn(linkUrl.Path.path + linkUrl.hash);
+	          } else if (linkUrl) {
+	            fn(linkUrl.Path.path);
+	          } else {
+	            fn(href);
+	          }
+	          return false;
+	        };
+	      }
+	    };
+	    for (let i = 0; i < links.length; i++) {
+	      replaceLink(links[i]);
+	    }
+	  }
+	  function substitute(content, urls, replacements) {
+	    urls.forEach(function (url, i) {
+	      if (url && replacements[i]) {
+	        // Account for special characters in the file name.
+	        // See https://stackoverflow.com/a/6318729.
+	        url = url.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+	        content = content.replace(new RegExp(url, 'g'), replacements[i]);
+	      }
+	    });
+	    return content;
+	  }
+	  return replacements;
+	}
+
+	var request = {};
+
+	var hasRequiredRequest;
+	function requireRequest() {
+	  if (hasRequiredRequest) return request;
+	  hasRequiredRequest = 1;
+	  var __importDefault = request && request.__importDefault || function (mod) {
+	    return mod && mod.__esModule ? mod : {
+	      "default": mod
+	    };
+	  };
+	  Object.defineProperty(request, "__esModule", {
+	    value: true
+	  });
+	  const core_1 = requireCore();
+	  const path_1 = __importDefault(requirePath());
+	  function request$1(url, type, withCredentials = false, headers = {}) {
+	    const supportsURL = typeof window != 'undefined' ? window.URL : false;
+	    const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
+	    return new Promise((resolve, reject) => {
+	      const xhr = new XMLHttpRequest();
+	      //-- Check from PDF.js:
+	      //   https://github.com/mozilla/pdf.js/blob/master/web/compatibility.js
+	      const xhrPrototype = XMLHttpRequest.prototype;
+	      let header;
+	      if (!('overrideMimeType' in xhrPrototype)) {
+	        // IE10 might have response, but not overrideMimeType
+	        Object.defineProperty(xhrPrototype, 'overrideMimeType', {
+	          value: function xmlHttpRequestOverrideMimeType() {}
+	        });
+	      }
+	      if (withCredentials) {
+	        xhr.withCredentials = true;
+	      }
+	      xhr.onreadystatechange = handler;
+	      xhr.onerror = err;
+	      xhr.open('GET', url, true);
+	      for (header in headers) {
+	        xhr.setRequestHeader(header, headers[header]);
+	      }
+	      if (type == 'json') {
+	        xhr.setRequestHeader('Accept', 'application/json');
+	      }
+	      // If type isn"t set, determine it from the file extension
+	      if (!type) {
+	        type = new path_1.default(url).extension;
+	      }
+	      if (type == 'blob') {
+	        xhr.responseType = BLOB_RESPONSE;
+	      }
+	      if ((0, core_1.isXml)(type)) {
+	        // xhr.responseType = "document";
+	        xhr.overrideMimeType('text/xml'); // for OPF parsing
+	      }
+	      if (type == 'binary') {
+	        xhr.responseType = 'arraybuffer';
+	      }
+	      xhr.send();
+	      function err(e) {
+	        reject(e);
+	      }
+	      function handler() {
+	        if (this.readyState === XMLHttpRequest.DONE) {
+	          let responseXML = null;
+	          if (this.responseType === '' || this.responseType === 'document') {
+	            responseXML = this.responseXML;
+	          }
+	          if (this.status === 200 || this.status === 0 || responseXML) {
+	            //-- Firefox is reporting 0 for blob urls
+	            let r;
+	            if (!this.response && !responseXML) {
+	              reject({
+	                status: this.status,
+	                message: 'Empty Response',
+	                stack: new Error().stack
+	              });
+	              return;
+	            }
+	            if (this.status === 403) {
+	              reject({
+	                status: this.status,
+	                response: this.response,
+	                message: 'Forbidden',
+	                stack: new Error().stack
+	              });
+	              return;
+	            }
+	            if (responseXML) {
+	              r = this.responseXML;
+	            } else if ((0, core_1.isXml)(type)) {
+	              // xhr.overrideMimeType("text/xml"); // for OPF parsing
+	              // If this.responseXML wasn't set, try to parse using a DOMParser from text
+	              r = (0, core_1.parse)(this.response, 'text/xml');
+	            } else if (type == 'xhtml') {
+	              r = (0, core_1.parse)(this.response, 'application/xhtml+xml');
+	            } else if (type == 'html' || type == 'htm') {
+	              r = (0, core_1.parse)(this.response, 'text/html');
+	            } else if (type == 'json') {
+	              r = JSON.parse(this.response);
+	            } else if (type == 'blob') {
+	              if (supportsURL) {
+	                r = this.response;
+	              } else {
+	                //-- Safari doesn't support responseType blob, so create a blob from arraybuffer
+	                r = new Blob([this.response]);
+	              }
+	            } else {
+	              r = this.response;
+	            }
+	            resolve(r);
+	          } else {
+	            reject({
+	              status: this.status,
+	              message: this.response,
+	              stack: new Error().stack
+	            });
+	          }
+	        }
+	      }
+	    });
+	  }
+	  request.default = request$1;
+	  return request;
+	}
+
+	var scrolltype = {};
+
+	var hasRequiredScrolltype;
+	function requireScrolltype() {
+	  if (hasRequiredScrolltype) return scrolltype;
+	  hasRequiredScrolltype = 1;
+	  Object.defineProperty(scrolltype, "__esModule", {
+	    value: true
+	  });
+	  scrolltype.default = scrollType;
+	  scrolltype.createDefiner = createDefiner;
+	  // Detect RTL scroll type
+	  // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
+	  function scrollType() {
+	    let type = 'reverse';
+	    const definer = createDefiner();
+	    document.body.appendChild(definer);
+	    if (definer.scrollLeft > 0) {
+	      type = 'default';
+	    } else {
+	      // Modern browsers: always use scrollIntoView logic
+	      definer.children[0].children[1].scrollIntoView();
+	      if (definer.scrollLeft < 0) {
+	        type = 'negative';
+	      }
+	    }
+	    document.body.removeChild(definer);
+	    return type;
+	  }
+	  function createDefiner() {
+	    const definer = document.createElement('div');
+	    definer.dir = 'rtl';
+	    definer.style.position = 'fixed';
+	    definer.style.width = '1px';
+	    definer.style.height = '1px';
+	    definer.style.top = '0px';
+	    definer.style.left = '0px';
+	    definer.style.overflow = 'hidden';
+	    const innerDiv = document.createElement('div');
+	    innerDiv.style.width = '2px';
+	    const spanA = document.createElement('span');
+	    spanA.style.width = '1px';
+	    spanA.style.display = 'inline-block';
+	    const spanB = document.createElement('span');
+	    spanB.style.width = '1px';
+	    spanB.style.display = 'inline-block';
+	    innerDiv.appendChild(spanA);
+	    innerDiv.appendChild(spanB);
+	    definer.appendChild(innerDiv);
+	    return definer;
+	  }
+	  return scrolltype;
+	}
+
+	var hasRequiredUtils;
+	function requireUtils() {
+	  if (hasRequiredUtils) return utils;
+	  hasRequiredUtils = 1;
+	  (function (exports) {
+
+	    var __createBinding = utils && utils.__createBinding || (Object.create ? function (o, m, k, k2) {
+	      if (k2 === undefined) k2 = k;
+	      var desc = Object.getOwnPropertyDescriptor(m, k);
+	      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	        desc = {
+	          enumerable: true,
+	          get: function () {
+	            return m[k];
+	          }
+	        };
+	      }
+	      Object.defineProperty(o, k2, desc);
+	    } : function (o, m, k, k2) {
+	      if (k2 === undefined) k2 = k;
+	      o[k2] = m[k];
+	    });
+	    var __exportStar = utils && utils.__exportStar || function (m, exports) {
+	      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+	    };
+	    Object.defineProperty(exports, "__esModule", {
+	      value: true
+	    });
+	    __exportStar(requireConstants(), exports);
+	    __exportStar(requireCore(), exports);
+	    __exportStar(requireHelpers(), exports);
+	    __exportStar(requireHook(), exports);
+	    __exportStar(requireLocationHelpers(), exports);
+	    __exportStar(requireMime(), exports);
+	    __exportStar(requirePath(), exports);
+	    __exportStar(requireQueue(), exports);
+	    __exportStar(requireReplacements(), exports);
+	    __exportStar(requireRequest(), exports);
+	    __exportStar(requireScrolltype(), exports);
+	    __exportStar(requireUrl(), exports);
+	  })(utils);
+	  return utils;
 	}
 
 	var spine$1 = {exports: {}};
@@ -2853,215 +3830,7 @@
 	  return epubcfi;
 	}
 
-	var hook = {};
-
-	var hasRequiredHook;
-	function requireHook() {
-	  if (hasRequiredHook) return hook;
-	  hasRequiredHook = 1;
-	  /**
-	   * Hooks allow for injecting functions that must all complete in order before finishing
-	   * They will execute in parallel but all must finish before continuing
-	   * Functions may return a promise if they are async.
-	   * @example this.content = new EPUBJS.Hook(this);
-	   */
-	  Object.defineProperty(hook, "__esModule", {
-	    value: true
-	  });
-	  class Hook {
-	    constructor(context) {
-	      this.context = context || this;
-	      this.hooks = [];
-	    }
-	    /**
-	     * Adds a function to be run before a hook completes
-	     * @example this.content.register(function(){...});
-	     */
-	    register(...tasks) {
-	      for (const task of tasks) {
-	        if (typeof task === 'function') {
-	          this.hooks.push(task);
-	        } else if (Array.isArray(task)) {
-	          for (const fn of task) {
-	            if (typeof fn === 'function') {
-	              this.hooks.push(fn);
-	            }
-	          }
-	        }
-	      }
-	    }
-	    /**
-	     * Removes a function
-	     * @example this.content.deregister(function(){...});
-	     */
-	    deregister(func) {
-	      const idx = this.hooks.indexOf(func);
-	      if (idx !== -1) {
-	        this.hooks.splice(idx, 1);
-	      }
-	    }
-	    /**
-	     * Triggers a hook to run all functions
-	     * @example this.content.trigger(args).then(function(){...});
-	     */
-	    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-	    trigger(...args) {
-	      const context = this.context;
-	      const promises = [];
-	      this.hooks.forEach(task => {
-	        try {
-	          const executing = task.apply(context, args);
-	          if (executing && typeof executing === 'object' &&
-	          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-	          typeof executing.then === 'function') {
-	            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-	            promises.push(executing);
-	          }
-	        } catch (err) {
-	          console.log(err);
-	        }
-	        // Otherwise Task resolves immediately, continue
-	      });
-	      return Promise.all(promises);
-	    }
-	    // Adds a function to be run before a hook completes
-	    list() {
-	      return this.hooks;
-	    }
-	    clear() {
-	      return this.hooks = [];
-	    }
-	  }
-	  hook.default = Hook;
-	  return hook;
-	}
-
 	var section$1 = {exports: {}};
-
-	var request = {};
-
-	var hasRequiredRequest;
-	function requireRequest() {
-	  if (hasRequiredRequest) return request;
-	  hasRequiredRequest = 1;
-	  var __importDefault = request && request.__importDefault || function (mod) {
-	    return mod && mod.__esModule ? mod : {
-	      "default": mod
-	    };
-	  };
-	  Object.defineProperty(request, "__esModule", {
-	    value: true
-	  });
-	  const core_1 = requireCore();
-	  const path_1 = __importDefault(requirePath());
-	  function request$1(url, type, withCredentials = false, headers = {}) {
-	    const supportsURL = typeof window != 'undefined' ? window.URL : false;
-	    const BLOB_RESPONSE = supportsURL ? 'blob' : 'arraybuffer';
-	    return new Promise((resolve, reject) => {
-	      const xhr = new XMLHttpRequest();
-	      //-- Check from PDF.js:
-	      //   https://github.com/mozilla/pdf.js/blob/master/web/compatibility.js
-	      const xhrPrototype = XMLHttpRequest.prototype;
-	      let header;
-	      if (!('overrideMimeType' in xhrPrototype)) {
-	        // IE10 might have response, but not overrideMimeType
-	        Object.defineProperty(xhrPrototype, 'overrideMimeType', {
-	          value: function xmlHttpRequestOverrideMimeType() {}
-	        });
-	      }
-	      if (withCredentials) {
-	        xhr.withCredentials = true;
-	      }
-	      xhr.onreadystatechange = handler;
-	      xhr.onerror = err;
-	      xhr.open('GET', url, true);
-	      for (header in headers) {
-	        xhr.setRequestHeader(header, headers[header]);
-	      }
-	      if (type == 'json') {
-	        xhr.setRequestHeader('Accept', 'application/json');
-	      }
-	      // If type isn"t set, determine it from the file extension
-	      if (!type) {
-	        type = new path_1.default(url).extension;
-	      }
-	      if (type == 'blob') {
-	        xhr.responseType = BLOB_RESPONSE;
-	      }
-	      if ((0, core_1.isXml)(type)) {
-	        // xhr.responseType = "document";
-	        xhr.overrideMimeType('text/xml'); // for OPF parsing
-	      }
-	      if (type == 'binary') {
-	        xhr.responseType = 'arraybuffer';
-	      }
-	      xhr.send();
-	      function err(e) {
-	        reject(e);
-	      }
-	      function handler() {
-	        if (this.readyState === XMLHttpRequest.DONE) {
-	          let responseXML = null;
-	          if (this.responseType === '' || this.responseType === 'document') {
-	            responseXML = this.responseXML;
-	          }
-	          if (this.status === 200 || this.status === 0 || responseXML) {
-	            //-- Firefox is reporting 0 for blob urls
-	            let r;
-	            if (!this.response && !responseXML) {
-	              reject({
-	                status: this.status,
-	                message: 'Empty Response',
-	                stack: new Error().stack
-	              });
-	              return;
-	            }
-	            if (this.status === 403) {
-	              reject({
-	                status: this.status,
-	                response: this.response,
-	                message: 'Forbidden',
-	                stack: new Error().stack
-	              });
-	              return;
-	            }
-	            if (responseXML) {
-	              r = this.responseXML;
-	            } else if ((0, core_1.isXml)(type)) {
-	              // xhr.overrideMimeType("text/xml"); // for OPF parsing
-	              // If this.responseXML wasn't set, try to parse using a DOMParser from text
-	              r = (0, core_1.parse)(this.response, 'text/xml');
-	            } else if (type == 'xhtml') {
-	              r = (0, core_1.parse)(this.response, 'application/xhtml+xml');
-	            } else if (type == 'html' || type == 'htm') {
-	              r = (0, core_1.parse)(this.response, 'text/html');
-	            } else if (type == 'json') {
-	              r = JSON.parse(this.response);
-	            } else if (type == 'blob') {
-	              if (supportsURL) {
-	                r = this.response;
-	              } else {
-	                //-- Safari doesn't support responseType blob, so create a blob from arraybuffer
-	                r = new Blob([this.response]);
-	              }
-	            } else {
-	              r = this.response;
-	            }
-	            resolve(r);
-	          } else {
-	            reject({
-	              status: this.status,
-	              message: this.response,
-	              stack: new Error().stack
-	            });
-	          }
-	        }
-	      }
-	    });
-	  }
-	  request.default = request$1;
-	  return request;
-	}
 
 	var section = section$1.exports;
 	var hasRequiredSection;
@@ -3320,775 +4089,6 @@
 	    module.exports = Section;
 	  })(section$1, section$1.exports);
 	  return section$1.exports;
-	}
-
-	var utils = {};
-
-	var constants = {};
-
-	var hasRequiredConstants;
-	function requireConstants() {
-	  if (hasRequiredConstants) return constants;
-	  hasRequiredConstants = 1;
-	  Object.defineProperty(constants, "__esModule", {
-	    value: true
-	  });
-	  constants.EVENTS = constants.DOM_EVENTS = constants.EPUBJS_VERSION = void 0;
-	  constants.EPUBJS_VERSION = '0.3';
-	  // Dom events to listen for
-	  constants.DOM_EVENTS = ['keydown', 'keyup', 'keypressed', 'mouseup', 'mousedown', 'mousemove', 'click', 'touchend', 'touchstart', 'touchmove'];
-	  constants.EVENTS = {
-	    BOOK: {
-	      OPEN_FAILED: 'openFailed'
-	    },
-	    CONTENTS: {
-	      EXPAND: 'expand',
-	      RESIZE: 'resize',
-	      SELECTED: 'selected',
-	      SELECTED_RANGE: 'selectedRange',
-	      LINK_CLICKED: 'linkClicked'
-	    },
-	    LOCATIONS: {
-	      CHANGED: 'changed'
-	    },
-	    MANAGERS: {
-	      RESIZE: 'resize',
-	      RESIZED: 'resized',
-	      ORIENTATION_CHANGE: 'orientationchange',
-	      ADDED: 'added',
-	      SCROLL: 'scroll',
-	      SCROLLED: 'scrolled',
-	      REMOVED: 'removed'
-	    },
-	    VIEWS: {
-	      AXIS: 'axis',
-	      WRITING_MODE: 'writingMode',
-	      LOAD_ERROR: 'loaderror',
-	      RENDERED: 'rendered',
-	      RESIZED: 'resized',
-	      DISPLAYED: 'displayed',
-	      SHOWN: 'shown',
-	      HIDDEN: 'hidden',
-	      MARK_CLICKED: 'markClicked'
-	    },
-	    RENDITION: {
-	      STARTED: 'started',
-	      ATTACHED: 'attached',
-	      DISPLAYED: 'displayed',
-	      DISPLAY_ERROR: 'displayerror',
-	      RENDERED: 'rendered',
-	      REMOVED: 'removed',
-	      RESIZED: 'resized',
-	      ORIENTATION_CHANGE: 'orientationchange',
-	      LOCATION_CHANGED: 'locationChanged',
-	      RELOCATED: 'relocated',
-	      MARK_CLICKED: 'markClicked',
-	      SELECTED: 'selected',
-	      LAYOUT: 'layout'
-	    },
-	    LAYOUT: {
-	      UPDATED: 'updated'
-	    },
-	    ANNOTATION: {
-	      ATTACH: 'attach',
-	      DETACH: 'detach'
-	    }
-	  };
-	  return constants;
-	}
-
-	var helpers = {};
-
-	var hasRequiredHelpers;
-	function requireHelpers() {
-	  if (hasRequiredHelpers) return helpers;
-	  hasRequiredHelpers = 1;
-	  Object.defineProperty(helpers, "__esModule", {
-	    value: true
-	  });
-	  helpers.indexOfElementNode = indexOfElementNode;
-	  helpers.debounce = debounce;
-	  helpers.throttle = throttle;
-	  /**
-	   * Gets the index of a node in its parent
-	   */
-	  function indexOfNode(node, typeId) {
-	    const parent = node.parentNode;
-	    if (!parent) {
-	      return -1;
-	    }
-	    const children = parent.childNodes;
-	    let sib;
-	    let index = -1;
-	    for (let i = 0; i < children.length; i++) {
-	      sib = children[i];
-	      if (sib.nodeType === typeId) {
-	        index++;
-	      }
-	      if (sib == node) break;
-	    }
-	    return index;
-	  }
-	  function indexOfElementNode(elementNode) {
-	    return indexOfNode(elementNode, 1);
-	  }
-	  /**
-	   * Creates a debounced function that delays invoking the provided function
-	   * until after the specified wait time has elapsed since the last invocation.
-	   */
-	  function debounce(func, wait) {
-	    let timeout;
-	    return function (...args) {
-	      clearTimeout(timeout);
-	      timeout = setTimeout(() => func.apply(this, args), wait);
-	    };
-	  }
-	  /**
-	   * Creates a throttled function that only invokes the provided function
-	   * at most once per every specified wait time.
-	   */
-	  function throttle(func, wait) {
-	    let lastCall = 0;
-	    return function (...args) {
-	      const now = Date.now();
-	      if (now - lastCall >= wait) {
-	        lastCall = now;
-	        func.apply(this, args);
-	      }
-	    };
-	  }
-	  return helpers;
-	}
-
-	var locationHelpers = {};
-
-	var hasRequiredLocationHelpers;
-	function requireLocationHelpers() {
-	  if (hasRequiredLocationHelpers) return locationHelpers;
-	  hasRequiredLocationHelpers = 1;
-	  Object.defineProperty(locationHelpers, "__esModule", {
-	    value: true
-	  });
-	  locationHelpers.buildEnrichedLocationPoint = buildEnrichedLocationPoint;
-	  locationHelpers.enrichLocationSide = enrichLocationSide;
-	  locationHelpers.buildLocationPoint = buildLocationPoint;
-	  function buildEnrichedLocationPoint(point, side, book) {
-	    const base = buildLocationPoint(point, side);
-	    enrichLocationSide(side, point, base, book);
-	    return base;
-	  }
-	  /**
-	   * Enriches a DisplayedLocation side (start or end) with location, percentage, and page info.
-	   */
-	  function enrichLocationSide(side, point, locatedSide, book) {
-	    // Location and percentage
-	    const cfi = point.mapping?.[side];
-	    if (cfi && book.locations) {
-	      const location = book.locations.locationFromCfi(cfi);
-	      if (location !== null) {
-	        locatedSide.location = location;
-	        locatedSide.percentage = book.locations.percentageFromLocation(location);
-	      }
-	    }
-	    // Page
-	    if (cfi && book.pageList) {
-	      const page = book.pageList.pageFromCfi(cfi);
-	      if (page !== -1) {
-	        locatedSide.page = page;
-	      }
-	    }
-	  }
-	  /**
-	   * Builds a DisplayedLocation sub-object (start or end) from a LocationPoint and side ('start' | 'end').
-	   */
-	  function buildLocationPoint(point, side) {
-	    return {
-	      index: point.index,
-	      href: point.href,
-	      cfi: point.mapping?.[side] ?? '',
-	      displayed: {
-	        page: side === 'start' ? point.pages?.[0] ?? 1 : point.pages?.[point.pages?.length - 1] ?? 1,
-	        total: point.totalPages ?? 0
-	      }
-	    };
-	  }
-	  return locationHelpers;
-	}
-
-	var mime = {};
-
-	var hasRequiredMime;
-	function requireMime() {
-	  if (hasRequiredMime) return mime;
-	  hasRequiredMime = 1;
-	  /**
-	   * From Zip.js, by Gildas Lormeau
-	   * edited down
-	   */
-	  Object.defineProperty(mime, "__esModule", {
-	    value: true
-	  });
-	  const table = {
-	    application: {
-	      ecmascript: ['es', 'ecma'],
-	      javascript: 'js',
-	      ogg: 'ogx',
-	      pdf: 'pdf',
-	      postscript: ['ps', 'ai', 'eps', 'epsi', 'epsf', 'eps2', 'eps3'],
-	      'rdf+xml': 'rdf',
-	      smil: ['smi', 'smil'],
-	      'xhtml+xml': ['xhtml', 'xht'],
-	      xml: ['xml', 'xsl', 'xsd', 'opf', 'ncx'],
-	      zip: 'zip',
-	      'x-httpd-eruby': 'rhtml',
-	      'x-latex': 'latex',
-	      'x-maker': ['frm', 'maker', 'frame', 'fm', 'fb', 'book', 'fbdoc'],
-	      'x-object': 'o',
-	      'x-shockwave-flash': ['swf', 'swfl'],
-	      'x-silverlight': 'scr',
-	      'epub+zip': 'epub',
-	      'font-tdpfr': 'pfr',
-	      'inkml+xml': ['ink', 'inkml'],
-	      json: 'json',
-	      'jsonml+json': 'jsonml',
-	      'mathml+xml': 'mathml',
-	      'metalink+xml': 'metalink',
-	      mp4: 'mp4s',
-	      // "oebps-package+xml" : "opf",
-	      'omdoc+xml': 'omdoc',
-	      oxps: 'oxps',
-	      'vnd.amazon.ebook': 'azw',
-	      widget: 'wgt',
-	      // "x-dtbncx+xml" : "ncx",
-	      'x-dtbook+xml': 'dtb',
-	      'x-dtbresource+xml': 'res',
-	      'x-font-bdf': 'bdf',
-	      'x-font-ghostscript': 'gsf',
-	      'x-font-linux-psf': 'psf',
-	      'x-font-otf': 'otf',
-	      'x-font-pcf': 'pcf',
-	      'x-font-snf': 'snf',
-	      'x-font-ttf': ['ttf', 'ttc'],
-	      'x-font-type1': ['pfa', 'pfb', 'pfm', 'afm'],
-	      'x-font-woff': 'woff',
-	      'x-mobipocket-ebook': ['prc', 'mobi'],
-	      'x-mspublisher': 'pub',
-	      'x-nzb': 'nzb',
-	      'x-tgif': 'obj',
-	      'xaml+xml': 'xaml',
-	      'xml-dtd': 'dtd',
-	      'xproc+xml': 'xpl',
-	      'xslt+xml': 'xslt',
-	      'internet-property-stream': 'acx',
-	      'x-compress': 'z',
-	      'x-compressed': 'tgz',
-	      'x-gzip': 'gz'
-	    },
-	    audio: {
-	      flac: 'flac',
-	      midi: ['mid', 'midi', 'kar', 'rmi'],
-	      mpeg: ['mpga', 'mpega', 'mp2', 'mp3', 'm4a', 'mp2a', 'm2a', 'm3a'],
-	      mpegurl: 'm3u',
-	      ogg: ['oga', 'ogg', 'spx'],
-	      'x-aiff': ['aif', 'aiff', 'aifc'],
-	      'x-ms-wma': 'wma',
-	      'x-wav': 'wav',
-	      adpcm: 'adp',
-	      mp4: 'mp4a',
-	      webm: 'weba',
-	      'x-aac': 'aac',
-	      'x-caf': 'caf',
-	      'x-matroska': 'mka',
-	      'x-pn-realaudio-plugin': 'rmp',
-	      xm: 'xm',
-	      mid: ['mid', 'rmi']
-	    },
-	    image: {
-	      gif: 'gif',
-	      ief: 'ief',
-	      jpeg: ['jpeg', 'jpg', 'jpe'],
-	      pcx: 'pcx',
-	      png: 'png',
-	      'svg+xml': ['svg', 'svgz'],
-	      tiff: ['tiff', 'tif'],
-	      'x-icon': 'ico',
-	      bmp: 'bmp',
-	      webp: 'webp',
-	      'x-pict': ['pic', 'pct'],
-	      'x-tga': 'tga',
-	      'cis-cod': 'cod'
-	    },
-	    text: {
-	      'cache-manifest': ['manifest', 'appcache'],
-	      css: 'css',
-	      csv: 'csv',
-	      html: ['html', 'htm', 'shtml', 'stm'],
-	      mathml: 'mml',
-	      plain: ['txt', 'text', 'brf', 'conf', 'def', 'list', 'log', 'in', 'bas'],
-	      richtext: 'rtx',
-	      'tab-separated-values': 'tsv',
-	      'x-bibtex': 'bib'
-	    },
-	    video: {
-	      mpeg: ['mpeg', 'mpg', 'mpe', 'm1v', 'm2v', 'mp2', 'mpa', 'mpv2'],
-	      mp4: ['mp4', 'mp4v', 'mpg4'],
-	      quicktime: ['qt', 'mov'],
-	      ogg: 'ogv',
-	      'vnd.mpegurl': ['mxu', 'm4u'],
-	      'x-flv': 'flv',
-	      'x-la-asf': ['lsf', 'lsx'],
-	      'x-mng': 'mng',
-	      'x-ms-asf': ['asf', 'asx', 'asr'],
-	      'x-ms-wm': 'wm',
-	      'x-ms-wmv': 'wmv',
-	      'x-ms-wmx': 'wmx',
-	      'x-ms-wvx': 'wvx',
-	      'x-msvideo': 'avi',
-	      'x-sgi-movie': 'movie',
-	      'x-matroska': ['mpv', 'mkv', 'mk3d', 'mks'],
-	      '3gpp2': '3g2',
-	      h261: 'h261',
-	      h263: 'h263',
-	      h264: 'h264',
-	      jpeg: 'jpgv',
-	      jpm: ['jpm', 'jpgm'],
-	      mj2: ['mj2', 'mjp2'],
-	      'vnd.ms-playready.media.pyv': 'pyv',
-	      'vnd.uvvu.mp4': ['uvu', 'uvvu'],
-	      'vnd.vivo': 'viv',
-	      webm: 'webm',
-	      'x-f4v': 'f4v',
-	      'x-m4v': 'm4v',
-	      'x-ms-vob': 'vob',
-	      'x-smv': 'smv'
-	    }
-	  };
-	  const mimeTypes = function () {
-	    let type, subtype, val, index;
-	    const mimeTypes = {};
-	    for (type in table) {
-	      if (Object.prototype.hasOwnProperty.call(table, type)) {
-	        for (subtype in table[type]) {
-	          if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
-	            val = table[type][subtype];
-	            if (typeof val == 'string') {
-	              mimeTypes[val] = type + '/' + subtype;
-	            } else {
-	              for (index = 0; index < val.length; index++) {
-	                mimeTypes[val[index]] = type + '/' + subtype;
-	              }
-	            }
-	          }
-	        }
-	      }
-	    }
-	    return mimeTypes;
-	  }();
-	  const defaultValue = 'text/plain';
-	  function lookup(filename) {
-	    if (!filename) return defaultValue;
-	    const ext = filename.split('.').pop();
-	    if (!ext) return defaultValue;
-	    return mimeTypes[ext.toLowerCase()] || defaultValue;
-	  }
-	  mime.default = {
-	    lookup
-	  };
-	  return mime;
-	}
-
-	var queue$1 = {};
-
-	var hasRequiredQueue;
-	function requireQueue() {
-	  if (hasRequiredQueue) return queue$1;
-	  hasRequiredQueue = 1;
-	  Object.defineProperty(queue$1, "__esModule", {
-	    value: true
-	  });
-	  const core_1 = requireCore();
-	  class Queue {
-	    /**
-	     * End the queue
-	     */
-	    stop() {
-	      this._q = [];
-	      this.running = false;
-	      this.paused = true;
-	    }
-	    constructor(context) {
-	      this._q = [];
-	      this.context = context;
-	      this.tick = core_1.requestAnimationFrame;
-	      this.running = false;
-	      this.paused = false;
-	    }
-	    /**
-	     * Add an item to the queue
-	     */
-	    enqueue(...args) {
-	      const taskOrPromise = args.shift();
-	      if (!taskOrPromise) {
-	        throw new Error('No Task Provided');
-	      }
-	      if (typeof taskOrPromise === 'function') {
-	        // Always execute with the queue's context
-	        const promise = new Promise((resolve, reject) => {
-	          this._q.push({
-	            task: async (...taskArgs) => {
-	              try {
-	                // Use Function.prototype.apply to set context
-	                const result = await taskOrPromise.apply(this.context, taskArgs);
-	                resolve(result);
-	                return result;
-	              } catch (err) {
-	                reject(err);
-	                throw err;
-	              }
-	            },
-	            args: args
-	          });
-	          if (this.paused == false && !this.running) {
-	            this.run();
-	          }
-	        });
-	        return promise;
-	      } else if (isPromise(taskOrPromise)) {
-	        const promise = taskOrPromise;
-	        this._q.push({
-	          promise
-	        });
-	        if (this.paused == false && !this.running) {
-	          this.run();
-	        }
-	        return promise;
-	      } else {
-	        // If not a function or promise, wrap as resolved promise
-	        const promise = Promise.resolve(taskOrPromise);
-	        this._q.push({
-	          promise
-	        });
-	        if (this.paused == false && !this.running) {
-	          this.run();
-	        }
-	        return promise;
-	      }
-	    }
-	    /**
-	     * Run one item
-	     */
-	    // Run All Immediately
-	    dump() {
-	      while (this._q.length) {
-	        this.dequeue();
-	      }
-	    }
-	    /**
-	     * Run all tasks sequentially, at convince
-	     */
-	    run() {
-	      if (!this.running) {
-	        this.running = true;
-	        this._deferredPromise = new Promise(resolve => {
-	          this._resolveDeferred = resolve;
-	        });
-	      }
-	      if (this.tick) {
-	        this.tick.call(globalThis, () => {
-	          if (this._q.length) {
-	            this.dequeue().then(() => {
-	              this.run();
-	            });
-	          } else {
-	            if (this._resolveDeferred) this._resolveDeferred(undefined);
-	            this.running = undefined;
-	          }
-	        });
-	      }
-	      return this._deferredPromise;
-	    }
-	    /**
-	     * Run one item
-	     */
-	    dequeue() {
-	      if (this._q.length && !this.paused) {
-	        const inwait = this._q.shift();
-	        if (!inwait) return Promise.resolve(undefined);
-	        const task = inwait.task;
-	        const args = Array.isArray(inwait.args) ? inwait.args : [];
-	        if (task) {
-	          try {
-	            const result = task.apply(this.context, args);
-	            if (isPromise(result)) {
-	              return result.then(value => {
-	                if (inwait.resolve) inwait.resolve(value);
-	                return value;
-	              }, err => {
-	                if (inwait.reject) inwait.reject(err);
-	                return undefined;
-	              });
-	            } else {
-	              if (inwait.resolve) inwait.resolve(result);
-	              return inwait.promise ?? Promise.resolve(result);
-	            }
-	          } catch (err) {
-	            if (inwait.reject) inwait.reject(err);
-	            return Promise.resolve(undefined);
-	          }
-	        } else if (inwait.promise) {
-	          return inwait.promise;
-	        }
-	      }
-	      return Promise.resolve(undefined);
-	    }
-	    clear() {
-	      this._q = [];
-	    }
-	    /**
-	     * Get the number of tasks in the queue
-	     */
-	    length() {
-	      return this._q.length;
-	    }
-	    /**
-	     * Pause a running queue
-	     */
-	    pause() {
-	      this.paused = true;
-	    }
-	  }
-	  function isPromise(value) {
-	    return !!value && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
-	  }
-	  queue$1.default = Queue;
-	  return queue$1;
-	}
-
-	var replacements = {};
-
-	var hasRequiredReplacements;
-	function requireReplacements() {
-	  if (hasRequiredReplacements) return replacements;
-	  hasRequiredReplacements = 1;
-	  var __importDefault = replacements && replacements.__importDefault || function (mod) {
-	    return mod && mod.__esModule ? mod : {
-	      "default": mod
-	    };
-	  };
-	  Object.defineProperty(replacements, "__esModule", {
-	    value: true
-	  });
-	  replacements.replaceBase = replaceBase;
-	  replacements.replaceCanonical = replaceCanonical;
-	  replacements.replaceMeta = replaceMeta;
-	  replacements.replaceLinks = replaceLinks;
-	  replacements.substitute = substitute;
-	  const url_1 = __importDefault(requireUrl());
-	  function replaceBase(doc, section) {
-	    let base;
-	    let url = section.url ?? '';
-	    const absolute = url.indexOf('://') > -1;
-	    if (!doc) {
-	      return;
-	    }
-	    const head = doc.querySelector('head');
-	    if (!head) return;
-	    base = head.querySelector('base');
-	    if (!base) {
-	      base = doc.createElement('base');
-	      head.insertBefore(base, head.firstChild);
-	    }
-	    // Fix for Safari (from or before 2019) crashing if the url doesn't have an origin
-	    if (!absolute && globalThis.window && globalThis.window.location) {
-	      url = globalThis.window.location.origin + url;
-	    }
-	    base.setAttribute('href', url);
-	  }
-	  function replaceCanonical(doc, section) {
-	    let link;
-	    const url = section.canonical;
-	    if (!doc) {
-	      return;
-	    }
-	    const head = doc.querySelector('head');
-	    if (!head) return;
-	    link = head.querySelector("link[rel='canonical']");
-	    if (link) {
-	      link.setAttribute('href', url ?? '');
-	    } else {
-	      link = doc.createElement('link');
-	      link.setAttribute('rel', 'canonical');
-	      link.setAttribute('href', url ?? '');
-	      head.appendChild(link);
-	    }
-	  }
-	  function replaceMeta(doc, section) {
-	    let meta;
-	    const id = section.idref;
-	    if (!doc) {
-	      return;
-	    }
-	    const head = doc.querySelector('head');
-	    if (!head) return;
-	    meta = head.querySelector("link[property='dc.identifier']");
-	    if (meta) {
-	      meta.setAttribute('content', id ?? '');
-	    } else {
-	      meta = doc.createElement('meta');
-	      meta.setAttribute('name', 'dc.identifier');
-	      meta.setAttribute('content', id ?? '');
-	      head.appendChild(meta);
-	    }
-	  }
-	  // TODO: move me to Contents
-	  function replaceLinks(contents, fn) {
-	    const links = contents.querySelectorAll('a[href]');
-	    if (!links.length) {
-	      return;
-	    }
-	    const base = contents.ownerDocument.documentElement.querySelector('base');
-	    const location = base ? base.getAttribute('href') ?? undefined : undefined;
-	    const replaceLink = function (link) {
-	      const href = link.getAttribute('href') ?? '';
-	      if (href.indexOf('mailto:') === 0) {
-	        return;
-	      }
-	      const absolute = href.indexOf('://') > -1;
-	      if (absolute) {
-	        link.setAttribute('target', '_blank');
-	      } else {
-	        let linkUrl;
-	        try {
-	          linkUrl = new url_1.default(href, location);
-	        } catch {
-	          // NOOP
-	        }
-	        link.onclick = function () {
-	          if (linkUrl && linkUrl.hash) {
-	            fn(linkUrl.Path.path + linkUrl.hash);
-	          } else if (linkUrl) {
-	            fn(linkUrl.Path.path);
-	          } else {
-	            fn(href);
-	          }
-	          return false;
-	        };
-	      }
-	    };
-	    for (let i = 0; i < links.length; i++) {
-	      replaceLink(links[i]);
-	    }
-	  }
-	  function substitute(content, urls, replacements) {
-	    urls.forEach(function (url, i) {
-	      if (url && replacements[i]) {
-	        // Account for special characters in the file name.
-	        // See https://stackoverflow.com/a/6318729.
-	        url = url.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
-	        content = content.replace(new RegExp(url, 'g'), replacements[i]);
-	      }
-	    });
-	    return content;
-	  }
-	  return replacements;
-	}
-
-	var scrolltype = {};
-
-	var hasRequiredScrolltype;
-	function requireScrolltype() {
-	  if (hasRequiredScrolltype) return scrolltype;
-	  hasRequiredScrolltype = 1;
-	  Object.defineProperty(scrolltype, "__esModule", {
-	    value: true
-	  });
-	  scrolltype.default = scrollType;
-	  scrolltype.createDefiner = createDefiner;
-	  // Detect RTL scroll type
-	  // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
-	  function scrollType() {
-	    let type = 'reverse';
-	    const definer = createDefiner();
-	    document.body.appendChild(definer);
-	    if (definer.scrollLeft > 0) {
-	      type = 'default';
-	    } else {
-	      // Modern browsers: always use scrollIntoView logic
-	      definer.children[0].children[1].scrollIntoView();
-	      if (definer.scrollLeft < 0) {
-	        type = 'negative';
-	      }
-	    }
-	    document.body.removeChild(definer);
-	    return type;
-	  }
-	  function createDefiner() {
-	    const definer = document.createElement('div');
-	    definer.dir = 'rtl';
-	    definer.style.position = 'fixed';
-	    definer.style.width = '1px';
-	    definer.style.height = '1px';
-	    definer.style.top = '0px';
-	    definer.style.left = '0px';
-	    definer.style.overflow = 'hidden';
-	    const innerDiv = document.createElement('div');
-	    innerDiv.style.width = '2px';
-	    const spanA = document.createElement('span');
-	    spanA.style.width = '1px';
-	    spanA.style.display = 'inline-block';
-	    const spanB = document.createElement('span');
-	    spanB.style.width = '1px';
-	    spanB.style.display = 'inline-block';
-	    innerDiv.appendChild(spanA);
-	    innerDiv.appendChild(spanB);
-	    definer.appendChild(innerDiv);
-	    return definer;
-	  }
-	  return scrolltype;
-	}
-
-	var hasRequiredUtils;
-	function requireUtils() {
-	  if (hasRequiredUtils) return utils;
-	  hasRequiredUtils = 1;
-	  (function (exports) {
-
-	    var __createBinding = utils && utils.__createBinding || (Object.create ? function (o, m, k, k2) {
-	      if (k2 === undefined) k2 = k;
-	      var desc = Object.getOwnPropertyDescriptor(m, k);
-	      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-	        desc = {
-	          enumerable: true,
-	          get: function () {
-	            return m[k];
-	          }
-	        };
-	      }
-	      Object.defineProperty(o, k2, desc);
-	    } : function (o, m, k, k2) {
-	      if (k2 === undefined) k2 = k;
-	      o[k2] = m[k];
-	    });
-	    var __exportStar = utils && utils.__exportStar || function (m, exports) {
-	      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-	    };
-	    Object.defineProperty(exports, "__esModule", {
-	      value: true
-	    });
-	    __exportStar(requireConstants(), exports);
-	    __exportStar(requireCore(), exports);
-	    __exportStar(requireHelpers(), exports);
-	    __exportStar(requireHook(), exports);
-	    __exportStar(requireLocationHelpers(), exports);
-	    __exportStar(requireMime(), exports);
-	    __exportStar(requirePath(), exports);
-	    __exportStar(requireQueue(), exports);
-	    __exportStar(requireReplacements(), exports);
-	    __exportStar(requireRequest(), exports);
-	    __exportStar(requireScrolltype(), exports);
-	    __exportStar(requireUrl(), exports);
-	  })(utils);
-	  return utils;
 	}
 
 	var spine = spine$1.exports;
@@ -19210,7 +19210,7 @@
 	    value: true
 	  });
 	  const event_emitter_1 = __importDefault(requireEventEmitter());
-	  const core_1 = requireCore();
+	  const utils_1 = requireUtils();
 	  const url_1 = __importDefault(requireUrl());
 	  const path_1 = __importDefault(requirePath());
 	  const spine_1 = __importDefault(requireSpine());
@@ -19256,7 +19256,7 @@
 	        options = url;
 	        url = undefined;
 	      }
-	      this.settings = (0, core_1.extend)(this.settings || {}, {
+	      this.settings = (0, utils_1.extend)(this.settings || {}, {
 	        requestMethod: undefined,
 	        requestCredentials: undefined,
 	        requestHeaders: undefined,
@@ -19266,20 +19266,20 @@
 	        openAs: undefined,
 	        store: undefined
 	      });
-	      if (options) (0, core_1.extend)(this.settings, options);
+	      if (options) (0, utils_1.extend)(this.settings, options);
 	      // Promises
-	      this.opening = new core_1.defer();
+	      this.opening = new utils_1.defer();
 	      this.opened = this.opening.promise;
 	      this.loading = {
-	        manifest: new core_1.defer(),
-	        spine: new core_1.defer(),
-	        metadata: new core_1.defer(),
-	        cover: new core_1.defer(),
-	        navigation: new core_1.defer(),
-	        pageList: new core_1.defer(),
-	        resources: new core_1.defer(),
-	        displayOptions: new core_1.defer(),
-	        packaging: new core_1.defer()
+	        manifest: new utils_1.defer(),
+	        spine: new utils_1.defer(),
+	        metadata: new utils_1.defer(),
+	        cover: new utils_1.defer(),
+	        navigation: new utils_1.defer(),
+	        pageList: new utils_1.defer(),
+	        resources: new utils_1.defer(),
+	        displayOptions: new utils_1.defer(),
+	        packaging: new utils_1.defer()
 	      };
 	      this.loaded = {
 	        manifest: this.loading.manifest.promise,
@@ -19751,7 +19751,7 @@
 	        this.packaging.metadata.orientation = displayOptions.orientationLock;
 	      }
 	      // openToSpread: use getValidOrDefault for type safety
-	      this.packaging.metadata.spread = (0, core_1.getValidOrDefault)(displayOptions.openToSpread, epub_enums_1.Spread, epub_enums_1.DEFAULT_SPREAD);
+	      this.packaging.metadata.spread = (0, utils_1.getValidOrDefault)(displayOptions.openToSpread, epub_enums_1.Spread, epub_enums_1.DEFAULT_SPREAD);
 	    }
 	    /**
 	     * Destroy the Book and all associated objects

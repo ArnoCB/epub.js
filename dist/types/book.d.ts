@@ -1,6 +1,5 @@
-import type { BookOptions, PackagingManifestJson, PackagingManifestObject, RenditionOptions } from './types';
-import type { EventEmitterMethods } from './types';
-import { defer } from './utils/core';
+import type { BookOptions, EventEmitterMethods, PackagingManifestJson, PackagingManifestObject, RenditionOptions } from './types';
+import { defer } from './utils';
 import Path from './utils/path';
 import Spine from './spine';
 import Locations from './locations';

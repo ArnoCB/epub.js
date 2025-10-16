@@ -2,14 +2,14 @@ import type {
   ArchiveRequestTypeMap,
   BookOptions,
   BookRequestFunction,
+  EventEmitterMethods,
   PackagingManifestJson,
   PackagingManifestObject,
   PackagingMetadataObject,
   RenditionOptions,
 } from './types';
 import EventEmitter from 'event-emitter';
-import type { EventEmitterMethods } from './types';
-import { extend, defer, getValidOrDefault } from './utils/core';
+import { extend, defer, getValidOrDefault } from './utils';
 import Url from './utils/url';
 import Path from './utils/path';
 import Spine from './spine';
