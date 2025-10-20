@@ -176,21 +176,34 @@ test.describe('Core Rendering Modes', () => {
 
     // Resize viewport
     await page.setViewportSize({ width: 1200, height: 800 });
-    await page.waitForTimeout(1500); // Allow resize to settle
 
-    // Check content after resize
-    const afterResize = await page.evaluate(() => {
-      const container =
-        document.getElementById('viewer') ||
-        document.querySelector('[data-epub-viewer]');
-      const iframe = container?.querySelector('iframe');
-      return {
-        hasContent:
-          !!iframe && iframe.offsetWidth > 0 && iframe.offsetHeight > 0,
-        width: iframe?.offsetWidth || 0,
-        height: iframe?.offsetHeight || 0,
-      };
-    });
+    // Poll for content visibility after resize (max 4000ms, check every 200ms)
+    let afterResize;
+    const maxWait = 4000;
+    const pollInterval = 200;
+    let waited = 0;
+    while (waited < maxWait) {
+      afterResize = await page.evaluate(() => {
+        const container =
+          document.getElementById('viewer') ||
+          document.querySelector('[data-epub-viewer]');
+        const iframe = container?.querySelector('iframe');
+        return {
+          hasContent:
+            !!iframe && iframe.offsetWidth > 0 && iframe.offsetHeight > 0,
+          width: iframe?.offsetWidth || 0,
+          height: iframe?.offsetHeight || 0,
+        };
+      });
+      if (
+        afterResize.hasContent &&
+        afterResize.width > 0 &&
+        afterResize.height > 0
+      )
+        break;
+      await page.waitForTimeout(pollInterval);
+      waited += pollInterval;
+    }
 
     expect(afterResize.hasContent).toBe(true);
     expect(afterResize.width).toBeGreaterThan(0);
