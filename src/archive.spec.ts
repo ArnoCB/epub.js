@@ -120,7 +120,9 @@ describe('Archive', () => {
       await expect(archive.request('/test.txt', 'text')).rejects.toBeDefined();
       expect(consoleSpy).toHaveBeenCalledWith(
         '[Archive] request error',
-        expect.any(Error)
+        expect.objectContaining({
+          message: expect.stringContaining('File not found in the epub'),
+        })
       );
       consoleSpy.mockRestore();
     });
