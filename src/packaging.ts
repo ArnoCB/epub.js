@@ -295,7 +295,7 @@ class Packaging {
 
     const el = found[0];
 
-    if (el.childNodes.length && el.childNodes[0].nodeValue) {
+    if (el && el.childNodes.length && el.childNodes[0]?.nodeValue) {
       return el.childNodes[0].nodeValue;
     }
 
@@ -308,8 +308,8 @@ class Packaging {
   private getPropertyText(xml: Element, property: string): string {
     const el = xml.querySelector(`meta[property='${property}']`);
 
-    if (el && el.childNodes.length) {
-      return el.childNodes[0].nodeValue || '';
+    if (el && el.childNodes.length > 0) {
+      return el.childNodes[0]?.nodeValue || '';
     }
 
     return '';
@@ -372,6 +372,7 @@ class Packaging {
     this.spine = undefined;
     // @ts-expect-error intentionally setting to undefined for garbage collection
     this.metadata = undefined;
+    // @ts-expect-error intentionally setting to undefined for garbage collection
     this.toc = undefined;
   }
 }

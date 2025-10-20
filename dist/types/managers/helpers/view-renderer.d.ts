@@ -1,10 +1,8 @@
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
-import { View } from './views';
-import type { ViewRendererSettings, RenderingOptions } from '../../types';
+import type { ViewRendererSettings, RenderingOptions, View } from '../../types';
+import type { BookRequestFunction } from '../../types/book';
 /**
- * ViewRenderer - Centralized view creation and rendering logic
- *
  * This class abstracts the common view creation and rendering logic that was
  * previously duplicated between DefaultViewManager and PreRenderer.
  * It provides consistent rendering behavior across all contexts and supports
@@ -12,8 +10,8 @@ import type { ViewRendererSettings, RenderingOptions } from '../../types';
  */
 export declare class ViewRenderer {
     private settings;
-    private request?;
-    constructor(settings: ViewRendererSettings, request?: (url: string) => Promise<Document>);
+    private request;
+    constructor(settings: ViewRendererSettings, request: BookRequestFunction);
     /**
      * Create a new view for a section with optional rendering options
      */

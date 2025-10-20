@@ -10,8 +10,8 @@ export type IframeViewSettings = {
   ignoreClass: string;
   axis: Axis | undefined;
   direction: Direction | undefined;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   layout: Layout | undefined;
   globalLayoutProperties: Record<string, unknown>;
   method: string | undefined;

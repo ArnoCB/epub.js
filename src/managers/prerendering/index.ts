@@ -1,15 +1,15 @@
 import DefaultViewManager from '../default';
 import BookPreRenderer from '../prerenderer';
-import type { PreRenderedChapter } from '../../types/pre-rendered-chapter';
-import { View } from '../helpers/views';
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
 import { EVENTS } from '../../utils/constants';
 import type {
   DefaultViewManagerSettings,
+  PreRenderedChapter,
   PreRenderingStatus,
   ViewSettings,
   ViewManager,
+  View,
 } from '../../types';
 
 // Type guard to check if a View is an IframeView
@@ -34,10 +34,11 @@ export class PreRenderingViewManager
   // Guard to ensure prerendering is only started once per manager instance
   private _preRenderingStarted: boolean = false;
   // Flag to track when we're attaching prerendered content to prevent layout destruction
+  /** @ts-expect-error: reserved for future use (attach/detach logic) */
   private _attaching: boolean = false;
 
   // Override the name property
-  public name: string = 'prerendering';
+  public override name: string = 'prerendering';
 
   // Public getter for compatibility with examples
   public get preRenderer(): BookPreRenderer | null {
@@ -59,6 +60,9 @@ export class PreRenderingViewManager
     this.usePreRendering = options.settings.usePreRendering || false;
     this.settings.overflow = 'hidden';
     this.overflow = 'hidden';
+
+    // No need to apply EventEmitter here since we're using composition in DefaultViewManager
+    // and this class inherits those event methods from the parent class
   }
 
   private writeIframeContent(
@@ -360,14 +364,20 @@ export class PreRenderingViewManager
     return '';
   }
 
-  async append(section: Section, forceRight = false): Promise<IframeView> {
+  override async append(
+    section: Section,
+    forceRight = false
+  ): Promise<IframeView> {
     return (
       (await this.attachPrerendered(section, forceRight, 'append')) ??
       (super.append(section, forceRight) as Promise<IframeView>)
     );
   }
 
-  async prepend(section: Section, forceRight = false): Promise<IframeView> {
+  override async prepend(
+    section: Section,
+    forceRight = false
+  ): Promise<IframeView> {
     return (
       (await this.attachPrerendered(section, forceRight, 'prepend')) ??
       (super.prepend(section, forceRight) as Promise<IframeView>)
@@ -455,7 +465,7 @@ export class PreRenderingViewManager
 
     if (!locationInfo?.length || !chapters?.length) return undefined;
 
-    const current = locationInfo[0];
+    const current = locationInfo[0]!;
     const currentHref = current.href;
     const currentPage = current.pages[0] ?? 1;
 
@@ -472,7 +482,7 @@ export class PreRenderingViewManager
     return totalBefore === undefined ? undefined : totalBefore + currentPage;
   }
 
-  afterDisplayed(view: View | IframeView): void {
+  override afterDisplayed(view: View | IframeView): void {
     // Check if this is a prerendered view that we just attached
     const isPrerenderedView =
       this._preRenderer &&
@@ -488,20 +498,18 @@ export class PreRenderingViewManager
     super.afterDisplayed(view);
   }
 
-  // Override destroy to clean up pre-renderer
-  destroy(): void {
+  override destroy(): void {
     this._preRenderer?.destroy();
     return super.destroy();
   }
 
-  // Override render to initialize the BookPreRenderer once the container and
-  // Only override render to initialize pre-renderer
-  render(element: HTMLElement, size?: { width: number; height: number }): void {
-    // Ensure overflow is explicitly set to hidden
+  override render(
+    element: HTMLElement,
+    size?: { width: number; height: number }
+  ): void {
     this.settings.overflow = 'hidden';
     this.overflow = 'hidden';
 
-    // Call parent render first
     super.render(element, size);
 
     // Initialize the pre-renderer now that the DOM container and viewSettings exist
@@ -520,8 +528,7 @@ export class PreRenderingViewManager
     }
   }
 
-  // Override resize to ensure proper handling of prerendered content during window resize
-  async resize(width?: string, height?: string, epubcfi?: string) {
+  override async resize(width?: string, height?: string, epubcfi?: string) {
     try {
       // Set _attaching flag to prevent layout destruction during resize
       this._attaching = true;
@@ -660,7 +667,7 @@ export class PreRenderingViewManager
     const scrollWidth = this.container.scrollWidth;
     const offsetWidth = this.container.offsetWidth;
     const isRtlDefault =
-      this.isRtlDirection() && this.settings.rtlScrollType === 'default';
+      this.isRtlDirection() && this.settings['rtlScrollType'] === 'default';
 
     // Define scroll positions for next/prev in both directions
     const rtlOptions = { next: scrollWidth, prev: 0 };
@@ -672,11 +679,11 @@ export class PreRenderingViewManager
     this.scrollTo(scrollPos, 0, true);
   }
 
-  async next(): Promise<void> {
+  override async next(): Promise<void> {
     return this.navigate(true); // forward in reading order
   }
 
-  async prev(): Promise<void> {
+  override async prev(): Promise<void> {
     return this.navigate(false); // backward in reading order
   }
 }

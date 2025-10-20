@@ -1,4 +1,4 @@
-import { Axis } from '../../enums';
+import { Axis, Direction } from '../../enums';
 import {
   uuid,
   isNumber,
@@ -18,7 +18,9 @@ interface Padding {
 type StageOptions = {
   width?: string;
   height?: string;
-  direction?: string;
+  direction?: Direction;
+  axis?: Axis;
+  hidden?: boolean;
   [key: string]: unknown;
 };
 
@@ -52,7 +54,11 @@ export class Stage {
   create(options: {
     width?: string;
     height?: string;
-    direction?: string;
+    direction?: Direction;
+    overflow?: string | boolean;
+    axis?: Axis;
+    fullsize?: boolean;
+    hidden?: boolean;
     [key: string]: unknown;
   }) {
     let height = options.height; // !== false ? options.height : "100%";
@@ -120,7 +126,7 @@ export class Stage {
       container.style['direction'] = direction;
     }
 
-    if (direction && this.settings.fullsize) {
+    if (direction && this.settings['fullsize']) {
       document.body.style['direction'] = direction;
     }
 
@@ -276,7 +282,7 @@ export class Stage {
       width = String(_windowBounds.width - leftPad - rightPad);
     }
 
-    if ((this.settings.fullsize && !_height) || !_height) {
+    if ((this.settings['fullsize'] && !_height) || !_height) {
       const topPad = parseFloat(bodyPadding.top ?? '0');
       const bottomPad = parseFloat(bodyPadding.bottom ?? '0');
       height = String(_windowBounds.height - topPad - bottomPad);
@@ -353,10 +359,10 @@ export class Stage {
       this.container.style['direction'] = dir;
     }
 
-    if (this.settings.fullsize) {
+    if (this.settings['fullsize']) {
       document.body.style['direction'] = dir;
     }
-    this.settings.dir = dir;
+    this.settings['dir'] = dir;
   }
 
   overflow(overflow: string) {
@@ -371,7 +377,7 @@ export class Stage {
         this.container.style.overflow = overflow;
       }
     }
-    this.settings.overflow = overflow;
+    this.settings['overflow'] = overflow;
   }
 
   destroy() {

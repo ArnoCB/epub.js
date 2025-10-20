@@ -15,5 +15,7 @@ module.exports = {
       tsconfig: 'tsconfig.jest.json',
     },
   },
+  // Setup files to run before tests
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // No global setup/teardown required now (webserver removed)
 };

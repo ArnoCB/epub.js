@@ -31,7 +31,7 @@ class DisplayOptions {
     options.forEach((el) => {
       let value = '';
       if (el.childNodes.length) {
-        value = el.childNodes[0].nodeValue ?? '';
+        value = el.childNodes[0]?.nodeValue ?? '';
       }
       const name = el.getAttribute('name');
       switch (name) {

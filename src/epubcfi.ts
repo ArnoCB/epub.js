@@ -284,8 +284,8 @@ class EpubCFI {
         ? this.parseComponent(pathComponent)
         : emptyComponent;
     const range = this.getRange(cfiStr);
-    const start = range ? this.parseComponent(range[0]) : null;
-    const end = range ? this.parseComponent(range[1]) : null;
+    const start = range ? this.parseComponent(range[0]!) : null;
+    const end = range ? this.parseComponent(range[1]!) : null;
     const isRange = !!range;
     const spinePos = base.steps[1]?.index ?? -1;
     return { spinePos, range: isRange, base, path, start, end };
@@ -298,12 +298,13 @@ class EpubCFI {
     };
 
     const parts = componentStr.split(':');
-    let steps = parts[0].split('/');
+
+    let steps = parts[0]!.split('/');
     let terminal;
 
     if (parts.length > 1) {
       terminal = parts[1];
-      component.terminal = this.parseTerminal(terminal);
+      component.terminal = this.parseTerminal(terminal!);
     }
 
     // Remove empty first element if path starts with '/'
@@ -351,7 +352,7 @@ class EpubCFI {
     const assertion = terminalStr.match(/\[(.*)\]/);
 
     if (assertion && assertion[1]) {
-      characterOffset = parseInt(terminalStr.split('[')[0]);
+      characterOffset = parseInt(terminalStr.split('[')[0]!);
       textLocationAssertion = assertion[1];
     } else {
       characterOffset = parseInt(terminalStr);
@@ -376,6 +377,8 @@ class EpubCFI {
       // Always return the part before the first comma (if any)
       return indirection[1].split(',')[0];
     }
+
+    return undefined;
   }
 
   /**
@@ -402,7 +405,7 @@ class EpubCFI {
     const ranges = cfiStr.split(',');
 
     if (ranges.length === 3) {
-      return [ranges[1], ranges[2]];
+      return [ranges[1]!, ranges[2]!];
     }
 
     return false;
@@ -620,6 +623,7 @@ class EpubCFI {
     ignoreClass?: string
   ): CFIRange {
     let start: Node, end: Node, startOffset: number, endOffset: number;
+    void base; // base is not used in this method currently
 
     // Duck-typing for DOM Range detection (works across iframes)
     function isDOMRange(obj: unknown): obj is Range {
@@ -627,17 +631,18 @@ class EpubCFI {
         !!obj &&
         typeof obj === 'object' &&
         'startContainer' in obj &&
-        typeof (obj as Record<string, unknown>).startContainer === 'object' &&
+        typeof (obj as Record<string, unknown>)['startContainer'] ===
+          'object' &&
         'endContainer' in obj &&
-        typeof (obj as Record<string, unknown>).endContainer === 'object' &&
+        typeof (obj as Record<string, unknown>)['endContainer'] === 'object' &&
         'startOffset' in obj &&
-        typeof (obj as Record<string, unknown>).startOffset === 'number' &&
+        typeof (obj as Record<string, unknown>)['startOffset'] === 'number' &&
         'endOffset' in obj &&
-        typeof (obj as Record<string, unknown>).endOffset === 'number' &&
+        typeof (obj as Record<string, unknown>)['endOffset'] === 'number' &&
         'collapsed' in obj &&
-        typeof (obj as Record<string, unknown>).collapsed === 'boolean' &&
+        typeof (obj as Record<string, unknown>)['collapsed'] === 'boolean' &&
         'commonAncestorContainer' in obj &&
-        typeof (obj as Record<string, unknown>).commonAncestorContainer ===
+        typeof (obj as Record<string, unknown>)['commonAncestorContainer'] ===
           'object'
       );
     }
@@ -648,13 +653,14 @@ class EpubCFI {
         !!obj &&
         typeof obj === 'object' &&
         'startContainer' in obj &&
-        typeof (obj as Record<string, unknown>).startContainer === 'object' &&
+        typeof (obj as Record<string, unknown>)['startContainer'] ===
+          'object' &&
         'endContainer' in obj &&
-        typeof (obj as Record<string, unknown>).endContainer === 'object' &&
+        typeof (obj as Record<string, unknown>)['endContainer'] === 'object' &&
         'startOffset' in obj &&
-        typeof (obj as Record<string, unknown>).startOffset === 'number' &&
+        typeof (obj as Record<string, unknown>)['startOffset'] === 'number' &&
         'endOffset' in obj &&
-        typeof (obj as Record<string, unknown>).endOffset === 'number'
+        typeof (obj as Record<string, unknown>)['endOffset'] === 'number'
       );
     }
 
@@ -705,7 +711,7 @@ class EpubCFI {
     const len = startComp.steps.length;
     for (let i = 0; i < len; i++) {
       if (!this.equalStep(startComp.steps[i], endComp.steps[i])) break;
-      path.steps.push(startComp.steps[i]);
+      path.steps.push(startComp.steps[i]!);
     }
 
     // If last step is equal, check terminals
@@ -714,7 +720,7 @@ class EpubCFI {
       this.equalStep(startComp.steps[len - 1], endComp.steps[len - 1]) &&
       this.equalTerminal(startComp.terminal, endComp.terminal)
     ) {
-      path.steps.push(startComp.steps[len - 1]);
+      path.steps.push(startComp.steps[len - 1]!);
     }
 
     // Remove common steps from start/end
@@ -733,6 +739,7 @@ class EpubCFI {
     base: string | CFIComponent,
     ignoreClass?: string
   ): CFIRange {
+    void base; // base is not used in this method currently
     const cfi: CFIRange = {
       path: { steps: [], terminal: { offset: null, assertion: null } },
       start: { steps: [], terminal: { offset: null, assertion: null } },
@@ -822,7 +829,8 @@ class EpubCFI {
 
     for (i = 0; i < len; i++) {
       const node = children[i];
-      currNodeType = node.nodeType;
+      currNodeType = node?.nodeType;
+
       if (
         currNodeType === ELEMENT_NODE &&
         node instanceof Element &&
@@ -830,6 +838,7 @@ class EpubCFI {
       ) {
         currNodeType = TEXT_NODE;
       }
+
       if (i > 0 && currNodeType === TEXT_NODE && prevNodeType === TEXT_NODE) {
         output[i] = prevIndex;
       } else if (nodeType === currNodeType) {
@@ -893,7 +902,7 @@ class EpubCFI {
     }
 
     const index = Array.prototype.indexOf.call(children, anchor);
-    return map[index];
+    return map[index] ?? -1;
   }
 
   stepsToXpath(steps: CFIStep[]): string {
@@ -966,7 +975,7 @@ class EpubCFI {
     let i;
 
     for (i = 0; i < len; i++) {
-      step = steps[i];
+      step = steps[i]!;
 
       if (step.type === 'element') {
         //better to get a container using id as some times step.index may not be correct
@@ -1031,17 +1040,22 @@ class EpubCFI {
 
     const children = container.childNodes;
     const map = this.normalizedMap(children, TEXT_NODE, ignoreClass);
-    const lastStepIndex = steps[steps.length - 1].index;
+    const lastStepIndex = steps[steps.length - 1]!.index;
 
     for (let i = 0; i < children.length; i++) {
       if (map[i] !== lastStepIndex) continue;
       const child = children[i];
-      const len = child.textContent?.length ?? 0;
+      const len = child?.textContent?.length ?? 0;
       if (offset > len) {
         offset -= len;
         continue;
       }
-      container = child.nodeType === ELEMENT_NODE ? child.childNodes[0] : child;
+
+      container =
+        child?.nodeType === ELEMENT_NODE
+          ? (child?.childNodes[0] ?? null)
+          : (child ?? null);
+
       break;
     }
 

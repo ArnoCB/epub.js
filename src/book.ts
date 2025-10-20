@@ -2,17 +2,16 @@ import type {
   ArchiveRequestTypeMap,
   BookOptions,
   BookRequestFunction,
-  EventEmitterMethods,
   PackagingManifestJson,
   PackagingManifestObject,
   PackagingMetadataObject,
   RenditionOptions,
 } from './types';
-import EventEmitter from 'event-emitter';
 import {
   extend,
   defer,
   getValidOrDefault,
+  EventEmitterBase,
   EPUBJS_VERSION,
   EVENTS,
 } from './utils';
@@ -57,8 +56,13 @@ type InputType = (typeof INPUT_TYPE)[keyof typeof INPUT_TYPE];
  * @example new Book("/path/to/book.epub", {})
  * @example new Book({ replacements: "blobUrl" })
  */
-class Book implements Pick<EventEmitterMethods, 'emit'> {
-  emit!: EventEmitterMethods['emit'];
+class Book {
+  private _events = new EventEmitterBase();
+
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
+
   settings: BookOptions = {};
   opening: defer<this>;
   opened: Promise<this> | undefined;
@@ -499,7 +503,7 @@ class Book implements Pick<EventEmitterMethods, 'emit'> {
     );
 
     this.resources = new Resources(this.packaging.manifest, {
-      archive: this.archive,
+      archive: this.archive!,
       resolver: (path, absolute) => this.resolve(path, absolute) ?? '',
       request: this.request.bind(this),
       replacements:
@@ -835,7 +839,5 @@ class Book implements Pick<EventEmitterMethods, 'emit'> {
     this.archived = false;
   }
 }
-
-EventEmitter(Book.prototype);
 
 export default Book;

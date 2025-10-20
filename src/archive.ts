@@ -138,7 +138,7 @@ class Archive {
       return entry
         .async('uint8array')
         .then(function (uint8array) {
-          return new Blob([new Uint8Array(uint8array)], { type: mimeType });
+          return new Blob([new Uint8Array(uint8array)], { type: mimeType! });
         })
         .catch((err) => {
           console.error('[Archive] getBlob error', err);
@@ -205,7 +205,7 @@ class Archive {
     const useBase64 = options && options.base64;
 
     if (url in this.urlCache) {
-      return this.urlCache[url];
+      return this.urlCache[url]!;
     }
 
     if (useBase64) {

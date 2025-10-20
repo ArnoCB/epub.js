@@ -9,7 +9,7 @@ import type { EventEmitterMethods, LayoutSettings, LayoutProps } from './types';
  * @param {number} [settings.minSpreadWidth=800]
  * @param {boolean} [settings.evenSpreads=false]
  */
-declare class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
+declare class Layout implements EventEmitterMethods {
     settings: LayoutSettings;
     name: string;
     _spread: boolean;
@@ -25,8 +25,11 @@ declare class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
     columnWidth: number;
     gap: number;
     props: LayoutProps;
-    emit: EventEmitterMethods['emit'];
-    on: EventEmitterMethods['on'];
+    private _events;
+    emit(type: string, ...args: unknown[]): void;
+    on(type: string, listener: (...args: unknown[]) => void): this;
+    once(type: string, listener: (...args: unknown[]) => void): this;
+    off(type: string, listener: (...args: unknown[]) => void): this;
     constructor(settings: LayoutSettings);
     /**
      * Switch the flow between paginated and scrolled

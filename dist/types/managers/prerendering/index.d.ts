@@ -1,10 +1,8 @@
 import DefaultViewManager from '../default';
 import BookPreRenderer from '../prerenderer';
-import type { PreRenderedChapter } from '../../types/pre-rendered-chapter';
-import { View } from '../helpers/views';
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
-import type { DefaultViewManagerSettings, PreRenderingStatus, ViewManager } from '../../types';
+import type { DefaultViewManagerSettings, PreRenderedChapter, PreRenderingStatus, ViewManager, View } from '../../types';
 /**
  * PreRenderingViewManager - Extends DefaultViewManager to add pre-rendering capabilities
  *
@@ -16,6 +14,7 @@ export declare class PreRenderingViewManager extends DefaultViewManager implemen
     private _preRenderer;
     usePreRendering: boolean;
     private _preRenderingStarted;
+    /** @ts-expect-error: reserved for future use (attach/detach logic) */
     private _attaching;
     name: string;
     get preRenderer(): BookPreRenderer | null;

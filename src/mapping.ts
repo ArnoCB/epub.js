@@ -40,8 +40,8 @@ export class Mapping {
     if (!root) return;
 
     const result = this.rangePairToCfiPair(cfiBase, {
-      start: this.findStart(root, start, end),
-      end: this.findEnd(root, start, end),
+      start: this.findStart(root, start, end)!,
+      end: this.findEnd(root, start, end)!,
     });
 
     if (this._dev === true) {
@@ -124,9 +124,16 @@ export class Mapping {
     for (let i = 0; i < count; i++) {
       start = (columnWidth + gap) * i;
       end = columnWidth * (i + 1) + gap * i;
+      const startRange = this.findStart(view.document.body, start, end);
+      const endRange = this.findEnd(view.document.body, start, end);
+
+      if (startRange === undefined || endRange === undefined) {
+        continue;
+      }
+
       columns.push({
-        start: this.findStart(view.document.body, start, end),
-        end: this.findEnd(view.document.body, start, end),
+        start: startRange,
+        end: endRange,
       });
     }
 
@@ -166,6 +173,7 @@ export class Mapping {
 
           $prev = node;
           stack.push(node);
+          return undefined;
         } else if (this.horizontal && this.direction === 'rtl') {
           left = elPos.left;
           right = elPos.right;
@@ -180,6 +188,7 @@ export class Mapping {
 
           $prev = node;
           stack.push(node);
+          return undefined;
         } else {
           top = elPos.top;
           bottom = elPos.bottom;
@@ -194,6 +203,7 @@ export class Mapping {
 
           $prev = node;
           stack.push(node);
+          return undefined;
         }
       });
 
@@ -268,6 +278,8 @@ export class Mapping {
           $prev = node;
           stack.push(node);
         }
+
+        return undefined;
       });
 
       if (found) {
@@ -291,7 +303,7 @@ export class Mapping {
     for (let i = 0; i < ranges.length; i++) {
       range = ranges[i];
 
-      pos = range.getBoundingClientRect();
+      pos = range!.getBoundingClientRect();
 
       if (this.horizontal && this.direction === 'ltr') {
         left = pos.left;
@@ -329,7 +341,7 @@ export class Mapping {
     for (let i = 0; i < ranges.length; i++) {
       range = ranges[i];
 
-      pos = range.getBoundingClientRect();
+      pos = range!.getBoundingClientRect();
 
       if (this.horizontal && this.direction === 'ltr') {
         left = pos.left;
@@ -449,7 +461,7 @@ export class Mapping {
     let cifPair;
 
     for (let i = 0; i < columns.length; i++) {
-      cifPair = this.rangePairToCfiPair(cfiBase, columns[i]);
+      cifPair = this.rangePairToCfiPair(cfiBase, columns[i]!);
 
       map.push(cifPair);
     }

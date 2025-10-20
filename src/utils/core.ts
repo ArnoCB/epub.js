@@ -169,11 +169,12 @@ export function locationOf<T>(
       return 0;
     };
   }
+
   if (end - start <= 0) {
     return pivot;
   }
 
-  const compared = compareFunction(array[pivot], item);
+  const compared = compareFunction(array[pivot]!, item);
 
   if (end - start === 1) {
     return compared >= 0 ? pivot : pivot + 1;
@@ -217,7 +218,7 @@ export function indexOfSorted<T>(
     return -1;
   }
 
-  const compared = compareFunction(array[pivot], item);
+  const compared = compareFunction(array[pivot]!, item);
 
   if (end - start === 1) {
     return compared === 0 ? pivot : -1;
@@ -546,7 +547,7 @@ export function findChildren(el: Element): ChildNode[] {
   const childNodes = el.childNodes;
   for (let i = 0; i < childNodes.length; i++) {
     const node = childNodes[i];
-    if (node.nodeType === 1) {
+    if (node?.nodeType === 1) {
       result.push(node);
     }
   }
@@ -584,7 +585,7 @@ export function filterChildren(
   const childNodes = el.childNodes;
   for (let i = 0; i < childNodes.length; i++) {
     const node = childNodes[i];
-    if (node.nodeType === 1 && node.nodeName.toLowerCase() === nodeName) {
+    if (node?.nodeType === 1 && node.nodeName.toLowerCase() === nodeName) {
       if (single) {
         return node;
       }

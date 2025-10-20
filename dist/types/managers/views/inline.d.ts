@@ -1,22 +1,22 @@
-import type { InlineViewOptions, InlineViewSettings } from '../../types';
+import type { BookRequestFunction, InlineViewOptions, InlineViewSettings } from '../../types';
 import type { Axis } from '../../enums';
 import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import Layout from '../../layout';
-import { View } from '../helpers/views';
 import Section from '../../section';
-import type { EventEmitterMethods } from '../../types';
-declare class InlineView implements EventEmitterMethods, View {
-    emit: EventEmitterMethods['emit'];
-    on: EventEmitterMethods['on'];
-    off: EventEmitterMethods['off'];
-    once: EventEmitterMethods['once'];
+import type { View } from '../../types';
+declare class InlineView implements View {
+    private _events;
     settings: InlineViewSettings;
     frame: HTMLDivElement | undefined;
     id: string;
     element: HTMLElement;
     index: number;
     section: Section;
+    on<T extends unknown[] = unknown[]>(type: string, listener: (...args: T) => void): View;
+    off<T extends unknown[] = unknown[]>(type: string, listener: (...args: T) => void): View;
+    once<T extends unknown[] = unknown[]>(type: string, listener: (...args: T) => void): View;
+    emit(type: string, ...args: unknown[]): void;
     added: boolean;
     displayed: boolean;
     rendered: boolean;
@@ -55,7 +55,7 @@ declare class InlineView implements EventEmitterMethods, View {
     ununderline(cfiRange: string): void;
     unmark(cfiRange: string): void;
     create(): HTMLDivElement;
-    render(request?: (url: string) => Promise<Document>, show?: boolean): Promise<void>;
+    render(request?: BookRequestFunction, show?: boolean): Promise<void>;
     size(_width?: number, _height?: number): void;
     lock(what: string, width: number, height: number): void;
     expand(): void;
@@ -75,7 +75,7 @@ declare class InlineView implements EventEmitterMethods, View {
     resizeListenters(): void;
     addListeners(): void;
     removeListeners(_layoutFunc?: unknown): void;
-    display(request: (url: string) => Promise<Document>): Promise<unknown>;
+    display(request?: BookRequestFunction): Promise<View>;
     show(): void;
     hide(): void;
     position(): DOMRect;

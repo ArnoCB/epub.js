@@ -27,7 +27,7 @@ import Archive from './archive';
 class Resources {
   settings: {
     replacements?: string;
-    archive?: Archive;
+    archive?: Archive | undefined;
     resolver: ResolverFunction;
     request: BookRequestFunction;
   };
@@ -57,7 +57,7 @@ class Resources {
   process(manifest: PackagingManifestObject) {
     this.manifest = manifest;
     this.resources = Object.keys(manifest).map(function (key) {
-      return manifest[key];
+      return manifest[key]!;
     });
 
     this.replacementUrls = [];

@@ -1,6 +1,10 @@
-import type { InlineViewOptions, InlineViewSettings } from '../../types';
+import type {
+  BookRequestFunction,
+  InlineViewOptions,
+  InlineViewSettings,
+} from '../../types';
 import type { Axis } from '../../enums';
-import EventEmitter from 'event-emitter';
+import { EventEmitterBase } from '../../utils/event-emitter';
 import {
   extend,
   borders,
@@ -14,21 +18,45 @@ import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import { EVENTS } from '../../utils/constants';
 import Layout from '../../layout';
-import { View } from '../helpers/views';
 import Section from '../../section';
-import type { EventEmitterMethods } from '../../types';
+import type { View } from '../../types';
 
-class InlineView implements EventEmitterMethods, View {
-  emit!: EventEmitterMethods['emit'];
-  on!: EventEmitterMethods['on'];
-  off!: EventEmitterMethods['off'];
-  once!: EventEmitterMethods['once'];
+class InlineView implements View {
+  private _events = new EventEmitterBase();
   settings: InlineViewSettings;
   frame: HTMLDivElement | undefined;
   id: string;
   element: HTMLElement;
   index: number;
   section: Section;
+
+  // Event emitter delegate methods with generics for better type safety
+  on<T extends unknown[] = unknown[]>(
+    type: string,
+    listener: (...args: T) => void
+  ): View {
+    this._events.on(type, listener as (...args: unknown[]) => void);
+    return this;
+  }
+
+  off<T extends unknown[] = unknown[]>(
+    type: string,
+    listener: (...args: T) => void
+  ): View {
+    this._events.off(type, listener as (...args: unknown[]) => void);
+    return this;
+  }
+
+  once<T extends unknown[] = unknown[]>(
+    type: string,
+    listener: (...args: T) => void
+  ): View {
+    this._events.once(type, listener as (...args: unknown[]) => void);
+    return this;
+  }
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
   added: boolean = false;
   displayed: boolean = false;
   rendered: boolean = false;
@@ -80,8 +108,8 @@ class InlineView implements EventEmitterMethods, View {
     this.index = section.index;
 
     this.element = this.container(this.settings.axis);
-    this._width = this.settings.width;
-    this._height = this.settings.height;
+    this._width = this.settings.width ?? 0;
+    this._height = this.settings.height ?? 0;
 
     this.layout = this.settings.layout;
     // Dom events to listen for
@@ -215,7 +243,7 @@ class InlineView implements EventEmitterMethods, View {
     return this.frame;
   }
 
-  render(request?: (url: string) => Promise<Document>, show: boolean = true) {
+  render(request?: BookRequestFunction, show: boolean = true) {
     // view.onLayout = this.layout.format.bind(this.layout);
     this.create();
 
@@ -259,8 +287,8 @@ class InlineView implements EventEmitterMethods, View {
 
   // Determine locks base on settings
   size(_width?: number, _height?: number) {
-    const width = _width || this.settings.width;
-    const height = _height || this.settings.height;
+    const width = _width ?? this.settings.width ?? 0;
+    const height = _height ?? this.settings.height ?? 0;
 
     if (this.layout.name === 'pre-paginated') {
       // TODO: check if these are different than the size set in chapter
@@ -469,9 +497,8 @@ class InlineView implements EventEmitterMethods, View {
     //TODO: remove content listeners for expanding
   }
 
-  display(request: (url: string) => Promise<Document>) {
-    const displayed = new defer();
-
+  display(request?: BookRequestFunction): Promise<View> {
+    const displayed = new defer<View>();
     if (!this.displayed) {
       this.render(request).then(() => {
         this.emit(EVENTS.VIEWS.DISPLAYED, this);
@@ -591,7 +618,5 @@ class InlineView implements EventEmitterMethods, View {
     }
   }
 }
-
-EventEmitter(InlineView.prototype);
 
 export default InlineView;

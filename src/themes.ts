@@ -241,8 +241,8 @@ class Themes {
       ) {
         theme = themes[name];
         if (
-          (theme.rules && Object.keys(theme.rules).length > 0) ||
-          (theme.url && links.indexOf(theme.url) === -1)
+          (theme?.rules && Object.keys(theme.rules).length > 0) ||
+          (theme?.url && links.indexOf(theme.url) === -1)
         ) {
           this.add(name, contents);
         }
@@ -337,6 +337,7 @@ class Themes {
 
     for (const rule in overrides) {
       if (Object.prototype.hasOwnProperty.call(overrides, rule)) {
+        if (overrides[rule] === undefined) continue;
         contents.css(rule, overrides[rule].value, overrides[rule].priority);
       }
     }

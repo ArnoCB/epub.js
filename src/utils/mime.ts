@@ -144,15 +144,16 @@ const mimeTypes = (function () {
   const mimeTypes: Record<string, string> = {};
 
   for (type in table) {
+    /** @todo refactor this so we don't need all these non-null assertions */
     if (Object.prototype.hasOwnProperty.call(table, type)) {
       for (subtype in table[type]) {
         if (Object.prototype.hasOwnProperty.call(table[type], subtype)) {
-          val = table[type][subtype];
+          val = table[type]![subtype];
           if (typeof val == 'string') {
             mimeTypes[val] = type + '/' + subtype;
           } else {
-            for (index = 0; index < val.length; index++) {
-              mimeTypes[val[index]] = type + '/' + subtype;
+            for (index = 0; index < val!.length; index++) {
+              mimeTypes[val![index]!] = type + '/' + subtype;
             }
           }
         }

@@ -1,5 +1,5 @@
 import { extend, EVENTS } from './utils';
-import EventEmitter from 'event-emitter';
+import { EventEmitterBase } from './utils/event-emitter';
 import Section from './section';
 import Contents from './contents';
 import { Flow, Axis, Spread } from './enums';
@@ -12,7 +12,7 @@ import type { EventEmitterMethods, LayoutSettings, LayoutProps } from './types';
  * @param {number} [settings.minSpreadWidth=800]
  * @param {boolean} [settings.evenSpreads=false]
  */
-class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
+class Layout implements EventEmitterMethods {
   settings: LayoutSettings;
   name: string;
   _spread: boolean;
@@ -28,8 +28,27 @@ class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
   columnWidth: number;
   gap: number;
   props: LayoutProps;
-  emit!: EventEmitterMethods['emit'];
-  on!: EventEmitterMethods['on'];
+  private _events: EventEmitterBase = new EventEmitterBase();
+
+  // Event methods delegated to _events
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
+
+  on(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.on(type, listener);
+    return this;
+  }
+
+  once(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.once(type, listener);
+    return this;
+  }
+
+  off(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.off(type, listener);
+    return this;
+  }
 
   constructor(settings: LayoutSettings) {
     // Set default direction if not provided
@@ -197,6 +216,8 @@ class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
   format(contents: Contents, section?: Section, axis?: Axis) {
     let formating;
 
+    // section is unused currently, but will be needed later perhaps
+    void section;
     if (this.name === 'pre-paginated') {
       formating = contents.fit(this.columnWidth, this.height);
     } else if (this._flow === 'paginated') {
@@ -259,7 +280,5 @@ class Layout implements Pick<EventEmitterMethods, 'emit' | 'on'> {
     }
   }
 }
-
-EventEmitter(Layout.prototype);
 
 export default Layout;

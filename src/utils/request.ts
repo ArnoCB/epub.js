@@ -36,7 +36,7 @@ function request<T = unknown>(
     xhr.open('GET', url, true);
 
     for (header in headers) {
-      xhr.setRequestHeader(header, headers[header]);
+      xhr.setRequestHeader(header, headers[header]!);
     }
 
     if (type == 'json') {

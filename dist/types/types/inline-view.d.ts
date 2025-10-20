@@ -13,8 +13,8 @@ export interface InlineViewOptions {
 export interface InlineViewSettings {
     ignoreClass: string;
     axis: Axis;
-    width: number;
-    height: number;
+    width?: number;
+    height?: number;
     layout: Layout;
     globalLayoutProperties: Record<string, unknown>;
 }

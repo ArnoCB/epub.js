@@ -1,8 +1,7 @@
 import Rendition from './rendition';
-import { View } from './managers/helpers/views';
 import Annotation from './annotation';
 import EpubCFI from './epubcfi';
-import type { MarkType } from './types';
+import type { MarkType, View } from './types';
 
 /**
  * Handles managing adding & removing Annotations
@@ -48,6 +47,7 @@ export class Annotations {
     this._annotations[hash] = annotation;
 
     if (sectionIndex in this._annotationsBySectionIndex) {
+      this._annotationsBySectionIndex[sectionIndex] ??= [];
       this._annotationsBySectionIndex[sectionIndex].push(hash);
     } else {
       this._annotationsBySectionIndex[sectionIndex] = [hash];
@@ -73,13 +73,14 @@ export class Annotations {
     if (hash in this._annotations) {
       const annotation = this._annotations[hash];
 
-      if (type && annotation.type !== type) {
+      if (type && annotation && annotation.type !== type) {
         return;
       }
 
       const views = this.rendition.views()!;
 
       views.forEach((view) => {
+        if (!annotation) return;
         this._removeFromAnnotationBySectionIndex(annotation.sectionIndex, hash);
         if (annotation.sectionIndex === view.index) {
           annotation.detach(view);
@@ -95,9 +96,8 @@ export class Annotations {
    * @private
    */
   _removeFromAnnotationBySectionIndex(sectionIndex: number, hash: string) {
-    this._annotationsBySectionIndex[sectionIndex] = this._annotationsAt(
-      sectionIndex
-    ).filter((h) => h !== hash);
+    this._annotationsBySectionIndex[sectionIndex] =
+      this._annotationsAt(sectionIndex)?.filter((h) => h !== hash) ?? [];
   }
 
   /**
@@ -167,9 +167,9 @@ export class Annotations {
     const sectionIndex = view.index;
     if (sectionIndex in this._annotationsBySectionIndex) {
       const annotations = this._annotationsBySectionIndex[sectionIndex];
-      annotations.forEach((hash) => {
+      annotations?.forEach((hash) => {
         const annotation = this._annotations[hash];
-        annotation.attach(view);
+        annotation?.attach(view);
       });
     }
   }
@@ -181,9 +181,9 @@ export class Annotations {
     const sectionIndex = view.index;
     if (sectionIndex in this._annotationsBySectionIndex) {
       const annotations = this._annotationsBySectionIndex[sectionIndex];
-      annotations.forEach((hash) => {
+      annotations?.forEach((hash) => {
         const annotation = this._annotations[hash];
-        annotation.detach(view);
+        annotation?.detach(view);
       });
     }
   }

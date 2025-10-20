@@ -1,27 +1,26 @@
 import Mapping from '../../mapping';
 import Queue from '../../utils/queue';
 import Stage from '../helpers/stage';
-import Views, { View, ViewConstructor } from '../helpers/views';
-import { ViewManager } from '../../types';
+import Views from '../helpers/views';
+import { ViewManager, View, ViewConstructor } from '../../types';
 import Layout from '../../layout';
 import { Section } from '../../section';
 import { Contents } from '../../epub';
 import { ViewRenderer } from '../helpers/view-renderer';
-import type { Axis, Flow } from '../../enums';
-import { DefaultViewManagerSettings, PageLocation, EventEmitterMethods } from '../../types';
-declare class DefaultViewManager implements ViewManager, Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
-    on: EventEmitterMethods['on'];
-    off: EventEmitterMethods['off'];
-    emit: EventEmitterMethods['emit'];
+import { type Axis, type Flow } from '../../enums';
+import { DefaultViewManagerSettings, PageLocation } from '../../types';
+declare class DefaultViewManager implements ViewManager {
+    private _events;
+    on(type: string, listener: (...args: unknown[]) => void): this;
+    off(type: string, listener: (...args: unknown[]) => void): this;
+    emit(type: string, ...args: unknown[]): void;
     settings: DefaultViewManagerSettings;
-    viewSettings: {
-        [key: string]: unknown;
-    };
+    viewSettings: DefaultViewManagerSettings;
     stage: Stage;
     name: string;
     rendered: boolean;
     optsSettings: DefaultViewManagerSettings;
-    View?: ViewConstructor | View;
+    View: ViewConstructor | View | undefined;
     request: ((url: string) => Promise<Document>) | undefined;
     renditionQueue: unknown;
     q: Queue;
@@ -36,7 +35,7 @@ declare class DefaultViewManager implements ViewManager, Pick<EventEmitterMethod
     _stageSize?: {
         width: number;
         height: number;
-    };
+    } | undefined;
     _bounds: {
         left: number;
         top: number;
@@ -116,7 +115,7 @@ declare class DefaultViewManager implements ViewManager, Pick<EventEmitterMethod
     private loadPrevSection;
     private adjustScrollAfterPrepend;
     private rememberScrollPosition;
-    current(): View | null;
+    current(): View | null | undefined;
     clear(): void;
     currentLocation(): PageLocation[];
     scrolledLocation(): PageLocation[];

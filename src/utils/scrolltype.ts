@@ -1,17 +1,20 @@
 // Detect RTL scroll type
+
+import { ScrollType } from '../enums';
+
 // Based on https://github.com/othree/jquery.rtl-scroll-type/blob/master/src/jquery.rtl-scroll.js
-export default function scrollType() {
-  let type = 'reverse';
+export default function scrollType(): ScrollType {
+  let type: ScrollType = ScrollType.reverse;
   const definer = createDefiner();
   document.body.appendChild(definer);
 
   if (definer.scrollLeft > 0) {
-    type = 'default';
+    type = ScrollType.default;
   } else {
     // Modern browsers: always use scrollIntoView logic
-    definer.children[0].children[1].scrollIntoView();
+    definer.children[0]?.children[1]?.scrollIntoView();
     if (definer.scrollLeft < 0) {
-      type = 'negative';
+      type = ScrollType.negative;
     }
   }
 

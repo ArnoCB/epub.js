@@ -1,5 +1,5 @@
 import { Section } from '../../section';
-import { View } from './views';
+import { View } from '../../types';
 import { CfiResolver } from './cfi-resolver';
 
 export interface PageMapEntry {

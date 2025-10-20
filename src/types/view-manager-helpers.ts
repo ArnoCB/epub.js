@@ -5,21 +5,18 @@
  */
 
 import type Layout from '../layout';
-import type { Stage, Views, View } from '../managers';
+import type { Stage, Views } from '../managers';
 import type { Section } from '../section';
 import type { Axis, Flow } from '../enums';
 import type { PageLocation } from '.';
 import type { Contents } from '../epub';
-import type { EventEmitterMethods } from '.';
+import type { View } from '.';
 
 export interface ViewManagerConstructor extends ViewManager {
   new (options: { [key: string]: unknown }): ViewManager;
 }
 
 export interface ViewManager {
-  // on(event: string, listener: (...args: unknown[]) => void): EventEmitterMethods;
-  // off(event: string, listener: (...args: unknown[]) => void): EventEmitterMethods;
-
   settings: {
     infinite?: boolean;
     hidden?: boolean;
@@ -43,8 +40,11 @@ export interface ViewManager {
   isPaginated?: boolean;
   overflow?: unknown;
   views: Views;
-  on: EventEmitterMethods['on'];
-  off: EventEmitterMethods['off'];
+
+  // Event emitter methods using composition pattern
+  on(type: string, listener: (...args: unknown[]) => void): ViewManager;
+  off(type: string, listener: (...args: unknown[]) => void): ViewManager;
+  emit?(type: string, ...args: unknown[]): void;
   container?: HTMLElement;
   display: (
     section: Section,

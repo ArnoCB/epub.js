@@ -1,4 +1,4 @@
-import type { DisplayedLocation, EventEmitterMethods, RenditionHooks, ViewManager, ViewManagerConstructor, RenditionOptions } from './types';
+import type { DisplayedLocation, RenditionHooks, ViewManager, ViewManagerConstructor, RenditionOptions } from './types';
 import { defer } from './utils';
 import EpubCFI from './epubcfi';
 import Queue from './utils/queue';
@@ -6,9 +6,10 @@ import Layout from './layout';
 import Themes from './themes';
 import Annotations from './annotations';
 import Book from './book';
-import Views, { View } from './managers/helpers/views';
+import Views from './managers/helpers/views';
 import Contents from './contents';
-import type { Direction, Flow, Spread } from './enums';
+import { type Direction, type Flow, type Spread } from './enums';
+import type { View } from './types';
 /**
  * Displays an Epub as a series of Views for each Section.
  * Requires Manager and View class to handle specifics of rendering
@@ -31,11 +32,12 @@ import type { Direction, Flow, Spread } from './enums';
  * @param {boolean} [options.allowScriptedContent=false] enable running scripts in content
  * @param {boolean} [options.allowPopups=false] enable opening popup in content
  */
-export declare class Rendition implements EventEmitterMethods {
-    emit: EventEmitterMethods['emit'];
-    on: EventEmitterMethods['on'];
-    off: EventEmitterMethods['off'];
-    once: EventEmitterMethods['once'];
+export declare class Rendition {
+    private _events;
+    on(type: string, listener: (...args: unknown[]) => void): this;
+    off(type: string, listener: (...args: unknown[]) => void): this;
+    once(type: string, listener: (...args: unknown[]) => void): this;
+    emit(type: string, ...args: unknown[]): void;
     settings: RenditionOptions;
     book: Book;
     hooks: RenditionHooks;

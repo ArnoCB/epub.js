@@ -1,7 +1,7 @@
 export declare function buildEnrichedLocationPoint(point: LocationPoint, side: 'start' | 'end', book: {
     locations?: {
-        locationFromCfi: (cfi: string) => number | null;
-        percentageFromLocation: (loc: number) => number;
+        locationFromCfi: (cfi: string) => number | null | undefined;
+        percentageFromLocation: (loc: number) => number | null | undefined;
     };
     pageList?: {
         pageFromCfi: (cfi: string) => number;
@@ -21,8 +21,8 @@ import type { LocationPoint, DisplayedLocation } from '../types/rendition';
  */
 export declare function enrichLocationSide(side: 'start' | 'end', point: LocationPoint, locatedSide: DisplayedLocation['start'], book: {
     locations?: {
-        locationFromCfi: (cfi: string) => number | null;
-        percentageFromLocation: (loc: number) => number;
+        locationFromCfi: (cfi: string) => number | null | undefined;
+        percentageFromLocation: (loc: number) => number | null | undefined;
     };
     pageList?: {
         pageFromCfi: (cfi: string) => number;

@@ -1,4 +1,4 @@
-import { Axis } from '../../enums';
+import { Axis, Direction } from '../../enums';
 interface Padding {
     left?: string;
     right?: string;
@@ -8,7 +8,9 @@ interface Padding {
 type StageOptions = {
     width?: string;
     height?: string;
-    direction?: string;
+    direction?: Direction;
+    axis?: Axis;
+    hidden?: boolean;
     [key: string]: unknown;
 };
 export declare class Stage {
@@ -26,7 +28,11 @@ export declare class Stage {
     create(options: {
         width?: string;
         height?: string;
-        direction?: string;
+        direction?: Direction;
+        overflow?: string | boolean;
+        axis?: Axis;
+        fullsize?: boolean;
+        hidden?: boolean;
         [key: string]: unknown;
     }): HTMLDivElement;
     wrap(container: HTMLElement): HTMLDivElement;

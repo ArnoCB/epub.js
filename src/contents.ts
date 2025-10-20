@@ -1,5 +1,5 @@
-import EventEmitter from 'event-emitter';
-import type { EventEmitterMethods, Viewport } from './types';
+import { EventEmitterBase } from './utils/event-emitter';
+import type { Viewport } from './types';
 import {
   isNumber,
   prefixed,
@@ -19,9 +19,19 @@ import { Axis, Direction } from './enums';
 /**
  * Handles DOM manipulation, queries and events for View contents
  */
-class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
-  emit!: EventEmitterMethods['emit'];
-  on!: EventEmitterMethods['on'];
+class Contents {
+  // Use composition for events
+  private _events = new EventEmitterBase();
+
+  // Public event methods that delegate to the internal EventEmitterBase
+  on(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.on(type, listener);
+    return this;
+  }
+
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
   document: Document;
   documentElement: HTMLElement;
   content: HTMLElement;
@@ -251,7 +261,11 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
    * @param {string} value
    * @param {boolean} [priority] set as "important"
    */
-  css(property: string, value?: string, priority?: boolean): string {
+  css(
+    property: string,
+    value?: string,
+    priority?: boolean
+  ): string | undefined {
     const content = this.content || this.document.body;
 
     if (value) {
@@ -282,12 +296,12 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
     // var width, height, scale, minimum, maximum, scalable;
     let $viewport = this.document.querySelector("meta[name='viewport']");
     const parsed: Viewport = {
-      width: undefined,
-      height: undefined,
-      scale: undefined,
-      minimum: undefined,
-      maximum: undefined,
-      scalable: undefined,
+      width: '',
+      height: '',
+      scale: '',
+      minimum: '',
+      maximum: '',
+      scalable: '',
     };
 
     const newContent = [];
@@ -492,7 +506,7 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
       let rules: CSSRuleList | undefined;
       // Firefox errors if we access cssRules cross-domain
       try {
-        rules = sheets[i].cssRules;
+        rules = sheets[i]?.cssRules;
       } catch {
         return;
       }
@@ -501,7 +515,11 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
       for (let j = 0; j < rules.length; j += 1) {
         const rule = rules[j];
         // Only CSSMediaRule has a media property
-        if (rule.type === CSSRule.MEDIA_RULE && (rule as CSSMediaRule).media) {
+        if (
+          rule &&
+          rule.type === CSSRule.MEDIA_RULE &&
+          (rule as CSSMediaRule).media
+        ) {
           const mql = this.window!.matchMedia(
             (rule as CSSMediaRule).media.mediaText
           );
@@ -556,7 +574,7 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
     for (let i = 0; i < images.length; i++) {
       img = images[i];
 
-      if (typeof img.naturalWidth !== 'undefined' && img.naturalWidth === 0) {
+      if (img?.naturalWidth !== undefined && img.naturalWidth === 0) {
         img.onload = this.expand.bind(this);
       }
     }
@@ -758,7 +776,7 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
             styleSheet.cssRules.length
           );
         });
-      } else {
+      } else if (definition) {
         const _rules = Object.keys(definition);
         const result = _rules
           .map((rule) => {
@@ -861,7 +879,7 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
         false
       );
     });
-    this._triggerEvent = undefined;
+    this._triggerEvent = () => {};
   }
 
   /**
@@ -896,7 +914,7 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
       this._onSelectionChange as EventListener,
       false
     );
-    this._onSelectionChange = undefined;
+    this._onSelectionChange = () => {};
   }
 
   /**
@@ -1214,5 +1232,5 @@ class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
   }
 }
 
-EventEmitter(Contents.prototype);
+// Event handling is now implemented via composition
 export default Contents;

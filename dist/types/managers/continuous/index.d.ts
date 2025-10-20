@@ -2,12 +2,10 @@ import { defer } from '../../utils/core';
 import DefaultViewManager from '../default';
 import Snap from '../helpers/snap';
 import Section from '../../section';
-import { View } from '../helpers/views';
 import IframeView from '../views/iframe';
-import type { DefaultViewManagerSettings, ViewManager } from '../../types';
-import type { Flow } from '../../enums';
-import type { EventEmitterMethods } from '../../types';
-declare class ContinuousViewManager extends DefaultViewManager implements ViewManager, Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
+import type { DefaultViewManagerSettings, ViewManager, View } from '../../types';
+import { type Flow } from '../../enums';
+declare class ContinuousViewManager extends DefaultViewManager implements ViewManager {
     trimTimeout: NodeJS.Timeout | undefined;
     snapper: Snap | undefined;
     scrollDeltaVert: number;

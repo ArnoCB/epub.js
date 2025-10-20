@@ -1,3 +1,6 @@
+export const DEFAULT_PAGE_WIDTH = 450;
+export const DEFAULT_PAGE_HEIGHT = 600;
+export const DEFAULT_SPREAD_WIDTH = 900;
 /**
  * Central type and enumroot for epub.js
  *
@@ -14,7 +17,12 @@
  * Related: CSS Writing Modes, EPUB 3.0.1 spec (see flow/scroll direction):
  * @see http://www.idpf.org/epub/301/spec/epub-publications.html#sec-itemref-property-values
  */
-export type Axis = 'horizontal' | 'vertical';
+export const Axis = {
+  horizontal: 'horizontal',
+  vertical: 'vertical',
+} as const;
+export type Axis = (typeof Axis)[keyof typeof Axis];
+export const DEFAULT_AXIS: Axis = 'horizontal';
 
 /**
  * Reading direction for EPUB content.
@@ -79,3 +87,25 @@ export const Spread = {
 } as const;
 export type Spread = (typeof Spread)[keyof typeof Spread];
 export const DEFAULT_SPREAD = 'auto';
+
+/**
+ * ScrollType for RTL scroll behavior detection.
+ * See: https://github.com/othree/jquery.rtl-scroll-type
+ */
+export const ScrollType = {
+  default: 'default',
+  reverse: 'reverse',
+  negative: 'negative',
+} as const;
+export type ScrollType = (typeof ScrollType)[keyof typeof ScrollType];
+export const DEFAULT_SCROLL_TYPE = 'reverse';
+
+/**
+ * This is to make the book / iframe transparent, so we can have
+ * bright highlights.
+ */
+export const DEFAULT_TRANSPARENCY = true;
+export const DEFAULT_FORCE_EVEN_PAGES = false;
+
+export const DEFAULT_ALLOW_SCRIPTED_CONTENT = false;
+export const DEFAULT_ALLOW_POPUPS = false;

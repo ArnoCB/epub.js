@@ -155,11 +155,11 @@ export class Spine {
     ) {
       index = typeof target === 'number' ? target : Number(target);
     } else if (typeof target === 'string' && target.indexOf('#') === 0) {
-      index = this.spineById[target.substring(1)];
+      index = this.spineById[target.substring(1)]!;
     } else if (typeof target === 'string') {
       // Remove fragments
-      target = target.split('#')[0];
-      index = this.spineByHref[target] || this.spineByHref[encodeURI(target)];
+      target = target.split('#')[0]!;
+      index = this.spineByHref[target] || this.spineByHref[encodeURI(target)]!;
     }
 
     return this.spineItems[index] || null;

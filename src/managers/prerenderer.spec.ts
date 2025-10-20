@@ -2,6 +2,7 @@ import BookPreRenderer from './prerenderer';
 import { Section } from '../section';
 import { ViewRenderer } from './helpers/view-renderer';
 import { PageMapGenerator } from './helpers/page-map-generator';
+import Layout from '../layout';
 
 // Mock the helper classes
 jest.mock('./helpers/view-renderer');
@@ -45,9 +46,17 @@ describe('BookPreRenderer', () => {
       width: 800,
       height: 600,
       flow: 'paginated' as const,
+      layout: 'reflowable' as any,
     };
 
     prerenderer = new BookPreRenderer(container, viewSettings, mockRequest);
+
+    // Add event emitter methods to the prerenderer
+    prerenderer.emit = jest.fn().mockReturnValue(true);
+    prerenderer.on = jest.fn().mockReturnThis();
+    prerenderer.off = jest.fn().mockReturnThis();
+    // Note: BookPreRenderer might not have the once method, but we're adding it for consistency
+    (prerenderer as any).once = jest.fn().mockReturnThis();
   });
 
   afterEach(() => {

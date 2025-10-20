@@ -9,8 +9,8 @@ export interface ViewRendererSettings {
     ignoreClass?: string;
     axis?: Axis;
     direction?: Direction;
-    width: number;
-    height: number;
+    width?: number;
+    height?: number;
     layout?: Layout;
     method?: string;
     forceRight?: boolean;

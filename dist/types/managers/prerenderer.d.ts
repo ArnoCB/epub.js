@@ -1,9 +1,12 @@
 import type { ViewSettings, PreRenderingStatus, EventEmitterMethods, PreRenderedChapter } from '../types';
 import { Section } from '../section';
-export declare class BookPreRenderer {
-    on: EventEmitterMethods['on'];
-    off: EventEmitterMethods['off'];
-    emit: EventEmitterMethods['emit'];
+export declare class BookPreRenderer implements EventEmitterMethods {
+    private _events;
+    on(type: string, listener: (...args: unknown[]) => void): this;
+    once(type: string, listener: (...args: unknown[]) => void): this;
+    off(type: string, listener: (...args: unknown[]) => void): this;
+    emit(type: string, ...args: unknown[]): void;
+    private container;
     private offscreenContainer;
     private unattachedStorage;
     private viewSettings;
@@ -70,6 +73,11 @@ export declare class BookPreRenderer {
      * prerendered chapters to produce a global pageNumber for each page entry.
      */
     private assignGlobalPageNumbers;
+    /**
+     * Remove any orphaned iframes from the container that might affect the iframe count
+     * in single page mode tests
+     */
+    private cleanupOrphanedIframes;
     destroy(): void;
 }
 export default BookPreRenderer;

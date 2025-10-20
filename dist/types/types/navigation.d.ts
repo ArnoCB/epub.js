@@ -10,18 +10,18 @@ export interface NavItem {
     href: string;
     label: string;
     subitems: NavItem[];
-    parent?: string;
+    parent?: string | undefined;
 }
 export interface LandmarkItem {
     href: string;
     label: string;
-    type?: string;
+    type?: string | undefined;
 }
 export interface RawNavItem {
     title: string;
     children?: RawNavItem[];
     id?: string;
     href?: string;
-    parent?: string;
+    parent?: string | undefined;
     [key: string]: unknown;
 }

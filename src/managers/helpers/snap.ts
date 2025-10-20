@@ -1,9 +1,9 @@
-import type { ViewManager, EventEmitterMethods } from '../../types';
+import type { ViewManager, View } from '../../types';
 import { extend, defer } from '../../utils/core';
 import { EVENTS } from '../../utils/constants';
-import EventEmitter from 'event-emitter';
+import { EventEmitterBase } from '../../utils/event-emitter';
+import { createDomEventHandler } from '../../utils/event-handler-wrapper';
 import Layout from '../../layout';
-import { View } from './views';
 import Contents from '../../contents';
 
 // easing equations from https://github.com/danro/easing-js/blob/master/easing.js
@@ -26,28 +26,43 @@ const EASING_EQUATIONS = {
   },
 };
 
-class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
+class Snap {
+  private _events = new EventEmitterBase();
+
   private isTouchEvent(e: Event): boolean {
     return e instanceof TouchEvent;
   }
-  emit!: EventEmitterMethods['emit'];
-  on!: EventEmitterMethods['on'];
-  off!: EventEmitterMethods['off'];
+
+  // Event emitter delegate methods
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
+
+  on(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.on(type, listener);
+    return this;
+  }
+
+  off(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.off(type, listener);
+    return this;
+  }
 
   touchCanceler!: boolean;
   resizeCanceler!: boolean;
   snapping!: boolean;
-  startTouchX?: number;
-  startTouchY?: number;
-  startTime?: number;
-  endTouchX?: number;
-  endTouchY?: number;
-  endTime?: number;
-  scrollLeft?: number;
-  scrollTop?: number;
+  startTouchX: number | undefined;
+  startTouchY: number | undefined;
+  startTime: number | undefined;
+  endTouchX: number | undefined;
+  endTouchY: number | undefined;
+  endTime: number | undefined;
+  scrollLeft: number | undefined;
+  scrollTop: number | undefined;
+  // a contsructor helper method sets the manager property
   manager!: ViewManager;
-  layout!: Layout;
-  fullsize?: boolean;
+  layout: Layout | undefined;
+  fullsize: boolean | undefined;
   element!: HTMLElement;
   scroller!: HTMLElement | Window;
   isVertical?: boolean;
@@ -57,6 +72,7 @@ class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
   _onTouchMove?: (e: Event) => void;
   _onTouchEnd?: (e: Event) => void;
   _afterDisplayed?: (view: View) => void;
+
   settings!: {
     duration: number;
     minVelocity: number;
@@ -160,19 +176,19 @@ class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
       passive: true,
     });
 
-    this.on('touchstart', this._onTouchStart);
+    this.on('touchstart', createDomEventHandler(this._onTouchStart));
 
     this._onTouchMove = this.onTouchMove.bind(this);
     this.scroller.addEventListener('touchmove', this._onTouchMove, {
       passive: true,
     });
-    this.on('touchmove', this._onTouchMove);
+    this.on('touchmove', createDomEventHandler(this._onTouchMove));
 
     this._onTouchEnd = this.onTouchEnd.bind(this);
     this.scroller.addEventListener('touchend', this._onTouchEnd, {
       passive: true,
     });
-    this.on('touchend', this._onTouchEnd);
+    this.on('touchend', createDomEventHandler(this._onTouchEnd));
 
     this._afterDisplayed = this.afterDisplayed.bind(this);
     this.manager.on(EVENTS.MANAGERS.ADDED, (...args: unknown[]) => {
@@ -182,41 +198,44 @@ class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
 
   removeListeners() {
     window.removeEventListener('resize', this._onResize!);
-    this._onResize = undefined;
+    this._onResize = () => {};
 
     this.scroller.removeEventListener('scroll', this._onScroll!);
-    this._onScroll = undefined;
+    this._onScroll = () => {};
 
     if (this._onTouchStart) {
       this.scroller.removeEventListener('touchstart', this._onTouchStart);
-      this.off!('touchstart', this._onTouchStart);
+      this.off!('touchstart', createDomEventHandler(this._onTouchStart));
     }
-    this._onTouchStart = undefined;
+    this._onTouchStart = () => {};
 
     if (this._onTouchMove) {
       this.scroller.removeEventListener('touchmove', this._onTouchMove);
-      this.off!('touchmove', this._onTouchMove);
+      this.off!('touchmove', createDomEventHandler(this._onTouchMove));
     }
-    this._onTouchMove = undefined;
+    this._onTouchMove = () => {};
 
     if (this._onTouchEnd) {
       this.scroller.removeEventListener('touchend', this._onTouchEnd);
-      this.off!('touchend', this._onTouchEnd);
+      this.off!('touchend', createDomEventHandler(this._onTouchEnd));
     }
-    this._onTouchEnd = undefined;
+    this._onTouchEnd = () => {};
 
     if (this._afterDisplayed) {
       this.manager.off!(EVENTS.MANAGERS.ADDED, (...args: unknown[]) => {
         this._afterDisplayed?.(args[0] as View);
       });
     }
-    this._afterDisplayed = undefined;
+    this._afterDisplayed = () => {};
   }
 
   afterDisplayed(view: View) {
     const contents = view.contents;
     ['touchstart', 'touchmove', 'touchend'].forEach((e) => {
-      contents!.on(e, (ev: TouchEvent) => this.triggerViewEvent(ev, contents!));
+      contents!.on(e, (...args: unknown[]) => {
+        const ev = args[0] as TouchEvent;
+        this.triggerViewEvent(ev, contents!);
+      });
     });
   }
 
@@ -244,7 +263,7 @@ class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
     if (!this.isTouchEvent(e)) return;
 
     // we know it is a TouchEvent because we checked it earlier
-    const { screenX, screenY } = (e as TouchEvent).touches[0];
+    const { screenX, screenY } = (e as TouchEvent).touches[0]!;
 
     if (this.fullsize) {
       this.enableScroll();
@@ -265,7 +284,7 @@ class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
 
   onTouchMove(e: Event) {
     if (!this.isTouchEvent(e)) return;
-    const { screenX, screenY } = (e as TouchEvent).touches[0];
+    const { screenX, screenY } = (e as TouchEvent).touches[0]!;
     const deltaY =
       this.endTouchY === undefined ? 0 : Math.abs(screenY - this.endTouchY);
     this.touchCanceler = true;
@@ -327,6 +346,8 @@ class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
       // next
       return 1;
     }
+
+    return 0;
   }
 
   needsSnap() {
@@ -432,7 +453,5 @@ class Snap implements Pick<EventEmitterMethods, 'emit' | 'on' | 'off'> {
     this.scroller = undefined;
   }
 }
-
-EventEmitter(Snap.prototype);
 
 export default Snap;

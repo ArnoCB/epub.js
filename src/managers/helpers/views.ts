@@ -1,76 +1,4 @@
-import Section from '../../section';
-import Contents from '../../contents';
-import Layout from '../../layout';
-import { Mark } from 'marks-pane';
-import { EventEmitterMethods } from '../../types';
-
-type CanonicalViewConstructor =
-  typeof import('../../types/canonical-view').default;
-type CanonicalViewInstance = InstanceType<CanonicalViewConstructor>;
-
-export type View = CanonicalViewInstance & {
-  on: EventEmitterMethods['on'];
-  emit: EventEmitterMethods['emit'];
-  off: EventEmitterMethods['off'];
-  once: EventEmitterMethods['once'];
-  // Runtime-only properties used throughout the codebase
-  element: HTMLElement;
-  displayed: boolean;
-  section?: Section;
-  index: number;
-  contents?: Contents;
-  // Bounds may be a DOMRect or a simple width/height object in some views
-  bounds(): DOMRect | { width: number; height: number } | undefined;
-  offset(): { top: number; left: number };
-  onDisplayed(view?: View): void;
-  display(request?: (url: string) => Promise<Document>): Promise<unknown>;
-  position(): DOMRect;
-  width(): number;
-  height(): number;
-  size(width?: number, height?: number): void;
-  setLayout(layout: Layout): void;
-  onResize?(
-    view: View,
-    size?: {
-      width: number;
-      height: number;
-      widthDelta: number;
-      heightDelta: number;
-    }
-  ): void;
-  locationOf(target: HTMLElement | string): { left: number; top: number };
-  highlight: (
-    cfiRange: string,
-    data: Record<string, string>,
-    cb?: (e: Event) => void,
-    className?: string,
-    styles?: object
-  ) => Mark | undefined;
-  underline: (
-    cfiRange: string,
-    data: Record<string, string>,
-    cb?: (e: Event) => void,
-    className?: string,
-    styles?: object
-  ) => Mark | undefined;
-  mark: (
-    cfiRange: string,
-    data: Record<string, string>,
-    cb?: (e: Event) => void
-  ) => { element: HTMLElement; range: Range } | Node | null;
-  unhighlight: (cfiRange: string) => void;
-  ununderline: (cfiRange: string) => void;
-  unmark: (cfiRange: string) => void;
-  show: () => void;
-  hide: () => void;
-
-  destroy: () => void;
-};
-
-export type ViewConstructor = new (
-  section: Section,
-  options: Record<string, unknown>
-) => View;
+import type { View } from '../../types';
 
 export class Views {
   container: HTMLElement;
@@ -159,7 +87,7 @@ export class Views {
       if (index < this.container.children.length) {
         this.container.insertBefore(
           view.element,
-          this.container.children[index]
+          this.container.children[index] ?? null
         );
       } else {
         this.container.appendChild(view.element);
@@ -206,7 +134,10 @@ export class Views {
 
     for (let i = 0; i < len; i++) {
       view = this._views[i];
-      this.destroy(view);
+
+      if (view) {
+        this.destroy(view);
+      }
     }
 
     this._views = [];
@@ -219,10 +150,12 @@ export class Views {
 
     for (let i = 0; i < len; i++) {
       view = this._views[i];
-      if (view.displayed && view.section?.index == section.index) {
+      if (view?.displayed && view.section?.index == section.index) {
         return view;
       }
     }
+
+    return undefined;
   }
 
   displayed() {
@@ -232,10 +165,11 @@ export class Views {
 
     for (let i = 0; i < len; i++) {
       view = this._views[i];
-      if (view.displayed) {
+      if (view?.displayed) {
         displayed.push(view);
       }
     }
+
     return displayed;
   }
 
@@ -245,7 +179,7 @@ export class Views {
 
     for (let i = 0; i < len; i++) {
       view = this._views[i];
-      if (view.displayed) {
+      if (view?.displayed) {
         view.show!();
       }
     }
@@ -259,7 +193,7 @@ export class Views {
 
     for (let i = 0; i < len; i++) {
       view = this._views[i];
-      if (view.displayed) {
+      if (view?.displayed) {
         view.hide!();
       }
     }

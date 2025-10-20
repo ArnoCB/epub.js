@@ -6,7 +6,7 @@ export class CfiResolver {
     section: Section,
     el: Element | null
   ): Promise<{ cfi?: string }> {
-    if (!el || !section.cfiFrom) return { cfi: undefined };
+    if (!el || !section.cfiFrom) return {};
 
     const targets = [
       this.descendantTextNodeTarget(doc, el),
@@ -23,7 +23,8 @@ export class CfiResolver {
       if (cfi) return { cfi };
     }
 
-    return { cfi: this.createApproximateCfi(doc, el, section) ?? undefined };
+    const approxCfi = this.createApproximateCfi(doc, el, section);
+    return approxCfi ? { cfi: approxCfi } : {};
   }
 
   private safeCfiPoint(section: Section, target: Range | Node): string | null {

@@ -252,51 +252,62 @@ test.describe('Regression Tests', () => {
       }, chapter);
 
       await page.waitForTimeout(1500);
-
-      const stepResult = await page.evaluate(
-        (stepInfo) => {
-          const win: any = window as any;
-          const rendition = win.getRendition
-            ? win.getRendition()
-            : win.rendition;
-          const container = rendition.manager.container;
-          const iframe = container.querySelector('iframe');
-
-          let contentCheck = { hasText: false, textLength: 0 };
-          try {
-            const doc = iframe?.contentDocument;
-            const body = doc?.body;
-            if (body) {
-              const text = (body.textContent || '').trim();
-              contentCheck = {
-                hasText: text.length > 0,
-                textLength: text.length,
-              };
+      // Poll for iframe visibility/content up to 1000ms
+      let pollResult: any = undefined;
+      const maxPolls = 5;
+      for (let poll = 0; poll < maxPolls; poll++) {
+        const result = await page.evaluate(
+          (stepInfo) => {
+            const win = window as any;
+            const rendition = win.getRendition
+              ? win.getRendition()
+              : win.rendition;
+            const container = rendition.manager.container;
+            const iframe = container.querySelector('iframe');
+            let contentCheck = { hasText: false, textLength: 0 };
+            try {
+              const doc = iframe?.contentDocument;
+              const body = doc?.body;
+              if (body) {
+                const text = (body.textContent || '').trim();
+                contentCheck = {
+                  hasText: text.length > 0,
+                  textLength: text.length,
+                };
+              }
+            } catch (e) {
+              contentCheck = { hasText: true, textLength: -1 };
             }
-          } catch (e) {
-            // Assume content exists if iframe is visible
-            contentCheck = { hasText: true, textLength: -1 };
-          }
+            return {
+              hasIframe: !!iframe,
+              iframeVisible: iframe
+                ? iframe.offsetWidth > 0 && iframe.offsetHeight > 0
+                : false,
+              ...contentCheck,
+              currentLocation: rendition.location?.start?.href || 'unknown',
+              iframeRect: iframe ? iframe.getBoundingClientRect() : null,
+              containerRect: container.getBoundingClientRect(),
+              time: Date.now(),
+            };
+          },
+          { step: i + 1, chapter }
+        );
+        pollResult = result;
+        if (pollResult && pollResult.iframeVisible && pollResult.hasText) break;
+        await page.waitForTimeout(200);
+      }
+      // Fallback: if polling never succeeded, use last result or throw
+      if (!pollResult) throw new Error('No poll result for iframe visibility');
 
-          return {
-            step: stepInfo.step,
-            chapter: stepInfo.chapter,
-            hasIframe: !!iframe,
-            iframeVisible: iframe
-              ? iframe.offsetWidth > 0 && iframe.offsetHeight > 0
-              : false,
-            ...contentCheck,
-            currentLocation: rendition.location?.start?.href || 'unknown',
-          };
-        },
-        { step: i + 1, chapter }
-      );
+      // Print diagnostic log
+      // eslint-disable-next-line no-console
+      // console.log('Prerendered navigation cycle step', i + 1, pollResult);
 
-      expect(stepResult.hasIframe).toBe(true);
-      expect(stepResult.iframeVisible).toBe(true);
-      expect(stepResult.hasText).toBe(true);
-      expect(stepResult.currentLocation).toMatch(
-        new RegExp(chapter.replace('.xhtml', ''))
+      expect(pollResult.hasIframe).toBe(true);
+      expect(pollResult.iframeVisible).toBe(true);
+      expect(pollResult.hasText).toBe(true);
+      expect(pollResult.currentLocation).toMatch(
+        new RegExp((chapter || '').replace('.xhtml', ''))
       );
     }
   });

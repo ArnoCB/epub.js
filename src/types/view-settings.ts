@@ -8,9 +8,9 @@ export interface ViewSettings {
   ignoreClass?: string;
   axis?: Axis;
   direction?: Direction;
-  width: number;
-  height: number;
-  layout?: Layout;
+  width?: number;
+  height?: number;
+  layout: Layout;
   method?: string;
   forceRight?: boolean;
   allowScriptedContent?: boolean;

@@ -2,19 +2,19 @@ import { defer } from '../../utils/core';
 import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import { Mark } from 'marks-pane';
-import { View } from '../helpers/views';
 import Layout from '../../layout';
 import Section from '../../section';
 import { StyledPane } from './styled-pane';
-import type { ExtendedIFrameElement, IframeViewSettings, MarkElementMap } from '../../types';
+import type { BookRequestFunction, ExtendedIFrameElement, IframeViewSettings, MarkElementMap } from '../../types';
 import type { Axis } from '../../enums';
-import type { EventEmitterMethods } from '../../types';
-declare class IframeView implements View, EventEmitterMethods {
-    emit: EventEmitterMethods['emit'];
-    on: EventEmitterMethods['on'];
-    off: EventEmitterMethods['off'];
-    once: EventEmitterMethods['once'];
+import type { View } from '../../types';
+declare class IframeView implements View {
+    private _events;
     settings: IframeViewSettings;
+    on(type: string, listener: (...args: unknown[]) => void): View;
+    off(type: string, listener: (...args: unknown[]) => void): View;
+    once(type: string, listener: (...args: unknown[]) => void): View;
+    emit(type: string, ...args: unknown[]): void;
     frame: HTMLIFrameElement | undefined;
     id: string;
     element: HTMLElement;
@@ -75,7 +75,7 @@ declare class IframeView implements View, EventEmitterMethods {
      * Returns a new div element.
      */
     createContainer(): HTMLElement;
-    render(request?: (url: string) => Promise<Document>): Promise<void>;
+    render(request?: BookRequestFunction): Promise<void>;
     reset(): void;
     size(_width?: number, _height?: number): void;
     lock(what: 'width' | 'height' | 'both', width: number, height: number): void;
@@ -97,7 +97,7 @@ declare class IframeView implements View, EventEmitterMethods {
     setWritingMode(mode: string): void;
     addListeners(): void;
     removeListeners(): void;
-    display(request?: (url: string) => Promise<Document>): Promise<unknown>;
+    display(request?: BookRequestFunction): Promise<View>;
     show(): void;
     hide(): void;
     offset(): {

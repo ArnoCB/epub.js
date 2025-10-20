@@ -4,6 +4,30 @@ import Locations from './locations';
 const Queue = jest.fn();
 const EpubCFI = jest.fn();
 
+// Mock the EventEmitter functionality for all tests
+jest.mock('./locations', () => {
+  const originalModule = jest.requireActual('./locations');
+  const EventEmitter = require('event-emitter');
+
+  // Create a mock implementation that adds event emitter capabilities
+  const MockLocations = function (spine: any, request: any, pause?: number) {
+    // Call the original constructor
+    const instance = new originalModule.Locations(spine, request, pause);
+
+    // Add the event emitter methods directly to the instance
+    instance.emit = jest.fn();
+    instance.on = jest.fn();
+    instance.off = jest.fn();
+
+    return instance;
+  };
+
+  // Copy over any prototype or static methods
+  MockLocations.prototype = originalModule.Locations.prototype;
+
+  return { __esModule: true, Locations: MockLocations, default: MockLocations };
+});
+
 jest.mock('./utils/queue', () => jest.fn());
 jest.mock('./epubcfi', () => jest.fn());
 jest.mock('./utils/core', () => ({

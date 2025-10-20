@@ -7,6 +7,8 @@ import type { RequestFunction, OptionalCustomRange } from './types';
  * Find Locations for a Book
  */
 export declare class Locations {
+    private _events;
+    emit(type: string, ...args: unknown[]): void;
     spine: Spine;
     request: RequestFunction<Document>;
     pause: number | undefined;
@@ -20,7 +22,6 @@ export declare class Locations {
     private _currentCfi;
     private _wordCounter;
     private processingTimeout;
-    emit: (event: string, ...args: unknown[]) => void;
     constructor(spine: Spine, request: RequestFunction<Document>, pause?: number);
     /**
      * Load all of sections in the book to generate locations

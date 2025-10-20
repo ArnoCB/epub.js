@@ -1,18 +1,22 @@
-import { defer, isXml, parse } from './utils';
+import { defer, EventEmitterBase, isXml, parse } from './utils';
 import httpRequest from './utils/request';
 import mime from './utils/mime';
 import Path from './utils/path';
-import EventEmitter from 'event-emitter';
 import localforage from 'localforage';
 import Resources from './resources';
-import type { BookRequestFunction, EventEmitterMethods } from './types';
+import type { BookRequestFunction } from './types';
 
 /**
  * Handles saving and requesting files from local storage
  * @param name This should be the name of the application for modals
  */
-class Store implements Pick<EventEmitterMethods, 'on'> {
-  on!: EventEmitterMethods['on'];
+class Store {
+  private _events = new EventEmitterBase();
+
+  on(type: string, listener: (...args: unknown[]) => void): void {
+    this._events.on(type, listener);
+  }
+
   storage: typeof localforage | undefined;
   urlCache: Record<string, string> = {};
   name: string;
@@ -322,7 +326,7 @@ class Store implements Pick<EventEmitterMethods, 'on'> {
     const useBase64 = options && options.base64;
 
     if (url in this.urlCache) {
-      deferred.resolve(this.urlCache[url]);
+      deferred.resolve(this.urlCache[url]!);
       return deferred.promise;
     }
 
@@ -370,7 +374,5 @@ class Store implements Pick<EventEmitterMethods, 'on'> {
     this.removeListeners();
   }
 }
-
-EventEmitter(Store.prototype);
 
 export default Store;

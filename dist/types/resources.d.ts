@@ -11,7 +11,7 @@ import Archive from './archive';
 declare class Resources {
     settings: {
         replacements?: string;
-        archive?: Archive;
+        archive?: Archive | undefined;
         resolver: ResolverFunction;
         request: BookRequestFunction;
     };
@@ -65,7 +65,7 @@ declare class Resources {
     /**
      * Get a URL for a resource
      */
-    get(path: string): Promise<string> | undefined;
+    get(path: string): Promise<string | undefined> | undefined;
     /**
      * Substitute urls in content, with replacements,
      * relative to a url if provided

@@ -4,7 +4,7 @@
  * Used by default view manager and pagination logic.
  */
 import type Layout from '../layout';
-import type { Axis, Direction } from '../enums';
+import type { Axis, Direction, Flow, ScrollType } from '../enums';
 export type DefaultViewManagerSettings = {
     layout: Layout;
     infinite?: boolean;
@@ -17,7 +17,16 @@ export type DefaultViewManagerSettings = {
     gap?: number;
     offset?: number;
     overflow?: string;
-    afterScrolledTimeout: number;
+    afterScrolledTimeout?: number;
+    flow?: Flow;
+    ignoreClass?: string;
+    transparency?: boolean;
+    allowScriptedContent?: boolean;
+    allowPopups?: boolean;
+    method?: string;
+    forceEvenPages?: boolean;
+    fullsize?: boolean;
+    rtlScrollType?: ScrollType;
     [key: string]: unknown;
 };
 export interface PageLocation {

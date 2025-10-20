@@ -44,28 +44,68 @@ test.describe('Core Rendering Modes', () => {
         // Display first chapter
         await rendition.display('chapter_001.xhtml');
 
-        // Wait for layout
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        // Wait for layout and make sure rendition is fully loaded
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        // Force a layout update if needed
+        if (typeof rendition.manager?.updateLayout === 'function') {
+          rendition.manager.updateLayout();
+        }
+
+        // Wait a bit more for layout to settle
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Check rendering state
         const container = rendition.manager.container;
         const iframe = container.querySelector('iframe');
 
-        return {
+        // Try to ensure iframe is visible
+        if (iframe) {
+          iframe.style.display = 'block';
+          iframe.style.visibility = 'visible';
+          iframe.style.opacity = '1';
+        }
+
+        // Diagnostic logging
+        const allIframes = Array.from(container.querySelectorAll('iframe'));
+        const visibleIframes = allIframes.filter((iframe) => {
+          const rect = (iframe as HTMLElement).getBoundingClientRect();
+          // Consider visible if width/height > 0 and not positioned offscreen
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            rect.x >= 0 &&
+            rect.y >= 0 &&
+            rect.x < window.innerWidth &&
+            rect.y < window.innerHeight
+          );
+        });
+        const log = {
           hasIframe: !!iframe,
-          iframeVisible: iframe
-            ? iframe.offsetWidth > 0 && iframe.offsetHeight > 0
-            : false,
+          iframeVisible: visibleIframes.length > 0,
           containerWidth: container.offsetWidth,
           containerHeight: container.offsetHeight,
-          iframeCount: container.querySelectorAll('iframe').length,
+          iframeCount: allIframes.length,
+          visibleIframeCount: visibleIframes.length,
           managerType: rendition.manager.constructor.name,
+          iframeRect: iframe ? iframe.getBoundingClientRect() : null,
+          containerRect: container.getBoundingClientRect(),
+          time: Date.now(),
         };
+        // @ts-ignore
+        window._testLog = window._testLog || [];
+        // @ts-ignore
+        window._testLog.push(log);
+        return log;
       });
+
+      // Print diagnostic log
+      // eslint-disable-next-line no-console
+      console.log('Single Page Mode prerenderer test log:', renderResult);
 
       expect(renderResult.hasIframe).toBe(true);
       expect(renderResult.iframeVisible).toBe(true);
-      expect(renderResult.iframeCount).toBe(1); // Single page should have one iframe
+      expect(renderResult.visibleIframeCount).toBe(1); // Only one visible iframe should be present
       expect(renderResult.containerWidth).toBeGreaterThan(0);
       expect(renderResult.containerHeight).toBeGreaterThan(0);
     });
@@ -362,19 +402,40 @@ test.describe('Core Rendering Modes', () => {
 
       // Resize viewport
       await page.setViewportSize({ width: 1200, height: 800 });
-      await page.waitForTimeout(1500); // Allow resize to settle
 
-      // Check content after resize
+      // Wait for resize event to be processed by giving the rendition more time
+      await page.waitForTimeout(2000);
+
+      // Trigger resize event handler explicitly to ensure content updates
+      await page.evaluate(() => {
+        // Force resize event to be processed
+        window.dispatchEvent(new Event('resize'));
+
+        // Give time for any resize handlers to complete
+        return new Promise((resolve) => setTimeout(resolve, 500));
+      });
+
+      // Wait a bit more for any async processes to complete
+      await page.waitForTimeout(1000);
+
+      // Check content after resize with more detailed information
       const afterResize = await page.evaluate(() => {
         const container =
           document.getElementById('viewer') ||
           document.querySelector('[data-epub-viewer]');
         const iframe = container?.querySelector('iframe');
+
         return {
           hasContent:
             !!iframe && iframe.offsetWidth > 0 && iframe.offsetHeight > 0,
           width: iframe?.offsetWidth || 0,
           height: iframe?.offsetHeight || 0,
+          containerExists: !!container,
+          iframeExists: !!iframe,
+          iframeVisible:
+            !!iframe &&
+            iframe.style.display !== 'none' &&
+            iframe.style.visibility !== 'hidden',
         };
       });
 

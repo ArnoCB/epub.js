@@ -1,12 +1,10 @@
 import { Section } from '../../section';
 import IframeView from '../views/iframe';
-import { View } from './views';
 import { extend } from '../../utils';
-import type { ViewRendererSettings, RenderingOptions } from '../../types';
+import type { ViewRendererSettings, RenderingOptions, View } from '../../types';
+import type { BookRequestFunction } from '../../types/book';
 
 /**
- * ViewRenderer - Centralized view creation and rendering logic
- *
  * This class abstracts the common view creation and rendering logic that was
  * previously duplicated between DefaultViewManager and PreRenderer.
  * It provides consistent rendering behavior across all contexts and supports
@@ -14,12 +12,9 @@ import type { ViewRendererSettings, RenderingOptions } from '../../types';
  */
 export class ViewRenderer {
   private settings: ViewRendererSettings;
-  private request?: (url: string) => Promise<Document>;
+  private request: BookRequestFunction;
 
-  constructor(
-    settings: ViewRendererSettings,
-    request?: (url: string) => Promise<Document>
-  ) {
+  constructor(settings: ViewRendererSettings, request: BookRequestFunction) {
     this.settings = settings;
     this.request = request;
   }
@@ -44,28 +39,28 @@ export class ViewRenderer {
       );
 
       // Add robust EventEmitter stubs to prevent errors
-      (view as unknown as Record<string, unknown>).on = function (
+      (view as unknown as Record<string, unknown>)['on'] = function (
         ...args: unknown[]
       ) {
         console.debug('[ViewRenderer] view.on stub called with:', args);
         return view;
       };
 
-      (view as unknown as Record<string, unknown>).off = function (
+      (view as unknown as Record<string, unknown>)['off'] = function (
         ...args: unknown[]
       ) {
         console.debug('[ViewRenderer] view.off stub called with:', args);
         return view;
       };
 
-      (view as unknown as Record<string, unknown>).emit = function (
+      (view as unknown as Record<string, unknown>)['emit'] = function (
         ...args: unknown[]
       ) {
         console.debug('[ViewRenderer] view.emit stub called with:', args);
         return view;
       };
 
-      (view as unknown as Record<string, unknown>).once = function (
+      (view as unknown as Record<string, unknown>)['once'] = function (
         ...args: unknown[]
       ) {
         console.debug('[ViewRenderer] view.once stub called with:', args);
@@ -132,13 +127,13 @@ export class ViewRenderer {
 
         // Store srcdoc attribute if available
         if (iframe.srcdoc) {
-          (view as unknown as Record<string, unknown>).preservedSrcdoc =
+          (view as unknown as Record<string, unknown>)['preservedSrcdoc'] =
             iframe.srcdoc;
         }
 
         // Store full document HTML if accessible
         if (iframe.contentDocument) {
-          (view as unknown as Record<string, unknown>).preservedContent =
+          (view as unknown as Record<string, unknown>)['preservedContent'] =
             iframe.contentDocument.documentElement.outerHTML;
         }
       }
@@ -183,16 +178,18 @@ export class ViewRenderer {
       }
 
       // Try to restore from preserved srcdoc
-      const preservedSrcdoc = (view as unknown as Record<string, unknown>)
-        .preservedSrcdoc as string;
+      const preservedSrcdoc = (view as unknown as Record<string, unknown>)[
+        'preservedSrcdoc'
+      ] as string;
       if (preservedSrcdoc && !iframe.srcdoc) {
         iframe.srcdoc = preservedSrcdoc;
         return true;
       }
 
       // Try to restore from preserved full content
-      const preservedContent = (view as unknown as Record<string, unknown>)
-        .preservedContent as string;
+      const preservedContent = (view as unknown as Record<string, unknown>)[
+        'preservedContent'
+      ] as string;
       if (preservedContent && iframe.contentDocument) {
         iframe.contentDocument.open();
         iframe.contentDocument.write(preservedContent);

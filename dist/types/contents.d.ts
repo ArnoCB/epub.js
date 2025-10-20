@@ -1,4 +1,4 @@
-import type { EventEmitterMethods, Viewport } from './types';
+import type { Viewport } from './types';
 import EpubCFI from './epubcfi';
 import Layout from './layout';
 import Section from './section';
@@ -6,9 +6,10 @@ import { Direction } from './enums';
 /**
  * Handles DOM manipulation, queries and events for View contents
  */
-declare class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
-    emit: EventEmitterMethods['emit'];
-    on: EventEmitterMethods['on'];
+declare class Contents {
+    private _events;
+    on(type: string, listener: (...args: unknown[]) => void): this;
+    emit(type: string, ...args: unknown[]): void;
     document: Document;
     documentElement: HTMLElement;
     content: HTMLElement;
@@ -97,7 +98,7 @@ declare class Contents implements Pick<EventEmitterMethods, 'emit' | 'on'> {
      * @param {string} value
      * @param {boolean} [priority] set as "important"
      */
-    css(property: string, value?: string, priority?: boolean): string;
+    css(property: string, value?: string, priority?: boolean): string | undefined;
     /**
      * Get or Set the viewport element
      * @param {object} [options]

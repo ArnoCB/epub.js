@@ -7,5 +7,6 @@ import type Section from '../section';
 export default class CanonicalView {
   constructor(section: Section, options: ViewSettings) {
     // stub
+    console.log('CanonicalView created', section, options);
   }
 }

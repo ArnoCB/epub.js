@@ -37,7 +37,7 @@ const ePub: EPubFactory = function (
 ePub.VERSION = EPUBJS_VERSION;
 
 if (typeof global !== 'undefined') {
-  (global as unknown as Record<string, unknown>).EPUBJS_VERSION =
+  (global as unknown as Record<string, unknown>)['EPUBJS_VERSION'] =
     EPUBJS_VERSION;
 }
 

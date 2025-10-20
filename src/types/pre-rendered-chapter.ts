@@ -1,5 +1,5 @@
 import type Section from '../section';
-import type { View } from '../managers/helpers/views';
+import type { View } from '.';
 import type { defer } from '../utils';
 import type { PageMapEntry } from './page-map-entry';
 

@@ -1,4 +1,4 @@
-import EventEmitter from 'event-emitter';
+import { EventEmitterBase } from '../../utils/event-emitter';
 import {
   extend,
   borders,
@@ -13,25 +13,42 @@ import EpubCFI from '../../epubcfi';
 import Contents from '../../contents';
 import { EVENTS } from '../../utils/constants';
 import { Highlight, Underline, Mark } from 'marks-pane';
-import { View } from '../helpers/views';
 import Layout from '../../layout';
 import Section from '../../section';
 import { StyledPane } from './styled-pane';
 import type {
+  BookRequestFunction,
   ExtendedIFrameElement,
   IframeViewSettings,
   MarkElementMap,
 } from '../../types';
 import type { Axis } from '../../enums';
-import type { EventEmitterMethods } from '../../types';
+import type { View } from '../../types';
 
-class IframeView implements View, EventEmitterMethods {
-  emit!: EventEmitterMethods['emit'];
-  on!: EventEmitterMethods['on'];
-  off!: EventEmitterMethods['off'];
-  once!: EventEmitterMethods['once'];
+class IframeView implements View {
+  private _events = new EventEmitterBase();
 
   settings: IframeViewSettings;
+
+  // Event emitter delegate methods
+  on(type: string, listener: (...args: unknown[]) => void): View {
+    this._events.on(type, listener);
+    return this;
+  }
+
+  off(type: string, listener: (...args: unknown[]) => void): View {
+    this._events.off(type, listener);
+    return this;
+  }
+
+  once(type: string, listener: (...args: unknown[]) => void): View {
+    this._events.once(type, listener);
+    return this;
+  }
+
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
 
   frame: HTMLIFrameElement | undefined;
   id: string;
@@ -232,7 +249,7 @@ class IframeView implements View, EventEmitterMethods {
     return document.createElement('div');
   }
 
-  async render(request?: (url: string) => Promise<Document>): Promise<void> {
+  async render(request?: BookRequestFunction): Promise<void> {
     this.create();
 
     // Fit to size of the container, apply padding
@@ -493,7 +510,7 @@ class IframeView implements View, EventEmitterMethods {
       let mark: { element: HTMLElement; range: Range } | undefined;
       for (const m in this.marks) {
         if (Object.prototype.hasOwnProperty.call(this.marks, m)) {
-          mark = this.marks[m];
+          mark = this.marks[m]!;
           this.placeMark(mark.element, mark.range);
         }
       }
@@ -648,6 +665,9 @@ class IframeView implements View, EventEmitterMethods {
   }
 
   onLoad(event: Event, promise: defer<Contents>) {
+    // Prevent unused variable warning, this is needed for the signature right now
+    void event;
+
     if (this.iframe === undefined) {
       throw new Error('Iframe not defined');
     }
@@ -730,8 +750,8 @@ class IframeView implements View, EventEmitterMethods {
     //TODO: remove content listeners for expanding
   }
 
-  display(request?: (url: string) => Promise<Document>) {
-    const displayed = new defer();
+  display(request?: BookRequestFunction): Promise<View> {
+    const displayed = new defer<View>();
 
     if (!this.displayed) {
       this.render(request).then(
@@ -981,7 +1001,7 @@ class IframeView implements View, EventEmitterMethods {
     }
 
     if (cfiRange in this.marks) {
-      const item = this.marks[cfiRange];
+      const item = this.marks[cfiRange]!;
       return item;
     }
 
@@ -1059,7 +1079,7 @@ class IframeView implements View, EventEmitterMethods {
 
       let rect;
       for (let i = 0; i != rects.length; i++) {
-        rect = rects[i];
+        rect = rects[i]!;
         if (!left || rect.left < left) {
           left = rect.left;
           // right = rect.right;
@@ -1083,7 +1103,7 @@ class IframeView implements View, EventEmitterMethods {
       listeners: Array<(e: Event) => void>;
     };
     if (cfiRange in this.highlights) {
-      item = this.highlights[cfiRange];
+      item = this.highlights[cfiRange]!;
 
       this.pane!.removeMark(item.mark);
 
@@ -1109,7 +1129,7 @@ class IframeView implements View, EventEmitterMethods {
         throw new Error('Pane not defined');
       }
 
-      item = this.underlines[cfiRange];
+      item = this.underlines[cfiRange]!;
       this.pane.removeMark(item.mark);
       item.listeners.forEach((l) => {
         if (l) {
@@ -1127,7 +1147,7 @@ class IframeView implements View, EventEmitterMethods {
         range: Range;
         element: HTMLElement;
         listeners: Array<(e: Event) => void>;
-      } = this.marks[cfiRange];
+      } = this.marks[cfiRange]!;
 
       this.element.removeChild(item.element);
       item.listeners.forEach((l) => {
@@ -1182,7 +1202,5 @@ class IframeView implements View, EventEmitterMethods {
     // this.element.style.width = "0px";
   }
 }
-
-EventEmitter(IframeView.prototype);
 
 export default IframeView;

@@ -3,7 +3,12 @@ import EpubCFI from './epubcfi';
 import Hook from './utils/hook';
 import { sprint } from './utils/core';
 import Request from './utils/request';
-import type { SectionItem, Match, SectionLayoutSettings } from './types';
+import type {
+  SectionItem,
+  Match,
+  SectionLayoutSettings,
+  BookRequestFunction,
+} from './types';
 import type { Orientation, Spread, LayoutType } from './enums';
 
 /**
@@ -54,7 +59,7 @@ export class Section {
   /**
    * Load the section from its url
    */
-  load<T>(_request?: (url: string) => Promise<T>) {
+  load(_request?: BookRequestFunction): Promise<unknown> {
     const request = _request || this.request || Request;
     const loading = new defer();
     const loaded = loading.promise;
@@ -83,7 +88,7 @@ export class Section {
   /**
    * Render the contents of a section
    */
-  render(_request?: (url: string) => Promise<Document>) {
+  render(_request?: BookRequestFunction) {
     const rendering = new defer();
 
     this.load(_request)
@@ -190,17 +195,17 @@ export class Section {
           endPos = pos + query.length;
         let endNodeIndex = 0,
           l = 0;
-        if (pos < (nodeList[startNodeIndex].textContent?.length || 0)) {
+        if (pos < (nodeList[startNodeIndex]?.textContent?.length || 0)) {
           while (endNodeIndex < nodeList.length - 1) {
-            l += nodeList[endNodeIndex].textContent?.length || 0;
+            l += nodeList[endNodeIndex]?.textContent?.length || 0;
             if (endPos <= l) {
               break;
             }
             endNodeIndex += 1;
           }
 
-          const startNode = nodeList[startNodeIndex],
-            endNode = nodeList[endNodeIndex];
+          const startNode = nodeList[startNodeIndex]!;
+          const endNode = nodeList[endNodeIndex]!;
           const range = this.document!.createRange();
           range.setStart(startNode, pos);
           const beforeEndLengthCount = nodeList

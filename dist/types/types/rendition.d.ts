@@ -1,12 +1,12 @@
 import type { Flow, Spread, Direction, Orientation, LayoutType } from '../enums';
 import type Hook from '../utils/hook';
 import type { ViewManager } from './view-manager-helpers';
-import type { View } from '../managers';
+import type { View } from '.';
 export type LayoutProperties = {
     layout?: LayoutType;
     spread?: Spread;
     orientation?: Orientation;
-    flow?: Flow;
+    flow: Flow;
     direction?: Direction;
     minSpreadWidth?: number;
     viewport?: string;
@@ -27,7 +27,7 @@ export type LocationPoint = {
     mapping?: {
         start: string;
         end: string;
-    };
+    } | undefined;
     pages?: number[];
 };
 export type DisplayedLocation = {
@@ -46,12 +46,12 @@ export type RenditionHooks = {
     show: Hook;
 };
 export interface RenditionOptions {
-    width?: number | string;
-    height?: number | string;
-    ignoreClass?: string;
-    manager?: ViewManager;
-    view?: View;
-    flow?: Flow;
+    width?: number | string | undefined;
+    height?: number | string | undefined;
+    ignoreClass?: string | undefined;
+    manager?: ViewManager | undefined;
+    view?: View | undefined;
+    flow: Flow;
     layout?: LayoutType;
     spread?: Spread;
     minSpreadWidth?: number;
@@ -69,7 +69,7 @@ export interface RenditionOptions {
     orientation?: Orientation;
     usePreRendering?: boolean;
     globalLayoutProperties?: {
-        flow?: Flow;
+        flow: Flow;
         [key: string]: unknown;
     };
 }

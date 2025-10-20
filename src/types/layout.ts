@@ -18,8 +18,8 @@ export type LayoutProps = {
   name: string;
   spread: boolean;
   flow: Flow;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   spreadWidth: number;
   delta: number;
   columnWidth: number;

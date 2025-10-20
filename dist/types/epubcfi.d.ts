@@ -68,7 +68,7 @@ declare class EpubCFI {
     parseComponent(componentStr: string): CFIComponent;
     parseStep(stepStr: string): CFIStep | undefined;
     parseTerminal(terminalStr: string): CFITerminal;
-    getChapterComponent(cfiStr: string): string;
+    getChapterComponent(cfiStr: string): string | undefined;
     getPathComponent(cfiStr: string): string | undefined;
     /**
      * Extract range components from a CFI string

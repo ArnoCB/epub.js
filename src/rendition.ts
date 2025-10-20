@@ -1,7 +1,6 @@
 import type {
   LocationPoint,
   DisplayedLocation,
-  EventEmitterMethods,
   RenditionHooks,
   ViewManager,
   ViewManagerConstructor,
@@ -9,7 +8,7 @@ import type {
   LayoutProps,
   LayoutProperties,
 } from './types';
-import EventEmitter from 'event-emitter';
+import { EventEmitterBase } from './utils/event-emitter';
 import {
   defer,
   isFloat,
@@ -24,11 +23,18 @@ import Layout from './layout';
 import Themes from './themes';
 import Annotations from './annotations';
 import Book from './book';
-import Views, { View } from './managers/helpers/views';
+import Views from './managers/helpers/views';
 import Contents from './contents';
 import DefaultViewManager from './managers/default';
 import { PreRenderingViewManager } from './managers/prerendering';
-import type { Direction, Flow, Spread } from './enums';
+import {
+  DEFAULT_LAYOUT_TYPE,
+  DEFAULT_SPREAD,
+  type Direction,
+  type Flow,
+  type Spread,
+} from './enums';
+import type { View } from './types';
 
 /**
  * Displays an Epub as a series of Views for each Section.
@@ -52,11 +58,29 @@ import type { Direction, Flow, Spread } from './enums';
  * @param {boolean} [options.allowScriptedContent=false] enable running scripts in content
  * @param {boolean} [options.allowPopups=false] enable opening popup in content
  */
-export class Rendition implements EventEmitterMethods {
-  emit!: EventEmitterMethods['emit'];
-  on!: EventEmitterMethods['on'];
-  off!: EventEmitterMethods['off'];
-  once!: EventEmitterMethods['once'];
+export class Rendition {
+  // Use composition for events
+  private _events = new EventEmitterBase();
+
+  // Public event methods that delegate to the internal EventEmitterBase
+  on(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.on(type, listener);
+    return this;
+  }
+
+  off(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.off(type, listener);
+    return this;
+  }
+
+  once(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.once(type, listener);
+    return this;
+  }
+
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
 
   settings: RenditionOptions;
   book: Book;
@@ -83,13 +107,12 @@ export class Rendition implements EventEmitterMethods {
       height: undefined,
       ignoreClass: '',
       view: 'iframe' as unknown as View, // or use a proper View instance if available
-      flow: undefined,
-      layout: undefined,
-      spread: undefined,
+      layout: DEFAULT_LAYOUT_TYPE,
+      spread: DEFAULT_SPREAD,
       minSpreadWidth: 400,
-      stylesheet: undefined,
+      stylesheet: '',
       resizeOnOrientationChange: true,
-      script: undefined,
+      script: '',
       snap: false,
       defaultDirection: 'ltr',
       allowScriptedContent: false,
@@ -205,13 +228,9 @@ export class Rendition implements EventEmitterMethods {
 
       // Ensure width and height are numbers or undefined
       const width =
-        typeof this.settings.width === 'number'
-          ? this.settings.width
-          : undefined;
+        typeof this.settings.width === 'number' ? this.settings.width : 0;
       const height =
-        typeof this.settings.height === 'number'
-          ? this.settings.height
-          : undefined;
+        typeof this.settings.height === 'number' ? this.settings.height : 0;
 
       // Choose the appropriate view manager based on usePreRendering setting
       const ManagerClass = this.settings.usePreRendering
@@ -230,6 +249,7 @@ export class Rendition implements EventEmitterMethods {
           width,
           height,
           afterScrolledTimeout: 10,
+          ignoreClass: this.settings.ignoreClass ?? '',
         },
       };
 
@@ -455,11 +475,10 @@ export class Rendition implements EventEmitterMethods {
     // style `on` method. Guard before wiring event handlers to avoid runtime
     // TypeErrors (see prerendered views created by BookPreRenderer).
     if (typeof view.on === 'function') {
-      view.on(
-        EVENTS.VIEWS.MARK_CLICKED,
-        (cfiRange: string, data: Record<string, unknown>) =>
-          this.triggerMarkEvent(cfiRange, data, view.contents!)
-      );
+      view.on(EVENTS.VIEWS.MARK_CLICKED, (...args: unknown[]) => {
+        const [cfiRange, data] = args as [string, Record<string, unknown>];
+        this.triggerMarkEvent(cfiRange, data, view.contents!);
+      });
     } else {
       console.debug(
         '[Rendition] view does not implement .on, skipping MARK_CLICKED wiring for',
@@ -660,12 +679,11 @@ export class Rendition implements EventEmitterMethods {
 
       // this.mapping = new Mapping(this._layout.props);
 
-      this._layout.on(
-        EVENTS.LAYOUT.UPDATED,
-        (props: LayoutProps, changed: Partial<LayoutProps>) => {
-          this.emit(EVENTS.RENDITION.LAYOUT, props, changed);
-        }
-      );
+      this._layout.on(EVENTS.LAYOUT.UPDATED, (...args: unknown[]) => {
+        const props = args[0] as LayoutProps;
+        const changed = args[1] as Partial<LayoutProps>;
+        this.emit(EVENTS.RENDITION.LAYOUT, props, changed);
+      });
     }
 
     if (this.manager && this._layout) {
@@ -764,12 +782,12 @@ export class Rendition implements EventEmitterMethods {
   getRange(cfi: string, ignoreClass?: string): Range | null {
     const _cfi = new EpubCFI(cfi);
     const found = this.manager.visible().filter(function (view) {
-      if (_cfi.spinePos === view.index) return true;
+      return _cfi.spinePos === view.index;
     });
 
     // Should only ever return 1 item
     if (found.length > 0) {
-      return found[0].contents!.range(cfi, ignoreClass);
+      return found[0]!.contents!.range(cfi, ignoreClass);
     }
 
     return null;
@@ -782,12 +800,18 @@ export class Rendition implements EventEmitterMethods {
   private located(location: LocationPoint[]): DisplayedLocation | null {
     if (!location.length) return null;
 
-    const start: LocationPoint = location[0];
-    const end: LocationPoint = location[location.length - 1];
+    const start: LocationPoint = location[0]!;
+    const end: LocationPoint = location[location.length - 1]!;
+
+    const bookArg = {
+      ...(this.book.locations && { locations: this.book.locations }),
+      ...(this.book.pageList && { pageList: this.book.pageList }),
+      ...(this.book.spine && { spine: this.book.spine }),
+    };
 
     const located: DisplayedLocation = {
-      start: buildEnrichedLocationPoint(start, 'start', this.book),
-      end: buildEnrichedLocationPoint(end, 'end', this.book),
+      start: buildEnrichedLocationPoint(start, 'start', bookArg),
+      end: buildEnrichedLocationPoint(end, 'end', bookArg),
     };
 
     if (
@@ -823,10 +847,14 @@ export class Rendition implements EventEmitterMethods {
    */
   private passEvents(contents: Contents) {
     DOM_EVENTS.forEach((e) => {
-      contents.on(e, (ev: Event) => this.triggerViewEvent(ev, contents));
+      contents.on(e, (...args: unknown[]) => {
+        const ev = args[0] as Event;
+        this.triggerViewEvent(ev, contents);
+      });
     });
 
-    contents.on(EVENTS.CONTENTS.SELECTED, (e: string) => {
+    contents.on(EVENTS.CONTENTS.SELECTED, (...args: unknown[]) => {
+      const e = args[0] as string;
       this.triggerSelectedEvent(e, contents);
     });
   }
@@ -922,7 +950,8 @@ export class Rendition implements EventEmitterMethods {
    */
   private handleLinks(contents: Contents) {
     if (contents) {
-      contents.on(EVENTS.CONTENTS.LINK_CLICKED, (href: string) => {
+      contents.on(EVENTS.CONTENTS.LINK_CLICKED, (...args: unknown[]) => {
+        const href = args[0] as string;
         const relative = this.book.path!.relative(href);
         this.display(relative);
       });
@@ -945,7 +974,7 @@ export class Rendition implements EventEmitterMethods {
     if (this.settings.stylesheet) {
       style.setAttribute('href', this.settings.stylesheet);
     }
-    doc.getElementsByTagName('head')[0].appendChild(style);
+    doc.getElementsByTagName('head')[0]?.appendChild(style);
   }
 
   /**
@@ -959,7 +988,7 @@ export class Rendition implements EventEmitterMethods {
       script.setAttribute('src', this.settings.script);
     }
     script.textContent = ' '; // Needed to prevent self closing tag
-    doc.getElementsByTagName('head')[0].appendChild(script);
+    doc.getElementsByTagName('head')[0]?.appendChild(script);
   }
 
   /**
@@ -973,11 +1002,10 @@ export class Rendition implements EventEmitterMethods {
     if (ident) {
       meta.setAttribute('content', ident);
     }
-    doc.getElementsByTagName('head')[0].appendChild(meta);
+    doc.getElementsByTagName('head')[0]?.appendChild(meta);
   }
 }
 
-//-- Enable binding events to Renderer
-EventEmitter(Rendition.prototype);
+// Event handling is now implemented via composition
 
 export default Rendition;

@@ -1,7 +1,6 @@
-import { sprint, locationOf, defer, EVENTS } from './utils';
+import { sprint, locationOf, defer, EventEmitterBase, EVENTS } from './utils';
 import Queue from './utils/queue';
 import EpubCFI from './epubcfi';
-import EventEmitter from 'event-emitter';
 import Spine from './spine';
 import Section from './section';
 import SpineItem from './section';
@@ -11,6 +10,12 @@ import type { RequestFunction, OptionalCustomRange } from './types';
  * Find Locations for a Book
  */
 export class Locations {
+  private _events = new EventEmitterBase();
+
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
+
   spine: Spine;
   request: RequestFunction<Document>;
   pause: number | undefined;
@@ -29,8 +34,6 @@ export class Locations {
   private _currentCfi: string | undefined = '';
   private _wordCounter: number = 0;
   private processingTimeout: NodeJS.Timeout | undefined = undefined;
-
-  emit!: (event: string, ...args: unknown[]) => void;
 
   constructor(
     spine: Spine,
@@ -469,7 +472,7 @@ export class Locations {
     }
 
     if (loc >= 0 && loc < this._locations.length) {
-      return this._locations[loc];
+      return this._locations[loc]!;
     }
 
     return '';
@@ -596,7 +599,5 @@ export class Locations {
     clearTimeout(this.processingTimeout);
   }
 }
-
-EventEmitter(Locations.prototype);
 
 export default Locations;

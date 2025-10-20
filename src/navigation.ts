@@ -53,7 +53,7 @@ export default class Navigation {
     let item;
 
     for (let i = 0; i < toc.length; i++) {
-      item = toc[i];
+      item = toc[i]!;
 
       if (item.href) {
         this.tocByHref[item.href] = i;
@@ -115,7 +115,7 @@ export default class Navigation {
     let result;
 
     for (let i = 0; i < navItems.length; ++i) {
-      result = this.getByIndex(target, index, navItems[i].subitems);
+      result = this.getByIndex(target, index, navItems[i]!.subitems);
       if (result) {
         break;
       }
@@ -135,7 +135,7 @@ export default class Navigation {
 
     const index = this.landmarksByType[type];
 
-    return this.landmarks[index];
+    return this.landmarks[index!];
   }
 
   /**
@@ -170,7 +170,7 @@ export default class Navigation {
     if (!navListHtml.children) return result;
 
     for (let i = 0; i < navListHtml.children.length; i++) {
-      const item = this.navItem(navListHtml.children[i], parent);
+      const item = this.navItem(navListHtml.children[i]!, parent);
 
       if (item) {
         result.push(item);
@@ -231,7 +231,7 @@ export default class Navigation {
     if (!navItems || length === 0) return list;
 
     for (i = 0; i < length; ++i) {
-      item = this.landmarkItem(navItems[i]);
+      item = this.landmarkItem(navItems[i]!);
       if (item && item.type) {
         list.push(item);
         this.landmarksByType[item.type] = i;
@@ -280,12 +280,12 @@ export default class Navigation {
     if (!navPoints || length === 0) return list;
 
     for (i = 0; i < length; ++i) {
-      item = this.ncxItem(navPoints[i]);
+      item = this.ncxItem(navPoints[i]!);
       toc[item.id] = item;
       if (!item.parent) {
         list.push(item);
       } else {
-        parent = toc[item.parent];
+        parent = toc[item.parent]!;
         parent.subitems.push(item);
       }
     }

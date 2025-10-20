@@ -4,15 +4,24 @@ import Snap from '../helpers/snap';
 import { EVENTS } from '../../utils/constants';
 import { debounce } from '../../utils/helpers';
 import Section from '../../section';
-import { View } from '../helpers/views';
 import IframeView from '../views/iframe';
-import type { DefaultViewManagerSettings, ViewManager } from '../../types';
-import type { Flow, Axis } from '../../enums';
-import type { EventEmitterMethods } from '../../types';
-class ContinuousViewManager
-  extends DefaultViewManager
-  implements ViewManager, Pick<EventEmitterMethods, 'emit' | 'on' | 'off'>
-{
+import type {
+  DefaultViewManagerSettings,
+  ViewManager,
+  View,
+} from '../../types';
+import {
+  type Flow,
+  type Axis,
+  DEFAULT_AXIS,
+  DEFAULT_FLOW,
+  DEFAULT_TRANSPARENCY,
+  DEFAULT_ALLOW_SCRIPTED_CONTENT,
+  DEFAULT_ALLOW_POPUPS,
+} from '../../enums';
+import { createEventHandler } from '../../utils';
+
+class ContinuousViewManager extends DefaultViewManager implements ViewManager {
   trimTimeout: NodeJS.Timeout | undefined;
   snapper: Snap | undefined;
   scrollDeltaVert: number = 0;
@@ -62,23 +71,24 @@ class ContinuousViewManager
     }
 
     this.viewSettings = {
-      ignoreClass: this.settings.ignoreClass,
-      axis: this.settings.axis,
-      flow: this.settings.flow,
+      ignoreClass: this.settings['ignoreClass'] || '',
+      axis: this.settings.axis || DEFAULT_AXIS,
+      flow: this.settings['flow'] || DEFAULT_FLOW,
       layout: this.layout,
       width: 0,
       height: 0,
       forceEvenPages: false,
-      allowScriptedContent: this.settings.allowScriptedContent,
-      allowPopups: this.settings.allowPopups,
-      transparency: this.settings.transparency,
+      allowScriptedContent:
+        this.settings['allowScriptedContent'] || DEFAULT_ALLOW_SCRIPTED_CONTENT,
+      allowPopups: this.settings['allowPopups'] || DEFAULT_ALLOW_POPUPS,
+      transparency: this.settings['transparency'] || DEFAULT_TRANSPARENCY,
     };
 
     this.scrollTop = 0;
     this.scrollLeft = 0;
   }
 
-  async display(section: Section, target?: HTMLElement | string) {
+  override async display(section: Section, target?: HTMLElement | string) {
     return DefaultViewManager.prototype.display
       .call(this, section, target)
       .then(() => {
@@ -104,7 +114,7 @@ class ContinuousViewManager
     return full.promise;
   }
 
-  afterResized(view: View) {
+  override afterResized(view: View) {
     this.emit(EVENTS.MANAGERS.RESIZE, view.section);
   }
 
@@ -115,7 +125,7 @@ class ContinuousViewManager
     view.onDisplayed = function () {};
   }
 
-  async add(section: Section): Promise<View> {
+  override async add(section: Section): Promise<View> {
     const view = this.createView(section);
 
     this.views.append(view);
@@ -125,13 +135,19 @@ class ContinuousViewManager
       // view.expanded = true;
     });
 
-    view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-      this.updateAxis(axis);
-    });
+    view.on(
+      EVENTS.VIEWS.AXIS,
+      createEventHandler((axis: Axis) => {
+        this.updateAxis(axis);
+      })
+    );
 
-    view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-      this.updateWritingMode(mode);
-    });
+    view.on(
+      EVENTS.VIEWS.WRITING_MODE,
+      createEventHandler((mode: string) => {
+        this.updateWritingMode(mode);
+      })
+    );
 
     // view.on(EVENTS.VIEWS.SHOWN, this.afterDisplayed.bind(this));
     view.onDisplayed = this.afterDisplayed.bind(this);
@@ -140,7 +156,7 @@ class ContinuousViewManager
     return view.display(this.request).then(() => view);
   }
 
-  append(section: Section): Promise<View> {
+  override append(section: Section): Promise<View> {
     const view = this.createView(section);
 
     view.on(EVENTS.VIEWS.RESIZED, () => {
@@ -148,13 +164,19 @@ class ContinuousViewManager
       // view.expanded = true;
     });
 
-    view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-      this.updateAxis(axis);
-    });
+    view.on(
+      EVENTS.VIEWS.AXIS,
+      createEventHandler((axis: Axis) => {
+        this.updateAxis(axis);
+      })
+    );
 
-    view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-      this.updateWritingMode(mode);
-    });
+    view.on(
+      EVENTS.VIEWS.WRITING_MODE,
+      createEventHandler((mode: string) => {
+        this.updateWritingMode(mode);
+      })
+    );
 
     this.views.append(view);
 
@@ -163,25 +185,33 @@ class ContinuousViewManager
     return Promise.resolve(view);
   }
 
-  prepend(section: Section): Promise<IframeView> {
+  override prepend(section: Section): Promise<IframeView> {
     const view = this.createView(section);
 
     view.on(
       EVENTS.VIEWS.RESIZED,
-      (bounds: { heightDelta: number; widthDelta: number }) => {
-        this.counter(bounds);
-        // @todo: neither view has 'expanded' implemented
-        // view.expanded = true;
-      }
+      createEventHandler(
+        (bounds: { heightDelta: number; widthDelta: number }) => {
+          this.counter(bounds);
+          // @todo: neither view has 'expanded' implemented
+          // view.expanded = true;
+        }
+      )
     );
 
-    view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-      this.updateAxis(axis);
-    });
+    view.on(
+      EVENTS.VIEWS.AXIS,
+      createEventHandler((axis: Axis) => {
+        this.updateAxis(axis);
+      })
+    );
 
-    view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-      this.updateWritingMode(mode);
-    });
+    view.on(
+      EVENTS.VIEWS.WRITING_MODE,
+      createEventHandler((mode: string) => {
+        this.updateWritingMode(mode);
+      })
+    );
 
     this.views.prepend(view);
 
@@ -190,7 +220,7 @@ class ContinuousViewManager
     return Promise.resolve(view);
   }
 
-  counter(bounds: { heightDelta: number; widthDelta: number }) {
+  override counter(bounds: { heightDelta: number; widthDelta: number }) {
     if (this.settings.axis === 'vertical') {
       this.scrollBy(0, bounds.heightDelta, true);
     } else {
@@ -211,7 +241,7 @@ class ContinuousViewManager
     const updating = new defer();
     const promises = [];
     for (let i = 0; i < viewsLength; i++) {
-      view = views[i];
+      view = views[i]!;
 
       isVisible = this.isVisible(view, offset, offset, container);
 
@@ -303,10 +333,10 @@ class ContinuousViewManager
       this.writingMode && this.writingMode.indexOf('vertical') === 0
         ? 'vertical'
         : 'horizontal';
-    const rtlScrollType = this.settings.rtlScrollType;
+    const rtlScrollType = this.settings['rtlScrollType'];
     const rtl = this.settings.direction === 'rtl';
 
-    if (!this.settings.fullsize) {
+    if (!this.settings['fullsize']) {
       // Scroll offset starts at width of element
       if (rtl && rtlScrollType === 'default' && writingMode === 'horizontal') {
         offset = contentLength - visibleLength - offset;
@@ -384,8 +414,8 @@ class ContinuousViewManager
   trim() {
     const task = new defer();
     const displayed = this.views.displayed();
-    const first = displayed[0];
-    const last = displayed[displayed.length - 1];
+    const first = displayed[0]!;
+    const last = displayed[displayed.length - 1]!;
     const firstIndex = this.views.indexOf(first);
     const lastIndex = this.views.indexOf(last);
     const above = this.views.slice(0, firstIndex);
@@ -393,12 +423,12 @@ class ContinuousViewManager
 
     // Erase all but last above
     for (let i = 0; i < above.length - 1; i++) {
-      this.erase(above[i], above);
+      this.erase(above[i]!, above);
     }
 
     // Erase all except first below
     for (let j = 1; j < below.length; j++) {
-      this.erase(below[j]);
+      this.erase(below[j]!);
     }
 
     task.resolve(undefined);
@@ -409,7 +439,7 @@ class ContinuousViewManager
     let prevTop;
     let prevLeft;
 
-    if (!this.settings.fullsize) {
+    if (!this.settings['fullsize']) {
       prevTop = this.container.scrollTop;
       prevLeft = this.container.scrollLeft;
     } else {
@@ -426,7 +456,7 @@ class ContinuousViewManager
         this.scrollTo(0, prevTop - bounds.height, true);
       } else {
         if (this.settings.direction === 'rtl') {
-          if (!this.settings.fullsize) {
+          if (!this.settings['fullsize']) {
             this.scrollTo(prevLeft, 0, true);
           } else {
             this.scrollTo(prevLeft + Math.floor(bounds.width), 0, true);
@@ -438,7 +468,7 @@ class ContinuousViewManager
     }
   }
 
-  moveTo(offset: { top: number; left: number }) {
+  override moveTo(offset: { top: number; left: number }) {
     let distX = 0,
       distY = 0;
     if (!this.isPaginated) {
@@ -451,7 +481,7 @@ class ContinuousViewManager
     }
   }
 
-  addEventListeners() {
+  override addEventListeners() {
     window.addEventListener('unload', () => {
       this.ignore = true;
       // this.scrollTo(0,0);
@@ -460,10 +490,12 @@ class ContinuousViewManager
 
     this.addScrollListeners();
 
-    if (this.isPaginated && this.settings.snap) {
+    if (this.isPaginated && this.settings['snap']) {
       this.snapper = new Snap(
         this,
-        typeof this.settings.snap === 'object' ? { ...this.settings.snap } : {}
+        typeof this.settings['snap'] === 'object'
+          ? { ...this.settings['snap'] }
+          : {}
       );
     }
   }
@@ -475,14 +507,14 @@ class ContinuousViewManager
 
     const dir =
       this.settings.direction === 'rtl' &&
-      this.settings.rtlScrollType === 'default'
+      this.settings['rtlScrollType'] === 'default'
         ? -1
         : 1;
 
     this.scrollDeltaVert = 0;
     this.scrollDeltaHorz = 0;
 
-    if (!this.settings.fullsize) {
+    if (!this.settings['fullsize']) {
       scroller = this.container;
       this.scrollTop = this.container.scrollTop;
       this.scrollLeft = this.container.scrollLeft;
@@ -498,29 +530,29 @@ class ContinuousViewManager
     this.didScroll = false;
   }
 
-  removeEventListeners() {
+  override removeEventListeners() {
     let scroller;
 
-    if (!this.settings.fullsize) {
+    if (!this.settings['fullsize']) {
       scroller = this.container;
     } else {
       scroller = window;
     }
 
     scroller.removeEventListener('scroll', this._onScroll!);
-    this._onScroll = undefined;
+    this._onScroll = () => {};
   }
 
-  onScroll() {
+  override onScroll() {
     let scrollTop;
     let scrollLeft;
     const dir =
       this.settings.direction === 'rtl' &&
-      this.settings.rtlScrollType === 'default'
+      this.settings['rtlScrollType'] === 'default'
         ? -1
         : 1;
 
-    if (!this.settings.fullsize) {
+    if (!this.settings['fullsize']) {
       scrollTop = this.container.scrollTop;
       scrollLeft = this.container.scrollLeft;
     } else {
@@ -582,7 +614,7 @@ class ContinuousViewManager
     }, this.settings.afterScrolledTimeout);
   }
 
-  next() {
+  override next() {
     const delta =
       this.layout.props.name === 'pre-paginated' && this.layout.props.spread
         ? this.layout.props.delta * 2
@@ -654,7 +686,7 @@ class ContinuousViewManager
     return Promise.resolve();
   }
 
-  prev() {
+  override prev() {
     const delta =
       this.layout.props.name === 'pre-paginated' && this.layout.props.spread
         ? this.layout.props.delta * 2
@@ -708,7 +740,7 @@ class ContinuousViewManager
     return Promise.resolve();
   }
 
-  updateFlow(flow: Flow) {
+  override updateFlow(flow: Flow) {
     if (this.rendered && this.snapper) {
       this.snapper.destroy();
       this.snapper = undefined;
@@ -716,17 +748,17 @@ class ContinuousViewManager
 
     super.updateFlow(flow, 'scroll');
 
-    if (this.rendered && this.isPaginated && this.settings.snap) {
+    if (this.rendered && this.isPaginated && this.settings['snap']) {
       this.snapper = new Snap(
         this,
-        typeof this.settings.snap === 'object'
-          ? (this.settings.snap as { [key: string]: unknown })
+        typeof this.settings['snap'] === 'object'
+          ? (this.settings['snap'] as { [key: string]: unknown })
           : ({} as { [key: string]: unknown })
       );
     }
   }
 
-  destroy() {
+  override destroy() {
     super.destroy();
 
     if (this.snapper) {

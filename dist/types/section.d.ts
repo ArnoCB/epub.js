@@ -1,5 +1,5 @@
 import Hook from './utils/hook';
-import type { SectionItem, Match, SectionLayoutSettings } from './types';
+import type { SectionItem, Match, SectionLayoutSettings, BookRequestFunction } from './types';
 import type { Orientation, Spread, LayoutType } from './enums';
 /**
  * Represents a Section of the Book
@@ -34,11 +34,11 @@ export declare class Section {
     /**
      * Load the section from its url
      */
-    load<T>(_request?: (url: string) => Promise<T>): Promise<unknown>;
+    load(_request?: BookRequestFunction): Promise<unknown>;
     /**
      * Render the contents of a section
      */
-    render(_request?: (url: string) => Promise<Document>): Promise<unknown>;
+    render(_request?: BookRequestFunction): Promise<unknown>;
     /**
      * Find a string in a section using node-by-node searching.
      * This method searches within individual text nodes, making it suitable

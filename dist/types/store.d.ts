@@ -1,12 +1,13 @@
 import localforage from 'localforage';
 import Resources from './resources';
-import type { BookRequestFunction, EventEmitterMethods } from './types';
+import type { BookRequestFunction } from './types';
 /**
  * Handles saving and requesting files from local storage
  * @param name This should be the name of the application for modals
  */
-declare class Store implements Pick<EventEmitterMethods, 'on'> {
-    on: EventEmitterMethods['on'];
+declare class Store {
+    private _events;
+    on(type: string, listener: (...args: unknown[]) => void): void;
     storage: typeof localforage | undefined;
     urlCache: Record<string, string>;
     name: string;

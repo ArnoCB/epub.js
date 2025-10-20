@@ -38,6 +38,8 @@ class PageList {
     } else if (ncx) {
       return this.parseNcx(ncx);
     }
+
+    return undefined;
   }
 
   /**
@@ -111,6 +113,13 @@ class PageList {
       split = href.split('#');
       packageUrl = split[0];
       cfi = split.length > 1 ? split[1] : undefined;
+      if (cfi === undefined || packageUrl === undefined) {
+        return {
+          href,
+          page: text,
+        };
+      }
+
       return {
         cfi,
         href,
@@ -150,13 +159,13 @@ class PageList {
     }
     let index = indexOfSorted(cfi, this.locations, this.epubcfi?.compare);
     if (index !== -1) {
-      pg = parseInt(this.pages[index], 10);
+      pg = parseInt(this.pages[index]!, 10);
     } else {
       index = locationOf(cfi, this.locations, this.epubcfi?.compare);
       pg =
         index - 1 >= 0
-          ? parseInt(this.pages[index - 1], 10)
-          : parseInt(this.pages[0], 10);
+          ? parseInt(this.pages[index - 1]!, 10)
+          : parseInt(this.pages[0]!, 10);
       if (isNaN(pg)) {
         pg = -1;
       }

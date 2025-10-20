@@ -25,6 +25,17 @@ jest.mock('../../utils/core', () => ({
   revokeBlobUrl: jest.fn(),
 }));
 
+// Mock EventEmitter to provide the necessary methods
+jest.mock('event-emitter', () => {
+  return jest.fn((obj) => {
+    obj.emit = jest.fn();
+    obj.on = jest.fn().mockReturnThis();
+    obj.off = jest.fn().mockReturnThis();
+    obj.once = jest.fn().mockReturnThis();
+    return obj;
+  });
+});
+
 describe('IframeView', () => {
   let section: Section;
   let options: { axis: string; transparency: boolean };
@@ -37,6 +48,12 @@ describe('IframeView', () => {
     } as unknown as Section;
     options = { axis: 'horizontal', transparency: true };
     view = new IframeView(section, options as Partial<IframeViewSettings>);
+
+    // Ensure view has event emitter methods
+    view.emit = jest.fn().mockReturnValue(true);
+    view.on = jest.fn().mockReturnThis();
+    view.off = jest.fn().mockReturnThis();
+    view.once = jest.fn().mockReturnThis();
   });
 
   test('should initialize with section and options', () => {

@@ -33,7 +33,7 @@ export declare class Annotations {
      * Get annotations by Section Index
      * @private
      */
-    _annotationsAt(index: number): string[];
+    _annotationsAt(index: number): string[] | undefined;
     /**
      * Add a highlight to the store
      */

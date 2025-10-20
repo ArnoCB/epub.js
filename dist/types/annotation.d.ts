@@ -1,5 +1,4 @@
-import { View } from './managers/helpers/views';
-import type { MarkType, AnnotationData } from './types';
+import type { MarkType, View, AnnotationData } from './types';
 /**
  * Annotation object
  * @param {object} options
@@ -13,6 +12,8 @@ import type { MarkType, AnnotationData } from './types';
  * @returns {Annotation} annotation
  */
 export declare class Annotation {
+    private _events;
+    emit(type: string, ...args: unknown[]): void;
     type: MarkType;
     cfiRange: string;
     data: Record<string, string>;
@@ -24,7 +25,6 @@ export declare class Annotation {
     cb: undefined | ((annotation: Annotation) => void);
     className: string | undefined;
     styles: Record<string, string> | undefined;
-    emit: (event: string, ...args: unknown[]) => void;
     constructor({ type, cfiRange, data, sectionIndex, cb, className, styles, }: AnnotationData);
     /**
      * Update stored data

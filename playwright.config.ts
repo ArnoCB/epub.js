@@ -32,8 +32,8 @@ const config: PlaywrightTestConfig = {
     // Serve the repository root so /dist/epub.js and /lib/epub.js are reachable
     command: 'npx http-server -p 9877 -c-1 --cors',
     port: 9877,
-    timeout: 30_000,
-    // Allow using an already-running server (non-destructive)
+    timeout: 60_000, // Increased timeout for server startup
+    // Always use an already-running server if available
     reuseExistingServer: true,
   },
 };

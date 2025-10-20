@@ -3,8 +3,8 @@ export function buildEnrichedLocationPoint(
   side: 'start' | 'end',
   book: {
     locations?: {
-      locationFromCfi: (cfi: string) => number | null;
-      percentageFromLocation: (loc: number) => number;
+      locationFromCfi: (cfi: string) => number | null | undefined;
+      percentageFromLocation: (loc: number) => number | null | undefined;
     };
     pageList?: {
       pageFromCfi: (cfi: string) => number;
@@ -30,8 +30,8 @@ export function enrichLocationSide(
   locatedSide: DisplayedLocation['start'],
   book: {
     locations?: {
-      locationFromCfi: (cfi: string) => number | null;
-      percentageFromLocation: (loc: number) => number;
+      locationFromCfi: (cfi: string) => number | null | undefined;
+      percentageFromLocation: (loc: number) => number | null | undefined;
     };
     pageList?: {
       pageFromCfi: (cfi: string) => number;
@@ -46,9 +46,12 @@ export function enrichLocationSide(
   const cfi = point.mapping?.[side];
   if (cfi && book.locations) {
     const location = book.locations.locationFromCfi(cfi);
-    if (location !== null) {
+    if (typeof location === 'number' && !isNaN(location)) {
       locatedSide.location = location;
-      locatedSide.percentage = book.locations.percentageFromLocation(location);
+      const percentage = book.locations.percentageFromLocation(location);
+      if (typeof percentage === 'number' && !isNaN(percentage)) {
+        locatedSide.percentage = percentage;
+      }
     }
   }
 

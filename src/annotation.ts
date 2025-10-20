@@ -1,7 +1,6 @@
-import EventEmitter from 'event-emitter';
+import { EventEmitterBase } from './utils';
 import { EVENTS } from './utils/constants';
-import { View } from './managers/helpers/views';
-import type { MarkType, AnnotationData } from './types';
+import type { MarkType, View, AnnotationData } from './types';
 
 /**
  * Annotation object
@@ -16,6 +15,12 @@ import type { MarkType, AnnotationData } from './types';
  * @returns {Annotation} annotation
  */
 export class Annotation {
+  private _events = new EventEmitterBase();
+
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
+
   public type: MarkType;
   public cfiRange: string;
   public data: Record<string, string>;
@@ -31,7 +36,6 @@ export class Annotation {
   public cb: undefined | ((annotation: Annotation) => void);
   public className: string | undefined;
   public styles: Record<string, string> | undefined;
-  public emit!: (event: string, ...args: unknown[]) => void;
 
   constructor({
     type,
@@ -126,7 +130,5 @@ export class Annotation {
 
   text() {}
 }
-
-EventEmitter(Annotation.prototype);
 
 export default Annotation;

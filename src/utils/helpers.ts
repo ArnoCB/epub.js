@@ -9,11 +9,11 @@ function indexOfNode(node: Node, typeId: number): number {
   }
 
   const children = parent.childNodes;
-  let sib: Node;
+  let sib: Node | undefined;
   let index = -1;
   for (let i = 0; i < children.length; i++) {
     sib = children[i];
-    if (sib.nodeType === typeId) {
+    if (sib && sib.nodeType === typeId) {
       index++;
     }
     if (sib == node) break;

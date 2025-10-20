@@ -1,36 +1,63 @@
-import EventEmitter from 'event-emitter';
+import { EventEmitterBase } from '../../utils/event-emitter';
 import { extend, defer, windowBounds, isNumber } from '../../utils/core';
 import scrollType from '../../utils/scrolltype';
 import Mapping from '../../mapping';
 import Queue from '../../utils/queue';
 import Stage from '../helpers/stage';
-import Views, { View, ViewConstructor } from '../helpers/views';
+import Views from '../helpers/views';
 import { EVENTS } from '../../utils/constants';
-import { ViewManager } from '../../types';
+import {
+  ViewManager,
+  ViewRendererSettings,
+  View,
+  ViewConstructor,
+  BookRequestFunction,
+} from '../../types';
+import request from '../../utils/request';
 import Layout from '../../layout';
 import { Section } from '../../section';
 import { Contents } from '../../epub';
 import { ViewRenderer } from '../helpers/view-renderer';
-import type { Axis, Direction, Flow } from '../../enums';
 import {
-  DefaultViewManagerSettings,
-  PageLocation,
-  EventEmitterMethods,
-} from '../../types';
-class DefaultViewManager
-  implements ViewManager, Pick<EventEmitterMethods, 'emit' | 'on' | 'off'>
-{
-  on!: EventEmitterMethods['on'];
-  off!: EventEmitterMethods['off'];
-  emit!: EventEmitterMethods['emit'];
+  DEFAULT_ALLOW_POPUPS,
+  DEFAULT_ALLOW_SCRIPTED_CONTENT,
+  DEFAULT_AXIS,
+  DEFAULT_DIRECTION,
+  DEFAULT_FLOW,
+  DEFAULT_TRANSPARENCY,
+  type Axis,
+  type Direction,
+  type Flow,
+} from '../../enums';
+import { DefaultViewManagerSettings, PageLocation } from '../../types';
+import { createEventHandler } from '../../utils/event-handler-wrapper';
+
+class DefaultViewManager implements ViewManager {
+  // Use composition for events instead of mixin pattern
+  private _events = new EventEmitterBase();
+
+  // Public event methods that delegate to the internal EventEmitterBase
+  on(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.on(type, listener);
+    return this;
+  }
+
+  off(type: string, listener: (...args: unknown[]) => void): this {
+    this._events.off(type, listener);
+    return this;
+  }
+
+  emit(type: string, ...args: unknown[]): void {
+    this._events.emit(type, ...args);
+  }
 
   settings: DefaultViewManagerSettings;
-  viewSettings: { [key: string]: unknown };
+  viewSettings: DefaultViewManagerSettings;
   stage!: Stage;
   name = 'default';
   rendered: boolean = false;
   optsSettings: DefaultViewManagerSettings;
-  View?: ViewConstructor | View;
+  View: ViewConstructor | View | undefined;
   request: ((url: string) => Promise<Document>) | undefined;
   renditionQueue!: unknown;
   q!: Queue;
@@ -42,7 +69,7 @@ class DefaultViewManager
   protected viewRenderer!: ViewRenderer;
   _onScroll?: () => void;
   scrollLeft?: number;
-  _stageSize?: { width: number; height: number };
+  _stageSize?: { width: number; height: number } | undefined;
   _bounds!:
     | { left: number; top: number; right: number; bottom: number }
     | DOMRect;
@@ -100,22 +127,24 @@ class DefaultViewManager
       allowScriptedContent: false,
       allowPopups: false,
       ...(options.settings || {}),
-    };
+    } as DefaultViewManagerSettings;
 
     extend(this.settings, options.settings || {});
 
     this.viewSettings = {
-      ignoreClass: this.settings.ignoreClass,
-      axis: this.settings.axis,
-      flow: this.settings.flow,
+      ignoreClass: this.settings.ignoreClass || '',
+      axis: this.settings.axis || DEFAULT_AXIS,
+      flow: this.settings.flow || DEFAULT_FLOW,
       layout: this.layout,
-      method: this.settings.method, // srcdoc, blobUrl, write
+      // iframeView will set the proper value
+      method: this.settings.method || '', // srcdoc, blobUrl, write
       width: 0,
       height: 0,
       forceEvenPages: true,
-      transparency: this.settings.transparency,
-      allowScriptedContent: this.settings.allowScriptedContent,
-      allowPopups: this.settings.allowPopups,
+      transparency: this.settings.transparency || DEFAULT_TRANSPARENCY,
+      allowScriptedContent:
+        this.settings.allowScriptedContent || DEFAULT_ALLOW_SCRIPTED_CONTENT,
+      allowPopups: this.settings.allowPopups || DEFAULT_ALLOW_POPUPS,
     };
 
     this.rendered = false;
@@ -125,7 +154,7 @@ class DefaultViewManager
     this.viewRenderer = new ViewRenderer(
       {
         ignoreClass: this.viewSettings.ignoreClass as string,
-        axis: this.viewSettings.axis as Axis,
+        axis: this.viewSettings.axis,
         direction: this.settings.direction,
         width: this.viewSettings.width as number,
         height: this.viewSettings.height as number,
@@ -137,8 +166,8 @@ class DefaultViewManager
         transparency: this.viewSettings.transparency as boolean,
         forceEvenPages: this.viewSettings.forceEvenPages as boolean,
         flow: this.viewSettings.flow as Flow,
-      },
-      this.request
+      } as ViewRendererSettings,
+      (this.request ?? request) as BookRequestFunction
     );
   }
 
@@ -146,7 +175,7 @@ class DefaultViewManager
     const tag = element.tagName;
 
     if (
-      typeof this.settings.fullsize === 'undefined' &&
+      this.settings.fullsize === undefined &&
       tag &&
       (tag.toLowerCase() == 'body' || tag.toLowerCase() == 'html')
     ) {
@@ -158,19 +187,19 @@ class DefaultViewManager
       this.overflow = this.settings.overflow;
     }
 
-    this.settings.size = size;
+    this.settings['size'] = size;
 
     this.settings.rtlScrollType = scrollType();
 
     // Save the stage
     this.stage = new Stage({
-      width: size ? String(size.width) : undefined,
-      height: size ? String(size.height) : undefined,
+      width: size ? String(size.width) : '',
+      height: size ? String(size.height) : '',
       overflow: this.overflow,
-      hidden: this.settings.hidden,
-      axis: this.settings.axis,
+      hidden: this.settings.hidden || false,
+      axis: this.settings.axis || DEFAULT_AXIS,
       fullsize: this.settings.fullsize,
-      direction: this.settings.direction,
+      direction: this.settings.direction || DEFAULT_DIRECTION,
     });
 
     this.stage.attachTo(element);
@@ -234,7 +263,7 @@ class DefaultViewManager
     }
 
     scroller.removeEventListener('scroll', this._onScroll!);
-    this._onScroll = undefined;
+    this._onScroll = () => {};
   }
 
   destroy() {
@@ -252,7 +281,7 @@ class DefaultViewManager
   }
 
   onOrientationChange() {
-    if (this.optsSettings.resizeOnOrientationChange) {
+    if (this.optsSettings['resizeOnOrientationChange']) {
       this.resize();
     }
   }
@@ -328,12 +357,12 @@ class DefaultViewManager
     const hasMultiplePages = this.layout.divisor > 1;
 
     if (!isPrePaginated || !hasMultiplePages) {
-      return;
+      return undefined;
     }
 
     // First page (cover) should stand alone
     if (forceRight || section.index === 0) {
-      return;
+      return undefined;
     }
 
     const next = section.next();
@@ -341,6 +370,8 @@ class DefaultViewManager
     if (next && !next.properties.includes('page-spread-left')) {
       return action.call(this, next);
     }
+
+    return undefined;
   }
 
   display(section: Section, target?: HTMLElement | string) {
@@ -561,13 +592,19 @@ class DefaultViewManager
 
     // Check if view has event methods before using them
     if (typeof view.on === 'function') {
-      view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-        this.updateAxis(axis);
-      });
+      view.on(
+        EVENTS.VIEWS.AXIS,
+        createEventHandler((axis: Axis) => {
+          this.updateAxis(axis);
+        })
+      );
 
-      view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-        this.updateWritingMode(mode);
-      });
+      view.on(
+        EVENTS.VIEWS.WRITING_MODE,
+        createEventHandler((mode: string) => {
+          this.updateWritingMode(mode);
+        })
+      );
     } else {
       console.warn(
         '[DefaultViewManager] view does not have event methods in add():',
@@ -620,13 +657,19 @@ class DefaultViewManager
 
     // Check if view has event methods before using them
     if (typeof view.on === 'function') {
-      view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-        this.updateAxis(axis);
-      });
+      view.on(
+        EVENTS.VIEWS.AXIS,
+        createEventHandler((axis: Axis) => {
+          this.updateAxis(axis);
+        })
+      );
 
-      view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-        this.updateWritingMode(mode);
-      });
+      view.on(
+        EVENTS.VIEWS.WRITING_MODE,
+        createEventHandler((mode: string) => {
+          this.updateWritingMode(mode);
+        })
+      );
     } else {
       console.warn(
         '[DefaultViewManager] view does not have event methods in append():',
@@ -644,18 +687,26 @@ class DefaultViewManager
     if (typeof view.on === 'function') {
       view.on(
         EVENTS.VIEWS.RESIZED,
-        (bounds: { heightDelta: number; widthDelta: number }) => {
-          this.counter(bounds);
-        }
+        createEventHandler(
+          (bounds: { heightDelta: number; widthDelta: number }) => {
+            this.counter(bounds);
+          }
+        )
       );
 
-      view.on(EVENTS.VIEWS.AXIS, (axis: Axis) => {
-        this.updateAxis(axis);
-      });
+      view.on(
+        EVENTS.VIEWS.AXIS,
+        createEventHandler((axis: Axis) => {
+          this.updateAxis(axis);
+        })
+      );
 
-      view.on(EVENTS.VIEWS.WRITING_MODE, (mode: string) => {
-        this.updateWritingMode(mode);
-      });
+      view.on(
+        EVENTS.VIEWS.WRITING_MODE,
+        createEventHandler((mode: string) => {
+          this.updateWritingMode(mode);
+        })
+      );
     } else {
       console.warn(
         '[DefaultViewManager] view does not have event methods in prepend():',
@@ -1379,7 +1430,7 @@ class DefaultViewManager
     let view;
 
     for (let i = 0; i < viewsLength; i++) {
-      view = views[i];
+      view = views[i]!;
 
       isVisible = this.isVisible(view, 0, 0, container as DOMRect);
 
@@ -1627,7 +1678,7 @@ class DefaultViewManager
   direction(dir = 'ltr') {
     this.settings.direction = dir as Direction;
     this.stage?.direction(dir);
-    this.viewSettings.direction = dir;
+    this.viewSettings.direction = dir as Direction;
     this.updateLayout();
   }
 
@@ -1635,8 +1686,5 @@ class DefaultViewManager
     return this.rendered;
   }
 }
-
-//-- Enable binding events to Manager
-EventEmitter(DefaultViewManager.prototype);
 
 export default DefaultViewManager;
