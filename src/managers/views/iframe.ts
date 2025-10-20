@@ -185,7 +185,7 @@ class IframeView implements View {
       this.element = this.createContainer();
     }
 
-    this.iframe = document.createElement('iframe');
+    this.iframe = document.createElement('iframe') as HTMLIFrameElement;
     this.iframe.id = this.id;
     this.iframe.scrolling = 'no'; // Might need to be removed: breaks ios width calculations
     this.iframe.style.overflow = 'hidden';
@@ -199,15 +199,14 @@ class IframeView implements View {
     }
 
     // sandbox
-    this.iframe.sandbox = 'allow-same-origin';
-
+    let sandboxValue = 'allow-same-origin';
     if (this.settings.allowScriptedContent) {
-      this.iframe.sandbox += ' allow-scripts';
+      sandboxValue += ' allow-scripts';
     }
-
     if (this.settings.allowPopups) {
-      this.iframe.sandbox += ' allow-popups';
+      sandboxValue += ' allow-popups';
     }
+    this.iframe.setAttribute('sandbox', sandboxValue);
 
     this.iframe.setAttribute('enable-annotation', 'true');
 

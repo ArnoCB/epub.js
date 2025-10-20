@@ -10180,13 +10180,14 @@
 	        this.iframe.allowTransparency = 'true';
 	      }
 	      // sandbox
-	      this.iframe.sandbox = 'allow-same-origin';
+	      let sandboxValue = 'allow-same-origin';
 	      if (this.settings.allowScriptedContent) {
-	        this.iframe.sandbox += ' allow-scripts';
+	        sandboxValue += ' allow-scripts';
 	      }
 	      if (this.settings.allowPopups) {
-	        this.iframe.sandbox += ' allow-popups';
+	        sandboxValue += ' allow-popups';
 	      }
+	      this.iframe.setAttribute('sandbox', sandboxValue);
 	      this.iframe.setAttribute('enable-annotation', 'true');
 	      this.resizing = true;
 	      // this.iframe.style.display = "none";
@@ -13556,7 +13557,15 @@
 	        newIframe.style.visibility = 'visible';
 	        newIframe.style.opacity = '1';
 	        newIframe.style.display = 'block';
-	        newIframe.sandbox = 'allow-same-origin';
+	        // sandbox
+	        let sandboxValue = 'allow-same-origin';
+	        if (this.viewSettings.allowScriptedContent) {
+	          sandboxValue += ' allow-scripts';
+	        }
+	        if (this.viewSettings.allowPopups) {
+	          sandboxValue += ' allow-popups';
+	        }
+	        newIframe.setAttribute('sandbox', sandboxValue);
 	        // Diagnostic logging for iframe size
 	        // eslint-disable-next-line no-console
 	        console.log('[BookPreRenderer] New iframe created', {
@@ -13565,12 +13574,6 @@
 	          styleWidth: newIframe.style.width,
 	          styleHeight: newIframe.style.height
 	        });
-	        if (this.viewSettings.allowScriptedContent) {
-	          newIframe.sandbox += ' allow-scripts';
-	        }
-	        if (this.viewSettings.allowPopups) {
-	          newIframe.sandbox += ' allow-popups';
-	        }
 	        // Populate iframe from preservedSrcdoc or preservedContent
 	        try {
 	          if (chapter.preservedSrcdoc) {

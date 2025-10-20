@@ -99,10 +99,6 @@ test.describe('Core Rendering Modes', () => {
         return log;
       });
 
-      // Print diagnostic log
-      // eslint-disable-next-line no-console
-      console.log('Single Page Mode prerenderer test log:', renderResult);
-
       expect(renderResult.hasIframe).toBe(true);
       expect(renderResult.iframeVisible).toBe(true);
       expect(renderResult.visibleIframeCount).toBe(1); // Only one visible iframe should be present

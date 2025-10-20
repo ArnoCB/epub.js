@@ -10,7 +10,7 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "moduleResolution": "nodenext",
     "baseUrl": ".",
     "paths": {

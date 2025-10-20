@@ -880,7 +880,15 @@ export class BookPreRenderer implements EventEmitterMethods {
       newIframe.style.visibility = 'visible';
       newIframe.style.opacity = '1';
       newIframe.style.display = 'block';
-      newIframe.sandbox = 'allow-same-origin';
+      // sandbox
+      let sandboxValue = 'allow-same-origin';
+      if ((this.viewSettings as ViewSettings).allowScriptedContent) {
+        sandboxValue += ' allow-scripts';
+      }
+      if ((this.viewSettings as ViewSettings).allowPopups) {
+        sandboxValue += ' allow-popups';
+      }
+      newIframe.setAttribute('sandbox', sandboxValue);
 
       // Diagnostic logging for iframe size
       // eslint-disable-next-line no-console
@@ -890,14 +898,6 @@ export class BookPreRenderer implements EventEmitterMethods {
         styleWidth: newIframe.style.width,
         styleHeight: newIframe.style.height,
       });
-
-      if ((this.viewSettings as ViewSettings).allowScriptedContent) {
-        newIframe.sandbox += ' allow-scripts';
-      }
-
-      if ((this.viewSettings as ViewSettings).allowPopups) {
-        newIframe.sandbox += ' allow-popups';
-      }
 
       // Populate iframe from preservedSrcdoc or preservedContent
       try {

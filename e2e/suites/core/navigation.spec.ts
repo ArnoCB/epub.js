@@ -304,28 +304,35 @@ test.describe('Core Navigation', () => {
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }, chapterIndex);
 
-        // Verify content is visible after navigation
-        const chapterResult = await page.evaluate((expectedIndex) => {
-          const win: any = window as any;
-          const rendition = win.getRendition
-            ? win.getRendition()
-            : win.rendition;
-          const container = rendition.manager.container;
-          const iframe = container.querySelector('iframe');
-
-          return {
-            hasIframe: !!iframe,
-            iframeVisible: iframe
-              ? iframe.offsetWidth > 0 && iframe.offsetHeight > 0
-              : false,
-            currentHref: rendition.location?.start?.href || 'unknown',
-            expectedIndex,
-          };
-        }, chapterIndex);
-
-        expect(chapterResult.hasIframe).toBe(true);
-        expect(chapterResult.iframeVisible).toBe(true);
-        expect(chapterResult.currentHref).toBeTruthy(); // Just verify we have a valid href
+        // Poll for iframe visibility/content up to 1000ms
+        let pollResult: any = undefined;
+        const maxPolls = 5;
+        for (let poll = 0; poll < maxPolls; poll++) {
+          const result = await page.evaluate((expectedIndex) => {
+            const win = window as any;
+            const rendition = win.getRendition
+              ? win.getRendition()
+              : win.rendition;
+            const container = rendition.manager.container;
+            const iframe = container.querySelector('iframe');
+            return {
+              hasIframe: !!iframe,
+              iframeVisible: iframe
+                ? iframe.offsetWidth > 0 && iframe.offsetHeight > 0
+                : false,
+              currentHref: rendition.location?.start?.href || 'unknown',
+              expectedIndex,
+            };
+          }, chapterIndex);
+          pollResult = result;
+          if (pollResult && pollResult.iframeVisible) break;
+          await page.waitForTimeout(200);
+        }
+        if (!pollResult)
+          throw new Error('No poll result for iframe visibility');
+        expect(pollResult.hasIframe).toBe(true);
+        expect(pollResult.iframeVisible).toBe(true);
+        expect(pollResult.currentHref).toBeTruthy(); // Just verify we have a valid href
       }
     });
 
