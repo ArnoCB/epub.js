@@ -116,7 +116,13 @@ describe('Archive', () => {
       await archive.createUrl('/test.txt');
       archive.destroy();
 
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       await expect(archive.request('/test.txt', 'text')).rejects.toBeDefined();
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[Archive] request error',
+        expect.any(Error)
+      );
+      consoleSpy.mockRestore();
     });
   });
 

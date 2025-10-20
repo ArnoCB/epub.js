@@ -85,7 +85,7 @@ describe('IframeView', () => {
     expect(['none', '', null]).toContain(iframe.style.border);
     expect(['transparent', '', null]).toContain(iframe.style.background);
     expect(['true', undefined]).toContain(iframe.allowTransparency);
-    expect(iframe.sandbox).toContain('allow-same-origin');
+    expect(iframe.getAttribute('sandbox')).toContain('allow-same-origin');
     expect(iframe.getAttribute('enable-annotation')).toBe('true');
   });
 

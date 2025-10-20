@@ -213,15 +213,6 @@ export class BookPreRenderer implements EventEmitterMethods {
     this.offscreenContainer.style.overflow = 'hidden';
     this.offscreenContainer.style.visibility = 'hidden';
 
-    // Diagnostic logging for offscreen container size
-    // eslint-disable-next-line no-console
-    console.log('[BookPreRenderer] Offscreen container created', {
-      width: viewSettings.width,
-      height: viewSettings.height,
-      styleWidth: this.offscreenContainer.style.width,
-      styleHeight: this.offscreenContainer.style.height,
-    });
-
     this.container.appendChild(this.offscreenContainer);
   }
 
