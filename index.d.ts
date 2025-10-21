@@ -19,7 +19,6 @@ export * from './dist/types/section';
 export * from './dist/types/spine';
 export * from './dist/types/store';
 export * from './dist/types/themes';
-
 export * from './dist/types/managers';
 export * from './dist/types/types';
 export * from './dist/types/utils';
