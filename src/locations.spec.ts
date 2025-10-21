@@ -7,8 +7,6 @@ const EpubCFI = jest.fn();
 // Mock the EventEmitter functionality for all tests
 jest.mock('./locations', () => {
   const originalModule = jest.requireActual('./locations');
-  const EventEmitter = require('event-emitter');
-
   // Create a mock implementation that adds event emitter capabilities
   const MockLocations = function (spine: any, request: any, pause?: number) {
     // Call the original constructor
