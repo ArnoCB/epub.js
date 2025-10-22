@@ -2,6 +2,7 @@ import type Section from '../section';
 import type Contents from '../contents';
 import type Layout from '../layout';
 import type { Mark } from 'marks-pane';
+import type { MarkDataObject } from './mark-data-object';
 import type { BookRequestFunction } from './book';
 export type CanonicalViewConstructor = typeof import('./canonical-view').default;
 export type CanonicalViewInstance = InstanceType<CanonicalViewConstructor>;
@@ -40,9 +41,9 @@ export type View = CanonicalViewInstance & {
         left: number;
         top: number;
     };
-    highlight: (cfiRange: string, data: Record<string, string>, cb?: (e: Event) => void, className?: string, styles?: object) => Mark | undefined;
-    underline: (cfiRange: string, data: Record<string, string>, cb?: (e: Event) => void, className?: string, styles?: object) => Mark | undefined;
-    mark: (cfiRange: string, data: Record<string, string>, cb?: (e: Event) => void) => {
+    highlight: (cfiRange: string, data: MarkDataObject, cb?: (e: Event) => void, className?: string, styles?: object) => Mark | undefined;
+    underline: (cfiRange: string, data: MarkDataObject, cb?: (e: Event) => void, className?: string, styles?: object) => Mark | undefined;
+    mark: (cfiRange: string, data: MarkDataObject, cb?: (e: Event) => void) => {
         element: HTMLElement;
         range: Range;
     } | Node | null;

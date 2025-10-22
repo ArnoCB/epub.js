@@ -1148,21 +1148,14 @@ class Contents {
     }
   }
 
-  mapPage(
-    cfiBase: string,
-    layout: Layout,
-    start: number,
-    end: number,
-    dev: boolean
-  ) {
+  mapPage(cfiBase: string, layout: Layout, start: number, end: number) {
     // Pass dev as the fourth argument, direction and axis as undefined
-    const mapping = new Mapping(layout, undefined, undefined, dev);
+    const mapping = new Mapping(layout, undefined, undefined);
     return mapping.page(this, cfiBase, start, end);
   }
 
   /**
    * Emit event when link in content is clicked
-   * @private
    */
   private linksHandler() {
     replaceLinks(this.content, (href) => {

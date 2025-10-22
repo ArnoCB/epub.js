@@ -79,6 +79,7 @@
   },
   "dependencies": {
     "core-js": "^3.18.3",
+    "hash-wasm": "^4.12.0",
     "jszip": "^3.7.1",
     "localforage": "^1.10.0",
     "marks-pane": "github:ArnoCB/marks-pane",

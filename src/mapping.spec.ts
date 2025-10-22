@@ -72,7 +72,7 @@ describe('Mapping', () => {
     };
 
     // Create mapping instance
-    mapping = new Mapping(mockLayout, 'ltr', 'horizontal', false);
+    mapping = new Mapping(mockLayout, 'ltr', 'horizontal');
 
     // Mock global objects
     global.document = mockDocument;
@@ -93,14 +93,14 @@ describe('Mapping', () => {
       expect(defaultMapping.layout).toBe(mockLayout);
       expect(defaultMapping.horizontal).toBe(false); // Documents actual behavior: defaults to false
       expect(defaultMapping.direction).toBe('ltr');
-      expect(defaultMapping._dev).toBe(false);
+      expect(defaultMapping).toBe(false);
     });
 
     it('should initialize with provided parameters', () => {
-      const verticalMapping = new Mapping(mockLayout, 'rtl', 'vertical', true);
+      const verticalMapping = new Mapping(mockLayout, 'rtl', 'vertical');
       expect(verticalMapping.horizontal).toBe(false);
       expect(verticalMapping.direction).toBe('rtl');
-      expect(verticalMapping._dev).toBe(true);
+      expect(verticalMapping).toBe(true);
     });
 
     it('should default direction to ltr when not provided', () => {
@@ -172,7 +172,7 @@ describe('Mapping', () => {
     });
 
     it('should handle dev mode highlighting', () => {
-      const devMapping = new Mapping(mockLayout, 'ltr', 'horizontal', true);
+      const devMapping = new Mapping(mockLayout, 'ltr', 'horizontal');
 
       // Documents current behavior: when DOM elements are not properly mocked,
       // the createTreeWalker call fails with parameter validation

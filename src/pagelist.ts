@@ -31,13 +31,10 @@ class PageList {
    */
   parse(xml: Document): PageListItem[] | undefined {
     const html = xml.querySelector('html');
-    const ncx = xml.querySelector('ncx');
+    if (html) return this.parseNav(html);
 
-    if (html) {
-      return this.parseNav(html);
-    } else if (ncx) {
-      return this.parseNcx(ncx);
-    }
+    const ncx = xml.querySelector('ncx');
+    if (ncx) return this.parseNcx(ncx);
 
     return undefined;
   }

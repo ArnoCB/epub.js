@@ -1,4 +1,4 @@
-import type { BookOptions, PackagingManifestJson, PackagingManifestObject, RenditionOptions } from './types';
+import type { BookOptions, PackagingManifestJson, PackagingManifestObject, RenditionOptions, SearchResult } from './types';
 import { defer } from './utils';
 import Path from './utils/path';
 import Spine from './spine';
@@ -63,6 +63,7 @@ declare class Book {
     packaging: Packaging | undefined;
     private container;
     displayOptions: DisplayOptions | undefined;
+    private bookHash;
     cover: string | undefined;
     package: Packaging | undefined;
     constructor(url?: string | Blob | ArrayBuffer | undefined, options?: BookOptions);
@@ -160,6 +161,45 @@ declare class Book {
      * Apply iBooks display options overrides to packaging metadata
      */
     private applyDisplayOptionsOverrides;
+    /**
+     * Get the title of the book
+     * @returns Promise resolving to the book title
+     */
+    get title(): Promise<string>;
+    /**
+     * Get the book hash identifier
+     */
+    getBookHash(): string;
+    /**
+     * Set the book hash by generating MD5 from the OPF content
+     */
+    private setBookHash;
+    /**
+     * Search for a string within a single section
+     * @param section - The section to search in (can be Section object, section index, or section href)
+     * @param searchString - The string to search for
+     * @returns Promise resolving to array of search results for that section
+     * @example
+     * // Search by section index
+     * const results = await book.searchSection(0, "query");
+     *
+     * // Search by section href
+     * const results = await book.searchSection("chapter1.xhtml", "query");
+     *
+     * // Search by Section object
+     * const section = book.spine.get(0);
+     * const results = await book.searchSection(section, "query");
+     */
+    searchSection(section: Section | number | string, searchString: string): Promise<SearchResult[]>;
+    /**
+     * Search for a string across all sections of the book
+     * @param searchString - The string to search for
+     * @returns Promise resolving to array of search results with location information
+     * @example
+     * const results = await book.searchAll("query");
+     * // results = [{ searchTerm: "query", fragment: "...text...", location: { bookHash: "ABC123", cfiRange: "epubcfi(...)" }}]
+     */
+    searchAll(searchString: string): Promise<SearchResult[]>;
     /**
      * Destroy the Book and all associated objects
      */

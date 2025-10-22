@@ -49,6 +49,7 @@ class Store {
       if (typeof localforage === 'undefined') {
         throw new Error('localForage lib not loaded');
       }
+
       this.storage = localforage.createInstance({
         name: this.name,
       });
@@ -60,6 +61,7 @@ class Store {
       ) {
         throw error;
       }
+
       // For other errors, preserve the original error message
       throw new Error(
         `Failed to initialize localForage storage: ${
@@ -83,6 +85,7 @@ class Store {
    */
   private removeListeners() {
     if (!this._status) return;
+
     window.removeEventListener('online', this._status);
     window.removeEventListener('offline', this._status);
     this._status = undefined;
@@ -92,9 +95,9 @@ class Store {
    * Update the online / offline status
    */
   private status() {
-    const online = navigator.onLine;
-    this.online = online;
-    if (online) {
+    this.online = navigator.onLine;
+
+    if (this.online) {
       this.emit('online', this);
     } else {
       this.emit('offline', this);
@@ -126,6 +129,7 @@ class Store {
         }
       });
     });
+
     return Promise.all(mapped);
   }
 
@@ -198,6 +202,7 @@ class Store {
     }
 
     let response: Promise<Blob | string | undefined>;
+
     if (type == 'blob') {
       response = this.getBlob(url);
     } else {
@@ -218,6 +223,7 @@ class Store {
           stack: new Error().stack,
         });
       }
+
       return deferred.promise;
     });
   }

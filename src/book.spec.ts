@@ -85,4 +85,30 @@ describe('Book', () => {
     expect(book.settings.requestCredentials).toBe(true);
     expect(book.settings.requestHeaders).toEqual({ foo: 'bar' });
   });
+
+  describe('Search functionality', () => {
+    it('should have a getBookHash method that returns empty string initially', () => {
+      const hash = book.getBookHash();
+      expect(hash).toBe('');
+    });
+
+    it('should have a title getter that returns a promise', async () => {
+      // Mock the loaded metadata
+      book = createTestBook();
+      (book as any).loaded = {
+        metadata: Promise.resolve({ title: 'Test Book Title' }),
+      };
+
+      const title = await book.title;
+      expect(title).toBe('Test Book Title');
+    });
+
+    it('should have a searchSection method', () => {
+      expect(typeof book.searchSection).toBe('function');
+    });
+
+    it('should have a searchAll method', () => {
+      expect(typeof book.searchAll).toBe('function');
+    });
+  });
 });

@@ -556,9 +556,6 @@ export class Rendition {
 
   /**
    * Trigger a resize of the views
-   * @param {number} [width]
-   * @param {number} [height]
-   * @param {string} [epubcfi] (optional)
    */
   resize(width: number, height: number, epubcfi?: string) {
     if (width) {
@@ -1005,7 +1002,5 @@ export class Rendition {
     doc.getElementsByTagName('head')[0]?.appendChild(meta);
   }
 }
-
-// Event handling is now implemented via composition
 
 export default Rendition;

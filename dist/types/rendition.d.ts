@@ -103,9 +103,6 @@ export declare class Rendition {
     private onOrientationChange;
     /**
      * Trigger a resize of the views
-     * @param {number} [width]
-     * @param {number} [height]
-     * @param {string} [epubcfi] (optional)
      */
     resize(width: number, height: number, epubcfi?: string): void;
     /**

@@ -22,5 +22,6 @@ export * from './dist/types/themes';
 export * from './dist/types/managers';
 export * from './dist/types/types';
 export * from './dist/types/utils';
+export * from './dist/types/enums';
 
 export { default } from './dist/types/epub';

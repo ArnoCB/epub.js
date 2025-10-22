@@ -1,7 +1,7 @@
 import Rendition from './rendition';
 import Annotation from './annotation';
 import EpubCFI from './epubcfi';
-import type { MarkType, View } from './types';
+import type { MarkType, View, MarkDataObject } from './types';
 
 /**
  * Handles managing adding & removing Annotations
@@ -26,7 +26,7 @@ export class Annotations {
   add(
     type: MarkType,
     cfiRange: string,
-    data: Record<string, string>,
+    data: MarkDataObject,
     cb?: (annotation: Annotation) => void,
     className?: string,
     styles?: Record<string, string>
@@ -113,7 +113,7 @@ export class Annotations {
    */
   highlight(
     cfiRange: string,
-    data: Record<string, string>,
+    data: MarkDataObject,
     cb?: (annotation: Annotation) => void,
     className?: string,
     styles?: Record<string, string>
@@ -126,7 +126,7 @@ export class Annotations {
    */
   underline(
     cfiRange: string,
-    data: Record<string, string>,
+    data: MarkDataObject,
     cb?: (annotation: Annotation) => void,
     className?: string,
     styles?: Record<string, string>
@@ -140,7 +140,7 @@ export class Annotations {
    */
   mark(
     cfiRange: string,
-    data: Record<string, string>,
+    data: MarkDataObject,
     cb?: (annotation: Annotation) => void
   ) {
     return this.add('mark', cfiRange, data, cb);

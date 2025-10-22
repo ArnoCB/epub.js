@@ -23,7 +23,7 @@ import type {
   MarkElementMap,
 } from '../../types';
 import type { Axis } from '../../enums';
-import type { View } from '../../types';
+import type { View, MarkDataObject } from '../../types';
 
 class IframeView implements View {
   private _events = new EventEmitterBase();
@@ -864,7 +864,7 @@ class IframeView implements View {
 
   highlight(
     cfiRange: string,
-    data: Record<string, string> = {},
+    data: MarkDataObject = {},
     cb?: (e: Event) => void,
     className = 'epubjs-hl',
     styles = {}
@@ -932,7 +932,7 @@ class IframeView implements View {
 
   underline(
     cfiRange: string,
-    data: Record<string, string> = {},
+    data: MarkDataObject = {},
     cb?: (e: Event) => void,
     className = 'epubjs-ul',
     styles = {}
@@ -992,7 +992,7 @@ class IframeView implements View {
 
   mark(
     cfiRange: string,
-    data: Record<string, string> = {},
+    data: MarkDataObject = {},
     cb?: (e: Event) => void
   ): { element: HTMLElement; range: Range } | Node | null {
     if (!this.contents) {

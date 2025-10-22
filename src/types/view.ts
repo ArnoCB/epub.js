@@ -2,6 +2,7 @@ import type Section from '../section';
 import type Contents from '../contents';
 import type Layout from '../layout';
 import type { Mark } from 'marks-pane';
+import type { MarkDataObject } from './mark-data-object';
 // No longer need EventEmitterMethods import
 import type { BookRequestFunction } from './book';
 
@@ -42,21 +43,21 @@ export type View = CanonicalViewInstance & {
   locationOf(target: HTMLElement | string): { left: number; top: number };
   highlight: (
     cfiRange: string,
-    data: Record<string, string>,
+    data: MarkDataObject,
     cb?: (e: Event) => void,
     className?: string,
     styles?: object
   ) => Mark | undefined;
   underline: (
     cfiRange: string,
-    data: Record<string, string>,
+    data: MarkDataObject,
     cb?: (e: Event) => void,
     className?: string,
     styles?: object
   ) => Mark | undefined;
   mark: (
     cfiRange: string,
-    data: Record<string, string>,
+    data: MarkDataObject,
     cb?: (e: Event) => void
   ) => { element: HTMLElement; range: Range } | Node | null;
   unhighlight: (cfiRange: string) => void;

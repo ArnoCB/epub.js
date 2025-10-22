@@ -7,7 +7,7 @@ import Section from '../../section';
 import { StyledPane } from './styled-pane';
 import type { BookRequestFunction, ExtendedIFrameElement, IframeViewSettings, MarkElementMap } from '../../types';
 import type { Axis } from '../../enums';
-import type { View } from '../../types';
+import type { View, MarkDataObject } from '../../types';
 declare class IframeView implements View {
     private _events;
     settings: IframeViewSettings;
@@ -122,9 +122,9 @@ declare class IframeView implements View {
         width: number;
         height: number;
     };
-    highlight(cfiRange: string, data?: Record<string, string>, cb?: (e: Event) => void, className?: string, styles?: {}): Mark | undefined;
-    underline(cfiRange: string, data?: Record<string, string>, cb?: (e: Event) => void, className?: string, styles?: {}): Mark | undefined;
-    mark(cfiRange: string, data?: Record<string, string>, cb?: (e: Event) => void): {
+    highlight(cfiRange: string, data?: MarkDataObject, cb?: (e: Event) => void, className?: string, styles?: {}): Mark | undefined;
+    underline(cfiRange: string, data?: MarkDataObject, cb?: (e: Event) => void, className?: string, styles?: {}): Mark | undefined;
+    mark(cfiRange: string, data?: MarkDataObject, cb?: (e: Event) => void): {
         element: HTMLElement;
         range: Range;
     } | Node | null;

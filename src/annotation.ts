@@ -1,6 +1,6 @@
 import { EventEmitterBase } from './utils';
 import { EVENTS } from './utils/constants';
-import type { MarkType, View, AnnotationData } from './types';
+import type { MarkType, View, AnnotationData, MarkDataObject } from './types';
 
 /**
  * Annotation object
@@ -23,7 +23,7 @@ export class Annotation {
 
   public type: MarkType;
   public cfiRange: string;
-  public data: Record<string, string>;
+  public data: MarkDataObject;
   public sectionIndex: number;
   public mark: HTMLElement | undefined;
   public _markInternal:
@@ -59,7 +59,7 @@ export class Annotation {
   /**
    * Update stored data
    */
-  update(data: Record<string, string>) {
+  update(data: MarkDataObject) {
     this.data = data;
   }
 

@@ -12,3 +12,4 @@ export * from './event-handler-wrapper';
 export * from './scrolltype';
 export * from './url';
 export * from './event-emitter';
+export * from './md5';

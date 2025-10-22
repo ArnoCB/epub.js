@@ -274,13 +274,12 @@ declare class Contents {
      * @param {string} [dir="ltr"] "rtl" | "ltr"
      */
     direction(dir?: 'rtl' | 'ltr'): void;
-    mapPage(cfiBase: string, layout: Layout, start: number, end: number, dev: boolean): {
+    mapPage(cfiBase: string, layout: Layout, start: number, end: number): {
         start: string;
         end: string;
     } | undefined;
     /**
      * Emit event when link in content is clicked
-     * @private
      */
     private linksHandler;
     /**

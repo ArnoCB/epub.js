@@ -1,4 +1,4 @@
-import type { MarkType, View, AnnotationData } from './types';
+import type { MarkType, View, AnnotationData, MarkDataObject } from './types';
 /**
  * Annotation object
  * @param {object} options
@@ -16,7 +16,7 @@ export declare class Annotation {
     emit(type: string, ...args: unknown[]): void;
     type: MarkType;
     cfiRange: string;
-    data: Record<string, string>;
+    data: MarkDataObject;
     sectionIndex: number;
     mark: HTMLElement | undefined;
     _markInternal: HTMLElement | Node | {
@@ -29,7 +29,7 @@ export declare class Annotation {
     /**
      * Update stored data
      */
-    update(data: Record<string, string>): void;
+    update(data: MarkDataObject): void;
     /**
      * Add to a view
      */

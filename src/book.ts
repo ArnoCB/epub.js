@@ -6,11 +6,14 @@ import type {
   PackagingManifestObject,
   PackagingMetadataObject,
   RenditionOptions,
+  SearchResult,
+  Match,
 } from './types';
 import {
   extend,
   defer,
   getValidOrDefault,
+  md5Hex,
   EventEmitterBase,
   EPUBJS_VERSION,
   EVENTS,
@@ -32,7 +35,7 @@ import Store from './store';
 import DisplayOptions from './displayoptions';
 import { Section } from './section';
 import JSZip from 'jszip';
-import { Spread, DEFAULT_SPREAD } from './enums/epub-enums';
+import { Spread, DEFAULT_SPREAD, Orientation } from './enums/epub-enums';
 
 const CONTAINER_PATH = 'META-INF/container.xml';
 const IBOOKS_DISPLAY_OPTIONS_PATH =
@@ -115,6 +118,8 @@ class Book {
   packaging: Packaging | undefined;
   private container: Container | undefined;
   displayOptions: DisplayOptions | undefined;
+
+  private bookHash: string = '';
 
   cover: string | undefined;
 
@@ -213,6 +218,13 @@ class Book {
         this.emit(EVENTS.BOOK.OPEN_FAILED, err);
       });
     }
+
+    // Setup book hash when ready
+    this.ready.then(() => {
+      this.setBookHash().catch((err: unknown) => {
+        console.error('Failed to set book hash:', err);
+      });
+    });
   }
 
   /**
@@ -346,9 +358,11 @@ class Book {
    */
   load<T = unknown>(path: string): Promise<T> {
     const resolved = this.resolve(path);
+
     if (resolved === undefined) {
       throw new Error('Cannot resolve path: ' + path);
     }
+
     if (this.archived) {
       // Determine type based on file extension
       const extension = path.split('.').pop()?.toLowerCase();
@@ -368,19 +382,23 @@ class Book {
       } else if (extension === 'ncx') {
         type = 'ncx';
       }
+
       if (!type) {
         throw new Error(
           `Unsupported file extension for archived resource: ${extension}`
         );
       }
+
       if (this.archive === undefined) {
         throw new Error('Archive is not defined. Cannot load resource.');
       }
+
       // Type assertion: Archive.request returns correct type for known extensions
       return this.archive.request(resolved, type) as Promise<
         ArchiveRequestTypeMap[typeof type]
       > as Promise<T>;
     }
+
     return this.request(
       resolved,
       '',
@@ -562,7 +580,8 @@ class Book {
         this.navigation = new Navigation(toc);
 
         if (packaging.pageList) {
-          this.pageList = new PageList(packaging.pageList); // TODO: handle page lists from Manifest
+          // @todo handle page lists from Manifest
+          this.pageList = new PageList(packaging.pageList);
         }
 
         resolve(this.navigation);
@@ -688,22 +707,16 @@ class Book {
         await this.resources.replaceCss();
       }
 
-      if (this.storage) {
-        if (typeof this.storage.on === 'function') {
-          this.storage.on('offline', () => {
-            this.url = new Url('/', '');
-            if (this.spine?.hooks?.serialize) {
-              this.spine.hooks.serialize.register(substituteResources);
-            }
-          });
+      if (this.storage?.on) {
+        this.storage.on('offline', () => {
+          this.url = new Url('/', '');
+          this.spine?.hooks?.serialize?.register?.(substituteResources);
+        });
 
-          this.storage.on('online', () => {
-            this.url = originalUrl;
-            if (this.spine?.hooks?.serialize) {
-              this.spine.hooks.serialize.deregister(substituteResources);
-            }
-          });
-        }
+        this.storage.on('online', () => {
+          this.url = originalUrl;
+          this.spine?.hooks?.serialize?.deregister?.(substituteResources);
+        });
       }
     })();
 
@@ -784,10 +797,9 @@ class Book {
       this.packaging.metadata.layout = 'reflowable';
     }
 
-    // orientationLock: 'landscape'|'portrait' (maps to orientation)
     if (
-      displayOptions.orientationLock === 'landscape' ||
-      displayOptions.orientationLock === 'portrait'
+      displayOptions.orientationLock === Orientation.landscape ||
+      displayOptions.orientationLock === Orientation.portrait
     ) {
       this.packaging.metadata.orientation = displayOptions.orientationLock;
     }
@@ -799,6 +811,120 @@ class Book {
       DEFAULT_SPREAD
     );
   }
+
+  /**
+   * Get the title of the book
+   * @returns Promise resolving to the book title
+   */
+  get title(): Promise<string> {
+    return this.loaded!.metadata.then((metadata) => {
+      return metadata.title;
+    });
+  }
+
+  /**
+   * Get the book hash identifier
+   */
+  getBookHash(): string {
+    return this.bookHash;
+  }
+
+  /**
+   * Set the book hash by generating MD5 from the OPF content
+   */
+  private async setBookHash(): Promise<void> {
+    if (!this.archive || !this.path) {
+      return;
+    }
+
+    try {
+      const contentOpfBlob = await this.archive.getBlob(this.path.toString());
+      const text = await contentOpfBlob.text();
+      this.bookHash = await md5Hex(text);
+    } catch (err) {
+      console.error('Failed to generate book hash:', err);
+    }
+  }
+
+  /**
+   * Search for a string within a single section
+   * @param section - The section to search in (can be Section object, section index, or section href)
+   * @param searchString - The string to search for
+   * @returns Promise resolving to array of search results for that section
+   * @example
+   * // Search by section index
+   * const results = await book.searchSection(0, "query");
+   *
+   * // Search by section href
+   * const results = await book.searchSection("chapter1.xhtml", "query");
+   *
+   * // Search by Section object
+   * const section = book.spine.get(0);
+   * const results = await book.searchSection(section, "query");
+   */
+  async searchSection(
+    section: Section | number | string,
+    searchString: string
+  ): Promise<SearchResult[]> {
+    await this.ready;
+    await this.setBookHash();
+
+    // Resolve section to Section object
+    let sectionObj: Section | null;
+
+    if (section instanceof Section) {
+      sectionObj = section;
+    } else if (typeof section === 'number') {
+      sectionObj = this.spine.get(section);
+    } else {
+      sectionObj = this.spine.get(section);
+    }
+
+    if (!sectionObj) {
+      throw new Error(`Section not found: ${section}`);
+    }
+
+    // Load the section, search, and unload
+    try {
+      await sectionObj.load(this.load.bind(this));
+      const matches = sectionObj.find(searchString);
+
+      return matches.map((match: Match): SearchResult => {
+        return {
+          searchTerm: searchString,
+          fragment: match.excerpt,
+          location: {
+            bookHash: this.bookHash,
+            cfiRange: match.cfi,
+          },
+        };
+      });
+    } finally {
+      sectionObj.unload();
+    }
+  }
+
+  /**
+   * Search for a string across all sections of the book
+   * @param searchString - The string to search for
+   * @returns Promise resolving to array of search results with location information
+   * @example
+   * const results = await book.searchAll("query");
+   * // results = [{ searchTerm: "query", fragment: "...text...", location: { bookHash: "ABC123", cfiRange: "epubcfi(...)" }}]
+   */
+  async searchAll(searchString: string): Promise<SearchResult[]> {
+    await this.ready;
+    await this.setBookHash();
+
+    const results = await Promise.all(
+      this.spine.spineItems.map((item: Section) =>
+        this.searchSection(item, searchString)
+      )
+    );
+
+    return results.flat();
+  }
+
   /**
    * Destroy the Book and all associated objects
    */

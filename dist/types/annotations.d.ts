@@ -1,6 +1,6 @@
 import Rendition from './rendition';
 import Annotation from './annotation';
-import type { MarkType } from './types';
+import type { MarkType, MarkDataObject } from './types';
 /**
  * Handles managing adding & removing Annotations
  */
@@ -19,7 +19,7 @@ export declare class Annotations {
     /**
      * Add an annotation to store
      */
-    add(type: MarkType, cfiRange: string, data: Record<string, string>, cb?: (annotation: Annotation) => void, className?: string, styles?: Record<string, string>): Annotation;
+    add(type: MarkType, cfiRange: string, data: MarkDataObject, cb?: (annotation: Annotation) => void, className?: string, styles?: Record<string, string>): Annotation;
     /**
      * Remove an annotation from store
      */
@@ -37,16 +37,16 @@ export declare class Annotations {
     /**
      * Add a highlight to the store
      */
-    highlight(cfiRange: string, data: Record<string, string>, cb?: (annotation: Annotation) => void, className?: string, styles?: Record<string, string>): Annotation;
+    highlight(cfiRange: string, data: MarkDataObject, cb?: (annotation: Annotation) => void, className?: string, styles?: Record<string, string>): Annotation;
     /**
      * Add a underline to the store
      */
-    underline(cfiRange: string, data: Record<string, string>, cb?: (annotation: Annotation) => void, className?: string, styles?: Record<string, string>): Annotation;
+    underline(cfiRange: string, data: MarkDataObject, cb?: (annotation: Annotation) => void, className?: string, styles?: Record<string, string>): Annotation;
     /**
      * Add a mark to the store
   
      */
-    mark(cfiRange: string, data: Record<string, string>, cb?: (annotation: Annotation) => void): Annotation;
+    mark(cfiRange: string, data: MarkDataObject, cb?: (annotation: Annotation) => void): Annotation;
     /**
      * iterate over annotations in the store
      */

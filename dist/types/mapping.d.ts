@@ -4,14 +4,12 @@ import { Axis, Direction } from './enums';
 import type { ViewParameter } from './types/mapping';
 /**
  * Map text locations to CFI range
- * @param {boolean} [dev] toggle developer highlighting
  */
 export declare class Mapping {
     layout: Layout;
     horizontal: boolean;
     direction: Direction;
-    _dev: boolean;
-    constructor(layout: Layout, direction?: Direction, axis?: Axis, dev?: boolean);
+    constructor(layout: Layout, direction?: Direction, axis?: Axis);
     /**
      * Find CFI pairs for entire section at once
      */

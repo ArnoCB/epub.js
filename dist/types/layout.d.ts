@@ -4,10 +4,6 @@ import { Flow, Axis, Spread } from './enums';
 import type { EventEmitterMethods, LayoutSettings, LayoutProps } from './types';
 /**
  * Figures out the CSS values to apply for a layout
- * @param {string} [settings.layout='reflowable']
- * @param {string} [settings.spread]
- * @param {number} [settings.minSpreadWidth=800]
- * @param {boolean} [settings.evenSpreads=false]
  */
 declare class Layout implements EventEmitterMethods {
     settings: LayoutSettings;

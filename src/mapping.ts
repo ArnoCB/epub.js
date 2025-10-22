@@ -7,19 +7,16 @@ import type { ViewParameter } from './types/mapping';
 
 /**
  * Map text locations to CFI range
- * @param {boolean} [dev] toggle developer highlighting
  */
 export class Mapping {
   layout: Layout;
   horizontal: boolean;
   direction: Direction;
-  _dev: boolean;
 
-  constructor(layout: Layout, direction?: Direction, axis?: Axis, dev = false) {
+  constructor(layout: Layout, direction?: Direction, axis?: Axis) {
     this.layout = layout;
-    this.horizontal = axis === 'horizontal' ? true : false;
+    this.horizontal = axis === Axis.horizontal ? true : false;
     this.direction = direction || 'ltr';
-    this._dev = dev;
   }
 
   /**
@@ -39,43 +36,10 @@ export class Mapping {
 
     if (!root) return;
 
-    const result = this.rangePairToCfiPair(cfiBase, {
+    return this.rangePairToCfiPair(cfiBase, {
       start: this.findStart(root, start, end)!,
       end: this.findEnd(root, start, end)!,
     });
-
-    if (this._dev === true) {
-      const doc = contents.document;
-      const startRange = new EpubCFI(result.start).toRange(doc);
-      const endRange = new EpubCFI(result.end).toRange(doc);
-
-      if (!startRange || !endRange) {
-        throw new Error('Invalid range');
-      }
-
-      if (!doc) {
-        throw new Error('Document is not available');
-      }
-
-      if (!doc.defaultView) {
-        throw new Error('Document defaultView is not available');
-      }
-
-      const selection = doc.defaultView.getSelection();
-
-      if (!selection) {
-        throw new Error('Selection is not available');
-      }
-
-      const r = doc.createRange();
-      selection?.removeAllRanges();
-
-      r.setStart(startRange.startContainer, startRange.startOffset);
-      r.setEnd(endRange.endContainer, endRange.endOffset);
-      selection.addRange(r);
-    }
-
-    return result;
   }
 
   /**

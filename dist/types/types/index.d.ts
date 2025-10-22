@@ -28,3 +28,5 @@ export * from './resources';
 export * from './mark-element-map';
 export * from './viewport';
 export * from './view';
+export * from './mark-data-object';
+export * from './search';
