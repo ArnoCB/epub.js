@@ -59,7 +59,7 @@ type InputType = (typeof INPUT_TYPE)[keyof typeof INPUT_TYPE];
  * @example new Book("/path/to/book.epub", {})
  * @example new Book({ replacements: "blobUrl" })
  */
-class Book {
+export class Book {
   private _events = new EventEmitterBase();
 
   emit(type: string, ...args: unknown[]): void {

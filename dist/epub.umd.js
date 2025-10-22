@@ -5699,7 +5699,8 @@
 	  Object.defineProperty(epubcfi, "__esModule", {
 	    value: true
 	  });
-	  const core_1 = requireCore();
+	  epubcfi.EpubCFI = void 0;
+	  const utils_1 = requireUtils();
 	  const ELEMENT_NODE = 1;
 	  const TEXT_NODE = 3;
 	  const DOCUMENT_NODE = 9;
@@ -5925,7 +5926,7 @@
 	     */
 	    checkType(cfi) {
 	      if (this.isCfiString(cfi)) return 'string';
-	      if (cfi && typeof cfi === 'object' && ((0, core_1.type)(cfi) === 'Range' || typeof cfi.startContainer !== 'undefined' && typeof cfi.collapsed !== 'undefined')) {
+	      if (cfi && typeof cfi === 'object' && ((0, utils_1.type)(cfi) === 'Range' || typeof cfi.startContainer !== 'undefined' && typeof cfi.collapsed !== 'undefined')) {
 	        return 'range';
 	      }
 	      if (cfi && typeof cfi === 'object' && typeof cfi.nodeType !== 'undefined') {
@@ -6050,7 +6051,7 @@
 	      } else {
 	        characterOffset = parseInt(terminalStr);
 	      }
-	      if (!(0, core_1.isNumber)(characterOffset)) {
+	      if (!(0, utils_1.isNumber)(characterOffset)) {
 	        characterOffset = null;
 	      }
 	      return {
@@ -6437,7 +6438,7 @@
 	        const parent = anchor.parentNode;
 	        children = parent ? parent.children : undefined;
 	        if (!children && parent) {
-	          children = (0, core_1.findChildren)(parent);
+	          children = (0, utils_1.findChildren)(parent);
 	        }
 	        index = children ? Array.prototype.indexOf.call(children, anchor) : -1;
 	        return index;
@@ -6650,6 +6651,7 @@
 	      this.end = null;
 	    }
 	  }
+	  epubcfi.EpubCFI = EpubCFI;
 	  epubcfi.default = EpubCFI;
 	  return epubcfi;
 	}
@@ -23727,6 +23729,7 @@
 	  Object.defineProperty(book, "__esModule", {
 	    value: true
 	  });
+	  book.Book = void 0;
 	  const utils_1 = requireUtils();
 	  const url_1 = __importDefault(requireUrl());
 	  const path_1 = __importDefault(requirePath());
@@ -24559,6 +24562,7 @@
 	      this.archived = false;
 	    }
 	  }
+	  book.Book = Book;
 	  book.default = Book;
 	  return book;
 	}

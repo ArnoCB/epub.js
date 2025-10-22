@@ -39,7 +39,7 @@ import type { CustomRange, CFIStep, CFITerminal, CFIComponent, CFIRange } from '
  * - Text Location Assertion ([text])
  * - Side Bias (;s=a/b)
  */
-declare class EpubCFI {
+export declare class EpubCFI {
     str: string;
     base: CFIComponent;
     spinePos: number;

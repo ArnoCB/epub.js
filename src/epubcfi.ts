@@ -1,4 +1,4 @@
-import { type, isNumber, findChildren } from './utils/core';
+import { type, isNumber, findChildren } from './utils';
 import type {
   CustomRange,
   CFIStep,
@@ -52,7 +52,7 @@ const DOCUMENT_NODE = 9;
  * - Side Bias (;s=a/b)
  */
 
-class EpubCFI {
+export class EpubCFI {
   public str: string = '';
   public base: CFIComponent = {
     steps: [],

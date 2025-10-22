@@ -17,7 +17,7 @@ import { Section } from './section';
  * @example new Book("/path/to/book.epub", {})
  * @example new Book({ replacements: "blobUrl" })
  */
-declare class Book {
+export declare class Book {
     private _events;
     emit(type: string, ...args: unknown[]): void;
     settings: BookOptions;
