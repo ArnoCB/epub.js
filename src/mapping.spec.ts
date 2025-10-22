@@ -93,14 +93,12 @@ describe('Mapping', () => {
       expect(defaultMapping.layout).toBe(mockLayout);
       expect(defaultMapping.horizontal).toBe(false); // Documents actual behavior: defaults to false
       expect(defaultMapping.direction).toBe('ltr');
-      expect(defaultMapping).toBe(false);
     });
 
     it('should initialize with provided parameters', () => {
       const verticalMapping = new Mapping(mockLayout, 'rtl', 'vertical');
       expect(verticalMapping.horizontal).toBe(false);
       expect(verticalMapping.direction).toBe('rtl');
-      expect(verticalMapping).toBe(true);
     });
 
     it('should default direction to ltr when not provided', () => {
