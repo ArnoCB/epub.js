@@ -7,9 +7,6 @@ import { EPUBJS_VERSION } from './utils';
 
 /**
  * Creates a new Book
- * @param {string|ArrayBuffer} url URL, Path or ArrayBuffer
- * @param {object} options to pass to the book
- * @returns {Book} a new Book object
  * @example ePub("/path/to/book.epub", {})
  */
 type EPubFactory = {
@@ -47,5 +44,13 @@ ePub.Contents = Contents;
 ePub.CFI = CFI;
 ePub.utils = utils;
 
+// Export both for backward compatibility and Angular-friendly imports
 export default ePub;
-export { Book, CFI as EpubCFI, Rendition, Contents, utils };
+
+// Named exports - Angular-friendly (use these in Angular projects)
+export { Book, Rendition, Contents, utils };
+export { CFI as EpubCFI };
+export { CFI }; // Also export with original name
+
+// Export version
+export const VERSION = EPUBJS_VERSION;

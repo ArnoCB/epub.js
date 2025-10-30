@@ -5,9 +5,6 @@ import Contents from './contents';
 import * as utils from './utils/core';
 /**
  * Creates a new Book
- * @param {string|ArrayBuffer} url URL, Path or ArrayBuffer
- * @param {object} options to pass to the book
- * @returns {Book} a new Book object
  * @example ePub("/path/to/book.epub", {})
  */
 type EPubFactory = {
@@ -21,4 +18,7 @@ type EPubFactory = {
 };
 declare const ePub: EPubFactory;
 export default ePub;
-export { Book, CFI as EpubCFI, Rendition, Contents, utils };
+export { Book, Rendition, Contents, utils };
+export { CFI as EpubCFI };
+export { CFI };
+export declare const VERSION = "0.3";

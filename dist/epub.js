@@ -24614,13 +24614,14 @@ function requireEpub() {
   Object.defineProperty(epub$1, "__esModule", {
     value: true
   });
-  epub$1.utils = epub$1.Contents = epub$1.Rendition = epub$1.EpubCFI = epub$1.Book = void 0;
+  epub$1.VERSION = epub$1.CFI = epub$1.EpubCFI = epub$1.utils = epub$1.Contents = epub$1.Rendition = epub$1.Book = void 0;
   const book_1 = __importDefault(requireBook());
   epub$1.Book = book_1.default;
   const rendition_1 = __importDefault(requireRendition());
   epub$1.Rendition = rendition_1.default;
   const epubcfi_1 = __importDefault(requireEpubcfi());
   epub$1.EpubCFI = epubcfi_1.default;
+  epub$1.CFI = epubcfi_1.default;
   const contents_1 = __importDefault(requireContents());
   epub$1.Contents = contents_1.default;
   const utils = __importStar(requireCore());
@@ -24639,7 +24640,10 @@ function requireEpub() {
   ePub.Contents = contents_1.default;
   ePub.CFI = epubcfi_1.default;
   ePub.utils = utils;
+  // Export both for backward compatibility and Angular-friendly imports
   epub$1.default = ePub;
+  // Export version
+  epub$1.VERSION = utils_1.EPUBJS_VERSION;
   return epub$1;
 }
 
