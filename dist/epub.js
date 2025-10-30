@@ -24650,5 +24650,13 @@ function requireEpub() {
 var epubExports = requireEpub();
 var epub = /*@__PURE__*/getDefaultExportFromCjs(epubExports);
 
-export { epub as default };
+
+export { epub as default, epub as ePub };
+export const Book = epub.Book;
+export const Rendition = epub.Rendition;
+export const Contents = epub.Contents;
+export const CFI = epub.CFI;
+export const EpubCFI = epub.CFI;
+export const utils = epub.utils;
+export const VERSION = epub.VERSION;
 //# sourceMappingURL=epub.js.map
