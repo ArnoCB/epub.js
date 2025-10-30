@@ -23746,7 +23746,6 @@
 	  const epubcfi_1 = __importDefault(requireEpubcfi());
 	  const store_1 = __importDefault(requireStore());
 	  const displayoptions_1 = __importDefault(requireDisplayoptions());
-	  const section_1 = requireSection();
 	  const epub_enums_1 = requireEpubEnums();
 	  const CONTAINER_PATH = 'META-INF/container.xml';
 	  const IBOOKS_DISPLAY_OPTIONS_PATH = 'META-INF/com.apple.ibooks.display-options.xml';
@@ -24485,7 +24484,8 @@
 	      await this.setBookHash();
 	      // Resolve section to Section object
 	      let sectionObj;
-	      if (section instanceof section_1.Section) {
+	      // Check if it's already a Section object by checking for Section-specific properties
+	      if (typeof section === 'object' && section !== null && 'idref' in section && 'find' in section) {
 	        sectionObj = section;
 	      } else if (typeof section === 'number') {
 	        sectionObj = this.spine.get(section);

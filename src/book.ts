@@ -872,7 +872,13 @@ export class Book {
     // Resolve section to Section object
     let sectionObj: Section | null;
 
-    if (section instanceof Section) {
+    // Check if it's already a Section object by checking for Section-specific properties
+    if (
+      typeof section === 'object' &&
+      section !== null &&
+      'idref' in section &&
+      'find' in section
+    ) {
       sectionObj = section;
     } else if (typeof section === 'number') {
       sectionObj = this.spine.get(section);
