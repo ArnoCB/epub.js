@@ -24657,6 +24657,5 @@ export const Rendition = epub.Rendition;
 export const Contents = epub.Contents;
 export const CFI = epub.CFI;
 export const EpubCFI = epub.CFI;
-export const utils = epub.utils;
 export const VERSION = epub.VERSION;
 //# sourceMappingURL=epub.js.map
