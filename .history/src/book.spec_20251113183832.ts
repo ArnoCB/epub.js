@@ -5,7 +5,6 @@ import PageList from './pagelist';
 import Spine from './spine';
 import Path from './utils/path';
 import Packaging from './packaging';
-import Url from './utils/url';
 
 // Use a factory function instead of subclass to avoid TypeScript issues
 function createTestBook(url?: string | object, skipOpen = false): Book {
@@ -17,7 +16,7 @@ function createTestBook(url?: string | object, skipOpen = false): Book {
     // Create without URL to avoid auto-opening
     book = new Book();
     // Manually set the URL without triggering open
-    (book as any).url = new Url(url);
+    (book as any).url = new (require('./utils/url').default)(url);
   } else {
     // Create a regular Book instance
     book = new Book(url as any);

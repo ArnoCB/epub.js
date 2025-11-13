@@ -5,7 +5,6 @@ import PageList from './pagelist';
 import Spine from './spine';
 import Path from './utils/path';
 import Packaging from './packaging';
-import Url from './utils/url';
 
 // Use a factory function instead of subclass to avoid TypeScript issues
 function createTestBook(url?: string | object, skipOpen = false): Book {
@@ -17,7 +16,7 @@ function createTestBook(url?: string | object, skipOpen = false): Book {
     // Create without URL to avoid auto-opening
     book = new Book();
     // Manually set the URL without triggering open
-    (book as any).url = new Url(url);
+    (book as any).url = new (require('./utils/url').default)(url);
   } else {
     // Create a regular Book instance
     book = new Book(url as any);
@@ -56,8 +55,12 @@ describe('Book', () => {
   });
 
   it('should resolve canonical paths', () => {
-    // Create book with URL but skip auto-opening to prevent network requests
-    book = createTestBook('http://example.com/', true);
+    // Mock the request to prevent actual HTTP calls
+    const mockRequest = jest
+      .fn()
+      .mockRejectedValue(new Error('No network in tests'));
+    book = createTestBook('http://example.com/');
+    (book as any).request = mockRequest;
 
     // If Book does not expose a way to set path, mock the method on the instance
     (book as any).path = {
@@ -68,8 +71,12 @@ describe('Book', () => {
   });
 
   it('should generate a key with identifier', () => {
-    // Create book with filename but skip auto-opening to prevent network requests
-    book = createTestBook('file.epub', true);
+    // Mock the request to prevent actual HTTP calls
+    const mockRequest = jest
+      .fn()
+      .mockRejectedValue(new Error('No network in tests'));
+    book = createTestBook('file.epub');
+    (book as any).request = mockRequest;
 
     book.packaging = {
       metadata: { identifier: 'abc' },

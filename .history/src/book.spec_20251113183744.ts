@@ -5,23 +5,11 @@ import PageList from './pagelist';
 import Spine from './spine';
 import Path from './utils/path';
 import Packaging from './packaging';
-import Url from './utils/url';
 
 // Use a factory function instead of subclass to avoid TypeScript issues
-function createTestBook(url?: string | object, skipOpen = false): Book {
-  // If skipOpen is true and url is provided, we need to prevent the constructor from opening
-  // Create book without URL first, then set URL manually
-  let book: Book;
-
-  if (skipOpen && typeof url === 'string') {
-    // Create without URL to avoid auto-opening
-    book = new Book();
-    // Manually set the URL without triggering open
-    (book as any).url = new Url(url);
-  } else {
-    // Create a regular Book instance
-    book = new Book(url as any);
-  }
+function createTestBook(url?: string | object): Book {
+  // Create a regular Book instance
+  const book = new Book(url as any);
 
   // Override emit method to make it safe for tests
   const mockEmit = jest.fn().mockReturnValue(true);
@@ -56,9 +44,7 @@ describe('Book', () => {
   });
 
   it('should resolve canonical paths', () => {
-    // Create book with URL but skip auto-opening to prevent network requests
-    book = createTestBook('http://example.com/', true);
-
+    book = createTestBook('http://example.com/');
     // If Book does not expose a way to set path, mock the method on the instance
     (book as any).path = {
       resolve: jest.fn(() => 'resolved/path'),
@@ -68,12 +54,11 @@ describe('Book', () => {
   });
 
   it('should generate a key with identifier', () => {
-    // Create book with filename but skip auto-opening to prevent network requests
-    book = createTestBook('file.epub', true);
-
     book.packaging = {
       metadata: { identifier: 'abc' },
     } as unknown as Packaging;
+    // Use the constructor to set the url/filename
+    book = createTestBook('file.epub');
     // If Book does not expose a way to set packaging after construction, this may need further refactor
     (book as any).packaging = {
       metadata: { identifier: 'abc' },
