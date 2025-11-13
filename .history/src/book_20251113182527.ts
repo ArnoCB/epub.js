@@ -871,6 +871,7 @@ export class Book {
     searchString: string
   ): Promise<SearchResult[]> {
     await this.ready;
+    await this.setBookHash();
 
     // Resolve section to Section object
     let sectionObj: Section | null;

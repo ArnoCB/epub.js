@@ -831,20 +831,21 @@ export class Book {
     if (!this.bookHash) {
       await this.setBookHash();
     }
-
-    return this.bookHash;
+    return this.bookHash.toUpperCase();
   }
 
   /**
    * Set the book hash by generating MD5 from the OPF content
    */
   private async setBookHash(): Promise<void> {
-    if (!this.archive || !this.path) return;
+    if (!this.archive || !this.path) {
+      return;
+    }
 
     try {
       const contentOpfBlob = await this.archive.getBlob(this.path.toString());
       const text = await contentOpfBlob.text();
-      this.bookHash = (await md5Hex(text)).toUpperCase();
+      this.bookHash = await md5Hex(text);
     } catch (err) {
       console.error('Failed to generate book hash:', err);
     }
@@ -871,6 +872,7 @@ export class Book {
     searchString: string
   ): Promise<SearchResult[]> {
     await this.ready;
+    await this.setBookHash();
 
     // Resolve section to Section object
     let sectionObj: Section | null;
@@ -923,6 +925,7 @@ export class Book {
    */
   async searchAll(searchString: string): Promise<SearchResult[]> {
     await this.ready;
+    await this.setBookHash();
 
     const results = await Promise.all(
       this.spine.spineItems.map((item: Section) =>

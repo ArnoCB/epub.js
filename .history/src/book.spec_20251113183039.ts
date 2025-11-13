@@ -30,29 +30,10 @@ jest.mock('./managers/views/iframe.ts', () => ({
 
 describe('Book', () => {
   let book: Book;
-  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    // Suppress console.error for XMLHttpRequest errors from JSDOM
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((message) => {
-      // Only suppress XMLHttpRequest and AggregateError from JSDOM
-      if (
-        typeof message === 'string' && 
-        (message.includes('XMLHttpRequest') || message.includes('AggregateError'))
-      ) {
-        return;
-      }
-      // Let other errors through (optional - remove if you want to suppress all)
-      // console.warn(message);
-    });
-
     // Use our factory function that creates a Book with mocked methods
     book = createTestBook();
-  });
-
-  afterEach(() => {
-    // Restore console.error after each test
-    consoleErrorSpy.mockRestore();
   });
 
   it('should initialize with default public properties', () => {

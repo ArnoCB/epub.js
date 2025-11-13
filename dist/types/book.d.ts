@@ -168,8 +168,10 @@ export declare class Book {
     get title(): Promise<string>;
     /**
      * Get the book hash identifier
+     * If the hash hasn't been generated yet, it will be generated first
+     * @returns Promise resolving to the book hash in uppercase
      */
-    getBookHash(): string;
+    getBookHash(): Promise<string>;
     /**
      * Set the book hash by generating MD5 from the OPF content
      */

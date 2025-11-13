@@ -24444,21 +24444,24 @@
 	    }
 	    /**
 	     * Get the book hash identifier
+	     * If the hash hasn't been generated yet, it will be generated first
+	     * @returns Promise resolving to the book hash in uppercase
 	     */
-	    getBookHash() {
+	    async getBookHash() {
+	      if (!this.bookHash) {
+	        await this.setBookHash();
+	      }
 	      return this.bookHash;
 	    }
 	    /**
 	     * Set the book hash by generating MD5 from the OPF content
 	     */
 	    async setBookHash() {
-	      if (!this.archive || !this.path) {
-	        return;
-	      }
+	      if (!this.archive || !this.path) return;
 	      try {
 	        const contentOpfBlob = await this.archive.getBlob(this.path.toString());
 	        const text = await contentOpfBlob.text();
-	        this.bookHash = await (0, utils_1.md5Hex)(text);
+	        this.bookHash = (await (0, utils_1.md5Hex)(text)).toUpperCase();
 	      } catch (err) {
 	        console.error('Failed to generate book hash:', err);
 	      }
@@ -24481,7 +24484,6 @@
 	     */
 	    async searchSection(section, searchString) {
 	      await this.ready;
-	      await this.setBookHash();
 	      // Resolve section to Section object
 	      let sectionObj;
 	      // Check if it's already a Section object by checking for Section-specific properties
@@ -24523,7 +24525,6 @@
 	     */
 	    async searchAll(searchString) {
 	      await this.ready;
-	      await this.setBookHash();
 	      const results = await Promise.all(this.spine.spineItems.map(item => this.searchSection(item, searchString)));
 	      return results.flat();
 	    }

@@ -871,6 +871,7 @@ export class Book {
     searchString: string
   ): Promise<SearchResult[]> {
     await this.ready;
+    await this.setBookHash();
 
     // Resolve section to Section object
     let sectionObj: Section | null;
@@ -923,6 +924,7 @@ export class Book {
    */
   async searchAll(searchString: string): Promise<SearchResult[]> {
     await this.ready;
+    await this.setBookHash();
 
     const results = await Promise.all(
       this.spine.spineItems.map((item: Section) =>
