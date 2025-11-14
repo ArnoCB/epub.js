@@ -549,9 +549,9 @@ export class Book {
         this.loading!.bookHash.resolve(this.bookHash);
       })
       .catch((err) => {
-        // If hash generation fails, resolve with empty string to not block book opening
-        console.warn('Failed to generate book hash:', err);
-        this.loading!.bookHash.resolve('');
+        // Log and reject to help debug hash generation failures
+        console.error('Failed to generate book hash:', err);
+        this.loading!.bookHash.reject(err);
       });
 
     if (
@@ -843,13 +843,6 @@ export class Book {
 
   /**
    * Set the book hash by generating MD5 from the OPF content
-   *
-   * NOTE: The hash differs between archived and directory-based books:
-   * - Archived books: hash of raw OPF bytes from .epub (canonical, matches Apple Books)
-   * - Directory-based books: hash of serialized XML (may differ due to formatting)
-   *
-   * TODO: Normalize hashes by fetching raw text for directory-based books instead of
-   * parsing and re-serializing, to ensure consistent hashes for cross-platform compatibility.
    */
   private async setBookHash(): Promise<void> {
     if (!this.path) {
@@ -866,7 +859,6 @@ export class Book {
       text = await contentOpfBlob.text();
     } else {
       // For non-archived books, load as XML document and serialize it
-      // TODO: Fetch as raw text instead to match archived book hash
       const resolved = this.resolve(this.path.toString());
       if (!resolved) {
         throw new Error('Cannot resolve OPF path');

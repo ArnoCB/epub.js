@@ -843,13 +843,6 @@ export class Book {
 
   /**
    * Set the book hash by generating MD5 from the OPF content
-   *
-   * NOTE: The hash differs between archived and directory-based books:
-   * - Archived books: hash of raw OPF bytes from .epub (canonical, matches Apple Books)
-   * - Directory-based books: hash of serialized XML (may differ due to formatting)
-   *
-   * TODO: Normalize hashes by fetching raw text for directory-based books instead of
-   * parsing and re-serializing, to ensure consistent hashes for cross-platform compatibility.
    */
   private async setBookHash(): Promise<void> {
     if (!this.path) {
@@ -866,7 +859,6 @@ export class Book {
       text = await contentOpfBlob.text();
     } else {
       // For non-archived books, load as XML document and serialize it
-      // TODO: Fetch as raw text instead to match archived book hash
       const resolved = this.resolve(this.path.toString());
       if (!resolved) {
         throw new Error('Cannot resolve OPF path');

@@ -543,16 +543,19 @@ export class Book {
 
     this.isOpen = true;
 
-    // Generate book hash for all books
-    this.setBookHash()
-      .then(() => {
-        this.loading!.bookHash.resolve(this.bookHash);
-      })
-      .catch((err) => {
-        // If hash generation fails, resolve with empty string to not block book opening
-        console.warn('Failed to generate book hash:', err);
-        this.loading!.bookHash.resolve('');
-      });
+    // Generate book hash for archived books
+    if (this.archived) {
+      this.setBookHash()
+        .then(() => {
+          this.loading!.bookHash.resolve(this.bookHash);
+        })
+        .catch((err) => {
+          this.loading!.bookHash.reject(err);
+        });
+    } else {
+      // For non-archived books, resolve with empty string
+      this.loading!.bookHash.resolve('');
+    }
 
     if (
       this.archived ||
@@ -843,13 +846,6 @@ export class Book {
 
   /**
    * Set the book hash by generating MD5 from the OPF content
-   *
-   * NOTE: The hash differs between archived and directory-based books:
-   * - Archived books: hash of raw OPF bytes from .epub (canonical, matches Apple Books)
-   * - Directory-based books: hash of serialized XML (may differ due to formatting)
-   *
-   * TODO: Normalize hashes by fetching raw text for directory-based books instead of
-   * parsing and re-serializing, to ensure consistent hashes for cross-platform compatibility.
    */
   private async setBookHash(): Promise<void> {
     if (!this.path) {
@@ -865,16 +861,8 @@ export class Book {
       const contentOpfBlob = await this.archive.getBlob(this.path.toString());
       text = await contentOpfBlob.text();
     } else {
-      // For non-archived books, load as XML document and serialize it
-      // TODO: Fetch as raw text instead to match archived book hash
-      const resolved = this.resolve(this.path.toString());
-      if (!resolved) {
-        throw new Error('Cannot resolve OPF path');
-      }
-      const doc = await this.load<XMLDocument>(resolved);
-      // Serialize the XML document to string for hashing
-      const serializer = new XMLSerializer();
-      text = serializer.serializeToString(doc);
+      // For non-archived books, fetch using the load method
+      text = await this.load<string>(this.path.toString());
     }
 
     this.bookHash = (await md5Hex(text)).toUpperCase();

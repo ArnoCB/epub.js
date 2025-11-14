@@ -15,8 +15,7 @@ test('open epub in real browser', async ({ page, baseURL }) => {
   // OPEN OPF (directory based epub)
   const opened = await page.evaluate(async () => {
     const book = (window as any).ePub('/e2e/fixtures/alice/OPS/package.opf');
-    await book.ready; // Wait for ready instead of opened to ensure hash is calculated
-
+    await book.opened;
     return {
       isOpen: !!book.isOpen,
       url:
@@ -42,7 +41,7 @@ test('open epub in real browser', async ({ page, baseURL }) => {
   // OPEN ARCHIVED EPUB (.epub)
   const archived = await page.evaluate(async () => {
     const book = (window as any).ePub('/e2e/fixtures/alice.epub');
-    await book.ready; // Wait for ready to ensure hash is calculated
+    await book.opened;
     return {
       isOpen: !!book.isOpen,
       hasArchive: !!book.archive,
@@ -58,16 +57,6 @@ test('open epub in real browser', async ({ page, baseURL }) => {
   expect(archived.bookHash.length).toBeGreaterThan(0);
   expect(/^[A-F0-9]+$/.test(archived.bookHash)).toBe(true);
 
-  // NOTE: The hashes differ between archived (.epub) and directory-based (OPF) books
-  // because they hash different representations:
-  // - Archived: raw bytes from the .epub file (matches Apple Books hash)
-  // - Directory-based: serialized XML with potential formatting differences
-  //
-  // The archived hash is the canonical one and should be used for cross-platform
-  // compatibility (e.g., matching with Apple Books annotations).
-  //
-  // TODO: Consider normalizing directory-based book hashes to match archived hashes
-  // by fetching the raw OPF content as text instead of parsing and re-serializing.
-  // This would ensure notes/annotations for the same book are found regardless of
-  // how the book was loaded.
+  // Both books should have the same hash since they're the same content
+  expect(archived.bookHash).toBe(opened.bookHash);
 });

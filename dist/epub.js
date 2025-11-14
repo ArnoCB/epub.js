@@ -23953,7 +23953,8 @@ function requireBook() {
         pageList: new utils_1.defer(),
         resources: new utils_1.defer(),
         displayOptions: new utils_1.defer(),
-        packaging: new utils_1.defer()
+        packaging: new utils_1.defer(),
+        bookHash: new utils_1.defer()
       };
       this.loaded = {
         manifest: this.loading.manifest.promise,
@@ -23964,22 +23965,10 @@ function requireBook() {
         pageList: this.loading.pageList.promise,
         resources: this.loading.resources.promise,
         displayOptions: this.loading.displayOptions.promise,
-        packaging: this.loading.packaging.promise
+        packaging: this.loading.packaging.promise,
+        bookHash: this.loading.bookHash.promise
       };
-      // Create a promise for the book hash. For archived books we want
-      // readiness to wait until the hash has been generated. For non-archived
-      // books this resolves immediately.
-      const hashPromise = (async () => {
-        if (this.archived) {
-          // Ensure packaging (and thus path) is loaded first
-          await this.loaded.packaging;
-          // setBookHash will throw on failure so ready will reject if hash cannot be generated
-          await this.setBookHash();
-          return this.bookHash;
-        }
-        return undefined;
-      })();
-      this.ready = Promise.all([this.loaded.manifest, this.loaded.spine, this.loaded.metadata, this.loaded.cover, this.loaded.navigation, this.loaded.resources, this.loaded.displayOptions, this.loaded.packaging, hashPromise]);
+      this.ready = Promise.all([this.loaded.manifest, this.loaded.spine, this.loaded.metadata, this.loaded.cover, this.loaded.navigation, this.loaded.resources, this.loaded.displayOptions, this.loaded.packaging, this.loaded.bookHash]);
       this.request = this.settings.requestMethod || request_1.default;
       this.spine = new spine_1.default();
       this.locations = new locations_1.default(this.spine, path => this.load(path));
@@ -24243,6 +24232,14 @@ function requireBook() {
       this.loading.resources.resolve(this.resources);
       this.loading.pageList.resolve(this.pageList);
       this.isOpen = true;
+      // Generate book hash for all books
+      this.setBookHash().then(() => {
+        this.loading.bookHash.resolve(this.bookHash);
+      }).catch(err => {
+        // If hash generation fails, resolve with empty string to not block book opening
+        console.warn('Failed to generate book hash:', err);
+        this.loading.bookHash.resolve('');
+      });
       if (this.archived || this.settings.replacements && this.settings.replacements != 'none') {
         this.replacements().then(() => {
           return this.loaded.displayOptions.then(() => {
@@ -24454,16 +24451,35 @@ function requireBook() {
     }
     /**
      * Set the book hash by generating MD5 from the OPF content
+     *
+     * NOTE: The hash differs between archived and directory-based books:
+     * - Archived books: hash of raw OPF bytes from .epub (canonical, matches Apple Books)
+     * - Directory-based books: hash of serialized XML (may differ due to formatting)
+     *
+     * TODO: Normalize hashes by fetching raw text for directory-based books instead of
+     * parsing and re-serializing, to ensure consistent hashes for cross-platform compatibility.
      */
     async setBookHash() {
-      if (!this.archive) {
-        throw new Error('Cannot generate book hash: archive is not available');
-      }
       if (!this.path) {
         throw new Error('Cannot generate book hash: package path is not available');
       }
-      const contentOpfBlob = await this.archive.getBlob(this.path.toString());
-      const text = await contentOpfBlob.text();
+      let text;
+      if (this.archived && this.archive) {
+        // For archived books, get content from the archive
+        const contentOpfBlob = await this.archive.getBlob(this.path.toString());
+        text = await contentOpfBlob.text();
+      } else {
+        // For non-archived books, load as XML document and serialize it
+        // TODO: Fetch as raw text instead to match archived book hash
+        const resolved = this.resolve(this.path.toString());
+        if (!resolved) {
+          throw new Error('Cannot resolve OPF path');
+        }
+        const doc = await this.load(resolved);
+        // Serialize the XML document to string for hashing
+        const serializer = new XMLSerializer();
+        text = serializer.serializeToString(doc);
+      }
       this.bookHash = (await (0, utils_1.md5Hex)(text)).toUpperCase();
     }
     /**

@@ -34,6 +34,7 @@ export declare class Book {
         resources: defer<Resources | undefined>;
         displayOptions: defer<DisplayOptions | undefined>;
         packaging: defer<Packaging>;
+        bookHash: defer<string>;
     } | undefined;
     loaded: {
         manifest: Promise<PackagingManifestObject>;
@@ -45,6 +46,7 @@ export declare class Book {
         resources: Promise<Resources | undefined>;
         displayOptions: Promise<DisplayOptions | undefined>;
         packaging: Promise<Packaging | undefined>;
+        bookHash: Promise<string>;
     } | undefined;
     isRendered: boolean;
     ready: Promise<unknown[]>;
@@ -174,6 +176,13 @@ export declare class Book {
     getBookHash(): Promise<string>;
     /**
      * Set the book hash by generating MD5 from the OPF content
+     *
+     * NOTE: The hash differs between archived and directory-based books:
+     * - Archived books: hash of raw OPF bytes from .epub (canonical, matches Apple Books)
+     * - Directory-based books: hash of serialized XML (may differ due to formatting)
+     *
+     * TODO: Normalize hashes by fetching raw text for directory-based books instead of
+     * parsing and re-serializing, to ensure consistent hashes for cross-platform compatibility.
      */
     private setBookHash;
     /**

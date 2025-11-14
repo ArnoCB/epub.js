@@ -58,16 +58,6 @@ test('open epub in real browser', async ({ page, baseURL }) => {
   expect(archived.bookHash.length).toBeGreaterThan(0);
   expect(/^[A-F0-9]+$/.test(archived.bookHash)).toBe(true);
 
-  // NOTE: The hashes differ between archived (.epub) and directory-based (OPF) books
-  // because they hash different representations:
-  // - Archived: raw bytes from the .epub file (matches Apple Books hash)
-  // - Directory-based: serialized XML with potential formatting differences
-  //
-  // The archived hash is the canonical one and should be used for cross-platform
-  // compatibility (e.g., matching with Apple Books annotations).
-  //
-  // TODO: Consider normalizing directory-based book hashes to match archived hashes
-  // by fetching the raw OPF content as text instead of parsing and re-serializing.
-  // This would ensure notes/annotations for the same book are found regardless of
-  // how the book was loaded.
+  // Note: The hashes may differ between archived and directory-based books
+  // due to formatting differences (raw bytes vs serialized XML), but both should be valid
 });
