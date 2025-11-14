@@ -1040,11 +1040,12 @@ class IframeView implements View {
 
     if (cb) {
       mark.addEventListener('click', cb);
-      mark.addEventListener('touchstart', cb, { passive: true });
+      mark.addEventListener('touchstart', cb);
     }
 
     mark.addEventListener('click', emitter);
-    mark.addEventListener('touchstart', emitter, { passive: true });
+    mark.addEventListener('touchstart', emitter);
+
     this.placeMark(mark, range);
 
     this.element.appendChild(mark);

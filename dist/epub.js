@@ -13411,10 +13411,14 @@ function requireIframe() {
       };
       highlightElement.setAttribute('ref', className);
       highlightElement.addEventListener('click', emitter);
-      highlightElement.addEventListener('touchstart', emitter);
+      highlightElement.addEventListener('touchstart', emitter, {
+        passive: true
+      });
       if (cb) {
         highlightElement.addEventListener('click', cb);
-        highlightElement.addEventListener('touchstart', cb);
+        highlightElement.addEventListener('touchstart', cb, {
+          passive: true
+        });
       }
       return h;
     }
@@ -13447,10 +13451,14 @@ function requireIframe() {
       };
       underlineElement.setAttribute('ref', className);
       underlineElement.addEventListener('click', emitter);
-      underlineElement.addEventListener('touchstart', emitter);
+      underlineElement.addEventListener('touchstart', emitter, {
+        passive: true
+      });
       if (cb) {
         underlineElement.addEventListener('click', cb);
-        underlineElement.addEventListener('touchstart', cb);
+        underlineElement.addEventListener('touchstart', cb, {
+          passive: true
+        });
       }
       return h;
     }
@@ -13490,10 +13498,14 @@ function requireIframe() {
       }
       if (cb) {
         mark.addEventListener('click', cb);
-        mark.addEventListener('touchstart', cb);
+        mark.addEventListener('touchstart', cb, {
+          passive: true
+        });
       }
       mark.addEventListener('click', emitter);
-      mark.addEventListener('touchstart', emitter);
+      mark.addEventListener('touchstart', emitter, {
+        passive: true
+      });
       this.placeMark(mark, range);
       this.element.appendChild(mark);
       this.marks[cfiRange] = {

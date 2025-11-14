@@ -920,11 +920,11 @@ class IframeView implements View {
 
     highlightElement.setAttribute('ref', className);
     highlightElement.addEventListener('click', emitter);
-    highlightElement.addEventListener('touchstart', emitter, { passive: true });
+    highlightElement.addEventListener('touchstart', emitter);
 
     if (cb) {
       highlightElement.addEventListener('click', cb);
-      highlightElement.addEventListener('touchstart', cb, { passive: true });
+      highlightElement.addEventListener('touchstart', cb);
     }
 
     return h;
@@ -981,11 +981,11 @@ class IframeView implements View {
 
     underlineElement.setAttribute('ref', className);
     underlineElement.addEventListener('click', emitter);
-    underlineElement.addEventListener('touchstart', emitter, { passive: true });
+    underlineElement.addEventListener('touchstart', emitter);
 
     if (cb) {
       underlineElement.addEventListener('click', cb);
-      underlineElement.addEventListener('touchstart', cb, { passive: true });
+      underlineElement.addEventListener('touchstart', cb);
     }
     return h;
   }
@@ -1040,11 +1040,12 @@ class IframeView implements View {
 
     if (cb) {
       mark.addEventListener('click', cb);
-      mark.addEventListener('touchstart', cb, { passive: true });
+      mark.addEventListener('touchstart', cb);
     }
 
     mark.addEventListener('click', emitter);
-    mark.addEventListener('touchstart', emitter, { passive: true });
+    mark.addEventListener('touchstart', emitter);
+
     this.placeMark(mark, range);
 
     this.element.appendChild(mark);
