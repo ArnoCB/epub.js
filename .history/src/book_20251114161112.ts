@@ -836,7 +836,9 @@ export class Book {
    * @returns Promise resolving to the book hash in uppercase
    */
   async getBookHash(): Promise<string> {
-    await this.ready;
+    if (!this.bookHash) {
+      await this.setBookHash();
+    }
 
     return this.bookHash;
   }

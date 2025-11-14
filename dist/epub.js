@@ -23966,7 +23966,20 @@ function requireBook() {
         displayOptions: this.loading.displayOptions.promise,
         packaging: this.loading.packaging.promise
       };
-      this.ready = Promise.all([this.loaded.manifest, this.loaded.spine, this.loaded.metadata, this.loaded.cover, this.loaded.navigation, this.loaded.resources, this.loaded.displayOptions, this.loaded.packaging]);
+      // Create a promise for the book hash. For archived books we want
+      // readiness to wait until the hash has been generated. For non-archived
+      // books this resolves immediately.
+      const hashPromise = (async () => {
+        if (this.archived) {
+          // Ensure packaging (and thus path) is loaded first
+          await this.loaded.packaging;
+          // setBookHash will throw on failure so ready will reject if hash cannot be generated
+          await this.setBookHash();
+          return this.bookHash;
+        }
+        return undefined;
+      })();
+      this.ready = Promise.all([this.loaded.manifest, this.loaded.spine, this.loaded.metadata, this.loaded.cover, this.loaded.navigation, this.loaded.resources, this.loaded.displayOptions, this.loaded.packaging, hashPromise]);
       this.request = this.settings.requestMethod || request_1.default;
       this.spine = new spine_1.default();
       this.locations = new locations_1.default(this.spine, path => this.load(path));
@@ -23991,12 +24004,6 @@ function requireBook() {
           this.emit(utils_1.EVENTS.BOOK.OPEN_FAILED, err);
         });
       }
-      // Setup book hash when ready
-      this.ready.then(() => {
-        this.setBookHash().catch(err => {
-          console.error('Failed to set book hash:', err);
-        });
-      });
     }
     /**
      * Open a epub or url
@@ -24442,23 +24449,22 @@ function requireBook() {
      * @returns Promise resolving to the book hash in uppercase
      */
     async getBookHash() {
-      if (!this.bookHash) {
-        await this.setBookHash();
-      }
+      await this.ready;
       return this.bookHash;
     }
     /**
      * Set the book hash by generating MD5 from the OPF content
      */
     async setBookHash() {
-      if (!this.archive || !this.path) return;
-      try {
-        const contentOpfBlob = await this.archive.getBlob(this.path.toString());
-        const text = await contentOpfBlob.text();
-        this.bookHash = (await (0, utils_1.md5Hex)(text)).toUpperCase();
-      } catch (err) {
-        console.error('Failed to generate book hash:', err);
+      if (!this.archive) {
+        throw new Error('Cannot generate book hash: archive is not available');
       }
+      if (!this.path) {
+        throw new Error('Cannot generate book hash: package path is not available');
+      }
+      const contentOpfBlob = await this.archive.getBlob(this.path.toString());
+      const text = await contentOpfBlob.text();
+      this.bookHash = (await (0, utils_1.md5Hex)(text)).toUpperCase();
     }
     /**
      * Search for a string within a single section

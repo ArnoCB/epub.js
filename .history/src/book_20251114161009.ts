@@ -233,6 +233,8 @@ export class Book {
         this.emit(EVENTS.BOOK.OPEN_FAILED, err);
       });
     }
+
+    // Note: hash generation is now part of `this.ready` for archived books
   }
 
   /**
@@ -836,7 +838,9 @@ export class Book {
    * @returns Promise resolving to the book hash in uppercase
    */
   async getBookHash(): Promise<string> {
-    await this.ready;
+    if (!this.bookHash) {
+      await this.setBookHash();
+    }
 
     return this.bookHash;
   }
@@ -845,15 +849,7 @@ export class Book {
    * Set the book hash by generating MD5 from the OPF content
    */
   private async setBookHash(): Promise<void> {
-    if (!this.archive) {
-      throw new Error('Cannot generate book hash: archive is not available');
-    }
-
-    if (!this.path) {
-      throw new Error(
-        'Cannot generate book hash: package path is not available'
-      );
-    }
+    if (!this.archive || !this.path) return;
 
     const contentOpfBlob = await this.archive.getBlob(this.path.toString());
     const text = await contentOpfBlob.text();

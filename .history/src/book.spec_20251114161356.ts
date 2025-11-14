@@ -104,11 +104,6 @@ describe('Book', () => {
   describe('Search functionality', () => {
     describe('getBookHash', () => {
       it('should reject when archive and path are not set', async () => {
-        // Simulate ready rejecting due to missing archive/path
-        (book as any).ready = Promise.reject(
-          new Error('Cannot generate book hash: archive is not available')
-        );
-
         await expect(book.getBookHash()).rejects.toThrow(
           'Cannot generate book hash: archive is not available'
         );
@@ -125,14 +120,6 @@ describe('Book', () => {
         (book as any).path = {
           toString: jest.fn().mockReturnValue('OEBPS/content.opf'),
         };
-
-        // Mark the book as archived and mark ready as already resolved so
-        // getBookHash doesn't wait indefinitely in this test harness.
-        (book as any).archived = true;
-        (book as any).ready = Promise.resolve([]);
-
-        // Trigger hash generation (setBookHash is private, use any to call)
-        await (book as any).setBookHash();
 
         const hash = await book.getBookHash();
 
@@ -155,11 +142,6 @@ describe('Book', () => {
           toString: jest.fn().mockReturnValue('OEBPS/content.opf'),
         };
 
-        (book as any).archived = true;
-        (book as any).ready = Promise.resolve([]);
-
-        // Generate hash once
-        await (book as any).setBookHash();
         const hash1 = await book.getBookHash();
         const hash2 = await book.getBookHash();
 
@@ -178,11 +160,6 @@ describe('Book', () => {
         (book as any).path = {
           toString: jest.fn().mockReturnValue('OEBPS/content.opf'),
         };
-
-        (book as any).archived = true;
-        (book as any).ready = Promise.resolve([]);
-
-        await (book as any).setBookHash();
 
         const hash = await book.getBookHash();
 

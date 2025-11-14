@@ -836,7 +836,19 @@ export class Book {
    * @returns Promise resolving to the book hash in uppercase
    */
   async getBookHash(): Promise<string> {
-    await this.ready;
+    // Wait for book readiness (includes hash generation for archived books)
+    if (this.ready) {
+      try {
+        await this.ready;
+      } catch (err) {
+        // If ready rejected, still attempt to generate hash directly so caller
+        // gets the most specific error available
+      }
+    }
+
+    if (!this.bookHash) {
+      await this.setBookHash();
+    }
 
     return this.bookHash;
   }
